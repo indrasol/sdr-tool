@@ -1,5 +1,5 @@
 
-import { Plus, FolderPlus } from 'lucide-react';
+import { Plus, FolderPlus, Sparkles } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import AppHeader from '@/components/layout/AppHeader';
 
@@ -16,7 +16,7 @@ const CreateProject = () => {
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-3xl">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl">
           <div className="glass-card p-8 rounded-lg hover:scale-102 transition-transform cursor-pointer">
             <Plus className="w-12 h-12 text-primary mb-4" />
             <h3 className="text-xl font-semibold mb-2">New Project</h3>
@@ -36,6 +36,17 @@ const CreateProject = () => {
             </p>
             <Button variant="default" size="lg" className="w-full">
               Add Existing Project
+            </Button>
+          </div>
+
+          <div className="glass-card p-8 rounded-lg hover:scale-102 transition-transform cursor-pointer">
+            <Sparkles className="w-12 h-12 text-primary mb-4" />
+            <h3 className="text-xl font-semibold mb-2">Model with AI</h3>
+            <p className="text-sm text-muted-foreground mb-6">
+              Let AI help you model and structure your project based on best practices
+            </p>
+            <Button variant="default" size="lg" className="w-full">
+              Start AI Modeling
             </Button>
           </div>
         </div>
