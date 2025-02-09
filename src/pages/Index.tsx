@@ -1,5 +1,5 @@
 
-import { FileText, Upload, Shield } from 'lucide-react';
+import { FileText, Shield } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import AppHeader from '@/components/layout/AppHeader';
 import ProjectCard from '@/components/dashboard/ProjectCard';
@@ -20,16 +20,7 @@ const Index = () => {
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
-          <div className="glass-card p-6 rounded-lg">
-            <Upload className="w-8 h-8 text-primary mb-4" />
-            <h3 className="text-lg font-semibold mb-2">Upload Documents</h3>
-            <p className="text-sm text-muted-foreground mb-4">
-              Upload your infrastructure and application design documents for review
-            </p>
-            <Button variant="default" size="sm">Start Upload</Button>
-          </div>
-
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-12">
           <div className="glass-card p-6 rounded-lg">
             <FileText className="w-8 h-8 text-primary mb-4" />
             <h3 className="text-lg font-semibold mb-2">Risk Analysis</h3>
