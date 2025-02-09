@@ -2,6 +2,7 @@
 import { useState } from 'react';
 import { Shield, Menu } from 'lucide-react';
 import { Button } from "@/components/ui/button";
+import { Link } from 'react-router-dom';
 
 const AppHeader = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -24,9 +25,11 @@ const AppHeader = () => {
           <a href="/assessments" className="text-sm font-medium hover:text-primary transition-colors">
             SOC 2
           </a>
-          <Button variant="default" size="sm">
-            Create Project
-          </Button>
+          <Link to="/create-project">
+            <Button variant="default" size="sm">
+              Create Project
+            </Button>
+          </Link>
         </nav>
 
         <Button
@@ -51,9 +54,11 @@ const AppHeader = () => {
             <a href="/assessments" className="text-sm font-medium hover:text-primary transition-colors">
               SOC 2
             </a>
-            <Button variant="default" size="sm" className="w-full">
-              Create Project
-            </Button>
+            <Link to="/create-project">
+              <Button variant="default" size="sm" className="w-full">
+                Create Project
+              </Button>
+            </Link>
           </nav>
         </div>
       )}
