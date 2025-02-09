@@ -25,7 +25,7 @@ const AppHeader = () => {
             SOC 2
           </a>
           <Button variant="default" size="sm">
-            Upload Document
+            Create Project
           </Button>
         </nav>
 
@@ -52,7 +52,7 @@ const AppHeader = () => {
               SOC 2
             </a>
             <Button variant="default" size="sm" className="w-full">
-              Upload Document
+              Create Project
             </Button>
           </nav>
         </div>
