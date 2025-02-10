@@ -38,6 +38,7 @@ const ModelWithAI = () => {
     // For now, we'll just add a new node as a demonstration
     const newNode = {
       id: Date.now().toString(),
+      type: 'default', // Adding the required type property
       data: { label: userInput },
       position: { 
         x: Math.random() * 400 + 50,
