@@ -2,8 +2,11 @@
 import { Plus, FolderPlus, Sparkles } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import AppHeader from '@/components/layout/AppHeader';
+import { useNavigate } from 'react-router-dom';
 
 const CreateProject = () => {
+  const navigate = useNavigate();
+
   return (
     <div className="min-h-screen bg-background">
       <AppHeader />
@@ -39,7 +42,10 @@ const CreateProject = () => {
             </Button>
           </div>
 
-          <div className="glass-card p-8 rounded-lg hover:scale-102 transition-transform cursor-pointer">
+          <div 
+            className="glass-card p-8 rounded-lg hover:scale-102 transition-transform cursor-pointer"
+            onClick={() => navigate('/model-with-ai')}
+          >
             <Sparkles className="w-12 h-12 text-primary mb-4" />
             <h3 className="text-xl font-semibold mb-2">Model with AI</h3>
             <p className="text-sm text-muted-foreground mb-6">
