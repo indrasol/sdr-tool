@@ -76,23 +76,23 @@ const ModelWithAI = () => {
         {/* Left Sidebar - Chat Interface */}
         <div className="w-1/3 border-r border-border p-4 flex flex-col">
           {/* Tab Navigation */}
-          <div className="flex mb-4 bg-secondary rounded-lg p-1">
+          <div className="flex mb-4">
             <button
               onClick={() => setActiveTab('chat')}
-              className={`flex-1 py-2 text-sm font-medium rounded-md transition-colors ${
+              className={`flex-1 py-2 px-4 text-sm font-medium rounded-t-lg border-b-2 transition-colors ${
                 activeTab === 'chat'
-                  ? 'bg-white text-primary shadow-sm'
-                  : 'text-muted-foreground hover:text-foreground'
+                  ? 'border-primary text-primary'
+                  : 'border-transparent text-muted-foreground hover:text-foreground hover:border-muted'
               }`}
             >
               Chat
             </button>
             <button
               onClick={() => setActiveTab('history')}
-              className={`flex-1 py-2 text-sm font-medium rounded-md transition-colors ${
+              className={`flex-1 py-2 px-4 text-sm font-medium rounded-t-lg border-b-2 transition-colors ${
                 activeTab === 'history'
-                  ? 'bg-white text-primary shadow-sm'
-                  : 'text-muted-foreground hover:text-foreground'
+                  ? 'border-primary text-primary'
+                  : 'border-transparent text-muted-foreground hover:text-foreground hover:border-muted'
               }`}
             >
               History
