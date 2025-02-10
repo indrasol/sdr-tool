@@ -15,6 +15,13 @@ import {
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 
+type Message = {
+  id: number;
+  content: string;
+  type: 'user' | 'assistant';
+  timestamp: Date;
+};
+
 const initialNodes = [
   {
     id: '1',
@@ -28,17 +35,31 @@ const ModelWithAI = () => {
   const [userInput, setUserInput] = useState('');
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
+  const [activeTab, setActiveTab] = useState<'chat' | 'history'>('chat');
+  const [messages, setMessages] = useState<Message[]>([]);
 
   const onConnect = useCallback((params) => {
     setEdges((eds) => addEdge(params, eds));
   }, []);
 
   const handleSubmit = () => {
+    if (!userInput.trim()) return;
+
+    // Add user message
+    const newMessage: Message = {
+      id: Date.now(),
+      content: userInput,
+      type: 'user',
+      timestamp: new Date(),
+    };
+    
+    setMessages(prev => [...prev, newMessage]);
+
     // Here you would integrate with an AI service to process the input
     // For now, we'll just add a new node as a demonstration
     const newNode = {
       id: Date.now().toString(),
-      type: 'default', // Adding the required type property
+      type: 'default',
       data: { label: userInput },
       position: { 
         x: Math.random() * 400 + 50,
@@ -57,17 +78,53 @@ const ModelWithAI = () => {
       <div className="flex h-[calc(100vh-64px)]">
         {/* Left Sidebar - Chat Interface */}
         <div className="w-1/3 border-r border-border p-4 flex flex-col">
-          <div className="mb-4">
-            <h2 className="text-2xl font-bold mb-2">Model Description</h2>
-            <p className="text-muted-foreground mb-4">
-              Describe your model in natural language and see it visualized in real-time
-            </p>
+          {/* Tab Navigation */}
+          <div className="flex mb-4 bg-secondary rounded-lg p-1">
+            <button
+              onClick={() => setActiveTab('chat')}
+              className={`flex-1 py-2 text-sm font-medium rounded-md transition-colors ${
+                activeTab === 'chat'
+                  ? 'bg-white text-primary shadow-sm'
+                  : 'text-muted-foreground hover:text-foreground'
+              }`}
+            >
+              Chat
+            </button>
+            <button
+              onClick={() => setActiveTab('history')}
+              className={`flex-1 py-2 text-sm font-medium rounded-md transition-colors ${
+                activeTab === 'history'
+                  ? 'bg-white text-primary shadow-sm'
+                  : 'text-muted-foreground hover:text-foreground'
+              }`}
+            >
+              History
+            </button>
           </div>
           
-          <div className="flex-1 overflow-auto mb-4 glass-card p-4 rounded-lg">
-            {/* Chat messages would go here */}
+          {/* Chat Messages */}
+          <div className="flex-1 overflow-auto mb-4 glass-card p-4 rounded-lg space-y-4">
+            {messages.map((message) => (
+              <div
+                key={message.id}
+                className={`flex ${
+                  message.type === 'assistant' ? 'justify-start' : 'justify-end'
+                }`}
+              >
+                <div
+                  className={`max-w-[80%] p-3 rounded-lg ${
+                    message.type === 'assistant'
+                      ? 'bg-secondary text-foreground'
+                      : 'bg-primary text-primary-foreground'
+                  }`}
+                >
+                  {message.content}
+                </div>
+              </div>
+            ))}
           </div>
 
+          {/* Input Area */}
           <div className="flex flex-col gap-2">
             <Textarea
               value={userInput}
