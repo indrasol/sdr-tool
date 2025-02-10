@@ -126,7 +126,7 @@ const ModelWithAI = () => {
             <Textarea
               value={userInput}
               onChange={(e) => setUserInput(e.target.value)}
-              placeholder="Ask Lovable to modify Textarea..."
+              placeholder="Start describing your project ..."
               className="min-h-[60px] pr-[100px] resize-none bg-secondary rounded-lg"
             />
             <div className="absolute bottom-2 right-2 flex items-center gap-1">
