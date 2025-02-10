@@ -1,0 +1,17 @@
+fastapi
+uvicorn
+pytesseract
+Pillow
+pdfplumber
+langchain
+openai
+langchain-community
+transformers
+python-dotenv
+torch
+pdf2image
+lxml
+python-docx
+python-pptx
+langchain-openai
+faiss-cpu
