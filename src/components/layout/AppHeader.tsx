@@ -16,9 +16,9 @@ const AppHeader = () => {
         </div>
         
         <nav className="hidden md:flex items-center space-x-6">
-          <a href="/dashboard" className="text-sm font-medium hover:text-primary transition-colors">
+          <Link to="/" className="text-sm font-medium hover:text-primary transition-colors">
             Dashboard
-          </a>
+          </Link>
           <a href="/documents" className="text-sm font-medium hover:text-primary transition-colors">
             Documents
           </a>
@@ -45,9 +45,9 @@ const AppHeader = () => {
       {isMenuOpen && (
         <div className="md:hidden absolute top-full left-0 right-0 glass-card py-4 px-6 slide-up">
           <nav className="flex flex-col space-y-4">
-            <a href="/dashboard" className="text-sm font-medium hover:text-primary transition-colors">
+            <Link to="/" className="text-sm font-medium hover:text-primary transition-colors">
               Dashboard
-            </a>
+            </Link>
             <a href="/documents" className="text-sm font-medium hover:text-primary transition-colors">
               Documents
             </a>
