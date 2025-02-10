@@ -1,6 +1,6 @@
 
 import { useCallback, useState } from 'react';
-import { MessageSquare } from 'lucide-react';
+import { Paperclip, ChevronUp, List } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import AppHeader from '@/components/layout/AppHeader';
@@ -45,7 +45,6 @@ const ModelWithAI = () => {
   const handleSubmit = () => {
     if (!userInput.trim()) return;
 
-    // Add user message
     const newMessage: Message = {
       id: Date.now(),
       content: userInput,
@@ -55,8 +54,6 @@ const ModelWithAI = () => {
     
     setMessages(prev => [...prev, newMessage]);
 
-    // Here you would integrate with an AI service to process the input
-    // For now, we'll just add a new node as a demonstration
     const newNode = {
       id: Date.now().toString(),
       type: 'default',
@@ -125,21 +122,37 @@ const ModelWithAI = () => {
           </div>
 
           {/* Input Area */}
-          <div className="flex flex-col gap-2">
+          <div className="relative">
             <Textarea
               value={userInput}
               onChange={(e) => setUserInput(e.target.value)}
-              placeholder="Describe your model or diagram..."
-              className="min-h-[100px] resize-none"
+              placeholder="Ask Lovable to modify Textarea..."
+              className="min-h-[60px] pr-[100px] resize-none bg-secondary rounded-lg"
             />
-            <Button 
-              onClick={handleSubmit}
-              className="w-full"
-              disabled={!userInput.trim()}
-            >
-              <MessageSquare className="w-4 h-4 mr-2" />
-              Generate Diagram
-            </Button>
+            <div className="absolute bottom-2 right-2 flex items-center gap-1">
+              <Button 
+                size="icon" 
+                variant="ghost" 
+                className="h-8 w-8 text-muted-foreground hover:text-foreground"
+              >
+                <Paperclip className="h-5 w-5" />
+              </Button>
+              <Button 
+                size="icon" 
+                variant="ghost" 
+                className="h-8 w-8 text-muted-foreground hover:text-foreground"
+              >
+                <List className="h-5 w-5" />
+              </Button>
+              <Button 
+                size="icon" 
+                onClick={handleSubmit}
+                disabled={!userInput.trim()}
+                className="h-8 w-8"
+              >
+                <ChevronUp className="h-5 w-5" />
+              </Button>
+            </div>
           </div>
         </div>
 
