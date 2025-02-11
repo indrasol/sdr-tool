@@ -1,6 +1,6 @@
 
 import { useState } from 'react';
-import { ShieldCheck, Menu } from 'lucide-react';
+import { Route, Menu } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Link } from 'react-router-dom';
 
@@ -12,8 +12,8 @@ const AppHeader = () => {
       <div className="max-w-7xl mx-auto flex items-center justify-between">
         <Link to="/" className="flex items-center space-x-2 hover:opacity-90 transition-opacity">
           <div className="relative flex items-center">
-            <ShieldCheck className="w-8 h-8 text-primary" />
-            <div className="absolute -right-1 -bottom-1 w-3 h-3 bg-primary rounded-full" />
+            <Route className="w-8 h-8 text-primary" />
+            <div className="absolute -right-1 -bottom-1 w-2 h-2 bg-primary rounded-full shadow-lg" />
           </div>
           <span className="text-xl font-semibold text-foreground">
             SecureTrack
