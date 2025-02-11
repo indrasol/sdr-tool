@@ -12,7 +12,7 @@ const AppHeader = () => {
       <div className="max-w-7xl mx-auto flex items-center justify-between">
         <Link to="/" className="flex items-center space-x-2 hover:opacity-90 transition-opacity">
           <div className="relative flex items-center">
-            <Route className="w-8 h-8 text-primary" />
+            <Route className="w-8 h-8" style={{ color: '#3ECF8E' }} />
           </div>
           <span className="text-xl font-semibold text-foreground">
             SecureTrack
