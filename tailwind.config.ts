@@ -67,11 +67,16 @@ export default {
           from: { backgroundPosition: '200% 0' },
           to: { backgroundPosition: '-200% 0' },
         },
+        'spin-slow': {
+          from: { transform: 'rotate(0deg)' },
+          to: { transform: 'rotate(360deg)' },
+        },
       },
       animation: {
         fadeIn: 'fadeIn 0.3s ease-in-out',
         slideIn: 'slideIn 0.4s ease-out',
         shimmer: 'shimmer 8s infinite linear',
+        'spin-slow': 'spin-slow 8s linear infinite',
       },
       backgroundImage: {
         'gradient-radial': 'radial-gradient(var(--tw-gradient-stops))',
