@@ -13,7 +13,6 @@ const AppHeader = () => {
         <Link to="/" className="flex items-center space-x-2 hover:opacity-90 transition-opacity">
           <div className="relative flex items-center">
             <Route className="w-8 h-8 text-primary" />
-            <div className="absolute -right-1 -bottom-1 w-2 h-2 bg-primary rounded-full shadow-lg" />
           </div>
           <span className="text-xl font-semibold text-foreground">
             SecureTrack
