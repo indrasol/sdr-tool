@@ -180,7 +180,7 @@ const ModelWithAI = () => {
         {/* Right Panel - Diagramming Area */}
         <div className="flex-1 bg-dot-pattern relative">
           {/* Drawing Toolbar */}
-          <div className="absolute top-4 left-4 glass-card p-2 rounded-lg flex gap-2 z-10">
+          <div className="absolute top-4 left-4 glass-card p-2 rounded-lg flex flex-col gap-2 z-10">
             <Button
               size="icon"
               variant={activeTool === 'select' ? 'default' : 'ghost'}
@@ -227,6 +227,7 @@ const ModelWithAI = () => {
             >
               <Eraser className="h-4 w-4" />
             </Button>
+            <div className="h-px bg-border w-full my-1"></div>
             <Button
               size="icon"
               variant="ghost"
@@ -234,7 +235,7 @@ const ModelWithAI = () => {
                 setNodes([]);
                 setEdges([]);
               }}
-              className="h-8 w-8 ml-2 border-l border-border"
+              className="h-8 w-8"
             >
               <Plus className="h-4 w-4 rotate-45" />
             </Button>
