@@ -1,6 +1,6 @@
 
 import { useCallback, useState } from 'react';
-import { Paperclip, ChevronUp, List } from 'lucide-react';
+import { Paperclip, ChevronUp, List, Square, Circle, ArrowRight, Eraser, Pointer, Plus } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import AppHeader from '@/components/layout/AppHeader';
@@ -22,6 +22,8 @@ type Message = {
   timestamp: Date;
 };
 
+type ToolType = 'select' | 'square' | 'circle' | 'arrow' | 'eraser';
+
 const initialNodes = [
   {
     id: '1',
@@ -37,6 +39,7 @@ const ModelWithAI = () => {
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
   const [activeTab, setActiveTab] = useState<'chat' | 'history'>('chat');
   const [messages, setMessages] = useState<Message[]>([]);
+  const [activeTool, setActiveTool] = useState<ToolType>('select');
 
   const onConnect = useCallback((params) => {
     setEdges((eds) => addEdge(params, eds));
@@ -66,6 +69,24 @@ const ModelWithAI = () => {
     
     setNodes((nds) => [...nds, newNode]);
     setUserInput('');
+  };
+
+  const addShape = (type: 'square' | 'circle') => {
+    const newNode = {
+      id: Date.now().toString(),
+      type: type === 'square' ? 'default' : 'output',
+      data: { label: `New ${type}` },
+      position: { 
+        x: Math.random() * 400 + 50,
+        y: Math.random() * 400 + 50
+      },
+      style: type === 'circle' ? {
+        borderRadius: '50%',
+        width: 80,
+        height: 80,
+      } : undefined,
+    };
+    setNodes((nds) => [...nds, newNode]);
   };
 
   return (
@@ -157,7 +178,68 @@ const ModelWithAI = () => {
         </div>
 
         {/* Right Panel - Diagramming Area */}
-        <div className="flex-1 bg-dot-pattern">
+        <div className="flex-1 bg-dot-pattern relative">
+          {/* Drawing Toolbar */}
+          <div className="absolute top-4 left-4 glass-card p-2 rounded-lg flex gap-2 z-10">
+            <Button
+              size="icon"
+              variant={activeTool === 'select' ? 'default' : 'ghost'}
+              onClick={() => setActiveTool('select')}
+              className="h-8 w-8"
+            >
+              <Pointer className="h-4 w-4" />
+            </Button>
+            <Button
+              size="icon"
+              variant={activeTool === 'square' ? 'default' : 'ghost'}
+              onClick={() => {
+                setActiveTool('square');
+                addShape('square');
+              }}
+              className="h-8 w-8"
+            >
+              <Square className="h-4 w-4" />
+            </Button>
+            <Button
+              size="icon"
+              variant={activeTool === 'circle' ? 'default' : 'ghost'}
+              onClick={() => {
+                setActiveTool('circle');
+                addShape('circle');
+              }}
+              className="h-8 w-8"
+            >
+              <Circle className="h-4 w-4" />
+            </Button>
+            <Button
+              size="icon"
+              variant={activeTool === 'arrow' ? 'default' : 'ghost'}
+              onClick={() => setActiveTool('arrow')}
+              className="h-8 w-8"
+            >
+              <ArrowRight className="h-4 w-4" />
+            </Button>
+            <Button
+              size="icon"
+              variant={activeTool === 'eraser' ? 'default' : 'ghost'}
+              onClick={() => setActiveTool('eraser')}
+              className="h-8 w-8"
+            >
+              <Eraser className="h-4 w-4" />
+            </Button>
+            <Button
+              size="icon"
+              variant="ghost"
+              onClick={() => {
+                setNodes([]);
+                setEdges([]);
+              }}
+              className="h-8 w-8 ml-2 border-l border-border"
+            >
+              <Plus className="h-4 w-4 rotate-45" />
+            </Button>
+          </div>
+
           <ReactFlow
             nodes={nodes}
             edges={edges}
