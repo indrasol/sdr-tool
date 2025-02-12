@@ -93,11 +93,11 @@ const ModelWithAI = () => {
     <div className="min-h-screen bg-background">
       <AppHeader />
       
-      <div className="flex h-[calc(100vh-64px)]">
+      <div className="flex h-[calc(100vh-64px)] pt-16">
         {/* Left Sidebar - Chat Interface */}
         <div className="w-1/3 border-r border-border p-4 flex flex-col">
           {/* Tab Navigation */}
-          <div className="flex mb-4">
+          <div className="flex mb-4 mt-4">
             <button
               onClick={() => setActiveTab('chat')}
               className={`flex-1 py-2 px-4 text-sm font-medium rounded-t-lg border-b-2 transition-colors ${
@@ -180,7 +180,7 @@ const ModelWithAI = () => {
         {/* Right Panel - Diagramming Area */}
         <div className="flex-1 bg-dot-pattern relative">
           {/* Drawing Toolbar */}
-          <div className="absolute top-4 left-4 glass-card p-2 rounded-lg flex flex-col gap-2 z-10">
+          <div className="absolute top-20 left-4 glass-card p-2 rounded-lg flex flex-col gap-2 z-10">
             <Button
               size="icon"
               variant={activeTool === 'select' ? 'default' : 'ghost'}
