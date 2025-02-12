@@ -15,7 +15,7 @@ const AppHeader = () => {
             <Route className="w-8 h-8" style={{ color: '#3ECF8E' }} />
           </div>
           <span className="text-xl font-semibold text-foreground">
-            SecureTrack
+            Secure<span style={{ color: '#3ECF8E' }}>Track</span>
           </span>
         </Link>
         
