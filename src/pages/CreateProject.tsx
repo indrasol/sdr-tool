@@ -21,7 +21,7 @@ const CreateProject = () => {
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl">
           <div className="glass-card p-8 rounded-lg hover:scale-102 transition-transform cursor-pointer">
-            <Plus className="w-12 h-12 text-primary mb-4" />
+            <Plus className="w-12 h-12 mb-4" style={{ color: '#3ECF8E' }} />
             <h3 className="text-xl font-semibold mb-2">New Project</h3>
             <p className="text-sm text-muted-foreground mb-6">
               Create a new project from scratch with custom settings and configurations
@@ -32,7 +32,7 @@ const CreateProject = () => {
           </div>
 
           <div className="glass-card p-8 rounded-lg hover:scale-102 transition-transform cursor-pointer">
-            <FolderPlus className="w-12 h-12 text-primary mb-4" />
+            <FolderPlus className="w-12 h-12 mb-4" style={{ color: '#3ECF8E' }} />
             <h3 className="text-xl font-semibold mb-2">Add Existing Project</h3>
             <p className="text-sm text-muted-foreground mb-6">
               Import an existing project and its associated documents and settings
@@ -46,7 +46,7 @@ const CreateProject = () => {
             className="glass-card p-8 rounded-lg hover:scale-102 transition-transform cursor-pointer"
             onClick={() => navigate('/model-with-ai')}
           >
-            <Sparkles className="w-12 h-12 text-primary mb-4" />
+            <Sparkles className="w-12 h-12 mb-4" style={{ color: '#3ECF8E' }} />
             <h3 className="text-xl font-semibold mb-2">Model with AI</h3>
             <p className="text-sm text-muted-foreground mb-6">
               Let AI help you model and structure your project based on best practices
