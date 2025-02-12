@@ -1,17 +1,47 @@
-version: "3.9"
+version: '3.8'
 
 services:
   backend:
-    env_file:
-      - .env.development
+    build: ./sdr_backend
+    container_name: sdr_backend
     ports:
       - "8000:8000"
-    command: ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
+    env_file:
+      - .env.dev  # Load the development-specific .env file for the backend
+    networks:
+      - sdr_network
+    volumes:
+      - ./sdr_backend:/app
+    depends_on:
+      - db
 
   frontend:
-    env_file:
-      - .env.development
+    build: ./sdr_frontend
+    container_name: sdr_frontend
     ports:
-      - "8080:8080"
-    command: ["npm", "run", "dev"]
+      - "3000:3000"
+    networks:
+      - sdr_network
+    volumes:
+      - ./sdr_frontend:/app
+    depends_on:
+      - backend
 
+  db:
+    image: postgres:latest
+    container_name: sdr_db
+    environment:
+      - POSTGRES_USER=dev_user
+      - POSTGRES_PASSWORD=dev_password
+      - POSTGRES_DB=dev_db
+    networks:
+      - sdr_network
+    volumes:
+      - sdr_db_data:/var/lib/postgresql/data
+
+networks:
+  sdr_network:
+    driver: bridge
+
+volumes:
+  sdr_db_data:
