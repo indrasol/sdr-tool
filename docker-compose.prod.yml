@@ -1,34 +1,47 @@
-version: "3.9"
+version: '3.8'
 
 services:
   backend:
-    env_file:
-      - .env.production
+    build: ./sdr_backend
+    container_name: sdr_backend
     ports:
       - "8000:8000"
-    command: ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
+    env_file:
+      - .env.prod  # Load the production-specific .env file for the backend
+    networks:
+      - sdr_network
+    volumes:
+      - ./sdr_backend:/app
+    depends_on:
+      - db
 
   frontend:
-    env_file:
-      - .env.production
+    build: ./sdr_frontend
+    container_name: sdr_frontend
     ports:
-      - "8080:8080"
-    command: ["npm", "run", "build"]
+      - "3000:3000"
+    networks:
+      - sdr_network
     volumes:
-      - ./sdr_frontend/dist:/app/dist
+      - ./sdr_frontend:/app
+    depends_on:
+      - backend
 
   db:
-    image: postgres:15
+    image: postgres:latest
     container_name: sdr_db
     environment:
-      POSTGRES_USER: ${POSTGRES_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-      POSTGRES_DB: ${POSTGRES_DB}
-    ports:
-      - "5432:5432"
+      - POSTGRES_USER=prod_user
+      - POSTGRES_PASSWORD=prod_password
+      - POSTGRES_DB=prod_db
+    networks:
+      - sdr_network
     volumes:
-      - db_data:/var/lib/postgresql/data
+      - sdr_db_data:/var/lib/postgresql/data
+
+networks:
+  sdr_network:
+    driver: bridge
 
 volumes:
-  db_data:
-
+  sdr_db_data:
