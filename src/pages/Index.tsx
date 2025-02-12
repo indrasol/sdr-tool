@@ -22,7 +22,7 @@ const Index = () => {
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-12">
           <div className="glass-card p-6 rounded-lg">
-            <FileText className="w-8 h-8" style={{ color: '#3ECF8E' }} />
+            <FileText className="w-8 h-8 text-primary mb-4" />
             <h3 className="text-lg font-semibold mb-2">Risk Analysis</h3>
             <p className="text-sm text-muted-foreground mb-4">
               AI-powered security risk identification and assessment
@@ -31,7 +31,7 @@ const Index = () => {
           </div>
 
           <div className="glass-card p-6 rounded-lg">
-            <Shield className="w-8 h-8" style={{ color: '#3ECF8E' }} />
+            <Shield className="w-8 h-8 text-primary mb-4" />
             <h3 className="text-lg font-semibold mb-2">SOC 2 Compliance</h3>
             <p className="text-sm text-muted-foreground mb-4">
               Track and manage your SOC 2 compliance journey
@@ -65,7 +65,7 @@ const Index = () => {
             </div>
           ) : (
             <EmptyState
-              icon={<FileText className="w-full h-full" style={{ color: '#3ECF8E' }} />}
+              icon={<FileText className="w-full h-full" />}
               title="No projects yet"
               description="Start by creating your first project and uploading documents for review."
               action={<Button>Create Project</Button>}
