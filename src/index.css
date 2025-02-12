@@ -1,4 +1,3 @@
-
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap');
 
 @tailwind base;
@@ -16,7 +15,7 @@
     --popover: 0 0% 100%;
     --popover-foreground: 220 10% 15%;
     
-    --primary: 159 84% 52%;
+    --primary: 250 95% 65%;
     --primary-foreground: 0 0% 100%;
     
     --secondary: 220 15% 95%;
@@ -25,7 +24,7 @@
     --muted: 220 15% 95%;
     --muted-foreground: 220 10% 45%;
     
-    --accent: 159 84% 52%;
+    --accent: 250 95% 65%;
     --accent-foreground: 0 0% 100%;
     
     --destructive: 0 84% 60%;
@@ -33,7 +32,7 @@
 
     --border: 220 13% 90%;
     --input: 220 13% 90%;
-    --ring: 159 84% 52%;
+    --ring: 250 95% 65%;
 
     --radius: 0.5rem;
   }
