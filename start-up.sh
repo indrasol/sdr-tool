@@ -30,9 +30,9 @@ if [[ "$MODE" == "backend" ]]; then
   fi
 fi
 
-# Run docker-compose for the selected environment
-echo "Starting containers in $ENVIRONMENT environment..."
+# # Run docker-compose for the selected environment
+# echo "Starting containers in $ENVIRONMENT environment..."
 
-echo "Running command - 'docker-compose -f "docker-compose.$ENVIRONMENT.yml" up --build'"
-# Run the docker-compose command for the selected environment
-docker-compose -f "docker-compose.$ENVIRONMENT.yml" up --build
+# echo "Running command - 'docker-compose -f "docker-compose.$ENVIRONMENT.yml" up --build'"
+# # Run the docker-compose command for the selected environment
+# docker-compose -f "docker-compose.$ENVIRONMENT.yml" up --build
