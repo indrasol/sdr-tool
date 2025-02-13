@@ -15,3 +15,5 @@ python-docx
 python-pptx
 langchain-openai
 faiss-cpu
+reportlab
+python--multipart

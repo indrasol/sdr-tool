@@ -3,6 +3,13 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
+env = os.getenv('ENV', 'development') 
+
+if env == 'development':
+    load_dotenv('.env.dev')
+elif env == 'production':
+    load_dotenv('.env.prod')
+
 # Main
 title=os.getenv("title")
 description=os.getenv("description")

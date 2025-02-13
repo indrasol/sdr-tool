@@ -10,7 +10,7 @@ from fastapi import APIRouter, HTTPException
 from fastapi.responses import JSONResponse
 
 from core.analysis import analyze_architecture
-from models.analysis_models import AnalysisInput  # Import Pydantic model
+from models.analysis_input import AnalysisInput  # Import Pydantic model
 import re
 
 router = APIRouter()

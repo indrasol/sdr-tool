@@ -15,7 +15,7 @@ import datetime
 
 from core.file_processor import extract_text_from_document
 from api.routes.analyze import analyze
-from models.analysis_models import AnalysisInput  # Import Pydantic model
+from models.analysis_input import AnalysisInput  # Import Pydantic model
 from config.settings import UPLOADS_DIR, OUTPUT_DIR
 from fastapi.templating import Jinja2Templates
 from starlette.requests import Request
