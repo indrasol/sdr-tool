@@ -9,64 +9,6 @@ import uuid
 
 router = APIRouter()
 
-# Function to call OpenAI and get structured architecture response
-# def generate_architecture_with_llm(prompt: str) -> dict:
-#     try:
-#         system_prompt = """You are an AI expert in designing secure software architectures. 
-#         When given a tech stack, generate a structured JSON output that describes the architecture in the following format:
-
-#         {
-#             "architecture": [
-#                 {
-#                     "component": "API Gateway",
-#                     "description": "Handles authentication, security, and load balancing.",
-#                     "technology": "Amazon API Gateway"
-#                 },
-#                 {
-#                     "component": "Microservices",
-#                     "description": "Decoupled services communicating via REST or messaging queues.",
-#                     "technology": "Spring Boot, Node.js"
-#                 },
-#                 {
-#                     "component": "Redis",
-#                     "description": "Used as caching and session storage.",
-#                     "technology": "Redis"
-#                 }
-#             ]
-#         }
-
-#         Always return a valid JSON response, and do not include any extra text outside of JSON format.
-#         """
-#         client = Client(api_key=OPENAI_API_KEY)
-#         response = client.chat.completions.create(
-#             model="gpt-4",
-#             messages=[
-#                 {"role": "system", "content": system_prompt},
-#                 {"role": "user", "content": prompt},
-#             ]
-#         )
-#         # print(f"LLM Response: {response}")
-#         print(type(response.choices[0].message))
-#         print("Message Object Type:", type(response.choices[0].message))
-#         print("Message Content Type:", type(response.choices[0].message.content))
-#         print("Message Content:", response.choices[0].message.content)
-
-#             # Extract content correctly
-#         architecture_json_str = response.choices[0].message.content.strip()
-
-#         # 🚨 Check if the response is **not JSON** and handle errors
-#         try:
-#             architecture_json = json.loads(architecture_json_str)
-#         except json.JSONDecodeError:
-#             print("🚨 Error: LLM response is not valid JSON.")
-#             return {"error": "Invalid response from AI. Expected JSON format."}
-
-#         return architecture_json
-
-#     except Exception as e:
-#         print("🚨 Exception occurred:", e)
-#         return {"error": str(e)}
-
 def generate_architecture_with_llm(prompt: str):
     """
     Calls OpenAI API to generate a structured architecture JSON.
@@ -126,23 +68,6 @@ def validate_and_format_response(data):
 
     for edge in edges:
         edge["id"] = str(uuid.uuid4())  # Unique ID for each edge
-    # for idx, node in enumerate(data.get("components", [])):
-    #     node_id = str(uuid.uuid4())  # Unique ID
-    #     nodes.append({
-    #         "id": node_id,
-    #         "type": node.get("type", "default"),
-    #         "position": {"x": idx * 200, "y": 100},  # Example layout
-    #         "data": {"label": node.get("name", "Unnamed Node")}
-    #     })
-
-    #     # Create edges
-    #     for target in node.get("connections", []):
-    #         edges.append({
-    #             "id": str(uuid.uuid4()),
-    #             "source": node_id,
-    #             "target": target,
-    #             "type": "smoothstep"
-    #         })
 
     return {"status": "success", "architecture": {"nodes": nodes, "edges": edges}}
 
