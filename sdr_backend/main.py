@@ -16,7 +16,7 @@ app = FastAPI(
 )
 
 # Mount the "outputs" directory as a static files directory
-app.mount("/outputs", StaticFiles(directory="outputs"), name="outputs")
+# app.mount("/outputs", StaticFiles(directory="outputs"), name="outputs")
 
 # Allow frontend origins (Update this to match your frontend URL)
 origins = [
