@@ -1,10 +1,8 @@
-
 import { useCallback, useState } from 'react';
 import { Paperclip, ChevronUp, List , Edit, Trash} from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import AppHeader from '@/components/layout/AppHeader';
-import { BaseEdge} from "reactflow";
 import {
   ReactFlow,
   MiniMap,
@@ -13,6 +11,9 @@ import {
   useNodesState,
   useEdgesState,
   addEdge,
+  MarkerType,
+  BaseEdge,
+  EdgeProps,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 
@@ -122,18 +123,26 @@ const ModelWithAI = () => {
     setUserInput('');
   };
 
-  // Define colors for different node types
+  // Updated node colors with better contrast and meaning
   const nodeColors = {
-    scanning: "#E57373",
-    storage: "#388E3C",
-    processing: "#5C6BC0",
-    akamai: "#D32F2F",
+    scanning: "#FF6B6B",     // Bright red for scanning
+    storage: "#4CAF50",      // Green for storage
+    processing: "#2196F3",   // Blue for processing
+    akamai: "#9C27B0",      // Purple for akamai
+    default: "#78909C"       // Grey for default
   };
 
   // Custom Node Component
   const CustomNode = ({ data }) => (
-    <div style={{ ...nodeStyle, background: nodeColors[data.type] || "#90A4AE" }} className="p-2 rounded-lg shadow-md flex justify-between items-center">
-      <span>{data.label}</span>
+    <div
+      style={{
+        ...nodeStyle,
+        background: nodeColors[data.type] || "#bdc9cf",
+        border: `2px solid ${nodeColors[data.type] || "#90A4AE"}`,
+      }}
+      className="p-2 rounded-lg shadow-md flex justify-between items-center"
+    >
+      <span className="font-bold text-white">{data.label}</span>
       <div className="flex gap-2">
         <button className="text-white opacity-75 hover:opacity-100">
           <Edit size={14} />
@@ -154,24 +163,33 @@ const ModelWithAI = () => {
     textAlign: "center" as "center",
   };
   
-  // Custom Edge Styles
-  const customEdgeStyle = {
+  // Define edge styles with explicit arrow settings
+  const edgeStyle = {
+    stroke: '#333',
     strokeWidth: 2,
-    stroke: "#757575",
   };
 
-  // Labeled Edges
-  const edgeTypes = {
-    labeled: ({ id, source, target, label, style }) => (
+  // Define the custom edge with marker
+  const CustomEdge: React.FC<EdgeProps> = ({
+    id,
+    sourceX,
+    sourceY,
+    targetX,
+    targetY,
+    sourcePosition,
+    targetPosition,
+    style = {},
+    markerEnd,
+  }) => {
+    return (
       <BaseEdge
-        id={id}
-        path='smoothstep'
+        path={`M${sourceX},${sourceY} L${targetX},${targetY}`}
+        markerEnd={markerEnd}
         style={style}
-        label={label} // Pass label directly as a prop
       />
-    ),
+    );
   };
-  
+
   return (
     <div className="min-h-screen bg-background">
       <AppHeader />
@@ -259,22 +277,17 @@ const ModelWithAI = () => {
           <ReactFlow
             nodes={nodes.map((node) => ({
               ...node,
-              style: nodeStyle,
+              type: 'default',
+              draggable: true,
             }))}
             edges={edges.map((edge) => ({
               ...edge,
-              type: "smoothstep",
-              animated: true,
-              style: customEdgeStyle,
+              type: 'default',
             }))}
-            nodeTypes={{
-              custom: (props) => (
-                <div style={{ ...nodeStyle, background: "#E3F2FD" as "center" }}>
-                  {props.data.label}
-                </div>
-              ),
-            }}
             fitView
+            onNodesChange={onNodesChange}
+            onEdgesChange={onEdgesChange}
+            onConnect={onConnect}
           >
             <Controls />
             <MiniMap />
