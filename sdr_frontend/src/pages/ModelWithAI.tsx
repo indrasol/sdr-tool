@@ -15,6 +15,8 @@ import {
   BaseEdge,
   EdgeProps,
 } from '@xyflow/react';
+import { CustomEdge } from '@/components/flow/CustomEdge';
+import { customNodeTypes } from '@/components/flow/CustomNodes';
 import '@xyflow/react/dist/style.css';
 
 type Message = {
@@ -33,6 +35,25 @@ const initialNodes = [
   },
 ];
 
+// Add type definition for customNodeTypes
+type NodeTypes = {
+  [key: string]: { color: string };
+};
+
+// Add this before the nodeColor function
+const nodeColorMap: NodeTypes = {
+  service: { color: '#FF6B6B' },
+  database: { color: '#4CAF50' },
+  cloud: { color: '#2196F3' },
+  network: { color: '#9C27B0' },
+  server: { color: '#FF9800' }
+};
+
+const nodeColor = (node: any) => {
+  const type = node.data?.nodeType || 'service';
+  return nodeColorMap[type]?.color || '#78909C';
+};
+
 const ModelWithAI = () => {
   const [userInput, setUserInput] = useState('');
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
@@ -43,7 +64,19 @@ const ModelWithAI = () => {
   const [error, setError] = useState('');
 
   const onConnect = useCallback((params) => {
-    setEdges((eds) => addEdge(params, eds));
+    setEdges((eds) => addEdge({
+      ...params,
+      type: 'custom',
+      markerEnd: {
+        type: MarkerType.ArrowClosed,
+        width: 20,
+        height: 20,
+        color: '#64748b',
+      },
+      data: {
+        label: 'connects to'
+      },
+    }, eds));
   }, []);
 
   const fetchArchitecture = async () => {
@@ -68,9 +101,16 @@ const ModelWithAI = () => {
     // Transform response into ReactFlow nodes
     const formattedNodes = data.architecture.nodes.map((node: any) => ({
       id: node.id.toString(),
-      type: node.type || "default",
-      data: { label: node.data?.label ||  `Node ${node.id}` }, // Ensure label is meaningful,
-      position: { x: node.x || Math.random() * 400, y: node.y || Math.random() * 400 }, // Fallback positioning
+      type: node.type || 'service',
+      data: { 
+        label: node.data?.label || `Node ${node.id}`,
+        nodeType: node.type || 'service',
+        description: node.data?.description || 'Component description'
+      },
+      position: { 
+        x: node.x || Math.random() * 400, 
+        y: node.y || Math.random() * 400 
+      },
     }));
 
     // Transform response into ReactFlow edges
@@ -78,7 +118,17 @@ const ModelWithAI = () => {
       id: edge.id.toString(),
       source: edge.source.toString(),
       target: edge.target.toString(),
-      animated: true, // Optional animation
+      type: 'custom',
+      animated: true,
+      markerEnd: {
+        type: MarkerType.ArrowClosed,
+        width: 20,
+        height: 20,
+        color: '#64748b',
+      },
+      data: {
+        label: edge.label || 'connects to'
+      },
     }));
 
     // Update state with new nodes and edges
@@ -96,7 +146,12 @@ const ModelWithAI = () => {
 
   } catch (error) {
     console.error("Error processing architecture:", error);
-    setMessages(prev => [...prev, { id: Date.now() + 2, content: "Error generating architecture.", type: "assistant", timestamp: new Date() }]);
+    setMessages(prev => [...prev, { 
+      id: Date.now() + 2, 
+      content: "Error generating architecture.", 
+      type: "assistant", 
+      timestamp: new Date() 
+    }]);
   }
   setLoading(false);
   setUserInput('');
@@ -121,73 +176,6 @@ const ModelWithAI = () => {
 
     fetchArchitecture();
     setUserInput('');
-  };
-
-  // Updated node colors with better contrast and meaning
-  const nodeColors = {
-    scanning: "#FF6B6B",     // Bright red for scanning
-    storage: "#4CAF50",      // Green for storage
-    processing: "#2196F3",   // Blue for processing
-    akamai: "#9C27B0",      // Purple for akamai
-    default: "#78909C"       // Grey for default
-  };
-
-  // Custom Node Component
-  const CustomNode = ({ data }) => (
-    <div
-      style={{
-        ...nodeStyle,
-        background: nodeColors[data.type] || "#bdc9cf",
-        border: `2px solid ${nodeColors[data.type] || "#90A4AE"}`,
-      }}
-      className="p-2 rounded-lg shadow-md flex justify-between items-center"
-    >
-      <span className="font-bold text-white">{data.label}</span>
-      <div className="flex gap-2">
-        <button className="text-white opacity-75 hover:opacity-100">
-          <Edit size={14} />
-        </button>
-        <button className="text-white opacity-75 hover:opacity-100">
-          <Trash size={14} />
-        </button>
-      </div>
-    </div>
-  );
-
-  const nodeStyle = {
-    padding: "12px 16px",
-    borderRadius: "12px",
-    boxShadow: "0px 4px 8px rgba(0, 0, 0, 0.1)",
-    background: "white",
-    border: "1px solid #ddd",
-    textAlign: "center" as "center",
-  };
-  
-  // Define edge styles with explicit arrow settings
-  const edgeStyle = {
-    stroke: '#333',
-    strokeWidth: 2,
-  };
-
-  // Define the custom edge with marker
-  const CustomEdge: React.FC<EdgeProps> = ({
-    id,
-    sourceX,
-    sourceY,
-    targetX,
-    targetY,
-    sourcePosition,
-    targetPosition,
-    style = {},
-    markerEnd,
-  }) => {
-    return (
-      <BaseEdge
-        path={`M${sourceX},${sourceY} L${targetX},${targetY}`}
-        markerEnd={markerEnd}
-        style={style}
-      />
-    );
   };
 
   return (
@@ -275,23 +263,24 @@ const ModelWithAI = () => {
         {/* Right Panel - Diagramming Area */}
         <div className="flex-1 bg-dot-pattern">
           <ReactFlow
-            nodes={nodes.map((node) => ({
-              ...node,
-              type: 'default',
-              draggable: true,
-            }))}
-            edges={edges.map((edge) => ({
-              ...edge,
-              type: 'default',
-            }))}
+            nodes={nodes}
+            edges={edges}
+            nodeTypes={customNodeTypes}
             fitView
             onNodesChange={onNodesChange}
             onEdgesChange={onEdgesChange}
             onConnect={onConnect}
           >
             <Controls />
-            <MiniMap />
-            <Background />
+            <MiniMap 
+              nodeColor={nodeColor}
+              maskColor="rgba(255, 255, 255, 0.8)"
+            />
+            <Background 
+              gap={12}
+              size={1}
+              color="#f1f5f9"
+            />
           </ReactFlow>
         </div>
       </div>
