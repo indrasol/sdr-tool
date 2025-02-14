@@ -52,7 +52,7 @@ def generate_architecture_with_llm(prompt: str):
             raise HTTPException(status_code=500, detail="Invalid JSON response from LLM")
     except Exception as e:
         print("Exception occurred:", e)
-        return {"error": str(e)}
+        return HTTPException(status_code=500, detail=str(e))
         
 
 def validate_and_format_response(data):
@@ -62,14 +62,24 @@ def validate_and_format_response(data):
     print("Data received from LLM:", data)
     nodes = data.get("nodes", [])
     edges = data.get("edges", [])
-    # Ensure IDs are unique
+
+    # Ensure unique IDs without breaking connections
+    node_ids = set()
     for node in nodes:
-        node["id"] = str(uuid.uuid4())  # Unique ID for each node
+        if "id" not in node or not isinstance(node["id"], str):
+            node["id"] = str(uuid.uuid4())  
+        node_ids.add(node["id"])
 
     for edge in edges:
-        edge["id"] = str(uuid.uuid4())  # Unique ID for each edge
+        if "id" not in edge or not isinstance(edge["id"], str):
+            edge["id"] = str(uuid.uuid4())  
+        if edge["source"] not in node_ids or edge["target"] not in node_ids:
+            print(f"Invalid edge detected: {edge}")
+            continue  # Skip invalid edges
 
-    return {"status": "success", "architecture": {"nodes": nodes, "edges": edges}}
+    return {"nodes": nodes, "edges": edges}
+
+    # return {"status": "success", "architecture": {"nodes": nodes, "edges": edges}}
 
 # API endpoint
 @router.post("/generate_architecture", response_model=ArchitectureResponse)
