@@ -48,7 +48,7 @@ def generate_architecture_with_llm(prompt: str):
             parsed_json = json.loads(architecture_json)
             return validate_and_format_response(parsed_json)
         except json.JSONDecodeError:
-            print("🚨 JSON Decode Error:", str(e))
+            print("JSON Decode Error:", str(e))
             raise HTTPException(status_code=500, detail="Invalid JSON response from LLM")
     except Exception as e:
         print("Exception occurred:", e)
@@ -78,8 +78,6 @@ def validate_and_format_response(data):
             continue  # Skip invalid edges
 
     return {"nodes": nodes, "edges": edges}
-
-    # return {"status": "success", "architecture": {"nodes": nodes, "edges": edges}}
 
 # API endpoint
 @router.post("/generate_architecture", response_model=ArchitectureResponse)
