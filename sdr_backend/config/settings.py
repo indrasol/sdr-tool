@@ -19,6 +19,14 @@ print(f"title: {title}, description: {description}, version: {version}")
 
 # API Keys
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+
+
+# Langsmith Tracing
+LANGSMITH_API_KEY = os.getenv("LANGSMITH_API_KEY")
+LANGSMITH_TRACING=os.getenv("LANGSMITH_TRACING", "false")  # Default to false if not set
+LANGSMITH_ENDPOINT=os.getenv("LANGSMITH_ENDPOINT", "https://api.langsmith.com/v1/trace")  # Default endpoint
+LANGSMITH_PROJECT=os.getenv("LANGSMITH_PROJECT", "default_project")  # Default project name
+
 # TESSERACT_PATH = os.getenv("TESSERACT_PATH", "C:/Program Files/Tesseract-OCR/tesseract.exe")  # Update if needed
 
 # vector DB
