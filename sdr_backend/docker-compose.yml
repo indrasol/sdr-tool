@@ -1,0 +1,34 @@
+version: "3.8"
+services:
+  backend:
+    build: ./
+    ports:
+      - "8000:8000"
+    depends_on:
+      - project-service
+      - ai-modeling-service
+      - payment-service
+
+  project-service:
+    build: ./project-service
+    ports:
+      - "8001:8001"
+    environment:
+      DATABASE_URL: "postgresql://user:password@db:5432/projects_db"
+
+  ai-modeling-service:
+    build: ./ai-modeling-service
+    ports:
+      - "8002:8002"
+
+  payment-service:
+    build: ./payment-service
+    ports:
+      - "8003:8003"
+
+  db:
+    image: postgres:14
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: sdr_database
