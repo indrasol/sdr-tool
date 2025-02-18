@@ -1,3 +1,8 @@
+
+.venv/
+__pycache__/
+.DS_Store
+
 # Logs
 logs
 *.log
@@ -22,3 +27,4 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
