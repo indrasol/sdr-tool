@@ -1,0 +1,113 @@
+from fastapi import APIRouter, HTTPException, Depends
+from pydantic import BaseModel
+from langchain.schema.runnable import RunnableSequence  # Alternative import
+
+from utils.logger import log_info, log_error
+import json
+from typing import Dict, Any
+
+# Utils
+from utils.classify_intent import classify_intent
+from utils.prompt_engineering import enhance_prompt
+from utils.langsmith_logger import log_conversation
+# from utils.format_response_for_reactflow import format_response_for_reactflow
+from utils.structured_action_from_prompt import get_structured_action_from_prompt, get_expert_response_from_prompt
+from utils.node_linking import auto_link_with_user_nodes
+
+# Models
+from models.user_request import UserRequest
+from models.diagram_context import DiagramContext
+router = APIRouter()
+
+
+@router.post("/chat")
+async def process_chat(request: UserRequest): 
+    """
+    Full flow with context:
+    - Accept current node context.
+    - Enhance prompt using LLM.
+    - Extract structured action.
+    - Modify user-drawn diagram as per user's input.
+    """
+    user_defined_nodes = {node.id: node.model_dump() for node in request.diagram_context.nodes}
+    edges = [edge.model_dump() for edge in request.diagram_context.edges]
+
+    try:
+        
+        log_info(f"Received chat request: {request.user_input}")
+        log_info(f"Diagram state: {request.diagram_context}")
+
+
+        # Classify Intent
+        # intent = await classify_intent(request.user_input)
+        # logger.info(f"User Intent : {intent}")
+
+        # Evaluate and enhance the prompt
+        enhanced_output = await enhance_prompt(request.user_input)
+        enhanced_prompt = enhanced_output["enhanced_prompt"]
+        category = enhanced_output["category"]
+        log_info(f"Enhanced Prompt: {enhanced_prompt}")
+        log_info(f"Category: {category}")
+        # logger.info(f"Prompt evaluation result : Intent={evaluation_result['intent']}, Confidence={evaluation_result['confidence']}")
+        # LLM response
+        if category == "node_interaction":
+            structured_response = await get_structured_action_from_prompt(enhanced_prompt)
+
+            if "error" in structured_response:
+                return {"status": "error", "message": structured_response["error"]}
+
+            action = structured_response["action"]
+            node_details = structured_response["node_details"]
+
+            log_info(f"Action: {type(action)}")
+            log_info(f"Node Details: {type(node_details)}")
+            
+            # Pass the action and details to modify the diagram
+            response = auto_link_with_user_nodes(node_details, action, user_defined_nodes, edges)
+            # return {"status": "success", **response}
+            return response
+        elif category == "expert_query":
+            # Get expert response from LLM or another service based on enhanced prompt
+            expert_response = await get_expert_response_from_prompt(enhanced_prompt)
+            expert_response_cleaned = json.loads(expert_response["response"])
+            log_info(f"Expert response: {type(expert_response_cleaned)}")
+            log_info(f"Expert response: {expert_response_cleaned}")
+
+            if "error" in expert_response:
+                return {"status": "error", "message": expert_response_cleaned["error"]}
+            
+            return {"status": "success", **expert_response_cleaned}
+    
+        else:
+            return {"status": "error", "message": "Out of context"}
+
+        # Log the conversation
+        log_conversation(request.message, enhanced_prompt, llm_response)
+
+        if intent in ["Add", "Update", "Remove"]:
+            return format_response_for_reactflow(intent, llm_response)
+
+        return {"answer": llm_response}
+            
+    except Exception as e:
+        log_error(f"Error processing chat request: {str(e)}")
+        raise HTTPException(status_code=500, detail="Internal Server Error")
+    
+
+
+
+# Sampele queries
+
+# Add a new node
+# Add a Firewall Protection node and an Intrusion Detection System.
+
+#  Modify a node
+# Modify the Firewall Protection node to add a new rule.
+
+# Remove a node
+# Remove the Intrusion Detection System node.   
+
+# Query an expert
+# How to make kubernetes fit in secured architecture
+
+# Add a new node
