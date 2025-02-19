@@ -3,6 +3,9 @@ import { Paperclip, ChevronUp, List, Square, Circle, ArrowRight, Eraser, Pointer
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import AppHeader from '@/components/layout/AppHeader';
+import DOMPurify from 'dompurify';
+import ReactMarkdown from 'react-markdown';
+import { Prism as SyntaxHighlighter} from 'react-syntax-highlighter';
 import {
   ReactFlow,
   MiniMap,
@@ -13,16 +16,11 @@ import {
   addEdge,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
-import { mergeNodes, mergeEdges } from '@/utils/reponseUtils';
+import { mergeNodes, mergeEdges, parseExpertResponse } from '@/utils/reponseUtils';
+import { tomorrow as tomorrowNight } from 'react-syntax-highlighter/dist/esm/styles/prism';
+import { Message, ToolType } from '@/utils/types';
+import { typeMessage } from '@/utils/reponseUtils';
 
-type Message = {
-  id: number;
-  content: string;
-  type: 'user' | 'assistant';
-  timestamp: Date;
-};
-
-type ToolType = 'select' | 'square' | 'circle' | 'arrow' | 'eraser';
 
 const initialNodes = [
   {
@@ -94,7 +92,22 @@ const ModelWithAI = () => {
       //   "response": "some text if it's an expert query"
       // }
 
+      // Handle different response cases
+      let assistantMessage = '';
+
+      // Category : Node Interaction Response
       if (data.status === 'success') {
+
+        // Add the assistant's message placeholder
+        const assistantMsg: Message = {
+          id: Date.now(),
+          content: '', // Initially empty content for typing effect
+          type: 'assistant',
+          timestamp: new Date(),
+        };
+        setMessages((prev) => [...prev, assistantMsg]);
+        
+        
         // Merge nodes if present
         if (data.nodes) {
           const merged = mergeNodes(nodes, data.nodes);
@@ -107,18 +120,6 @@ const ModelWithAI = () => {
           setEdges(merged);
         }
 
-
-        // If there's an 'expert query' or textual 'response', show in chat
-        if (data.response) {
-          const assistantMsg: Message = {
-            id: Date.now(),
-            content: data.response,
-            type: 'assistant',
-            timestamp: new Date(),
-          };
-          setMessages((prev) => [...prev, assistantMsg]);
-        }
-
         // If there's a 'message' field about node actions, also display it
         if (data.message) {
           // data.message could be string or array
@@ -127,15 +128,24 @@ const ModelWithAI = () => {
             : data.message;
 
           if (combinedMessage) {
-            const nodeInteractionMsg: Message = {
-              id: Date.now(),
-              content: combinedMessage,
-              type: 'assistant',
-              timestamp: new Date(),
-            };
-            setMessages((prev) => [...prev, nodeInteractionMsg]);
+            assistantMessage = combinedMessage;
+            // Start the typing effect for the node interaction message
+            typeMessage(assistantMessage, setMessages, () => {
+              // If needed, add any additional post-typing logic here
+            });
           }
         }
+
+        // // Category : 'expert query' or textual response
+        if (data.expert_message) {
+          const formattedText = parseExpertResponse(data.expert_message);
+          assistantMessage = formattedText;
+
+          // Trigger typing effect after adding the message
+          typeMessage(assistantMessage, setMessages, () => {
+        });
+      }
+
       } else {
         // For error or out-of-context
         const errorMsg: Message = {
@@ -187,60 +197,45 @@ const ModelWithAI = () => {
       <div className="flex h-[calc(100vh-64px)] pt-16">
         {/* Left Sidebar - Chat Interface */}
         <div className="w-1/3 border-r border-border p-4 flex flex-col">
-          {/* Tab Navigation */}
-          <div className="flex mb-4 mt-4">
-            <button
-              onClick={() => setActiveTab('chat')}
-              className={`flex-1 py-2 px-4 text-sm font-medium rounded-t-lg border-b-2 transition-colors ${
-                activeTab === 'chat'
-                  ? 'border-primary text-primary'
-                  : 'border-transparent text-muted-foreground hover:text-foreground hover:border-muted'
-              }`}
-            >
-              Chat
-            </button>
-            <button
-              onClick={() => setActiveTab('history')}
-              className={`flex-1 py-2 px-4 text-sm font-medium rounded-t-lg border-b-2 transition-colors ${
-                activeTab === 'history'
-                  ? 'border-primary text-primary'
-                  : 'border-transparent text-muted-foreground hover:text-foreground hover:border-muted'
-              }`}
-            >
-              History
-            </button>
-          </div>
+      <div className="flex mb-4 mt-4">
+        <button className="flex-1 py-2 px-4 text-sm font-medium rounded-t-lg border-b-2 transition-colors border-primary text-primary">
+          Guardian AI
+        </button>
+      </div>
           
           {/* Chat Messages */}
           <div className="flex-1 overflow-auto mb-4 glass-card p-4 rounded-lg space-y-4">
-            {messages.map((message) => (
-              <div
-                key={message.id}
-                className={`flex ${
-                  message.type === 'assistant' ? 'justify-start' : 'justify-end'
-                }`}
+        {messages.map((message) => (
+          <div key={message.id} className={`flex ${message.type === "assistant" ? "justify-start" : "justify-end"}`}>
+            <div className={`max-w-[80%] p-3 rounded-lg ${message.type === "assistant" ? "bg-secondary text-foreground" : "bg-primary text-primary-foreground"}`}>
+              <ReactMarkdown
+                components={{
+                  code({ node, inline, className, children, ...props }) {
+                    return inline ? (
+                      <code className="bg-gray-200 px-1 py-0.5 rounded">{children}</code>
+                    ) : (
+                      <SyntaxHighlighter style={tomorrowNight} language="javascript" {...props}>
+                        {String(children).replace(/\n$/, "")}
+                      </SyntaxHighlighter>
+                    );
+                  },
+                }}
               >
-                <div
-                  className={`max-w-[80%] p-3 rounded-lg ${
-                    message.type === 'assistant'
-                      ? 'bg-secondary text-foreground'
-                      : 'bg-primary text-primary-foreground'
-                  }`}
-                >
-                  {message.content}
-                </div>
-              </div>
-            ))}
-
-            {/* Loading indicator */}
-            {loading && (
-              <div className="flex justify-start">
-                <div className="max-w-[80%] p-3 rounded-lg bg-secondary text-foreground">
-                  Processing...
-                </div>
-              </div>
-            )}
+                {DOMPurify.sanitize(message.content)}
+              </ReactMarkdown>
+            </div>
           </div>
+          ))}
+
+          {/* Loading indicator */}
+          {loading && (
+            <div className="flex justify-start">
+              <div className="max-w-[80%] p-3 rounded-lg bg-secondary text-foreground">
+                Processing...
+              </div>
+            </div>
+          )}
+        </div>
 
           {/* Input Area */}
           <div className="relative">

@@ -76,7 +76,7 @@ async def process_chat(request: UserRequest):
             if "error" in expert_response:
                 return {"status": "error", "message": expert_response_cleaned["error"]}
             
-            return {"status": "success", **expert_response_cleaned}
+            return {"status": "success", "expert_message" : expert_response_cleaned}
     
         else:
             return {"status": "error", "message": "Out of context"}
