@@ -51,7 +51,7 @@ async def process_chat(request: UserRequest):
         # logger.info(f"Prompt evaluation result : Intent={evaluation_result['intent']}, Confidence={evaluation_result['confidence']}")
         # LLM response
         if category == "node_interaction":
-            structured_response = await get_structured_action_from_prompt(enhanced_prompt)
+            structured_response = await get_structured_action_from_prompt(enhanced_prompt, user_defined_nodes)
 
             if "error" in structured_response:
                 return {"status": "error", "message": structured_response["error"]}
@@ -59,8 +59,8 @@ async def process_chat(request: UserRequest):
             action = structured_response["action"]
             node_details = structured_response["node_details"]
 
-            log_info(f"Action: {type(action)}")
-            log_info(f"Node Details: {type(node_details)}")
+            log_info(f"Action: {action}")
+            log_info(f"Node Details: {node_details}")
             
             # Pass the action and details to modify the diagram
             response = auto_link_with_user_nodes(node_details, action, user_defined_nodes, edges)
@@ -96,18 +96,22 @@ async def process_chat(request: UserRequest):
 
 
 
-# Sampele queries
+# Sampele tests
 
-# Add a new node
+# NODE INTERACTION
+
+# ADD
 # Add a Firewall Protection node and an Intrusion Detection System.
 
-#  Modify a node
-# Modify the Firewall Protection node to add a new rule.
+#  MODIFY
+#Scenario 1: give full  node name
+# Update Firewall Protection node to Firewall.
 
-# Remove a node
+#Scenario 2: give partial node name
+# Update Firewall node to firewall.
+
+# REMOVE
 # Remove the Intrusion Detection System node.   
 
-# Query an expert
+# EXPERT QUERY
 # How to make kubernetes fit in secured architecture
-
-# Add a new node
