@@ -68,6 +68,9 @@ def auto_link_with_user_nodes(node_details: List[Dict], action: str, user_define
             elif "label" in node_detail:
                 search_name = node_detail["label"].strip()
                 target_name = search_name
+            elif "name" in node_detail:
+                search_name = node_detail["name"].strip()
+                target_name = search_name
             else:
                 # Fallback: use the string representation.
                 search_name = str(node_detail).strip()
