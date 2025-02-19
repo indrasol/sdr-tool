@@ -3,9 +3,10 @@ from typing import Dict, Any
 from utils.logger import log_info
 from utils.response_utils import get_clean_response_for_invoke
 import json
+from utils.helper_functions import find_best_match
 
 
-async def get_structured_action_from_prompt(enhanced_prompt: str) -> Dict[str, Any]:
+async def get_structured_action_from_prompt(enhanced_prompt: str, user_defined_nodes: Dict[str, Dict]) -> Dict[str, Any]:
     log_info(f"Entering structured action from prompt")
 
     """
@@ -27,7 +28,7 @@ async def get_structured_action_from_prompt(enhanced_prompt: str) -> Dict[str, A
     You are an AI specialized in extracting action and reactflow compatible node details from the {enhanced_prompt}. 
     Extract and structure the user's request from the prompt.
     Identify the action (one of 'add', 'modify', 'remove') and the
-    associated node details (e.g., node name, attributes, values).
+    associated node details (e.g., node name, annotations if any, values if any etc, as per the reactflow node details).
     Respond in a structured format with 'action' and 'node_details' keys.
 
     Only return the JSON formatted response.
@@ -36,7 +37,7 @@ async def get_structured_action_from_prompt(enhanced_prompt: str) -> Dict[str, A
     try:
         log_info(f"Enhanced prompt from get_structured_action_from_prompt: {enhanced_prompt}")
         prompt = get_prompt_template(system_message, user_message)
-        log_info(f"Prompt from get_structured_action_from_prompt: {prompt}")
+        # log_info(f"Prompt from get_structured_action_from_prompt: {prompt}")
         chain = get_openai_model_chain(model_name="gpt-4o", temperature=0.3, prompt=prompt)
         response =  chain.invoke({
             "enhanced_prompt": enhanced_prompt
@@ -54,10 +55,57 @@ async def get_structured_action_from_prompt(enhanced_prompt: str) -> Dict[str, A
         if not structured_response:
             raise ValueError("The LLM response is empty or malformed.")
         
+        action = structured_response["action"]
+        node_details = structured_response["node_details"]
+        
+        # Ensure node_details is a list
+        if isinstance(node_details, dict):
+            node_details = [node_details]
+
+        updated_node_details = []
+        for node in node_details:
+            if "node_name" in node or "old_name" in node or "current_name" in node or "new_name" in node:
+                # Handle both node_name and old_name for flexibility
+                node_name = node.get("node_name", "").strip().lower()
+                old_name = node.get("old_name", "").strip().lower()
+                current_name = node.get("current_name", "").strip().lower()
+                new_name = node.get("new_name", "").strip().lower()
+
+                # Check for node_name (for add, remove actions)
+                if node_name:
+                    log_info(f"Checking partial match for node_name: {node_name}")
+                    matched_node = find_best_match(node_name, user_defined_nodes)
+                    if matched_node:
+                        log_info(f"Found match for '{node_name}': {matched_node['data']['label']}")
+                        node["node_name"] = matched_node["data"]["label"]
+
+                # Check for old_name (for modify, update actions)
+                if old_name and action in ["modify", "update"]:
+                    log_info(f"Checking partial match for old_name: {old_name}")
+                    matched_node = find_best_match(old_name, user_defined_nodes)
+                    if matched_node:
+                        log_info(f"Found match for '{old_name}': {matched_node['data']['label']}")
+                        node["old_name"] = matched_node["data"]["label"]
+
+                # Check for current_name (for modify, update actions)
+                if current_name and action in ["modify", "update"]:
+                    log_info(f"Checking partial match for current name: {current_name}")
+                    matched_node = find_best_match(current_name, user_defined_nodes)
+                    if matched_node:
+                        log_info(f"Found match for '{current_name}': {matched_node['data']['label']}")
+                        node["current_name"] = matched_node["data"]["label"]
+
+                updated_node_details.append(node)
+                log_info(f"Updated node details: {updated_node_details}")
+
+            else:
+                log_info(f"Invalid node detail format: {node}")
+                updated_node_details.append(node)
+        
         # Return the parsed structured response
         return {
-            "action": structured_response["action"],
-            "node_details": structured_response["node_details"]
+            "action": action,
+            "node_details": updated_node_details
         }
 
 
