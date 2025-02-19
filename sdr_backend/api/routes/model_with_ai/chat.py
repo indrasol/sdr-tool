@@ -1,22 +1,15 @@
-from fastapi import APIRouter, HTTPException, Depends
-from pydantic import BaseModel
-from langchain.schema.runnable import RunnableSequence  # Alternative import
+from fastapi import APIRouter, HTTPException
 
 from utils.logger import log_info, log_error
 import json
-from typing import Dict, Any
 
 # Utils
-from utils.classify_intent import classify_intent
 from utils.prompt_engineering import enhance_prompt
-from utils.langsmith_logger import log_conversation
-# from utils.format_response_for_reactflow import format_response_for_reactflow
 from utils.structured_action_from_prompt import get_structured_action_from_prompt, get_expert_response_from_prompt
 from utils.node_linking import auto_link_with_user_nodes
 
 # Models
 from models.user_request import UserRequest
-from models.diagram_context import DiagramContext
 router = APIRouter()
 
 
@@ -37,19 +30,14 @@ async def process_chat(request: UserRequest):
         log_info(f"Received chat request: {request.user_input}")
         log_info(f"Diagram state: {request.diagram_context}")
 
-
-        # Classify Intent
-        # intent = await classify_intent(request.user_input)
-        # logger.info(f"User Intent : {intent}")
-
         # Evaluate and enhance the prompt
         enhanced_output = await enhance_prompt(request.user_input)
         enhanced_prompt = enhanced_output["enhanced_prompt"]
         category = enhanced_output["category"]
         log_info(f"Enhanced Prompt: {enhanced_prompt}")
         log_info(f"Category: {category}")
-        # logger.info(f"Prompt evaluation result : Intent={evaluation_result['intent']}, Confidence={evaluation_result['confidence']}")
-        # LLM response
+        
+        # LLM response - node interaction
         if category == "node_interaction":
             structured_response = await get_structured_action_from_prompt(enhanced_prompt, user_defined_nodes)
 
@@ -64,8 +52,9 @@ async def process_chat(request: UserRequest):
             
             # Pass the action and details to modify the diagram
             response = auto_link_with_user_nodes(node_details, action, user_defined_nodes, edges)
-            # return {"status": "success", **response}
             return response
+        
+        # LLM response - expert query
         elif category == "expert_query":
             # Get expert response from LLM or another service based on enhanced prompt
             expert_response = await get_expert_response_from_prompt(enhanced_prompt)
@@ -77,17 +66,10 @@ async def process_chat(request: UserRequest):
                 return {"status": "error", "message": expert_response_cleaned["error"]}
             
             return {"status": "success", "expert_message" : expert_response_cleaned}
-    
+
+        # Out of context
         else:
             return {"status": "error", "message": "Out of context"}
-
-        # Log the conversation
-        log_conversation(request.message, enhanced_prompt, llm_response)
-
-        if intent in ["Add", "Update", "Remove"]:
-            return format_response_for_reactflow(intent, llm_response)
-
-        return {"answer": llm_response}
             
     except Exception as e:
         log_error(f"Error processing chat request: {str(e)}")
