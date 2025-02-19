@@ -64,15 +64,16 @@ async def get_structured_action_from_prompt(enhanced_prompt: str, user_defined_n
 
         updated_node_details = []
         for node in node_details:
-            if "node_name" in node or "old_name" in node or "current_name" in node or "new_name" in node:
+            if "node_name" in node or "name" in node or "old_name" in node or "current_name" in node or "new_name" in node:
                 # Handle both node_name and old_name for flexibility
                 node_name = node.get("node_name", "").strip().lower()
+                name = node.get("name", "").strip().lower()
                 old_name = node.get("old_name", "").strip().lower()
                 current_name = node.get("current_name", "").strip().lower()
                 new_name = node.get("new_name", "").strip().lower()
 
                 # Check for node_name (for add, remove actions)
-                if node_name:
+                if node_name or name:
                     log_info(f"Checking partial match for node_name: {node_name}")
                     matched_node = find_best_match(node_name, user_defined_nodes)
                     if matched_node:
