@@ -17,3 +17,6 @@ langchain-openai
 faiss-cpu
 reportlab
 python--multipart
+httpx>=0.24.0
+tenacity>=8.2.2
+pyyaml

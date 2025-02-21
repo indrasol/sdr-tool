@@ -1,0 +1,59 @@
+node_specific_rules:
+  firewall:
+    - rule_id: firewall_https_required
+      severity: critical
+      description: "Firewall must allow HTTPS traffic."
+      check: "any('https' in rule.lower() for rule in properties.rules)" # Python expression to evaluate
+    - rule_id: firewall_log_retention_period
+      severity: medium
+      description: "Log retention period for firewalls must be at least 30 days for medium and high security."
+      check: "properties.security_level in ['medium', 'high'] and properties.log_retention_days < 30"
+    - rule_id: firewall_default_deny
+      severity: high
+      description: "Firewalls in high security environments should have a default deny rule."
+      check: "properties.security_level == 'high' and not any(['deny all' in rule.lower() or 'default deny' in rule.lower() for rule in properties.rules])"
+  database:
+    - rule_id: database_encryption_both
+      severity: critical
+      description: "Databases with confidential or secret data must use both at-rest and in-transit encryption."
+      check: "properties.data_classification in ['confidential', 'secret'] and properties.encryption_type != 'both'"
+    - rule_id: database_backup_frequency_high_security
+      severity: medium
+      description: "High security databases must have at least weekly backups, preferably hourly."
+      check: "properties.security_level == 'high' and properties.backup_schedule != 'hourly' and properties.backup_schedule != 'weekly'" # Corrected check
+  api:
+    - rule_id: api_rate_limiting_sensitive_data
+      severity: medium
+      description: "APIs handling sensitive data (medium or high security) must enforce rate limiting."
+      check: "properties.security_level in ['medium', 'high'] and not properties.rate_limiting_enabled"
+    - rule_id: api_key_rotation_frequency_high_security
+      severity: medium
+      description: "API keys for high security APIs should be rotated every 90 days or less."
+      check: "properties.security_level == 'high' and properties.api_keys_rotation_days > 90"
+    - rule_id: api_authentication_required
+      severity: critical
+      description: "All APIs except low security must have authentication enabled."
+      check: "properties.security_level != 'low' and not properties.authentication_required"
+  storage:
+    - rule_id: storage_redundancy_sensitive_data
+      severity: critical
+      description: "Storage containing confidential or secret data must enable redundancy."
+      check: "properties.security_level in ['confidential', 'secret'] and not properties.redundancy_enabled"
+    - rule_id: storage_backup_retention_high_security
+      severity: medium
+      description: "High security storage should have backup retention of at least 4 weeks."
+      check: "properties.security_level == 'high' and properties.backup_retention_weeks < 4"
+
+global_rules:
+  - rule_id: global_encryption_high_security
+    severity: critical
+    description: "High security level always requires encryption."
+    check: "properties.security_level == 'high' and not properties.encryption"
+  - rule_id: global_access_control_medium_high_security
+    severity: critical
+    description: "Access control lists should not be empty for medium and high security levels."
+    check: "properties.security_level in ['medium', 'high'] and not properties.access_control"
+  - rule_id: global_compliance_high_security
+    severity: critical
+    description: "For 'high' security, at least one compliance standard must be specified."
+    check: "properties.security_level == 'high' and not properties.compliance"
