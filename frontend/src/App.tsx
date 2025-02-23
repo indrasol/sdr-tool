@@ -8,6 +8,7 @@ import Index from "./pages/Index";
 import CreateProject from "./pages/CreateProject";
 import ModelWithAI from "./pages/ModelWithAI";
 import NotFound from "./pages/NotFound";
+import ProjectList from "./pages/ProjectList";
 
 const queryClient = new QueryClient();
 
@@ -22,6 +23,7 @@ const App = () => (
             <Route path="/" element={<Index />} />
             <Route path="/create-project" element={<CreateProject />} />
             <Route path="/model-with-ai" element={<ModelWithAI />} />
+            <Route path="/project-list" element={<ProjectList />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </div>

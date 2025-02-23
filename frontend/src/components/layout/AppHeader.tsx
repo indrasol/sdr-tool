@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Route, Menu } from 'lucide-react';
 import { Button } from "@/components/ui/button";
@@ -34,6 +33,11 @@ const AppHeader = () => {
               Create Project
             </Button>
           </Link>
+          <Link to="/project-list">
+            <Button variant="default" size="sm">
+              Create New Project
+            </Button>
+          </Link>
         </nav>
 
         <Button
@@ -61,6 +65,11 @@ const AppHeader = () => {
             <Link to="/create-project">
               <Button variant="default" size="sm" className="w-full">
                 Create Project
+              </Button>
+            </Link>
+            <Link to="/project-list">
+              <Button variant="default" size="sm" className="w-full">
+                Create New Project
               </Button>
             </Link>
           </nav>
