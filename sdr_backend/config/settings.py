@@ -19,6 +19,8 @@ print(f"title: {title}, description: {description}, version: {version}")
 
 # API Keys
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+# CLAUDE_API_KEY = os.getenv("CLAUDE_API_KEY")
+ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY")
 
 
 # Langsmith Tracing
@@ -55,3 +57,6 @@ UPLOADS_DIR = os.getenv("UPLOAD_FOLDER", os.path.join(BASE_DIR, "uploads"))
 
 # Output directory
 OUTPUT_DIR = os.getenv("OUTPUT_FOLDER", os.path.join(BASE_DIR, "output"))
+
+# Reports directory
+REPORTS_DIR = os.getenv("REPORTS_FOLDER", os.path.join(BASE_DIR, "reports"))
