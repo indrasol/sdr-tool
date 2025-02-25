@@ -2,6 +2,33 @@ import DOMPurify from 'dompurify';
 import { Message } from '@/utils/types';
 import { nodeTypesConfig } from '@/utils/nodeTypesConfig';
 
+
+// ADD THESE near top of file:
+// Define node type for TypeScript
+interface ReactFlowNode {
+  id: string;
+  type: string;
+  data: any;
+  position: {
+    x: number;
+    y: number;
+  };
+  measured?: {
+    width: number;
+    height: number;
+  };
+}
+
+// Define edge type for TypeScript
+interface ReactFlowEdge {
+  id: string;
+  source: string;
+  target: string;
+  label?: string;
+  type?: string;
+  data?: any;
+}
+
 // Helper for typing effect
 export function typeMessage(message, setMessages, callback = () => {}) {
   let index = 0;
@@ -159,7 +186,7 @@ export function mergeNodes(currentNodes, backendActions) {
     }
   });
   
-  return Array.from(nodesMap.values());
+  return Array.from(nodesMap.values()).filter(node => node.id !== '1');
 }
 
 // Define edge type for TypeScript
@@ -172,13 +199,52 @@ interface ReactFlowEdge {
   data?: any;
 }
 
-// Merge current edges with backend actions
+// Fixes to properly handle edges from backend responses
 export function mergeEdges(currentEdges, backendActions) {
   // Create a map of existing edges by ID with explicit typing
   const edgesMap = new Map<string, ReactFlowEdge>(
     currentEdges.map(e => [e.id, e as ReactFlowEdge])
   );
   
+  console.log("Processing edges from actions:", backendActions);
+  
+  // First, check if there are direct edges in the response and process them
+  if (backendActions.edges && Array.isArray(backendActions.edges)) {
+    console.log("Found direct edges array:", backendActions.edges);
+    
+    backendActions.edges.forEach(edge => {
+      // Skip invalid edges
+      if (!edge.source || !edge.target) {
+        console.warn("Invalid edge - missing source or target:", edge);
+        return;
+      }
+      
+      // Create a unique ID for the edge if one doesn't exist
+      const edgeId = edge.id || `edge-${edge.source}-${edge.target}`;
+      
+      console.log("Adding edge:", edgeId, edge);
+      
+      // Create the edge in React Flow format
+      const newEdge: ReactFlowEdge = {
+        id: edgeId,
+        source: edge.source,
+        target: edge.target,
+        label: edge.label || '',
+        type: 'custom', // Use custom edge type
+        data: { 
+          ...edge,
+          edge_type: edge.edge_type || 'default',
+        }
+      };
+      
+      edgesMap.set(edgeId, newEdge);
+    });
+    
+    // Return early if we've processed direct edges
+    return Array.from(edgesMap.values());
+  }
+  
+  // If no direct edges, continue with processing actions
   // First pass: process edge additions and modifications
   backendActions.forEach((action) => {
     // Skip null or undefined actions
@@ -211,10 +277,11 @@ export function mergeEdges(currentEdges, backendActions) {
         source: source,
         target: target,
         label: edgeData.label,
-        type: edgeData.type,
+        type: 'custom', // Use our custom edge type
         data: edgeData
       };
       
+      console.log("Adding edge from action:", edgeId, edge);
       edgesMap.set(edgeId, edge);
     }
     // Handle edge removal
@@ -226,7 +293,7 @@ export function mergeEdges(currentEdges, backendActions) {
     else if (action.action === 'modify' && 
              (action.node_type === 'connection' || action.node_type === 'edge')) {
       if (edgesMap.has(action.node_id)) {
-        const edge = edgesMap.get(action.node_id);
+        const edge = edgesMap.get(action.node_id) as ReactFlowEdge;
         
         // Update edge properties
         edge.data = {
@@ -244,34 +311,12 @@ export function mergeEdges(currentEdges, backendActions) {
     }
   });
   
-  // Second pass: process direct edges array if provided
-  backendActions.forEach(action => {
-    if (action.edges && Array.isArray(action.edges)) {
-      action.edges.forEach(edge => {
-        // Skip invalid edges
-        if (!edge.source || !edge.target) return;
-        
-        const edgeId = edge.id || `edge-${edge.source}-${edge.target}`;
-        
-        const newEdge = {
-          id: edgeId,
-          source: edge.source,
-          target: edge.target,
-          label: edge.label || '',
-          type: edge.edge_type || 'default',
-          data: { ...edge }
-        };
-        
-        edgesMap.set(edgeId, newEdge);
-      });
-    }
-  });
-  
   return Array.from(edgesMap.values());
 }
+  
 
 // Handles both architecture and expert responses
-export function processBackendResponse(data, nodes, edges, setNodes, setEdges, setMessages) {
+export function processBackendResponse(data, nodes, edges, setNodes, setEdges, setMessages, hadFirstInteraction) {
   // Check if it's an expert response (no diagram changes)
   if (data.expert_message) {
     const messageContent = parseExpertResponse(data);
@@ -290,55 +335,103 @@ export function processBackendResponse(data, nodes, edges, setNodes, setEdges, s
     return;
   }
   
-  // Handle actions for diagram changes
-  if (data.nodes || data.actions) {
-    const actions = data.actions || data.nodes || [];
-    
-    // Update diagram
-    const mergedNodes = mergeNodes(nodes, actions);
-    const mergedEdges = mergeEdges(edges, actions);
-    
-    setNodes(mergedNodes);
-    setEdges(mergedEdges);
-    
-    // Prepare explanation message
-    let assistantMessage = '';
-    
-    if (data.explanation) {
-      assistantMessage += `**Explanation**\n\n${data.explanation}\n\n`;
+  // Process diagram updates with nodes first
+  if (data.nodes) {
+    console.log("Merging nodes from response:", data.nodes);
+    const mergedNodes = mergeNodes(nodes, data.nodes);
+    // Filter out placeholder if we've had first interaction
+    if (hadFirstInteraction) {
+      setNodes(mergedNodes.filter(node => node.id !== '1'));
+    } else {
+      setNodes(mergedNodes.filter(node => node.id !== '1'));
     }
+  } else if (data.actions) {
+    console.log("Merging nodes from actions:", data.actions);
+    const mergedNodes = mergeNodes(nodes, data.actions);
+    setNodes(mergedNodes.filter(node => node.id !== '1'));
+  }
+  
+  // Process edges separately
+  if (data.edges && Array.isArray(data.edges)) {
+    console.log("Processing direct edges array:", data.edges);
+    // Get existing edge IDs for comparison
+    const existingEdgeIds = new Set(edges.map(e => e.id));
     
-    if (data.security_messages && data.security_messages.length > 0) {
-      assistantMessage += "**Security Messages**\n\n";
-      data.security_messages.forEach(msg => {
-        if (typeof msg === 'object' && msg !== null) {
-          const severity = msg.severity || 'INFO';
-          const message = msg.message || '';
-          assistantMessage += `**${severity}**: ${message}\n\n`;
-        } else {
-          assistantMessage += `${msg}\n\n`;
+    // Create new edges in React Flow format
+    const newEdges = data.edges.map(edge => {
+      const id = edge.id || `edge-${edge.source}-${edge.target}`;
+      return {
+        id,
+        source: edge.source,
+        target: edge.target,
+        type: 'custom', // Use our custom edge type
+        label: edge.label || '',
+        data: {
+          ...edge,
+          edge_type: edge.edge_type || 'default'
         }
-      });
-    }
-    
-    if (data.references && data.references.length > 0) {
-      assistantMessage += "**References**\n\n";
-      data.references.forEach(ref => {
-        assistantMessage += `- ${ref}\n`;
-      });
-    }
-    
-    // Add assistant message if we have content
-    if (assistantMessage.trim()) {
-      const assistantMsg = {
-        id: Date.now(),
-        content: '',
-        type: 'assistant',
-        timestamp: new Date()
       };
-      
-      setMessages(prev => [...prev, assistantMsg]);
-      typeMessage(assistantMessage, setMessages);
+    });
+    
+    // Keep existing edges and add new ones
+    const updatedEdges = [
+      ...edges.filter(e => !newEdges.some(ne => ne.id === e.id)),
+      ...newEdges
+    ];
+    
+    console.log("Setting edges to:", updatedEdges);
+    setEdges(updatedEdges);
+  } else if (data.actions) {
+    // Use the updated mergeEdges function for actions
+    console.log("Merging edges from actions:", data.actions);
+    const updatedEdges = mergeEdges(edges, data.actions);
+    // Special case: if the response has both 'actions' and 'edges' properties
+    if (data.edges && Array.isArray(data.edges)) {
+      console.log("Also processing edges array within actions:", data.edges);
+      const withDirectEdges = mergeEdges(updatedEdges, { edges: data.edges });
+      setEdges(withDirectEdges);
+    } else {
+      setEdges(updatedEdges);
     }
+  }
+  
+  // Prepare explanation message
+  let assistantMessage = '';
+  
+  if (data.explanation) {
+    assistantMessage += `**Explanation**\n\n${data.explanation}\n\n`;
+  }
+  
+  if (data.security_messages && data.security_messages.length > 0) {
+    assistantMessage += "**Security Messages**\n\n";
+    data.security_messages.forEach(msg => {
+      if (typeof msg === 'object' && msg !== null) {
+        const severity = msg.severity || 'INFO';
+        const message = msg.message || '';
+        assistantMessage += `**${severity}**: ${message}\n\n`;
+      } else {
+        assistantMessage += `${msg}\n\n`;
+      }
+    });
+  }
+  
+  if (data.references && data.references.length > 0) {
+    assistantMessage += "**References**\n\n";
+    data.references.forEach(ref => {
+      assistantMessage += `- ${ref}\n`;
+    });
+  }
+  
+  // Add assistant message if we have content
+  if (assistantMessage.trim()) {
+    const assistantMsg = {
+      id: Date.now(),
+      content: '',
+      type: 'assistant',
+      timestamp: new Date()
+    };
+    
+    setMessages(prev => [...prev, assistantMsg]);
+    typeMessage(assistantMessage, setMessages);
   }
 }

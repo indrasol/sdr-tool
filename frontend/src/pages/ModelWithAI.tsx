@@ -32,20 +32,19 @@ import { Message, ToolType } from '@/utils/types';
 import { typeMessage } from '@/utils/reponseUtils';
 // import { CustomControls } from '@/components/ui/custom-controls';
 import { FlowControls } from '@/components/ui/flow-controls';
-const initialNodes = [
+
+const initialNodes =  [
   {
     id: '1',
     type: 'input',
     data: { 
       label: 'Start describing your model...',
-      // ADDED: properties field as an empty dictionary
       properties: {},
     },
-    // UPDATED: position field to be a tuple of floats
     position: { x: 500, y: 200 },
-    measured: {width: 150, height: 60} // ADDED: measured to align with the error message, though it might not be necessary for the fix
+    measured: {width: 150, height: 60}
   },
-];
+]
 
 const ModelWithAI = () => {
   const [userInput, setUserInput] = useState('');
@@ -56,6 +55,8 @@ const ModelWithAI = () => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [activeTool, setActiveTool] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
+  // 1. Add a state variable to track if we've had first interaction
+  const [hadFirstInteraction, setHadFirstInteraction] = useState(false);
   // NEW: Loading state
   const [loading, setLoading] = useState(false);
   
@@ -63,20 +64,46 @@ const ModelWithAI = () => {
   const [generatingReport, setGeneratingReport] = useState(false);
 
   // NEW STATE: Track if placeholder node has been removed
-  const [placeholderNodeRemoved, setPlaceholderNodeRemoved] = useState(false);
+  const [placeholderRemoved, setPlaceholderRemoved] = useState(false);
+
+
+  // useEffect(() => {
+  //   // Only add placeholder node if no user interaction has happened yet
+  //   if (!initialNodesCreated && nodes.length === 0) {
+  //     setNodes([{
+  //       id: '1',
+  //       type: 'input',
+  //       data: { 
+  //         label: 'Start describing your model...',
+  //         properties: {},
+  //       },
+  //       position: { x: 500, y: 200 },
+  //       measured: {width: 150, height: 60}
+  //     }]);
+  //     setInitialNodesCreated(true);
+  //   }
+  // }, [initialNodesCreated, setNodes]);
 
   const onConnect = useCallback((params) => {
     setEdges((eds) => addEdge(params, eds));
   }, []);
 
+  // ADD THIS before handleSend function:
+  interface NodeProperties {
+    node_type?: string;
+    [key: string]: any;  // Allow for any other properties
+  }
+
   // UPDATED: handleSend instead of handleSubmit
   const handleSend = async () => {
     if (!userInput.trim()) return;
 
-    // Remove placeholder node on first interaction
-    if (!placeholderNodeRemoved) {
-      setNodes(nodes.filter(node => node.id !== '1')); // Filter out node with ID '1'
-      setPlaceholderNodeRemoved(true); // Set state to true so it's not removed again
+   // Set that we've had our first interaction
+    if (!hadFirstInteraction) {
+      setHadFirstInteraction(true);
+      
+      // Remove placeholder node if it exists
+      setNodes(current => current.filter(node => node.id !== '1'));
     }
 
     // Add user message to the chat
@@ -117,6 +144,8 @@ const ModelWithAI = () => {
 
       /// Transform edges to backend format
       const edgesForBackend = edges.map(edge => ({
+        id: edge.id || `edge-${edge.source}-${edge.target}`, // Add the id field
+        type: edge.type || 'default', // Add the type field
         source: edge.source,
         target: edge.target,
         edge_type: edge.data?.type || 'default',
@@ -156,22 +185,195 @@ const ModelWithAI = () => {
 
       // processBackendResponse function to handle the response
       // This will update both the diagram and the chat
-      processBackendResponse(data, nodes, edges, setNodes, setEdges, setMessages);
+      processBackendResponse(data, nodes, edges, setNodes, setEdges, setMessages, hadFirstInteraction);
 
      
-    } catch (error : any) {
+    } catch (error: any) {
       console.error('Failed to fetch from backend:', error);
       
-      const errorMsg : Message = {
+      // Explicitly type the error message to match Message interface
+      const errorMsg: Message = {
         id: Date.now(),
         content: `Error: ${error?.message || 'Failed to contact server.'}`,
         type: 'assistant' as const,
         timestamp: new Date(),
-      };  
+      };
+      
       setMessages((prev) => [...prev, errorMsg]);
     } finally {
       setLoading(false);
     }
+  };
+
+  // Update your Flow component to include the custom edge type
+  // const Flow = () => {
+  //   const reactFlowInstance = useReactFlow();
+  // };
+
+  const addShape = (type: 'square' | 'circle' | 'rectangle' | 'diamond' | 'text' | 'cloud' | 'database' | 'server' | 'folder' | 'file' | 'settings' | 'users' | 'lock' | 'network' | 'code') => {
+    let newNode;
+    
+    
+    // const reactFlowInstance = useReactFlow();
+    // const viewportBounds = reactFlowInstance.getViewport();
+    // const centerX = viewportBounds.x + window.innerWidth / 2;
+    // const centerY = viewportBounds.y + window.innerHeight / 2;
+
+    
+    const position = {
+      x: 500, 
+      y: 200, 
+    };
+    
+    // ADD THIS CODE:
+    // Define a consistent node style for all nodes
+    const nodeDefaultStyle = {
+      width: 150,
+      height: 60,
+      border: '2px solid rgb(75, 39, 153)', // Purple border from placeholder
+      borderRadius: '8px',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      background: 'white',
+      padding: '8px',
+      boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)'
+    };
+    
+    // Handle basic shapes
+    if (['square', 'circle', 'rectangle', 'diamond', 'text'].includes(type)) {
+      newNode = {
+        id: Date.now().toString(),
+        type: 'custom',
+        data: { label: type.charAt(0).toUpperCase() + type.slice(1) },
+        properties: {}, // ADDED: properties field here as well for new nodes
+        position,
+        style: nodeDefaultStyle
+      };
+    } 
+    // Handle architecture tools
+    else {
+      const IconComponent = {
+        cloud: Cloud,
+        database: Database,
+        server: Server,
+        folder: Folder,
+        file: File,
+        settings: Settings,
+        users: Users,
+        lock: Lock,
+        network: Network,
+        code: Code
+      }[type];
+      
+      newNode = {
+        id: Date.now().toString(),
+        type: 'custom',
+        data: { 
+          label: type.charAt(0).toUpperCase() + type.slice(1), // Default label from type
+          icon: IconComponent 
+        },
+        properties: {}, // ADDED: properties field here as well for new nodes
+        position,
+        style: nodeDefaultStyle,
+        measured: { width: 200, height: 70 } 
+      };
+    }
+    
+    setNodes((nds) => [...nds, newNode]);
+  };
+
+  // Update the node components
+  const BasicNode = ({ data }) => (
+    <>
+      <Handle type="target" position={Position.Left} />
+      {/* <div className="flex items-center justify-center w-full h-full"> */}
+      <div className="flex flex-col items-center justify-center w-full h-full"> {/* Apply commonStyle here */}
+        <NodeResizer
+          minWidth={100}
+          minHeight={40}
+          handleStyle={{
+            border: 'none',
+            backgroundColor: 'transparent',
+          }}
+          lineStyle={{
+            border: 'none',
+          }}
+        />
+        <span className='text-sm'>{data.label}</span>
+      </div>
+      <Handle type="source" position={Position.Right} />
+    </>
+  );
+
+  // ADD THIS CODE:
+  // Define a consistent node style for all nodes
+  const nodeDefaultStyle = {
+    width: 150,
+    height: 60,
+    border: '2px solid rgb(75, 39, 153)', // Purple border from placeholder
+    borderRadius: '8px',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    background: 'white',
+    padding: '8px',
+    boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)'
+  };
+    
+
+  // REPLACE ENTIRE CustomNode COMPONENT WITH:
+  const CustomNode = ({ data }) => {
+    const Icon = data.icon;
+    
+    return (
+      <>
+        <Handle 
+          type="target" 
+          position={Position.Left} 
+          style={{ background: 'rgb(75, 39, 153)' }}
+        />
+        <div className="flex flex-col items-center justify-center w-full h-full" style={nodeDefaultStyle}>
+          <NodeResizer
+            minWidth={100}
+            minHeight={40}
+            handleStyle={{
+              border: 'none',
+              backgroundColor: 'transparent',
+            }}
+            lineStyle={{
+              border: 'none',
+            }}
+          />
+          
+          {/* Icon section */}
+          {Icon && (
+            <div className="mb-1"> 
+              <Icon className="w-5 h-5 text-purple-700" /> 
+            </div>
+          )}
+          
+          {/* Label section */}
+          <span 
+            className="text-sm font-medium"
+            style={{
+              whiteSpace: 'nowrap',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              maxWidth: '90%',
+              textAlign: 'center'
+            }}
+          >
+            {data.label}
+          </span>
+        </div>
+        <Handle 
+          type="source" 
+          position={Position.Right} 
+          style={{ background: 'rgb(75, 39, 153)' }}
+        />
+      </>
+    );
   };
 
   // Custom Edge component to show labels
@@ -233,151 +435,6 @@ const ModelWithAI = () => {
     custom: CustomEdge,
   };
 
-  // Update your Flow component to include the custom edge type
-  // const Flow = () => {
-  //   const reactFlowInstance = useReactFlow();
-  // };
-
-  const addShape = (type: 'square' | 'circle' | 'rectangle' | 'diamond' | 'text' | 'cloud' | 'database' | 'server' | 'folder' | 'file' | 'settings' | 'users' | 'lock' | 'network' | 'code') => {
-    let newNode;
-    
-    
-    // const reactFlowInstance = useReactFlow();
-    // const viewportBounds = reactFlowInstance.getViewport();
-    // const centerX = viewportBounds.x + window.innerWidth / 2;
-    // const centerY = viewportBounds.y + window.innerHeight / 2;
-
-    
-    const position = {
-      x: 500, 
-      y: 200, 
-    };
-    
-    const commonStyle = {
-      width: 150, // Standard, visible width
-      height: 60, // Standard, visible height
-      // border: '2px solid hsl(var(--primary))',
-      border: '2px solidrgb(75, 39, 153)',
-      borderRadius: '8px',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      background: 'transparent'
-      // background: '#F3F4F6', // Background color from placeholder
-      // color: '#374151', // Text color from placeholder
-    };
-    
-    // Handle basic shapes
-    if (['square', 'circle', 'rectangle', 'diamond', 'text'].includes(type)) {
-      newNode = {
-        id: Date.now().toString(),
-        type: 'custom',
-        data: { label: type.charAt(0).toUpperCase() + type.slice(1) },
-        properties: {}, // ADDED: properties field here as well for new nodes
-        position,
-        style: commonStyle
-      };
-    } 
-    // Handle architecture tools
-    else {
-      const IconComponent = {
-        cloud: Cloud,
-        database: Database,
-        server: Server,
-        folder: Folder,
-        file: File,
-        settings: Settings,
-        users: Users,
-        lock: Lock,
-        network: Network,
-        code: Code
-      }[type];
-      
-      newNode = {
-        id: Date.now().toString(),
-        type: 'custom',
-        data: { 
-          label: type.charAt(0).toUpperCase() + type.slice(1), // Default label from type
-          icon: IconComponent 
-        },
-        properties: {}, // ADDED: properties field here as well for new nodes
-        position,
-        style: commonStyle,
-        measured: { width: 200, height: 70 } 
-      };
-    }
-    
-    setNodes((nds) => [...nds, newNode]);
-  };
-
-  // Update the node components
-  const BasicNode = ({ data }) => (
-    <>
-      <Handle type="target" position={Position.Left} />
-      {/* <div className="flex items-center justify-center w-full h-full"> */}
-      <div className="flex flex-col items-center justify-center w-full h-full"> {/* Apply commonStyle here */}
-        <NodeResizer
-          minWidth={100}
-          minHeight={40}
-          handleStyle={{
-            border: 'none',
-            backgroundColor: 'transparent',
-          }}
-          lineStyle={{
-            border: 'none',
-          }}
-        />
-        <span className='text-sm'>{data.label}</span>
-      </div>
-      <Handle type="source" position={Position.Right} />
-    </>
-  );
-
-  const CustomNode = ({ data }) => {
-    const Icon = data.icon;
-    // console.log("Custom Node Data:", data);
-    // console.log("Icon:", Icon);
-    return (
-      <>
-        <Handle 
-          type="target" 
-          position={Position.Left} 
-        />
-        {/* <div className="flex items-center justify-center w-full h-full"> */}
-        <div className="flex flex-col items-center justify-center">
-          <NodeResizer
-            minWidth={100}
-            minHeight={40}
-            handleStyle={{
-              border: 'none',
-              backgroundColor: 'transparent',
-            }}
-            lineStyle={{
-              border: 'none',
-            }}
-          />
-          {/* Conditional Icon Rendering */}
-          {Icon && (
-            <div className="mb-1"> {/* Add margin-bottom for spacing */}
-              <Icon className="w-4 h-4" /> {/* Increased icon size for better visibility */}
-            </div>
-          )}
-          <span 
-            className='text-sm'
-            style={{
-              whiteSpace: 'nowrap', // Prevent text from wrapping
-              overflow: 'hidden', // Hide overflow
-              textOverflow: 'ellipsis', // Add ellipsis for overflow text
-              maxWidth: '100%', // Ensure text respects the fixed width
-            }}
-          >
-            {data.label}
-          </span> {/* Added text-sm for label size, adjust if needed */}
-        </div>
-        <Handle type="source" position={Position.Right} />
-      </>
-    );
-  };
 
   const toolList = [
     { type: 'square', icon: <Square className="h-4 w-4" />, label: 'Square' },
