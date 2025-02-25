@@ -1,6 +1,6 @@
 import { useCallback, useState, useEffect, useRef, memo } from 'react';
 // import { Paperclip, ChevronUp, List, Square, Circle, ArrowRight, Eraser, Pointer, Plus } from 'lucide-react';
-import { Cloud, Database, Server, Folder, File, Settings, Users, Lock, Network, Code, Search, Paperclip, ChevronUp, List, Square, Circle, Eraser, Plus, RectangleHorizontal, Diamond, Type } from 'lucide-react';
+import { Cloud, Database, Server, Folder, File, Settings, Users, Lock, Network, Code, Search, Paperclip, ChevronUp, List, Square, Circle, Eraser, Plus, RectangleHorizontal, Diamond, Type, Loader2, FileText } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import AppHeader from '@/components/layout/AppHeader';
@@ -18,19 +18,32 @@ import {
   NodeResizer,
   Handle,
   Position,
+  useReactFlow,
+  ReactFlowProvider,
+  getBezierPath,
+  EdgeProps, 
+  EdgeLabelRenderer
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
-import { mergeNodes, mergeEdges, parseExpertResponse } from '@/utils/reponseUtils';
+import { mergeNodes, mergeEdges, processBackendResponse } from '@/utils/reponseUtils';
+import { nodeTypesConfig } from '@/utils/nodeTypesConfig';
 import { tomorrow as tomorrowNight } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import { Message, ToolType } from '@/utils/types';
 import { typeMessage } from '@/utils/reponseUtils';
-
+// import { CustomControls } from '@/components/ui/custom-controls';
+import { FlowControls } from '@/components/ui/flow-controls';
 const initialNodes = [
   {
     id: '1',
     type: 'input',
-    data: { label: 'Start describing your model...' },
+    data: { 
+      label: 'Start describing your model...',
+      // ADDED: properties field as an empty dictionary
+      properties: {},
+    },
+    // UPDATED: position field to be a tuple of floats
     position: { x: 500, y: 200 },
+    measured: {width: 150, height: 60} // ADDED: measured to align with the error message, though it might not be necessary for the fix
   },
 ];
 
@@ -38,23 +51,19 @@ const ModelWithAI = () => {
   const [userInput, setUserInput] = useState('');
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
+  const [version, setVersion] = useState(1); // Initialize version to 1
   const [activeTab, setActiveTab] = useState<'chat' | 'history'>('chat');
   const [messages, setMessages] = useState<Message[]>([]);
   const [activeTool, setActiveTool] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
-
-  
   // NEW: Loading state
   const [loading, setLoading] = useState(false);
+  
+  // NEW: Generating report state
+  const [generatingReport, setGeneratingReport] = useState(false);
 
-  // First, add a ref for the chat container
-  // const chatContainerRef = useRef<HTMLDivElement>(null);
-  // const messagesEndRef = useRef<HTMLDivElement>(null);
-
-  // Update the useEffect to ensure smooth scrolling
-  // useEffect(() => {
-  //   messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  // }, [messages]);
+  // NEW STATE: Track if placeholder node has been removed
+  const [placeholderNodeRemoved, setPlaceholderNodeRemoved] = useState(false);
 
   const onConnect = useCallback((params) => {
     setEdges((eds) => addEdge(params, eds));
@@ -63,6 +72,12 @@ const ModelWithAI = () => {
   // UPDATED: handleSend instead of handleSubmit
   const handleSend = async () => {
     if (!userInput.trim()) return;
+
+    // Remove placeholder node on first interaction
+    if (!placeholderNodeRemoved) {
+      setNodes(nodes.filter(node => node.id !== '1')); // Filter out node with ID '1'
+      setPlaceholderNodeRemoved(true); // Set state to true so it's not removed again
+    }
 
     // Add user message to the chat
     const newUserMessage: Message = {
@@ -75,143 +90,190 @@ const ModelWithAI = () => {
     
     // Clear the input immediately after sending
     setUserInput('');
-
     setLoading(true);
 
     try {
-      const response = await fetch('http://localhost:8000/api/routes/chat', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          user_input: userInput,
-          diagram_context: {
-            nodes,
-            edges,
-          },
-        }),
+
+      // Define interface for node properties to assist TypeScript
+      interface NodeProperties {
+        node_type?: string;
+        [key: string]: any;  // Allow for any other properties
+      }
+
+      // Transform nodes to match NodeContext model
+      const nodesForBackend = nodes.map(node => {
+        // Safely handle properties with proper typing
+        const properties = (node.data?.properties || {}) as NodeProperties;
+        
+        return {
+          id: node.id,
+          type: node.type === 'custom' && properties.node_type 
+            ? properties.node_type 
+            : (node.data?.label || node.type),
+          properties: properties,
+          position: [node.position.x, node.position.y],
+        };
       });
 
+      /// Transform edges to backend format
+      const edgesForBackend = edges.map(edge => ({
+        source: edge.source,
+        target: edge.target,
+        edge_type: edge.data?.type || 'default',
+        label: edge.label || '',
+        properties: edge.data?.properties || {}
+      }));
+
+      const body = JSON.stringify({
+        user_input: userInput,
+        diagram_context: {
+          nodes: nodesForBackend,
+          edges: edgesForBackend,
+          version, // Include the current version
+        },
+        compliance_standards: [],
+      })
+
+      console.log("Request Body:", body);
+
+      const response = await fetch('http://localhost:8000/v1/routes/design', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: body,
+      });
+  
       if (!response.ok) {
         throw new Error(`Error: ${response.status} ${response.statusText}`);
       }
 
       const data = await response.json();
       console.log('Backend response:', data);
-      console.log('Backend response nodes:', data.nodes);
-      console.log('Backend response edges:', data.edges);
 
-      // Example structure:
-      // {
-      //   "status": "success",
-      //   "message": [... or string ...],
-      //   "nodes": [...],
-      //   "edges": [...],
-      //   "response": "some text if it's an expert query"
-      // }
-
-      // Handle different response cases
-      let assistantMessage = '';
-
-      // Category : Node Interaction Response
-      if (data.status === 'success') {
-
-        // Add the assistant's message placeholder
-        const assistantMsg: Message = {
-          id: Date.now(),
-          content: '', // Initially empty content for typing effect
-          type: 'assistant',
-          timestamp: new Date(),
-        };
-        setMessages((prev) => [...prev, assistantMsg]);
-        
-        
-        // Merge nodes if present
-        if (data.nodes) {
-          const merged = mergeNodes(nodes, data.nodes);
-          setNodes(merged);
-        }
-
-        // Merge edges if present
-        if (data.edges) {
-          const merged = mergeEdges(edges, data.edges);
-          setEdges(merged);
-        }
-
-        // If there's a 'message' field about node actions, also display it
-        if (data.message) {
-          // data.message could be string or array
-          const combinedMessage = Array.isArray(data.message)
-            ? data.message.join(', ')
-            : data.message;
-
-          if (combinedMessage) {
-            assistantMessage = combinedMessage;
-            // Start the typing effect for the node interaction message
-            typeMessage(assistantMessage, setMessages, () => {
-              // If needed, add any additional post-typing logic here
-            });
-          }
-        }
-
-        // // Category : 'expert query' or textual response
-        if (data.expert_message) {
-          const formattedText = parseExpertResponse(data.expert_message);
-          assistantMessage = formattedText;
-
-          // Trigger typing effect after adding the message
-          typeMessage(assistantMessage, setMessages, () => {
-        });
+      // Update the version if provided
+      if (data.version) {
+        setVersion(data.version);
       }
 
-      } else {
-        // For error or out-of-context
-        const errorMsg: Message = {
-          id: Date.now(),
-          content: data.message || 'Something went wrong.',
-          type: 'assistant',
-          timestamp: new Date(),
-        };
-        setMessages((prev) => [...prev, errorMsg]);
-      }
-    } catch (error) {
+      // processBackendResponse function to handle the response
+      // This will update both the diagram and the chat
+      processBackendResponse(data, nodes, edges, setNodes, setEdges, setMessages);
+
+     
+    } catch (error : any) {
       console.error('Failed to fetch from backend:', error);
-      const errorMsg: Message = {
+      
+      const errorMsg : Message = {
         id: Date.now(),
-        content: 'Error contacting server.',
-        type: 'assistant',
+        content: `Error: ${error?.message || 'Failed to contact server.'}`,
+        type: 'assistant' as const,
         timestamp: new Date(),
-      };
+      };  
       setMessages((prev) => [...prev, errorMsg]);
     } finally {
       setLoading(false);
     }
   };
 
+  // Custom Edge component to show labels
+  const CustomEdge: React.FC<EdgeProps> = (props) => {
+    const {
+      id,
+      sourceX,
+      sourceY,
+      targetX,
+      targetY,
+      sourcePosition,
+      targetPosition,
+      label,
+      data,
+      style = {},
+      markerEnd,
+    } = props;
+      const [edgePath, labelX, labelY] = getBezierPath({
+        sourceX,
+        sourceY,
+        sourcePosition,
+        targetX,
+        targetY,
+        targetPosition,
+      });
+      return (
+        <>
+          <path
+            id={id}
+            style={{ ...style, strokeWidth: 2 }}
+            className="react-flow__edge-path"
+            d={edgePath}
+            markerEnd={markerEnd}
+          />
+          {label && (
+            <EdgeLabelRenderer>
+              <div
+                style={{
+                  position: 'absolute',
+                  transform: `translate(-50%, -50%) translate(${labelX}px,${labelY}px)`,
+                  fontSize: 12,
+                  pointerEvents: 'all',
+                  backgroundColor: 'white',
+                  padding: '2px 4px',
+                  borderRadius: 4,
+                }}
+                className="nodrag nopan"
+              >
+                {label}
+              </div>
+            </EdgeLabelRenderer>
+          )}
+        </>
+      );
+    };
+
+  // Add this to your edgeTypes in ReactFlow
+  const edgeTypes = {
+    custom: CustomEdge,
+  };
+
+  // Update your Flow component to include the custom edge type
+  // const Flow = () => {
+  //   const reactFlowInstance = useReactFlow();
+  // };
+
   const addShape = (type: 'square' | 'circle' | 'rectangle' | 'diamond' | 'text' | 'cloud' | 'database' | 'server' | 'folder' | 'file' | 'settings' | 'users' | 'lock' | 'network' | 'code') => {
     let newNode;
     
+    
+    // const reactFlowInstance = useReactFlow();
+    // const viewportBounds = reactFlowInstance.getViewport();
+    // const centerX = viewportBounds.x + window.innerWidth / 2;
+    // const centerY = viewportBounds.y + window.innerHeight / 2;
+
+    
     const position = {
-      x: 300 + (Math.random() - 0.5) * 20,
-      y: 100 + (Math.random() - 0.5) * 20
+      x: 500, 
+      y: 200, 
     };
     
     const commonStyle = {
-      width: 150,
-      height: 40,
-      border: '2px solid hsl(var(--primary))',
+      width: 150, // Standard, visible width
+      height: 60, // Standard, visible height
+      // border: '2px solid hsl(var(--primary))',
+      border: '2px solidrgb(75, 39, 153)',
       borderRadius: '8px',
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
       background: 'transparent'
+      // background: '#F3F4F6', // Background color from placeholder
+      // color: '#374151', // Text color from placeholder
     };
     
     // Handle basic shapes
     if (['square', 'circle', 'rectangle', 'diamond', 'text'].includes(type)) {
       newNode = {
         id: Date.now().toString(),
-        type: 'basic',
+        type: 'custom',
         data: { label: type.charAt(0).toUpperCase() + type.slice(1) },
+        properties: {}, // ADDED: properties field here as well for new nodes
         position,
         style: commonStyle
       };
@@ -235,11 +297,13 @@ const ModelWithAI = () => {
         id: Date.now().toString(),
         type: 'custom',
         data: { 
-          label: '',
+          label: type.charAt(0).toUpperCase() + type.slice(1), // Default label from type
           icon: IconComponent 
         },
+        properties: {}, // ADDED: properties field here as well for new nodes
         position,
-        style: commonStyle
+        style: commonStyle,
+        measured: { width: 200, height: 70 } 
       };
     }
     
@@ -250,7 +314,8 @@ const ModelWithAI = () => {
   const BasicNode = ({ data }) => (
     <>
       <Handle type="target" position={Position.Left} />
-      <div className="flex items-center justify-center w-full h-full">
+      {/* <div className="flex items-center justify-center w-full h-full"> */}
+      <div className="flex flex-col items-center justify-center w-full h-full"> {/* Apply commonStyle here */}
         <NodeResizer
           minWidth={100}
           minHeight={40}
@@ -262,7 +327,7 @@ const ModelWithAI = () => {
             border: 'none',
           }}
         />
-        <span>{data.label}</span>
+        <span className='text-sm'>{data.label}</span>
       </div>
       <Handle type="source" position={Position.Right} />
     </>
@@ -270,13 +335,16 @@ const ModelWithAI = () => {
 
   const CustomNode = ({ data }) => {
     const Icon = data.icon;
+    // console.log("Custom Node Data:", data);
+    // console.log("Icon:", Icon);
     return (
       <>
         <Handle 
           type="target" 
           position={Position.Left} 
         />
-        <div className="flex items-center justify-center w-full h-full">
+        {/* <div className="flex items-center justify-center w-full h-full"> */}
+        <div className="flex flex-col items-center justify-center">
           <NodeResizer
             minWidth={100}
             minHeight={40}
@@ -288,7 +356,23 @@ const ModelWithAI = () => {
               border: 'none',
             }}
           />
-          <Icon className="w-6 h-6" />
+          {/* Conditional Icon Rendering */}
+          {Icon && (
+            <div className="mb-1"> {/* Add margin-bottom for spacing */}
+              <Icon className="w-4 h-4" /> {/* Increased icon size for better visibility */}
+            </div>
+          )}
+          <span 
+            className='text-sm'
+            style={{
+              whiteSpace: 'nowrap', // Prevent text from wrapping
+              overflow: 'hidden', // Hide overflow
+              textOverflow: 'ellipsis', // Add ellipsis for overflow text
+              maxWidth: '100%', // Ensure text respects the fixed width
+            }}
+          >
+            {data.label}
+          </span> {/* Added text-sm for label size, adjust if needed */}
         </div>
         <Handle type="source" position={Position.Right} />
       </>
@@ -319,6 +403,73 @@ const ModelWithAI = () => {
     return tool.label.toLowerCase().includes(searchQuery.toLowerCase());
   });
 
+  const Flow = () => {
+    const reactFlowInstance = useReactFlow();
+    
+    return (
+      <ReactFlow
+        nodes={nodes}
+        edges={edges}
+        onNodesChange={onNodesChange}
+        onEdgesChange={onEdgesChange}
+        onConnect={onConnect}
+        nodeTypes={{ 
+          basic: BasicNode,
+          custom: CustomNode 
+        }}
+        edgeTypes={edgeTypes}
+        defaultEdgeOptions={{
+          type: 'custom',
+        }}
+        defaultViewport={{ x: 0, y: 0, zoom: 1.25 }}
+        minZoom={0.2}
+        maxZoom={2}
+        style={{ 
+          width: '100%', 
+          height: '70vh',
+          position: 'absolute',
+          top: 0,
+          right: 0
+        }}
+        proOptions={{ hideAttribution: true }}
+      >
+        <FlowControls 
+          position="top-left"
+          style={{ 
+            boxShadow: '0 0 2px 1px rgba(0, 0, 0, 0.08)',
+          }}
+          // style={{ marginTop: '80px', marginLeft: '10px' }}
+        />
+        <MiniMap
+          nodeStrokeColor={(n) => {
+            if (n.type === 'basic') return '#0041d0';
+            if (n.type === 'custom') return '#ff0072';
+            return '#eee';
+          }}
+          nodeColor={(n) => {
+            if (n.type === 'basic') return '#fff';
+            if (n.type === 'custom') return '#fff';
+            return '#fff';
+          }}
+          nodeBorderRadius={2}
+          position="bottom-right"
+          style={{ 
+            backgroundColor: 'white',
+            border: '2px solid #e5e5e5',
+            borderRadius: '8px',
+            margin: 20,
+            width: 200,
+            height: 150,
+            boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)',
+            bottom: 100
+          }}
+          zoomable
+          pannable
+        />
+        <Background />
+      </ReactFlow>
+    );
+  };
 
   return (
     <div className="h-screen overflow-hidden bg-background">
@@ -369,6 +520,28 @@ const ModelWithAI = () => {
                       <ReactMarkdown
                         components={{
                           code({ node, inline, className, children, ...props }) {
+                            const value = String(children).replace(/\n$/, "");
+                            return inline ? (
+                              <code className="bg-gray-200 px-1 py-0.5 rounded">{children}</code>
+                            ) : (
+                              <SyntaxHighlighter
+                                style={tomorrowNight}
+                                language={className?.replace(/language-/, "") || 'json'} // default to json if language not specified
+                                PreTag="div" // to fix react-markdown code block issue
+                                {...props}
+                              >
+                                {value}
+                              </SyntaxHighlighter>
+                            );
+                          },
+                        }}
+                        skipHtml={false}
+                      >
+                        {DOMPurify.sanitize(message.content)}
+                      </ReactMarkdown>
+                      {/* <ReactMarkdown
+                        components={{
+                          code({ node, inline, className, children, ...props }) {
                             return inline ? (
                               <code className="bg-gray-200 px-1 py-0.5 rounded">{children}</code>
                             ) : (
@@ -380,7 +553,7 @@ const ModelWithAI = () => {
                         }}
                       >
                         {DOMPurify.sanitize(message.content)}
-                      </ReactMarkdown>
+                      </ReactMarkdown> */}
                     </div>
                   </div>
                 ))
@@ -532,8 +705,11 @@ const ModelWithAI = () => {
               ))}
             </div>
           </div>
+          <ReactFlowProvider>
+            <Flow />
+          </ReactFlowProvider>
 
-          <ReactFlow
+          {/* <ReactFlow
             nodes={nodes}
             edges={edges}
             onNodesChange={onNodesChange}
@@ -556,7 +732,7 @@ const ModelWithAI = () => {
             proOptions={{ hideAttribution: true }}
           >
             <Controls 
-              position="top-left"
+              position= "top-center"
               style={{ top: 10, left: 10 }}
             />
             <MiniMap
@@ -586,11 +762,11 @@ const ModelWithAI = () => {
               pannable
             />
             <Background />
-          </ReactFlow>
+          </ReactFlow> */}
         </div>
       </div>
     </div>
   );
 };
 
-export default ModelWithAI;
+export default ModelWithAI; 
