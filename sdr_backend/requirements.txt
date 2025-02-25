@@ -20,3 +20,5 @@ python--multipart
 httpx>=0.24.0
 tenacity>=8.2.2
 pyyaml
+anthropic
+httpx
