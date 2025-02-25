@@ -2,9 +2,17 @@ from fastapi import Request
 from fastapi.responses import JSONResponse
 
 
+# services/exception_handler.py
+
 class SecurityValidationError(Exception):
-    """Raised when security rules are violated"""
-    pass
+    """Custom exception for security validation errors."""
+    def __init__(self, message: str, severity: str = "CRITICAL"): # Added severity parameter with default "CRITICAL"
+        self.message = message
+        self.severity = severity.upper() # Store severity in uppercase for consistency
+        super().__init__(self.message)
+
+    def __str__(self):
+        return f"(Severity: {self.severity}): {self.message}" # Include severity in error string
 
 class ValidationError(Exception):
     """Raised when security rules are violated"""

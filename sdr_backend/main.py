@@ -1,20 +1,22 @@
 # main.py
 import uvicorn
 from fastapi import FastAPI
-from api.routes.routes import router as api_router
+from v1.api.routes.routes import router as api_router
 from fastapi.middleware.cors import CORSMiddleware
 # from config.settings import origins
 from config.settings import title
 from config.settings import description
 from config.settings import version
 from fastapi.staticfiles import StaticFiles
+from config.settings import REPORTS_DIR
 
 app = FastAPI(
     title=title,
     description=description,
     version=version,
 )
-
+# In your main FastAPI app
+app.mount("/reports", StaticFiles(directory=REPORTS_DIR), name="reports")
 # Mount the "outputs" directory as a static files directory
 # app.mount("/outputs", StaticFiles(directory="outputs"), name="outputs")
 
@@ -35,7 +37,7 @@ app.add_middleware(
 )
 
 # Include our API routes under the /api prefix
-app.include_router(api_router, prefix="/api/routes")
+app.include_router(api_router, prefix="/v1/routes")
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)

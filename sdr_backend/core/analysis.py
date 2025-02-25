@@ -18,7 +18,7 @@ import json
 from config.settings import OPENAI_API_KEY
 from core.retriever import retrieve_relevant_docs
 
-from models.security_analysis_response import SecurityAnalysisResponse
+from models.pydantic_models import SecurityAnalysisResponse
 import re
 
 
