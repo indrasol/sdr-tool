@@ -33,15 +33,87 @@ async def process_and_validate_llm_response(llm_response: Dict[str, Any], contex
         # Add timestamp to response
         llm_response['timestamp'] = formatted_timestamp
 
-         # Create an instance of ValidationHandler
+         # Create a deep copy to avoid modifying the original
+        processed_response = json.loads(json.dumps(llm_response))
+        
+        # Create an instance of ValidationHandler
         validator = ValidationHandler()
         
-        # Validate response type and structure
-        if 'nodes' in llm_response:
+        # Preprocess the response based on its type
+        if 'nodes' in processed_response:
+            # Architecture response - preprocess nodes
             try:
-                log_info(f"Validating architecture response with context: {context}")
+                # Fix common issues with node properties before validation
+                if isinstance(processed_response['nodes'], list):
+                    for node in processed_response['nodes']:
+                        # Ensure properties exist
+                        if 'properties' not in node or node['properties'] is None:
+                            node['properties'] = {}
+                        
+                        # Handle database properties specifically
+                        if node.get('node_type') == 'database' or (
+                                isinstance(node.get('properties'), dict) and
+                                node.get('properties', {}).get('properties_type') == 'database'):
+                            props = node.get('properties', {})
+                            
+                            # Set properties_type
+                            props['properties_type'] = 'database'
+                            
+                            # Set node_type
+                            props['node_type'] = node.get('node_type', 'database')
+                            
+                            # Map data_classification to accepted values
+                            if 'data_classification' in props:
+                                data_class = props['data_classification']
+                                if isinstance(data_class, str):
+                                    data_class = data_class.lower()
+                                    # Map variations to standard values
+                                    classification_map = {
+                                        'sensitive': 'confidential',
+                                        'protected': 'confidential',
+                                        'private': 'confidential',
+                                        'internal': 'confidential',
+                                        'classified': 'secret',
+                                        'restricted': 'secret',
+                                        'top-secret': 'secret',
+                                        'public-facing': 'public',
+                                        'unrestricted': 'public',
+                                        'open': 'public'
+                                    }
+                                    if data_class in classification_map:
+                                        props['data_classification'] = classification_map[data_class]
+                                    elif data_class not in ['public', 'confidential', 'secret']:
+                                        # Default to confidential for unknown values
+                                        props['data_classification'] = 'confidential'
+                                        log_info(f"Mapped unknown data_classification '{data_class}' to 'confidential'")
+                            else:
+                                # Set default if missing
+                                props['data_classification'] = 'confidential'
+                            
+                            # Ensure other required fields exist with defaults
+                            if 'encryption_type' not in props:
+                                props['encryption_type'] = 'both'
+                            
+                            if 'backup_schedule' not in props:
+                                props['backup_schedule'] = 'daily'
+                            
+                            node['properties'] = props
+                
+                # Ensure explanation exists
+                if 'explanation' not in processed_response or not processed_response['explanation']:
+                    processed_response['explanation'] = "Architecture changes based on security best practices."
+                
+                # Ensure confidence exists
+                if 'confidence' not in processed_response or not processed_response['confidence']:
+                    processed_response['confidence'] = 0.8
+                elif isinstance(processed_response['confidence'], str):
+                    try:
+                        processed_response['confidence'] = float(processed_response['confidence'])
+                    except ValueError:
+                        processed_response['confidence'] = 0.8
+                
                 # Validate against ArchitectureResponse schema
-                validated_response = ArchitectureResponse(**llm_response)
+                validated_response = ArchitectureResponse(**processed_response)
                 
                 log_info(f"Validating architecture response with context: {context}")
                 # Checks if the architecture response is valid
@@ -50,12 +122,69 @@ async def process_and_validate_llm_response(llm_response: Dict[str, Any], contex
                 processed_and_validated_response = validated_response
                 
             except ValidationError as e:
-                logging.error(f"ArchitectureResponse validation error: {str(e)}")
-                raise ValueError(f"Invalid ArchitectureResponse format: {str(e)}")
-        elif 'expert_message' in llm_response:
+                log_info(f"ArchitectureResponse validation error: {str(e)}")
+                # Create fallback expert response when architecture validation fails
+                expert_response = {
+                    "timestamp": formatted_timestamp,
+                    "expert_message": "I encountered an issue while creating the diagram updates. Here's my advice instead.",
+                    "justification": f"The system encountered validation errors. Original error: {str(e)[:200]}... " + 
+                                    "Please try a more specific request or describe your architecture components in more detail."
+                }
+                processed_and_validated_response = ExpertResponse(**expert_response)
+                
+        elif 'expert_message' in processed_response:
             try:
+                # Convert justification from list to string if needed
+                if "justification" in processed_response and isinstance(processed_response["justification"], list):
+                    processed_response["justification"] = "\n".join(processed_response["justification"])
+                
+                # Handle other fields that might be in unexpected formats
+                if 'security_messages' in processed_response:
+                    # Remove this field as it's not in the ExpertResponse model
+                    security_messages = processed_response.pop('security_messages')
+                    # Append security messages to justification if important
+                    if security_messages and isinstance(security_messages, list) and len(security_messages) > 0:
+                        messages_text = "\n\nSecurity considerations:\n"
+                        for msg in security_messages:
+                            if isinstance(msg, dict) and 'severity' in msg and 'message' in msg:
+                                messages_text += f"- {msg['severity']}: {msg['message']}\n"
+                            elif isinstance(msg, str):
+                                messages_text += f"- {msg}\n"
+                        processed_response["justification"] += messages_text
+                
+                # Handle recommended_next_steps if present
+                if 'recommended_next_steps' in processed_response:
+                    steps = processed_response.pop('recommended_next_steps')
+                    if steps:
+                        steps_text = "\n\nRecommended next steps:\n"
+                        if isinstance(steps, list):
+                            for step in steps:
+                                steps_text += f"- {step}\n"
+                        else:
+                            steps_text += steps
+                        processed_response["justification"] += steps_text
+                
+                # Handle references if present
+                if 'references' in processed_response:
+                    refs = processed_response.pop('references')
+                    if refs:
+                        refs_text = "\n\nReferences:\n"
+                        if isinstance(refs, list):
+                            for ref in refs:
+                                refs_text += f"- {ref}\n"
+                        else:
+                            refs_text += refs
+                        processed_response["justification"] += refs_text
+                
+                # Create valid ExpertResponse with only the expected fields
+                expert_response = {
+                    "timestamp": formatted_timestamp,
+                    "expert_message": processed_response["expert_message"],
+                    "justification": processed_response["justification"]
+                }
+
                 # Validate against ExpertResponse schema
-                validated_response = ExpertResponse(**llm_response)
+                validated_response = ExpertResponse(**expert_response)
                 
                 # Additional validation for expert response
                 await validator._validate_expert_response(response=validated_response)
@@ -63,29 +192,37 @@ async def process_and_validate_llm_response(llm_response: Dict[str, Any], contex
                 processed_and_validated_response = validated_response
                 
             except ValidationError as e:
-                logging.error(f"ExpertResponse validation error: {str(e)}")
-                raise ValueError(f"Invalid ExpertResponse format: {str(e)}")
-
+                log_info(f"ExpertResponse validation error: {str(e)}")
+                # Create a minimal valid expert response
+                expert_response = {
+                    "timestamp": formatted_timestamp,
+                    "expert_message": "I've analyzed your request but encountered some processing issues.",
+                    "justification": "The system was unable to format the complete response. " + 
+                                    "Please try rephrasing your question in a more specific way."
+                }
+                processed_and_validated_response = ExpertResponse(**expert_response)
+                
         else:
-            raise ValueError("Response must contain either 'actions' or 'expert_message'")
+            log_info("Response must contain either 'nodes' or 'expert_message'")
+            # Create a fallback expert response
+            expert_response = {
+                "timestamp": formatted_timestamp,
+                "expert_message": "I've received your request but I'm not sure how to process it.",
+                "justification": "The response structure was not recognized. Please try a different query format or be more specific about your security architecture needs."
+            }
+            processed_and_validated_response = ExpertResponse(**expert_response)
             
         return processed_and_validated_response
         
     except Exception as e:
         log_info(f"Error processing LLM response: {str(e)}")
-        raise ValueError(f"Failed to process LLM response: {str(e)}")
-
-# generate_llm_response
-# async def generate_llm_response(prompt: str, model: str = "claude") -> dict:
-#     """Enhance Prompt and Generate response using LLM """
-#     log_info(f"Entering generate_llm_response with prompt: {prompt}")
-#     try:
-#         raw_response = await llm_gateway.generate(prompt, model=model, prompt_type="generic_query")
-#         return raw_response
-#     except LLMError as e:
-#         raise HTTPException(500, detail=f"LLM Error: {str(e)}")
-#     except RateLimitError as e:
-#         raise HTTPException(429, detail=str(e))
+        # Provide a fallback response instead of raising an exception
+        expert_response = {
+            "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            "expert_message": "I encountered an unexpected error while processing your request.",
+            "justification": f"System error: {str(e)[:100]}... Please try again with a different query or contact support if the issue persists."
+        }
+        return ExpertResponse(**expert_response)
 
 # parse_llm_response
 async def parse_llm_response(raw_response: str) -> Union[ArchitectureResponse, ExpertResponse]: # Return Union type

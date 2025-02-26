@@ -1,11 +1,12 @@
 from fastapi import APIRouter, HTTPException
-
+from datetime import datetime
 from utils.logger import log_info
+from fastapi.responses import JSONResponse
 
 # Utils
 
 # Models
-from models.pydantic_models import UserRequest, ArchitectureResponse
+from models.pydantic_models import UserRequest, ArchitectureResponse, ExpertResponse
 
 # Core
 from core.security_layer import SecurityRulesValidator
@@ -47,33 +48,96 @@ async def process_request(request: UserRequest):
 
         # Step 3: Generate LLM response using user-defined LLM model
         llm_gateway = LLMGateway()
-        llm_response = await llm_gateway.generate_response(processed_request, model="claude", query_type="generic_query")
+        try:
+            llm_response = await llm_gateway.generate_response(
+                processed_request, 
+                model="claude", 
+                query_type="generic_query"
+            )
+        except Exception as llm_error:
+            log_info(f"LLM generation error: {str(llm_error)}")
+            # Create a fallback response when LLM fails
+            return ExpertResponse(
+                timestamp=datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                expert_message="I'm having trouble processing your request right now.",
+                justification="There was an issue communicating with the AI backend. Please try again shortly or rephrase your query."
+            )
 
-        # Step 4: Process and validate LLM response and format for ArchitectureResponse or ExpertResponse pydantic models
-        processed_and_validated_response = await process_and_validate_llm_response(llm_response, request.diagram_context)
+        # Step 3: Process and validate LLM response and format for models
+        try:
+            processed_and_validated_response = await process_and_validate_llm_response(
+                llm_response, 
+                request.diagram_context
+            )
+        except Exception as validation_error:
+            log_info(f"Validation error: {str(validation_error)}")
+            # Return a friendly error response instead of failing
+            return ExpertResponse(
+                timestamp=datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                expert_message="I had trouble understanding your request in the context of your current architecture.",
+                justification=f"Validation error: {str(validation_error)[:200]}... Please try being more specific or provide more context."
+            )
 
-        # Apply security rules if needed if response is ArchitectureResponse
+        # Step 4: Apply security rules if needed if response is ArchitectureResponse
         if isinstance(processed_and_validated_response, ArchitectureResponse):
-            log_info(f"Applying security rules to ArchitectureResponse")
-            security_validator = SecurityRulesValidator()
-            await security_validator.apply_security_rules(processed_and_validated_response, request.diagram_context)
+            try:
+                log_info(f"Applying security rules to ArchitectureResponse")
+                security_validator = SecurityRulesValidator()
+                await security_validator.apply_security_rules(
+                    processed_and_validated_response, 
+                    request.diagram_context
+                )
+            except Exception as security_error:
+                log_info(f"Security validation error: {str(security_error)}")
+                # We continue with the response even if security validation fails
+                # but add a warning message to security_messages
+                warning_msg = {
+                    "severity": "HIGH", 
+                    "message": f"Security validation incomplete: {str(security_error)[:100]}..."
+                }
+                if hasattr(processed_and_validated_response, 'security_messages'):
+                    processed_and_validated_response.security_messages.append(warning_msg)
         
-        # Step 5: Format final ArchitectureResponse pydantic model into JSONResponse for frontend
-        formatted_response = format_response(processed_and_validated_response)
-        # current_datetime = datetime.now()
-        # formatted_timestamp = current_datetime.strftime("%Y-%m-%d %H:%M:%S") 
-        # log_info(f"current_datetime: {formatted_timestamp}")
-        # formatted_response.timestamp = formatted_timestamp
-        log_info(f"Formatted response: {formatted_response}")
-
-        return formatted_response
+        # Step 5: Format final response
+        try:
+            formatted_response = format_response(processed_and_validated_response)
+            log_info(f"Formatted response: {formatted_response}")
+            return formatted_response
+        except Exception as format_error:
+            log_info(f"Format error: {str(format_error)}")
+            # If formatting fails, return the raw validated response
+            return processed_and_validated_response
     
     except ValidationError as e:
-        raise HTTPException(422, detail=str(e))
+        log_info(f"Request validation error: {str(e)}")
+        return JSONResponse(
+            status_code=422,
+            content={
+                "detail": f"Validation error: {str(e)}",
+                "type": "validation_error"
+            }
+        )
     except RateLimitError:
-        raise HTTPException(429, detail="Rate limit exceeded")
+        log_info("Rate limit exceeded")
+        return JSONResponse(
+            status_code=429,
+            content={
+                "detail": "Rate limit exceeded. Please try again later.",
+                "type": "rate_limit_error"
+            }
+        )
     except Exception as e:
-        raise HTTPException(500, detail="Internal server error")
+        log_info(f"Unexpected error: {str(e)}")
+        # Return a friendly error response
+        return JSONResponse(
+            status_code=500,
+            content={
+                "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                "expert_message": "I encountered an unexpected error while processing your request.",
+                "justification": "The system experienced an internal error. Please try again later or with a different query.",
+                "type": "server_error"
+            }
+        )
     
 
 

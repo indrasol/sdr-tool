@@ -22,7 +22,11 @@ class LLMGateway:
         self.rate_limit = 100  # Requests per minute
         self.rate_counter = 0
         self.conversation_history = []
-        self.schema_example = {
+        self.expert_response_schema_example = {
+            "expert_message": "Your detailed expert advice with recommendations here...",
+            "justification": "Your detailed justification as a single string goes here. Include all points and reasoning in this text. Do not use an array for justification."
+        }
+        self.architecture_response_schema_example = {
             "nodes": [{
                 "action": "add",
                 "node_type": "firewall",
@@ -277,11 +281,14 @@ class LLMGateway:
                 - Severity levels MUST be: 'CRITICAL', 'HIGH', 'MEDIUM', 'LOW', 'INFO'
 
             Example of valid architecture response structure:
-            {schema_example}
+            {architecture_response_schema_example}
 
             3. For expert advice, response MUST include:
-            - 'expert_message': Detailed advice
-            - 'justification': Reasoning behind advice
+            - 'expert_message': Detailed advice as a string
+            - 'justification': Reasoning behind advice as a SINGLE STRING (not an array)
+
+            Example of valid expert response structure:
+            {expert_response_schema_example}    
             """
     
     async def _build_generic_query_prompt(self, data: Dict[str, Any]) -> Dict[str, Any]:

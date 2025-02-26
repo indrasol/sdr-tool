@@ -46,6 +46,21 @@ const initialNodes =  [
   },
 ]
 
+// ADD THIS CODE:
+// Define a consistent node style for all nodes
+const nodeDefaultStyle = {
+  width: 150,
+  height: 60,
+  border: '2px solid rgb(75, 39, 153)', // Purple border from placeholder
+  borderRadius: '8px',
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  background: 'white',
+  padding: '8px',
+  boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)'
+};
+
 const ModelWithAI = () => {
   const [userInput, setUserInput] = useState('');
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
@@ -55,55 +70,49 @@ const ModelWithAI = () => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [activeTool, setActiveTool] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
-  // 1. Add a state variable to track if we've had first interaction
+  // Track if we've had first interaction
   const [hadFirstInteraction, setHadFirstInteraction] = useState(false);
-  // NEW: Loading state
+  // Loading state
   const [loading, setLoading] = useState(false);
-  
-  // NEW: Generating report state
+  // Generating report state
   const [generatingReport, setGeneratingReport] = useState(false);
 
-  // NEW STATE: Track if placeholder node has been removed
-  const [placeholderRemoved, setPlaceholderRemoved] = useState(false);
 
-
-  // useEffect(() => {
-  //   // Only add placeholder node if no user interaction has happened yet
-  //   if (!initialNodesCreated && nodes.length === 0) {
-  //     setNodes([{
-  //       id: '1',
-  //       type: 'input',
-  //       data: { 
-  //         label: 'Start describing your model...',
-  //         properties: {},
-  //       },
-  //       position: { x: 500, y: 200 },
-  //       measured: {width: 150, height: 60}
-  //     }]);
-  //     setInitialNodesCreated(true);
-  //   }
-  // }, [initialNodesCreated, setNodes]);
-
-  const onConnect = useCallback((params) => {
-    setEdges((eds) => addEdge(params, eds));
+  // Initial welcome message after component mounts
+  useEffect(() => {
+    // Only add welcome message if no messages exist yet
+    if (messages.length === 0) {
+      const welcomeMessage: Message = {
+        id: Date.now(),
+        content: "I'm your secure archietcture design assistant. Describe what you'd like to design, or use the shape tools to get started.",
+        type: 'assistant',
+        timestamp: new Date()
+      };
+      setMessages([welcomeMessage]);
+    }
   }, []);
 
-  // ADD THIS before handleSend function:
+  const onConnect = useCallback((params) => {
+    setEdges((eds) => addEdge({
+      ...params,
+      type: 'custom', // Use custom edge type for all connections
+      id: `edge-${params.source}-${params.target}`,
+      data: { type: 'default' }
+    }, eds));
+  }, []);
+
   interface NodeProperties {
     node_type?: string;
     [key: string]: any;  // Allow for any other properties
   }
 
-  // UPDATED: handleSend instead of handleSubmit
+  // UPDATED: handleSend to preserve existing nodes and edges
   const handleSend = async () => {
     if (!userInput.trim()) return;
 
-   // Set that we've had our first interaction
+    // Set that we've had our first interaction
     if (!hadFirstInteraction) {
       setHadFirstInteraction(true);
-      
-      // Remove placeholder node if it exists
-      setNodes(current => current.filter(node => node.id !== '1'));
     }
 
     // Add user message to the chat
@@ -120,14 +129,7 @@ const ModelWithAI = () => {
     setLoading(true);
 
     try {
-
-      // Define interface for node properties to assist TypeScript
-      interface NodeProperties {
-        node_type?: string;
-        [key: string]: any;  // Allow for any other properties
-      }
-
-      // Transform nodes to match NodeContext model
+      // Transform nodes to match backend model
       const nodesForBackend = nodes.map(node => {
         // Safely handle properties with proper typing
         const properties = (node.data?.properties || {}) as NodeProperties;
@@ -142,10 +144,10 @@ const ModelWithAI = () => {
         };
       });
 
-      /// Transform edges to backend format
+      // Transform edges to backend format
       const edgesForBackend = edges.map(edge => ({
-        id: edge.id || `edge-${edge.source}-${edge.target}`, // Add the id field
-        type: edge.type || 'default', // Add the type field
+        id: edge.id || `edge-${edge.source}-${edge.target}`,
+        type: edge.type || 'default',
         source: edge.source,
         target: edge.target,
         edge_type: edge.data?.type || 'default',
@@ -161,7 +163,7 @@ const ModelWithAI = () => {
           version, // Include the current version
         },
         compliance_standards: [],
-      })
+      });
 
       console.log("Request Body:", body);
 
@@ -183,15 +185,13 @@ const ModelWithAI = () => {
         setVersion(data.version);
       }
 
-      // processBackendResponse function to handle the response
+      // Process the backend response
       // This will update both the diagram and the chat
       processBackendResponse(data, nodes, edges, setNodes, setEdges, setMessages, hadFirstInteraction);
-
-     
     } catch (error: any) {
       console.error('Failed to fetch from backend:', error);
       
-      // Explicitly type the error message to match Message interface
+      // Add error message
       const errorMsg: Message = {
         id: Date.now(),
         content: `Error: ${error?.message || 'Failed to contact server.'}`,
@@ -205,19 +205,11 @@ const ModelWithAI = () => {
     }
   };
 
-  // Update your Flow component to include the custom edge type
-  // const Flow = () => {
-  //   const reactFlowInstance = useReactFlow();
-  // };
-
   const addShape = (type: 'square' | 'circle' | 'rectangle' | 'diamond' | 'text' | 'cloud' | 'database' | 'server' | 'folder' | 'file' | 'settings' | 'users' | 'lock' | 'network' | 'code') => {
-    let newNode;
-    
-    
-    // const reactFlowInstance = useReactFlow();
-    // const viewportBounds = reactFlowInstance.getViewport();
-    // const centerX = viewportBounds.x + window.innerWidth / 2;
-    // const centerY = viewportBounds.y + window.innerHeight / 2;
+    // Set that we've had first interaction
+    if (!hadFirstInteraction) {
+      setHadFirstInteraction(true);
+    }
 
     
     const position = {
@@ -225,31 +217,21 @@ const ModelWithAI = () => {
       y: 200, 
     };
     
-    // ADD THIS CODE:
-    // Define a consistent node style for all nodes
-    const nodeDefaultStyle = {
-      width: 150,
-      height: 60,
-      border: '2px solid rgb(75, 39, 153)', // Purple border from placeholder
-      borderRadius: '8px',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      background: 'white',
-      padding: '8px',
-      boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)'
-    };
-    
     // Handle basic shapes
     if (['square', 'circle', 'rectangle', 'diamond', 'text'].includes(type)) {
-      newNode = {
-        id: Date.now().toString(),
+      const newNode = {
+        id: `node-${Date.now()}`, // Use more predictable IDs
         type: 'custom',
-        data: { label: type.charAt(0).toUpperCase() + type.slice(1) },
-        properties: {}, // ADDED: properties field here as well for new nodes
+        data: { 
+          label: type.charAt(0).toUpperCase() + type.slice(1),
+          properties: { node_type: type } // Important: set node_type in properties
+        },
         position,
-        style: nodeDefaultStyle
+        style: nodeDefaultStyle,
+        measured: { width: 150, height: 60 }
       };
+      
+      setNodes((nds) => [...nds, newNode]);
     } 
     // Handle architecture tools
     else {
@@ -266,29 +248,28 @@ const ModelWithAI = () => {
         code: Code
       }[type];
       
-      newNode = {
-        id: Date.now().toString(),
+      const newNode = {
+        id: `${type}-${Date.now()}`, // More descriptive ID
         type: 'custom',
         data: { 
-          label: type.charAt(0).toUpperCase() + type.slice(1), // Default label from type
-          icon: IconComponent 
+          label: type.charAt(0).toUpperCase() + type.slice(1),
+          icon: IconComponent,
+          properties: { node_type: type } // Set node_type for backend identification
         },
-        properties: {}, // ADDED: properties field here as well for new nodes
         position,
         style: nodeDefaultStyle,
         measured: { width: 200, height: 70 } 
       };
+      
+      setNodes((nds) => [...nds, newNode]);
     }
-    
-    setNodes((nds) => [...nds, newNode]);
   };
 
-  // Update the node components
+  // Basic node component
   const BasicNode = ({ data }) => (
     <>
-      <Handle type="target" position={Position.Left} />
-      {/* <div className="flex items-center justify-center w-full h-full"> */}
-      <div className="flex flex-col items-center justify-center w-full h-full"> {/* Apply commonStyle here */}
+      <Handle type="target" position={Position.Left} style={{ background: 'rgb(75, 39, 153)' }} />
+      <div className="flex flex-col items-center justify-center w-full h-full"> 
         <NodeResizer
           minWidth={100}
           minHeight={40}
@@ -302,27 +283,11 @@ const ModelWithAI = () => {
         />
         <span className='text-sm'>{data.label}</span>
       </div>
-      <Handle type="source" position={Position.Right} />
+      <Handle type="source" position={Position.Right} style={{ background: 'rgb(75, 39, 153)' }} />
     </>
   );
-
-  // ADD THIS CODE:
-  // Define a consistent node style for all nodes
-  const nodeDefaultStyle = {
-    width: 150,
-    height: 60,
-    border: '2px solid rgb(75, 39, 153)', // Purple border from placeholder
-    borderRadius: '8px',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    background: 'white',
-    padding: '8px',
-    boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)'
-  };
     
-
-  // REPLACE ENTIRE CustomNode COMPONENT WITH:
+  // Custom node with icon
   const CustomNode = ({ data }) => {
     const Icon = data.icon;
     
@@ -596,21 +561,6 @@ const ModelWithAI = () => {
                       >
                         {DOMPurify.sanitize(message.content)}
                       </ReactMarkdown>
-                      {/* <ReactMarkdown
-                        components={{
-                          code({ node, inline, className, children, ...props }) {
-                            return inline ? (
-                              <code className="bg-gray-200 px-1 py-0.5 rounded">{children}</code>
-                            ) : (
-                              <SyntaxHighlighter style={tomorrowNight} language="javascript" {...props}>
-                                {String(children).replace(/\n$/, "")}
-                              </SyntaxHighlighter>
-                            );
-                          },
-                        }}
-                      >
-                        {DOMPurify.sanitize(message.content)}
-                      </ReactMarkdown> */}
                     </div>
                   </div>
                 ))
@@ -650,7 +600,10 @@ const ModelWithAI = () => {
               {loading && (
                 <div className="flex justify-start">
                   <div className="max-w-[80%] p-3 rounded-lg bg-secondary text-foreground">
-                    Processing...
+                    <div className="flex items-center gap-2">
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      <span>Processing...</span>
+                    </div>
                   </div>
                 </div>
               )}
@@ -765,61 +718,6 @@ const ModelWithAI = () => {
           <ReactFlowProvider>
             <Flow />
           </ReactFlowProvider>
-
-          {/* <ReactFlow
-            nodes={nodes}
-            edges={edges}
-            onNodesChange={onNodesChange}
-            onEdgesChange={onEdgesChange}
-            onConnect={onConnect}
-            nodeTypes={{ 
-              basic: BasicNode,
-              custom: CustomNode 
-            }}
-            defaultViewport={{ x: 0, y: 0, zoom: 1.25 }}
-            minZoom={0.2}
-            maxZoom={2}
-            style={{ 
-              width: '100%', 
-              height: '70vh',
-              position: 'absolute',
-              top: 0,
-              right: 0
-            }}
-            proOptions={{ hideAttribution: true }}
-          >
-            <Controls 
-              position= "top-center"
-              style={{ top: 10, left: 10 }}
-            />
-            <MiniMap
-              nodeStrokeColor={(n) => {
-                if (n.type === 'basic') return '#0041d0';
-                if (n.type === 'custom') return '#ff0072';
-                return '#eee';
-              }}
-              nodeColor={(n) => {
-                if (n.type === 'basic') return '#fff';
-                if (n.type === 'custom') return '#fff';
-                return '#fff';
-              }}
-              nodeBorderRadius={2}
-              position="bottom-right"
-              style={{ 
-                backgroundColor: 'white',
-                border: '2px solid #e5e5e5',
-                borderRadius: '8px',
-                margin: 20,
-                width: 200,
-                height: 150,
-                boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)',
-                bottom: 100
-              }}
-              zoomable
-              pannable
-            />
-            <Background />
-          </ReactFlow> */}
         </div>
       </div>
     </div>
