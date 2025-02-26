@@ -54,13 +54,57 @@ export function typeMessage(message, setMessages, callback = () => {}) {
   }, 5); // Speed up typing for better UX
 }
 
-// Parse expert response when no diagram changes are needed
+// Update the parseExpertResponse function to handle both array and string justifications
 export function parseExpertResponse(response) {
   if (response.expert_message) {
     let messageContent = `**Expert Advice:**\n\n${response.expert_message}\n\n`;
     
     if (response.justification) {
-      messageContent += `**Justification:**\n\n${response.justification}`;
+      // Handle justification as either string or array
+      if (Array.isArray(response.justification)) {
+        messageContent += `**Justification:**\n\n${response.justification.join('\n')}\n\n`;
+      } else {
+        messageContent += `**Justification:**\n\n${response.justification}\n\n`;
+      }
+    }
+    
+    // Add security messages if present
+    if (response.security_messages && Array.isArray(response.security_messages)) {
+      messageContent += "**Security Considerations:**\n\n";
+      response.security_messages.forEach(msg => {
+        if (typeof msg === 'object' && msg !== null) {
+          const severity = msg.severity || 'INFO';
+          const message = msg.message || '';
+          messageContent += `**${severity}**: ${message}\n\n`;
+        } else {
+          messageContent += `${msg}\n\n`;
+        }
+      });
+    }
+    
+    // Add recommended next steps if present
+    if (response.recommended_next_steps) {
+      messageContent += "**Recommended Next Steps:**\n\n";
+      if (Array.isArray(response.recommended_next_steps)) {
+        response.recommended_next_steps.forEach(step => {
+          messageContent += `- ${step}\n`;
+        });
+      } else {
+        messageContent += `${response.recommended_next_steps}\n`;
+      }
+      messageContent += "\n";
+    }
+    
+    // Add references if present
+    if (response.references && response.references.length > 0) {
+      messageContent += "**References:**\n\n";
+      if (Array.isArray(response.references)) {
+        response.references.forEach(ref => {
+          messageContent += `- ${ref}\n`;
+        });
+      } else {
+        messageContent += `${response.references}\n`;
+      }
     }
     
     return messageContent;
@@ -120,35 +164,81 @@ interface ReactFlowNode {
   };
 }
 
-// Merge current nodes with backend actions
+
 export function mergeNodes(currentNodes, backendActions) {
-  // Create a map of existing nodes by ID for efficient lookup
-  // Explicitly type the map to avoid TypeScript errors
-  const nodesMap = new Map<string, ReactFlowNode>(
-    currentNodes.map(n => [n.id, n as ReactFlowNode])
-  );
+  console.log("Current nodes BEFORE merging:", currentNodes);
+  console.log("Backend actions for nodes:", backendActions);
+  
+  // DEFENSIVE: If we received nothing meaningful, just return current nodes
+  if (!backendActions || (Array.isArray(backendActions) && backendActions.length === 0)) {
+    return currentNodes;
+  }
+  
+  // First, preserve all current nodes in a map
+  const nodesMap = new Map<string, ReactFlowNode>();
+  currentNodes.forEach(node => {
+    if (node.id !== '1') { // Skip placeholder
+      nodesMap.set(node.id, {...node}); // Clone to avoid reference issues
+    }
+  });
+  
+  // Normalize backendActions to an array no matter what format it comes in
+  let actionsArray = [];
+  if (Array.isArray(backendActions)) {
+    actionsArray = backendActions;
+  } else if (backendActions.nodes && Array.isArray(backendActions.nodes)) {
+    actionsArray = backendActions.nodes;
+  } else if (backendActions.actions && Array.isArray(backendActions.actions)) {
+    actionsArray = backendActions.actions;
+  } else if (typeof backendActions === 'object') {
+    actionsArray = [backendActions]; // Single action
+  }
+  
+  // Track which node types we see to detect potential replacements
+  const nodeTypesAdded = new Set();
   
   // Process each action from the backend
-  backendActions.forEach((action) => {
+  actionsArray.forEach((action) => {
     // Skip null or undefined actions
     if (!action) return;
     
-    console.log("Processing action:", action);
+    console.log("Processing node action:", action);
     
+    // CRITICAL: If there's no node_id, generate one to avoid conflicts with existing nodes
+    if (!action.node_id) {
+      const nodeType = action.node_type || 'node';
+      action.node_id = `${nodeType}-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+      console.log(`Generated new node ID: ${action.node_id} for missing ID`);
+    }
+    
+    // Track this node type to detect potential replacements
     const normalizedNodeType = normalizeNodeType(action.node_type);
+    nodeTypesAdded.add(normalizedNodeType);
+    
     const nodeConfig = nodeTypesConfig[normalizedNodeType] || {};
     
+    // Handle different action types
     switch (action.action) {
       case 'add':
-        // Skip if node already exists (prevent duplicates)
+        // CRITICAL FIX: Check if we're trying to add a node that would overwrite an existing one
+        // with the same ID (might happen if backend reuses IDs)
         if (nodesMap.has(action.node_id)) {
-          console.log(`Node ${action.node_id} already exists, updating instead`);
-          // Update existing node if it already exists
-          const existingNode = nodesMap.get(action.node_id);
-          existingNode.data = buildNodeData(action, nodeConfig);
-          existingNode.position = convertPosition(action.position);
+          console.log(`Node ID conflict: ${action.node_id} already exists`);
+          // Generate a new unique ID instead of overwriting
+          const newId = `${action.node_id}-${Date.now()}`;
+          console.log(`Generated new node ID: ${newId} to avoid conflict`);
+          
+          // Create and add new node with the new ID
+          const newNode = {
+            id: newId,
+            type: 'custom', // Using custom node type for consistent rendering
+            data: buildNodeData(action, nodeConfig),
+            position: convertPosition(action.position),
+            measured: { width: 150, height: 60 }
+          };
+          nodesMap.set(newId, newNode);
         } else {
-          // Create and add new node
+          // Normal case - add new node with the given ID
           const newNode = {
             id: action.node_id,
             type: 'custom', // Using custom node type for consistent rendering
@@ -161,10 +251,11 @@ export function mergeNodes(currentNodes, backendActions) {
         break;
         
       case 'modify':
+        // Only modify if the node exists - don't create new nodes with modify actions
         if (nodesMap.has(action.node_id)) {
           const nodeToModify = nodesMap.get(action.node_id);
           
-          // Update node while preserving any local state not handled by backend
+          // Update node properties while preserving any local state
           nodeToModify.data = {
             ...nodeToModify.data,
             ...buildNodeData(action, nodeConfig)
@@ -174,8 +265,21 @@ export function mergeNodes(currentNodes, backendActions) {
           if (action.position) {
             nodeToModify.position = convertPosition(action.position);
           }
+          
+          nodesMap.set(action.node_id, nodeToModify);
         } else {
-          console.warn(`Tried to modify non-existent node: ${action.node_id}`);
+          // DEFENSIVE: If backend is trying to "modify" a node that doesn't exist,
+          // treat it as an "add" instead (this could be the source of the problem)
+          console.warn(`Backend tried to modify non-existent node: ${action.node_id} - treating as add`);
+          
+          const newNode = {
+            id: action.node_id,
+            type: 'custom',
+            data: buildNodeData(action, nodeConfig),
+            position: convertPosition(action.position),
+            measured: { width: 150, height: 60 }
+          };
+          nodesMap.set(action.node_id, newNode);
         }
         break;
         
@@ -183,11 +287,29 @@ export function mergeNodes(currentNodes, backendActions) {
       case 'delete':
         nodesMap.delete(action.node_id);
         break;
+        
+      // DEFENSIVE: If no action specified, assume it's an add
+      default:
+        if (!nodesMap.has(action.node_id)) {
+          console.log(`Node with ID ${action.node_id} and no action specified - assuming add`);
+          const newNode = {
+            id: action.node_id,
+            type: 'custom',
+            data: buildNodeData(action, nodeConfig),
+            position: convertPosition(action.position),
+            measured: { width: 150, height: 60 }
+          };
+          nodesMap.set(action.node_id, newNode);
+        }
+        break;
     }
   });
   
-  return Array.from(nodesMap.values()).filter(node => node.id !== '1');
+  const resultNodes = Array.from(nodesMap.values()).filter(node => node.id !== '1');
+  console.log("Nodes AFTER merging:", resultNodes);
+  return resultNodes;
 }
+
 
 // Define edge type for TypeScript
 interface ReactFlowEdge {
@@ -199,16 +321,23 @@ interface ReactFlowEdge {
   data?: any;
 }
 
-// Fixes to properly handle edges from backend responses
+// IMPROVED: Merged edge handling for more robustness
 export function mergeEdges(currentEdges, backendActions) {
-  // Create a map of existing edges by ID with explicit typing
-  const edgesMap = new Map<string, ReactFlowEdge>(
-    currentEdges.map(e => [e.id, e as ReactFlowEdge])
-  );
+  console.log("Current edges before merging:", currentEdges);
+  console.log("Processing edges from backend:", backendActions);
   
-  console.log("Processing edges from actions:", backendActions);
+  // Create a map of existing edges by ID
+  const edgesMap = new Map<string, ReactFlowEdge>();
+  currentEdges.forEach(edge => {
+    edgesMap.set(edge.id, {...edge}); // Clone to avoid reference issues
+  });
   
-  // First, check if there are direct edges in the response and process them
+  // DEFENSIVE: If we received nothing meaningful, just return current edges
+  if (!backendActions) {
+    return currentEdges;
+  }
+  
+  // Process direct edges array if it exists
   if (backendActions.edges && Array.isArray(backendActions.edges)) {
     console.log("Found direct edges array:", backendActions.edges);
     
@@ -222,7 +351,7 @@ export function mergeEdges(currentEdges, backendActions) {
       // Create a unique ID for the edge if one doesn't exist
       const edgeId = edge.id || `edge-${edge.source}-${edge.target}`;
       
-      console.log("Adding edge:", edgeId, edge);
+      console.log("Adding/updating edge:", edgeId, edge);
       
       // Create the edge in React Flow format
       const newEdge: ReactFlowEdge = {
@@ -239,16 +368,23 @@ export function mergeEdges(currentEdges, backendActions) {
       
       edgesMap.set(edgeId, newEdge);
     });
-    
-    // Return early if we've processed direct edges
-    return Array.from(edgesMap.values());
   }
   
-  // If no direct edges, continue with processing actions
-  // First pass: process edge additions and modifications
-  backendActions.forEach((action) => {
-    // Skip null or undefined actions
+  // Normalize actions to array
+  let actionsArray = [];
+  if (Array.isArray(backendActions)) {
+    actionsArray = backendActions;
+  } else if (backendActions.actions && Array.isArray(backendActions.actions)) {
+    actionsArray = backendActions.actions;
+  } else if (typeof backendActions === 'object' && !backendActions.edges) {
+    actionsArray = [backendActions]; // Single action
+  }
+  
+  // Process edge actions
+  actionsArray.forEach((action) => {
     if (!action) return;
+    
+    console.log("Processing edge action:", action);
     
     // Handle connection actions
     if (action.action === 'connect' || 
@@ -311,12 +447,17 @@ export function mergeEdges(currentEdges, backendActions) {
     }
   });
   
-  return Array.from(edgesMap.values());
+  const resultEdges = Array.from(edgesMap.values());
+  console.log("Edges AFTER merging:", resultEdges);
+  return resultEdges;
 }
+
   
 
-// Handles both architecture and expert responses
+// IMPROVED: Process backend response with better handling of different formats
 export function processBackendResponse(data, nodes, edges, setNodes, setEdges, setMessages, hadFirstInteraction) {
+  console.log("Processing backend response:", data);
+  
   // Check if it's an expert response (no diagram changes)
   if (data.expert_message) {
     const messageContent = parseExpertResponse(data);
@@ -335,65 +476,29 @@ export function processBackendResponse(data, nodes, edges, setNodes, setEdges, s
     return;
   }
   
+  // CRITICAL FIX: Always start with current nodes and edges,
+  // never replace them entirely
+  let updatedNodes = [...nodes];
+  let updatedEdges = [...edges];
+  
   // Process diagram updates with nodes first
-  if (data.nodes) {
-    console.log("Merging nodes from response:", data.nodes);
-    const mergedNodes = mergeNodes(nodes, data.nodes);
-    // Filter out placeholder if we've had first interaction
-    if (hadFirstInteraction) {
-      setNodes(mergedNodes.filter(node => node.id !== '1'));
-    } else {
-      setNodes(mergedNodes.filter(node => node.id !== '1'));
-    }
-  } else if (data.actions) {
-    console.log("Merging nodes from actions:", data.actions);
-    const mergedNodes = mergeNodes(nodes, data.actions);
-    setNodes(mergedNodes.filter(node => node.id !== '1'));
+  if (data.nodes || data.actions) {
+    updatedNodes = mergeNodes(nodes, data);
   }
   
-  // Process edges separately
-  if (data.edges && Array.isArray(data.edges)) {
-    console.log("Processing direct edges array:", data.edges);
-    // Get existing edge IDs for comparison
-    const existingEdgeIds = new Set(edges.map(e => e.id));
-    
-    // Create new edges in React Flow format
-    const newEdges = data.edges.map(edge => {
-      const id = edge.id || `edge-${edge.source}-${edge.target}`;
-      return {
-        id,
-        source: edge.source,
-        target: edge.target,
-        type: 'custom', // Use our custom edge type
-        label: edge.label || '',
-        data: {
-          ...edge,
-          edge_type: edge.edge_type || 'default'
-        }
-      };
-    });
-    
-    // Keep existing edges and add new ones
-    const updatedEdges = [
-      ...edges.filter(e => !newEdges.some(ne => ne.id === e.id)),
-      ...newEdges
-    ];
-    
-    console.log("Setting edges to:", updatedEdges);
-    setEdges(updatedEdges);
-  } else if (data.actions) {
-    // Use the updated mergeEdges function for actions
-    console.log("Merging edges from actions:", data.actions);
-    const updatedEdges = mergeEdges(edges, data.actions);
-    // Special case: if the response has both 'actions' and 'edges' properties
-    if (data.edges && Array.isArray(data.edges)) {
-      console.log("Also processing edges array within actions:", data.edges);
-      const withDirectEdges = mergeEdges(updatedEdges, { edges: data.edges });
-      setEdges(withDirectEdges);
-    } else {
-      setEdges(updatedEdges);
-    }
+  // Filter out placeholder if we've had first interaction
+  if (hadFirstInteraction) {
+    updatedNodes = updatedNodes.filter(node => node.id !== '1');
   }
+  
+  // Process edges
+  if (data.edges || data.actions) {
+    updatedEdges = mergeEdges(edges, data);
+  }
+  
+  // Update state with the merged nodes and edges
+  setNodes(updatedNodes);
+  setEdges(updatedEdges);
   
   // Prepare explanation message
   let assistantMessage = '';
