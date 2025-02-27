@@ -32,6 +32,7 @@ import { Message, ToolType } from '@/utils/types';
 import { typeMessage } from '@/utils/reponseUtils';
 // import { CustomControls } from '@/components/ui/custom-controls';
 import { FlowControls } from '@/components/ui/flow-controls';
+import { useParams } from 'react-router-dom';
 
 const initialNodes =  [
   {
@@ -62,6 +63,7 @@ const nodeDefaultStyle = {
 };
 
 const ModelWithAI = () => {
+  const { projectId } = useParams(); // Get projectId from URL params
   const [userInput, setUserInput] = useState('');
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
@@ -78,13 +80,61 @@ const ModelWithAI = () => {
   const [generatingReport, setGeneratingReport] = useState(false);
 
 
+  // Define types for node and edge properties to fix TypeScript errors
+  interface NodeProperties {
+    node_type?: string;
+    [key: string]: any;  // Allow for any other properties
+  }
+  
+  interface EdgeProperties {
+    edge_type?: string;
+    type?: string;
+    [key: string]: any;
+  }
+
+  // NEW: Add session state for better context management
+  const [sessionState, setSessionState] = useState({
+  projectId: projectId || '',
+  currentVersion: 1,
+  conversationHistory: [] as Message[],
+  diagramContext: {
+    nodes: [],
+    edges: []
+  }
+  });
+
+  // NEW: Update session state whenever nodes, edges, or messages change
+  useEffect(() => {
+    setSessionState(prevState => ({
+      ...prevState,
+      currentVersion: version,
+      conversationHistory: messages,
+      diagramContext: {
+        nodes: nodes.map(node => ({
+          id: node.id,
+          type: ((node.data?.properties as NodeProperties | undefined)?.node_type) || node.type,
+          properties: node.data?.properties || {},
+          position: [node.position.x, node.position.y]
+        })),
+        edges: edges.map(edge => ({
+          id: edge.id,
+          source: edge.source,
+          target: edge.target,
+          type: ((edge.data as EdgeProperties | undefined)?.edge_type) || edge.type,
+          properties: edge.data?.properties || {}
+        }))
+      }
+    }));
+  }, [nodes, edges, messages, version, projectId]);
+
+
   // Initial welcome message after component mounts
   useEffect(() => {
     // Only add welcome message if no messages exist yet
     if (messages.length === 0) {
       const welcomeMessage: Message = {
         id: Date.now(),
-        content: "I'm your secure archietcture design assistant. Describe what you'd like to design, or use the shape tools to get started.",
+        content: "Hey! I'm your secure archietcture design assistant. Describe what you'd like to design, or use the shape tools to get started.",
         type: 'assistant',
         timestamp: new Date()
       };
@@ -100,11 +150,6 @@ const ModelWithAI = () => {
       data: { type: 'default' }
     }, eds));
   }, []);
-
-  interface NodeProperties {
-    node_type?: string;
-    [key: string]: any;  // Allow for any other properties
-  }
 
   // UPDATED: handleSend to preserve existing nodes and edges
   const handleSend = async () => {
@@ -129,48 +174,43 @@ const ModelWithAI = () => {
     setLoading(true);
 
     try {
-      // Transform nodes to match backend model
-      const nodesForBackend = nodes.map(node => {
-        // Safely handle properties with proper typing
-        const properties = (node.data?.properties || {}) as NodeProperties;
-        
-        return {
-          id: node.id,
-          type: node.type === 'custom' && properties.node_type 
-            ? properties.node_type 
-            : (node.data?.label || node.type),
-          properties: properties,
-          position: [node.position.x, node.position.y],
-        };
-      });
-
-      // Transform edges to backend format
-      const edgesForBackend = edges.map(edge => ({
-        id: edge.id || `edge-${edge.source}-${edge.target}`,
-        type: edge.type || 'default',
-        source: edge.source,
-        target: edge.target,
-        edge_type: edge.data?.type || 'default',
-        label: edge.label || '',
-        properties: edge.data?.properties || {}
-      }));
-
-      const body = JSON.stringify({
+      // NEW: Use sessionState for more consistent context representation
+      const requestPayload = {
         user_input: userInput,
         diagram_context: {
-          nodes: nodesForBackend,
-          edges: edgesForBackend,
-          version, // Include the current version
+          nodes: nodes.map(node => ({
+            id: node.id,
+            type: ((node.data?.properties as NodeProperties | undefined)?.node_type) || node.type,
+            properties: node.data?.properties || {},
+            position: [node.position.x, node.position.y]
+          })),
+          edges: edges.map(edge => ({
+            id: edge.id,
+            source: edge.source,
+            target: edge.target,
+            type: ((edge.data as EdgeProperties | undefined)?.edge_type) || edge.type,
+            properties: edge.data?.properties || {}
+          })),
+          version
         },
+        // NEW: Include conversation history for better context
+        conversation_history: messages
+          .filter(msg => msg.type !== 'assistant')
+          .map(msg => ({
+            role: msg.type,
+            content: msg.content,
+            timestamp: msg.timestamp
+          })),
+        project_id: projectId,
         compliance_standards: [],
-      });
+      };
 
-      console.log("Request Body:", body);
+      console.log("Request Payload:", requestPayload);
 
       const response = await fetch('http://localhost:8000/v1/routes/design', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: body,
+        body: JSON.stringify(requestPayload),
       });
   
       if (!response.ok) {
@@ -186,24 +226,102 @@ const ModelWithAI = () => {
       }
 
       // Process the backend response
-      // This will update both the diagram and the chat
       processBackendResponse(data, nodes, edges, setNodes, setEdges, setMessages, hadFirstInteraction);
     } catch (error: any) {
       console.error('Failed to fetch from backend:', error);
       
-      // Add error message
-      const errorMsg: Message = {
-        id: Date.now(),
-        content: `Error: ${error?.message || 'Failed to contact server.'}`,
-        type: 'assistant' as const,
-        timestamp: new Date(),
-      };
+    // NEW: Enhanced error message with recovery suggestion
+    const errorMsg: Message = {
+      id: Date.now(),
+      content: `Error: ${error?.message || 'Failed to contact server.'}\n\nTry simplifying your request or refreshing the page if the problem persists.`,
+      type: 'assistant' as const,
+      timestamp: new Date(),
+    };
       
       setMessages((prev) => [...prev, errorMsg]);
     } finally {
       setLoading(false);
     }
   };
+
+  // NEW: Function to generate a report
+  const handleGenerateReport = async () => {
+    if (nodes.length === 0) {
+      // Don't generate a report for an empty diagram
+      const errorMsg: Message = {
+        id: Date.now(),
+        content: "Please design an architecture first before generating a report.",
+        type: 'assistant',
+        timestamp: new Date()
+      };
+      setMessages(prev => [...prev, errorMsg]);
+      return;
+    }
+
+    setGeneratingReport(true);
+    try {
+
+      // Format nodes and edges with proper type casting for the report
+      const formattedDiagramContext = {
+        nodes: nodes.map(node => ({
+          id: node.id,
+          type: ((node.data?.properties as NodeProperties | undefined)?.node_type) || node.type,
+          properties: node.data?.properties || {},
+          position: [node.position.x, node.position.y]
+        })),
+        edges: edges.map(edge => ({
+          id: edge.id,
+          source: edge.source,
+          target: edge.target,
+          type: ((edge.data as EdgeProperties | undefined)?.edge_type) || edge.type,
+          properties: edge.data?.properties || {}
+        }))
+      };
+      // You'll implement the report generation API call here
+      const reportRequest = {
+        project_id: projectId,
+        diagram_context: sessionState.diagramContext,
+        conversation_history: sessionState.conversationHistory,
+        format: 'markdown'
+      };
+      
+      // Placeholder for the actual API call
+      // const reportResponse = await fetch('http://localhost:8000/api/routes/generate_report', {
+      //   method: 'POST',
+      //   headers: { 'Content-Type': 'application/json' },
+      //   body: JSON.stringify(reportRequest)
+      // });
+      // For now, just redirect to a report page
+      
+      // Navigate to report page (you'll need to implement this)
+      // history.push(`/projects/${projectId}/report`);
+      
+      console.log("Report generation requested:", reportRequest);
+      
+      // Inform the user (temporary until navigation is implemented)
+      const infoMsg: Message = {
+        id: Date.now(),
+        content: "This feature will be available soon!",
+        type: 'assistant',
+        timestamp: new Date()
+      };
+      setMessages(prev => [...prev, infoMsg]);
+      
+    } catch (error: any) {
+      console.error('Failed to generate report:', error);
+      const errorMsg: Message = {
+        id: Date.now(),
+        content: `Error generating report: ${error?.message || 'Unknown error'}`,
+        type: 'assistant',
+        timestamp: new Date()
+      };
+      setMessages(prev => [...prev, errorMsg]);
+    } finally {
+      setGeneratingReport(false);
+    }
+  };
+
+  
 
   const addShape = (type: 'square' | 'circle' | 'rectangle' | 'diamond' | 'text' | 'cloud' | 'database' | 'server' | 'folder' | 'file' | 'settings' | 'users' | 'lock' | 'network' | 'code') => {
     // Set that we've had first interaction
@@ -212,9 +330,11 @@ const ModelWithAI = () => {
     }
 
     
+    // NEW: Better positioning calculation to avoid stacking
+    const nodeCount = nodes.length;
     const position = {
-      x: 500, 
-      y: 200, 
+      x: 500 + (nodeCount % 3) * 50, 
+      y: 200 + Math.floor(nodeCount / 3) * 50,
     };
     
     // Handle basic shapes
@@ -567,7 +687,9 @@ const ModelWithAI = () => {
               ) : (
                 // History view with same chat styling
                 <div className="space-y-4">
-                  {messages.map((message) => (
+                  {messages
+                    .filter(message => message.type === "user")
+                    .map((message) => (
                     <div key={message.id}>
                       <div className="text-sm text-muted-foreground mb-1">
                         {new Date(message.timestamp).toLocaleString()}
@@ -624,6 +746,21 @@ const ModelWithAI = () => {
                 className="w-full min-h-[60px] pr-[100px] resize-none bg-secondary rounded-lg"
               />
               <div className="absolute bottom-2 right-2 flex items-center gap-1">
+                {/* Report Generation Button */}
+                <Button 
+                  size="icon" 
+                  variant="ghost" 
+                  onClick={handleGenerateReport}
+                  disabled={loading || generatingReport || nodes.length === 0}
+                  className="h-8 w-8 text-muted-foreground hover:text-foreground"
+                  title="Generate Security Report"
+                >
+                  {generatingReport ? (
+                    <Loader2 className="h-5 w-5 animate-spin" />
+                  ) : (
+                    <FileText className="h-5 w-5" />
+                  )}
+                </Button>
                 <Button 
                   size="icon" 
                   variant="ghost" 
