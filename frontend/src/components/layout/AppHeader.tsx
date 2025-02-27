@@ -1,11 +1,12 @@
-
 import { useState } from 'react';
 import { Route, Menu } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Link } from 'react-router-dom';
+import CreateProjectModel from "@/pages/CreateProjectModel"; // Import CreateProjectModel
 
 const AppHeader = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isDialogOpen, setIsDialogOpen] = useState(false); // State to control dialog visibility
 
   return (
     <header className="fixed top-0 left-0 right-0 z-50 glass-card px-6 py-4">
@@ -29,11 +30,18 @@ const AppHeader = () => {
           <a href="/assessments" className="text-sm font-medium hover:text-primary transition-colors">
             SOC 2
           </a>
-          <Link to="/create-project">
+          {/* <Link to="/create-project">
             <Button variant="default" size="sm">
               Create Project
             </Button>
-          </Link>
+          </Link> */}
+          <Button
+            variant="default"
+            size="sm"
+            onClick={() => setIsDialogOpen(true)} // Open the dialog
+          >
+            Create New Project
+          </Button>
         </nav>
 
         <Button
@@ -58,14 +66,31 @@ const AppHeader = () => {
             <a href="/assessments" className="text-sm font-medium hover:text-primary transition-colors">
               SOC 2
             </a>
-            <Link to="/create-project">
+            {/* <Link to="/create-project">
               <Button variant="default" size="sm" className="w-full">
                 Create Project
               </Button>
-            </Link>
+            </Link> */}
+            <Button
+              variant="default"
+              size="sm"
+              className="w-full"
+              onClick={() => setIsDialogOpen(true)} // Open the dialog
+            >
+              Create New Project
+            </Button>
           </nav>
         </div>
       )}
+
+      <CreateProjectModel
+        open={isDialogOpen}
+        onOpenChange={setIsDialogOpen}
+        addProject={(project) => {
+          // Add your addProject logic here
+          console.log('Project added:', project);
+        }}
+      />
     </header>
   );
 };
