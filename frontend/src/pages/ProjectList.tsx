@@ -100,6 +100,7 @@ export default function ProjectList() {
   useEffect(() => {
     fetchProjects();
   }, []);
+  
 
   // Function to fetch projects from API
   const fetchProjects = async () => {
@@ -124,11 +125,17 @@ export default function ProjectList() {
         priority: item.priority || "0-None",
         modelType: item.modelType || "Model With AI",
         description: item.description || "",
-        projectNumber: item.projectNumber || `P${String(Math.floor(Math.random() * 1000)).padStart(3, '0')}`,
+        //projectNumber: item.projectNumber || `P${String(Math.floor(Math.random() * 1000)).padStart(3, '0')}`,
+        projectNumber:item.project_number,
         tags: item.tags || "",
+        version: item.version || "1.0"
+
       }));
       
-      setProjects(formattedProjects);
+       setProjects(formattedProjects);
+      // Fallback to mock data
+      console.log("Projects fetched:", data);
+      console.log("Formatted projects:", formattedProjects);
       setError("");
     } catch (err) {
       console.error("Error fetching projects:", err);
@@ -182,19 +189,51 @@ export default function ProjectList() {
     }
   };
 
+  // const handleStatusChange = async (id: string, newStatus: "None" | "Started" | "In Progress" | "Completed") => {
+  //   try {
+  //     // Find the project to update
+  //     const projectToUpdate = projects.find(p => p.id === id);
+  //     if (!projectToUpdate) return;
+      
+  //     // Send update to API
+  //     const response = await fetch(`http://localhost:8000/v1/routes/projects/${id}`, {
+  //       method: 'PUT',
+  //       headers: {
+  //         'Content-Type': 'application/json',
+  //       },
+  //       body: JSON.stringify({ ...projectToUpdate, status: newStatus }),
+  //     });
+      
+  //     if (!response.ok) {
+  //       throw new Error(`API error: ${response.status}`);
+  //     }
+      
+  //     // Update state locally
+  //     setProjects((prevProjects) =>
+  //       prevProjects.map((project) =>
+  //         project.id === id ? { ...project, status: newStatus } : project
+  //       )
+  //     );
+  //   } catch (err) {
+  //     console.error("Error updating status:", err);
+  //     // Still update UI optimistically
+  //     setProjects((prevProjects) =>
+  //       prevProjects.map((project) =>
+  //         project.id === id ? { ...project, status: newStatus } : project
+  //       )
+  //     );
+  //   }
+  // };
+  // Update handleStatusChange function
   const handleStatusChange = async (id: string, newStatus: "None" | "Started" | "In Progress" | "Completed") => {
     try {
-      // Find the project to update
-      const projectToUpdate = projects.find(p => p.id === id);
-      if (!projectToUpdate) return;
-      
       // Send update to API
       const response = await fetch(`http://localhost:8000/v1/routes/projects/${id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ ...projectToUpdate, status: newStatus }),
+        body: JSON.stringify({ status: newStatus }),
       });
       
       if (!response.ok) {
@@ -216,7 +255,7 @@ export default function ProjectList() {
         )
       );
     }
-  };
+};
 
   const handleModelTypeChange = async (id: string, newModelType: string) => {
     try {
