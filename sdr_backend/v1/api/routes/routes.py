@@ -13,6 +13,7 @@ from v1.api.routes.model_with_ai.reports.generate_report import router as genera
 from v1.api.routes.model_with_ai.reports.update_report import router as update_report_router
 from v1.api.routes.model_with_ai.reports.get_report import router as get_report_router
 from v1.api.routes.model_with_ai.reports.get_report_versions import router as get_report_versions_router
+from v1.api.routes.projects.projects import router as project_router
 router = APIRouter()
 
 # Legacy Routes
@@ -29,3 +30,4 @@ router.include_router(generate_report_router, tags=["model_with_ai - generate_re
 router.include_router(update_report_router, tags=["model_with_ai - update_report_router"])
 router.include_router(get_report_router, tags=["model_with_ai - get_report_router"])
 router.include_router(get_report_versions_router, tags=["model_with_ai - get_report_versions_router"])
+router.include_router(project_router, tags=["Projects"])
