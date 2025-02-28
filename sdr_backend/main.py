@@ -39,5 +39,6 @@ app.add_middleware(
 # Include our API routes under the /api prefix
 app.include_router(api_router, prefix="/v1/routes")
 
+
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)
