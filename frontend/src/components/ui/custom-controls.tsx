@@ -101,7 +101,7 @@ const CustomControls = ({ position = 'top-left', style = {}, onGenerateReport } 
   const positionStyles = {
     position: 'absolute',
     display: 'flex',
-    flexDirection: 'row',
+    flexDirection: 'column',
     gap: '8px',
     padding: '4px',
     transform: 'none',
@@ -139,7 +139,7 @@ const CustomControls = ({ position = 'top-left', style = {}, onGenerateReport } 
             <path d="M27 5L5 27M27 27L5 5" stroke="currentColor" strokeWidth="3" fill="none" />
           </svg>
         </div>
-        <TooltipProvider>
+        {/* <TooltipProvider>
           <Tooltip>
             <TooltipTrigger asChild>
               <div
@@ -158,7 +158,7 @@ const CustomControls = ({ position = 'top-left', style = {}, onGenerateReport } 
               <p>Generate Report</p>
             </TooltipContent>
           </Tooltip>
-        </TooltipProvider>
+        </TooltipProvider> */}
       </div>
 
       <Dialog open={showReportDialog} onOpenChange={setShowReportDialog}>
