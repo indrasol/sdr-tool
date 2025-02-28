@@ -25,14 +25,12 @@ import {
   EdgeLabelRenderer
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
-import { mergeNodes, mergeEdges, processBackendResponse } from '@/utils/reponseUtils';
-import { nodeTypesConfig } from '@/utils/nodeTypesConfig';
+import {  processBackendResponse } from '@/utils/reponseUtils';
 import { tomorrow as tomorrowNight } from 'react-syntax-highlighter/dist/esm/styles/prism';
-import { Message, ToolType } from '@/utils/types';
-import { typeMessage } from '@/utils/reponseUtils';
-// import { CustomControls } from '@/components/ui/custom-controls';
+import { Message } from '@/utils/types';
 import { FlowControls } from '@/components/ui/flow-controls';
 import { useParams } from 'react-router-dom';
+import { nodeDefaultStyle } from '@/components/ui/nodeStyles';
 
 const initialNodes =  [
   {
@@ -49,18 +47,18 @@ const initialNodes =  [
 
 // ADD THIS CODE:
 // Define a consistent node style for all nodes
-const nodeDefaultStyle = {
-  width: 150,
-  height: 60,
-  border: '2px solid rgb(75, 39, 153)', // Purple border from placeholder
-  borderRadius: '8px',
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'center',
-  background: 'white',
-  padding: '8px',
-  boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)'
-};
+// const nodeDefaultStyle = {
+//   width: 150,
+//   height: 60,
+//   border: '2px solid rgb(75, 39, 153)', // Purple border from placeholder
+//   borderRadius: '8px',
+//   display: 'flex',
+//   alignItems: 'center',
+//   justifyContent: 'center',
+//   background: 'white',
+//   padding: '8px',
+//   boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)'
+// };
 
 const ModelWithAI = () => {
   const { projectId } = useParams(); // Get projectId from URL params
@@ -277,7 +275,7 @@ const ModelWithAI = () => {
           properties: edge.data?.properties || {}
         }))
       };
-      // You'll implement the report generation API call here
+      // Implement the report generation API call here
       const reportRequest = {
         project_id: projectId,
         diagram_context: sessionState.diagramContext,
