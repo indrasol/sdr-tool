@@ -10,6 +10,7 @@ class User(Base):
     __tablename__ = "users"
     id = Column(Integer, primary_key=True, index=True)
     username = Column(String, unique=True, index=True)
+    email = Column(String, unique=True, index=True)
     hashed_password = Column(String)
     projects = relationship("Project", back_populates="user")
 
@@ -21,3 +22,11 @@ class Project(Base):
     user = relationship("User", back_populates="projects")
     conversation_history = Column(JSON, default=[])
     diagram_state = Column(JSON, default={"nodes": [], "edges": []})
+
+
+class Tenant(Base):
+    __tablename__ = "tenants"
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"))
+    name = Column(String, nullable=False)
+    user = relationship("User", back_populates="tenants")

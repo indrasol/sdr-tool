@@ -14,7 +14,7 @@ from v1.api.routes.register.me import router as me_router
 
 # Model With AI -  Design
 from v1.api.routes.model_with_ai.design import router as design_router
-
+from v1.api.routes.model_with_ai.dummy_design import router as dummy_design_router
 # Model With AI - Reports
 from v1.api.routes.model_with_ai.reports.generate_report import router as generate_report_router
 from v1.api.routes.model_with_ai.reports.update_report import router as update_report_router
@@ -47,7 +47,7 @@ router.include_router(login_router, tags=["Register - login_router"])
 router.include_router(me_router, tags=["Register - me_router"])
 # Model With AI - Design
 router.include_router(design_router, tags=["model_with_ai - design_router"])
-
+router.include_router(dummy_design_router, tags=["model_with_ai - dummy_design_router"])
 
 # Model With AI - Reports
 router.include_router(generate_report_router, tags=["model_with_ai - generate_report_router"])
