@@ -1,414 +1,232 @@
 from datetime import datetime
-from fastapi import HTTPException
-from pydantic import BaseModel
-from models.pydantic_models import ArchitectureResponse, DiagramContext, ExpertResponse
+from typing import Dict, Any, Union, Optional
 from fastapi.responses import JSONResponse
-from services.prompt_handler import build_prompt
-from services.security_rules_handler import apply_security_rules
+from pydantic import ValidationError as PydanticValidationError
+from core.llm.llm_gateway import llm_gateway  # Assuming this exists for LLM interaction
+from services.exception_handler import LLMError  # Custom exception class
+from utils.logger import log_info  # Logging utility
+from services.validation_handler import ValidationHandler  # Updated below
+from models.new_pydantic_models import (
+    ArchitectureResponse,
+    ExpertResponse,
+    ErrorResponse,
+    ClarificationResponse,
+    ResponseType,
+    Status,
+)
 import json
-from core.llm_gateway import llm_gateway
-from services.exception_handler import LLMError, RateLimitError, ValidationError
-from utils.logger import log_info
-from services.exception_handler import SecurityValidationError
-from typing import Union, Dict, Any, Optional
-from services.validation_handler import ValidationHandler
-import logging
+from core.cache.session_manager import SessionManager
+from services.utils_handler import apply_diagram_changes
 
 
-async def process_and_validate_llm_response(llm_response: Dict[str, Any], context: Optional[DiagramContext] = None) -> Union[ArchitectureResponse, ExpertResponse]:
-    """
-        Processes and validates the LLM response against the required schema.
-        Includes security validation for architecture responses.
-        
+
+
+class ResponseHandler:
+    def __init__(self):
+        self.validator = ValidationHandler()
+        self.session_manager = SessionManager()
+
+    async def process_and_validate_llm_response(
+        self,
+        processed_request,
+        llm_response: Dict[str, Any],
+        session_id: str,
+        intent_type : str
+    ) -> Union[ArchitectureResponse, ExpertResponse, ErrorResponse, ClarificationResponse]:
+        try:
+            # Fetch current session data for context (e.g., diagram state)
+            session_data = self.session_manager.get_session(session_id) or {}
+            current_diagram = session_data.get("diagram_state", {"nodes": [], "edges": []})
+
+            # Convert raw response to appropriate Pydantic model
+            if intent_type == "diagram_modification":
+                response_model =  self._handle_architecture_response(llm_response, current_diagram)
+                # Apply changes to get the updated diagram state
+                updated_diagram = await apply_diagram_changes(current_diagram, response_model)
+            elif intent_type in ["expert_advice" , "diagram_query"]:
+                response_model =  self._handle_expert_response(llm_response)
+                updated_diagram = None
+            else:
+                raise ValueError(f"Unsupported intent_type: {intent_type}")
+
+            # Update session only after successful validation
+            self.session_manager.update_session(
+                session_id,
+                query=processed_request.get('query', ''),
+                response=response_model.dict() if hasattr(response_model, 'dict') else response_model,
+                diagram_state=updated_diagram
+            )
+
+        except (ValueError, KeyError, PydanticValidationError) as e:
+            log_info(f"Response processing failed: {str(e)}")
+            return self._create_fallback_response(session_id, Status.error, str(e))
+
+    async def _handle_architecture_response(
+        self, raw_response: Dict[str, Any], current_diagram: Dict[str, list]
+    ) -> ArchitectureResponse:
+        preprocessed = self._preprocess_architecture_response(raw_response)
+        try:
+            response = ArchitectureResponse(**preprocessed)
+            # Validate with current diagram state
+            await self.validator.validate_architecture_response(response, current_diagram)
+            return response
+        except PydanticValidationError as e:
+            log_info(f"ArchitectureResponse validation failed: {str(e)}")
+            corrected = await self._fix_response(raw_response, str(e), ResponseType.architecture)
+            try:
+                response = ArchitectureResponse(**corrected)
+                await self.validator.validate_architecture_response(response, current_diagram)
+                return response
+            except Exception as fix_error:
+                log_info(f"Failed to fix architecture response: {str(fix_error)}")
+                return self._create_fallback_response(
+                    raw_response["session_id"], Status.error, str(fix_error)
+                )
+
+    async def _handle_expert_response(self, raw_response: Dict[str, Any]) -> ExpertResponse:
+        try:
+            response = ExpertResponse(**raw_response)
+            await self.validator.validate_expert_response(response)
+            return response
+        except PydanticValidationError as e:
+            return self._create_fallback_response(raw_response["session_id"], Status.error, str(e))
+
+    def _create_fallback_response(
+        self, session_id: str, status: Status, error_message: str
+    ) -> ErrorResponse:
+        return ErrorResponse(
+            session_id=session_id,
+            response_type=ResponseType.error,
+            status=status,
+            message=f"Response processing failed: {error_message}",
+            timestamp=datetime.now().isoformat()
+        )
+
+    def _preprocess_architecture_response(self, response: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Preprocess architecture response to align with ArchitectureResponse model.
+
         Args:
-            llm_response: Raw response from LLM
-            context: Optional diagram context for validation
-            
+            response: Raw LLM response dictionary.
+
         Returns:
-            Validated ArchitectureResponse or ExpertResponse
-    """
-    try:
-        current_datetime = datetime.now()
-        formatted_timestamp = current_datetime.strftime("%Y-%m-%d %H:%M:%S") 
-        # Add timestamp to response
-        llm_response['timestamp'] = formatted_timestamp
+            Preprocessed dictionary ready for validation.
+        """
+        response.setdefault("response_type", ResponseType.architecture)
+        response.setdefault("status", Status.success)
+        response.setdefault("nodes_to_add", [])
+        response.setdefault("nodes_to_update", [])
+        response.setdefault("nodes_to_remove", [])
+        response.setdefault("edges_to_add", [])
+        response.setdefault("edges_to_update", [])
+        response.setdefault("edges_to_remove", [])
+        response.setdefault("explanation", None)
+        response.setdefault("security_messages", [])
+        return response
 
-         # Create a deep copy to avoid modifying the original
-        processed_response = json.loads(json.dumps(llm_response))
-        
-        # Create an instance of ValidationHandler
-        validator = ValidationHandler()
-        
-        # Preprocess the response based on its type
-        if 'nodes' in processed_response:
-            # Architecture response - preprocess nodes
-            try:
-                # Fix common issues with node properties before validation
-                if isinstance(processed_response['nodes'], list):
-                    for node in processed_response['nodes']:
-                        # Ensure properties exist
-                        if 'properties' not in node or node['properties'] is None:
-                            node['properties'] = {}
-                        
-                        # Handle database properties specifically
-                        if node.get('node_type') == 'database' or (
-                                isinstance(node.get('properties'), dict) and
-                                node.get('properties', {}).get('properties_type') == 'database'):
-                            props = node.get('properties', {})
-                            
-                            # Set properties_type
-                            props['properties_type'] = 'database'
-                            
-                            # Set node_type
-                            props['node_type'] = node.get('node_type', 'database')
-                            
-                            # Map data_classification to accepted values
-                            if 'data_classification' in props:
-                                data_class = props['data_classification']
-                                if isinstance(data_class, str):
-                                    data_class = data_class.lower()
-                                    # Map variations to standard values
-                                    classification_map = {
-                                        'sensitive': 'confidential',
-                                        'protected': 'confidential',
-                                        'private': 'confidential',
-                                        'internal': 'confidential',
-                                        'classified': 'secret',
-                                        'restricted': 'secret',
-                                        'top-secret': 'secret',
-                                        'public-facing': 'public',
-                                        'unrestricted': 'public',
-                                        'open': 'public'
-                                    }
-                                    if data_class in classification_map:
-                                        props['data_classification'] = classification_map[data_class]
-                                    elif data_class not in ['public', 'confidential', 'secret']:
-                                        # Default to confidential for unknown values
-                                        props['data_classification'] = 'confidential'
-                                        log_info(f"Mapped unknown data_classification '{data_class}' to 'confidential'")
-                            else:
-                                # Set default if missing
-                                props['data_classification'] = 'confidential'
-                            
-                            # Ensure other required fields exist with defaults
-                            if 'encryption_type' not in props:
-                                props['encryption_type'] = 'both'
-                            
-                            if 'backup_schedule' not in props:
-                                props['backup_schedule'] = 'daily'
-                            
-                            node['properties'] = props
-                
-                # Ensure explanation exists
-                if 'explanation' not in processed_response or not processed_response['explanation']:
-                    processed_response['explanation'] = "Architecture changes based on security best practices."
-                
-                # Ensure confidence exists
-                if 'confidence' not in processed_response or not processed_response['confidence']:
-                    processed_response['confidence'] = 0.8
-                elif isinstance(processed_response['confidence'], str):
-                    try:
-                        processed_response['confidence'] = float(processed_response['confidence'])
-                    except ValueError:
-                        processed_response['confidence'] = 0.8
-                
-                # Validate against ArchitectureResponse schema
-                validated_response = ArchitectureResponse(**processed_response)
-                
-                log_info(f"Validating architecture response with context: {context}")
-                # Checks if the architecture response is valid
-                await validator._process_architecture_response(response=validated_response, context=context)
+    def _preprocess_expert_response(self, response: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Preprocess expert response to align with ExpertResponse model.
 
-                processed_and_validated_response = validated_response
-                
-            except ValidationError as e:
-                log_info(f"ArchitectureResponse validation error: {str(e)}")
-                # Create fallback expert response when architecture validation fails
-                expert_response = {
-                    "timestamp": formatted_timestamp,
-                    "expert_message": "I encountered an issue while creating the diagram updates. Here's my advice instead.",
-                    "justification": f"The system encountered validation errors. Original error: {str(e)[:200]}... " + 
-                                    "Please try a more specific request or describe your architecture components in more detail."
-                }
-                processed_and_validated_response = ExpertResponse(**expert_response)
-                
-        elif 'expert_message' in processed_response:
-            try:
-                # Convert justification from list to string if needed
-                if "justification" in processed_response and isinstance(processed_response["justification"], list):
-                    processed_response["justification"] = "\n".join(processed_response["justification"])
-                
-                # Handle other fields that might be in unexpected formats
-                if 'security_messages' in processed_response:
-                    # Remove this field as it's not in the ExpertResponse model
-                    security_messages = processed_response.pop('security_messages')
-                    # Append security messages to justification if important
-                    if security_messages and isinstance(security_messages, list) and len(security_messages) > 0:
-                        messages_text = "\n\nSecurity considerations:\n"
-                        for msg in security_messages:
-                            if isinstance(msg, dict) and 'severity' in msg and 'message' in msg:
-                                messages_text += f"- {msg['severity']}: {msg['message']}\n"
-                            elif isinstance(msg, str):
-                                messages_text += f"- {msg}\n"
-                        processed_response["justification"] += messages_text
-                
-                # Handle recommended_next_steps if present
-                if 'recommended_next_steps' in processed_response:
-                    steps = processed_response.pop('recommended_next_steps')
-                    if steps:
-                        steps_text = "\n\nRecommended next steps:\n"
-                        if isinstance(steps, list):
-                            for step in steps:
-                                steps_text += f"- {step}\n"
-                        else:
-                            steps_text += steps
-                        processed_response["justification"] += steps_text
-                
-                # Handle references if present
-                if 'references' in processed_response:
-                    refs = processed_response.pop('references')
-                    if refs:
-                        refs_text = "\n\nReferences:\n"
-                        if isinstance(refs, list):
-                            for ref in refs:
-                                refs_text += f"- {ref}\n"
-                        else:
-                            refs_text += refs
-                        processed_response["justification"] += refs_text
-                
-                # Create valid ExpertResponse with only the expected fields
-                expert_response = {
-                    "timestamp": formatted_timestamp,
-                    "expert_message": processed_response["expert_message"],
-                    "justification": processed_response["justification"]
-                }
+        Args:
+            response: Raw LLM response dictionary.
 
-                # Validate against ExpertResponse schema
-                validated_response = ExpertResponse(**expert_response)
-                
-                # Additional validation for expert response
-                await validator._validate_expert_response(response=validated_response)
+        Returns:
+            Preprocessed dictionary ready for validation.
+        """
+        response.setdefault("response_type", ResponseType.expert)
+        response.setdefault("status", Status.success)
+        response.setdefault("title", None)
+        response.setdefault("content", "No content provided.")  # Required field
+        response.setdefault("sections", None)
+        response.setdefault("references", None)
+        return response
 
-                processed_and_validated_response = validated_response
-                
-            except ValidationError as e:
-                log_info(f"ExpertResponse validation error: {str(e)}")
-                # Create a minimal valid expert response
-                expert_response = {
-                    "timestamp": formatted_timestamp,
-                    "expert_message": "I've analyzed your request but encountered some processing issues.",
-                    "justification": "The system was unable to format the complete response. " + 
-                                    "Please try rephrasing your question in a more specific way."
-                }
-                processed_and_validated_response = ExpertResponse(**expert_response)
-                
-        else:
-            log_info("Response must contain either 'nodes' or 'expert_message'")
-            # Create a fallback expert response
-            expert_response = {
-                "timestamp": formatted_timestamp,
-                "expert_message": "I've received your request but I'm not sure how to process it.",
-                "justification": "The response structure was not recognized. Please try a different query format or be more specific about your security architecture needs."
-            }
-            processed_and_validated_response = ExpertResponse(**expert_response)
-            
-        return processed_and_validated_response
-        
-    except Exception as e:
-        log_info(f"Error processing LLM response: {str(e)}")
-        # Provide a fallback response instead of raising an exception
-        expert_response = {
-            "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-            "expert_message": "I encountered an unexpected error while processing your request.",
-            "justification": f"System error: {str(e)[:100]}... Please try again with a different query or contact support if the issue persists."
-        }
-        return ExpertResponse(**expert_response)
+    async def _fix_response(
+        self, raw_response: Dict[str, Any], error: str, response_type: ResponseType
+    ) -> Dict[str, Any]:
+        """
+        Attempt to fix an invalid response using the LLM.
 
-# parse_llm_response
-async def parse_llm_response(raw_response: str) -> Union[ArchitectureResponse, ExpertResponse]: # Return Union type
-    """
-    Parses the LLM's raw response and attempts to validate against both ArchitectureResponse and ExpertResponse schemas.
+        Args:
+            raw_response: Original raw response dictionary.
+            error: Validation error message.
+            response_type: Type of response to fix.
 
-    Args:
-        raw_response (str): The raw response from LLM.
+        Returns:
+            Corrected response dictionary.
 
-    Returns:
-        Union[ArchitectureResponse, ExpertResponse]: The validated and structured response, either ArchitectureResponse or ExpertResponse.
+        Raises:
+            LLMError: If correction fails.
+        """
+        schema = (
+            ArchitectureResponse.model_json_schema()
+            if response_type == ResponseType.architecture
+            else ExpertResponse.model_json_schema()
+        )
+        prompt = f"""
+        The following JSON response failed validation: {error}
 
-    Raises:
-        LLMError: If parsing or validation fails for both schemas.
-    """
-    try:
-        log_info(f"Entering parse_llm_response with raw_response: {raw_response}")
+        **Original Response:**
+        ```json
+        {json.dumps(raw_response, indent=2)}
 
-        # Extract content from OPenAI response (no changes)
-        llm_raw_response = raw_response.get("choices", [{}])[0].get("message", {}).get("content", "")
+        **Expected Response**
+        ```json
+        {json.dumps(schema, indent=2)}
 
-        if not llm_raw_response:
-            raise ValueError("LLM response content is empty")
+        Fix the response to match the schema. Return only the corrected JSON.
+        """
 
-        log_info(f"LLM raw response: {llm_raw_response}")
-
-        # --- Attempt to parse as ArchitectureResponse first ---
         try:
-            parsed_json = json.loads(llm_raw_response)
-            log_info(f"Attempting to parse as ArchitectureResponse: {parsed_json}")
-            return ArchitectureResponse(**parsed_json) # Try parsing as ArchitectureResponse
-        except ValidationError: # Catch ValidationError if ArchitectureResponse parsing fails
-            log_info("ArchitectureResponse validation failed. Trying ExpertResponse...")
-            # Ignore ValidationError and try parsing as ExpertResponse
+            corrected_json = await llm_gateway.generate_response(prompt, model="claude")
+            return json.loads(corrected_json.strip())
+        except Exception as e:
+            raise LLMError(f"Failed to fix response: {str(e)}")
+        
+    def _create_fallback_response(
+    self, session_id: str, status: Status, error: Optional[str] = None
+    ) -> Union[ErrorResponse, ClarificationResponse]:
+        """
+        Create a fallback response for errors or clarification.
 
-        # --- If ArchitectureResponse parsing failed, attempt to parse as ExpertResponse ---
-        try:
-            parsed_json = json.loads(llm_raw_response)
-            log_info(f"Attempting to parse as ExpertResponse: {parsed_json}")
-            return ExpertResponse(**parsed_json) # Try parsing as ExpertResponse
-        except ValidationError as e: # Catch ValidationError if ExpertResponse parsing also fails
-            error_msg = f"ExpertResponse validation error: {str(e)}"
-            log_info(f"parse_llm_response ExpertResponse ValidationError: {error_msg}")
-            corrected_response = await fix_llm_response(raw_response, error_msg)
-            # Retry parsing with corrected response (retry parsing as ArchitectureResponse first again)
-            return await parse_llm_response(corrected_response)
+        Args:
+        session_id: Session identifier.
+        status: Status of the fallback (error or warning).
+        error: Optional error message.
 
+        Returns:
+        ErrorResponse or ClarificationResponse.
+        """
+        if status == Status.error:
+            return ErrorResponse(
+            session_id=session_id,
+            timestamp=datetime.now(),
+            response_type=ResponseType.error,
+            status=Status.error,
+            error_message="Failed to process the request.",
+            details={"error": error} if error else None,
+            )
+        return ClarificationResponse(
+            session_id=session_id,
+            timestamp=datetime.now(),
+            response_type=ResponseType.clarification,
+            status=Status.warning,
+            clarification_needed="Please clarify your request.",
+            suggestions=["Rephrase your input.", "Provide more details."],
+        )
 
-        except json.JSONDecodeError as e: # JSONDecodeError handling (no changes)
-            error_msg = f"Invalid JSON format: {str(e)}"
-            log_info(f"parse_llm_response JSONDecodeError: {error_msg}")
-            corrected_response = await fix_llm_response(raw_response, error_msg)
-            return await parse_llm_response(corrected_response)  # Retry parsing
+    def format_response(
+    self, response: Union[ArchitectureResponse, ExpertResponse, ErrorResponse, ClarificationResponse]
+    ) -> JSONResponse:
+        """
+        Format the validated response for API output.
 
-        except Exception as e: # General Exception handling (no changes)
-            error_msg = f"Unexpected error in parse_llm_response: {str(e)}"
-            log_info(error_msg)
-            raise HTTPException(500, detail=error_msg)
-    except HTTPException as e:  # Catch HTTPException and re-raise
-        raise e
-    except Exception as e:
-        error_msg = f"Unexpected error in parse_llm_response: {str(e)}"
-        log_info(error_msg)
-        raise HTTPException(500, detail=error_msg)
-    
+        Args:
+        response: Validated response object.
 
-
-# fix_llm_response
-async def fix_llm_response(raw_response: str, error: str) -> str:
-    """
-    Attempts to fix an invalid LLM response using the LLM itself.  Now aware of both ArchitectureResponse and ExpertResponse schemas.
-
-    Args:
-        raw_response (str): The original invalid response.
-        error (str): The validation error message.
-
-    Returns:
-        str: Corrected response as a JSON string.
-    """
-    correction_prompt = f"""
-    The following JSON response failed validation with this error: {error}
-
-    **Original Response:**
-    ```json
-    {raw_response}
-    ```
-
-    **Valid Response Formats (Strictly Follow One of These Schemas):**
-
-    **1. ArchitectureResponse Schema:**
-    {ArchitectureResponse.model_json_schema(indent=2)}
-
-    **2. ExpertResponse Schema:**
-    {ExpertResponse.model_json_schema(indent=2)}
-
-
-    **Instructions:**
-    - Correct any JSON syntax errors in the Original Response.
-    - Ensure the corrected response strictly adheres to **ONE** of the two schemas provided above (either ArchitectureResponse OR ExpertResponse).
-    - Ensure all required fields for the chosen schema are present.
-    - Keep data types strictly as specified in the chosen schema.
-    - If a field is missing, infer a reasonable default value if possible, or leave it out if truly impossible to infer and not strictly required in the chosen schema.
-    - Choose the schema (ArchitectureResponse or ExpertResponse) that is most appropriate for the user's original query and the LLM's original intent.
-    - Do not wrap the response in Markdown (```json).
-    - Return ONLY the corrected JSON, without explanations or extra text.
-
-    **IMPORTANT:** Only output valid JSON conforming to either ArchitectureResponse or ExpertResponse schema, without explanations or extra text. Choose the most appropriate schema.
-    """
-
-    try:
-        # Get corrected response from LLM (no changes)
-        corrected = await llm_gateway.generate(correction_prompt)
-
-        # Ensure no markdown wrappers (no changes)
-        corrected = corrected.strip()
-        if corrected.startswith("```json"):
-            corrected = corrected[7:-3].strip()  # Remove the markdown block
-
-        return corrected
-    except Exception as e:
-        raise LLMError(f"Failed to fix response: {str(e)}")
-    
-
-    
-
-async def process_llm_response(llm_response: dict, context: DiagramContext) -> ArchitectureResponse:
-    """Convert LLM response into actionable architecture changes with security validation messages."""
-
-    # Validate against current diagram state and perform security rule checks
-    log_info(f"Entering Processing LLM response...")
-
-      # --- ADD THIS LOGGING BEFORE json.dumps ---
-    log_info("llm_response object before validation")
-    # log_info(llm_response) # Log the object directly
-    log_info(f"type of llm_response: {type(llm_response)}")
-    # --- END ADDED LOGGING ---
-
-    # If llm_response is a string, parse it into a dictionary
-    if isinstance(llm_response, BaseModel):
-     validated_response = llm_response
-    else:
-     try:
-        validated_response = ArchitectureResponse(**llm_response)
-     except ValidationError as e:
-        error_msg = f"ArchitectureResponse Pydantic Validation Error: {str(e)}"
-        log_info(f"process_llm_response ValidationError: {error_msg}")
-        raise HTTPException(status_code=500, detail=error_msg)
-
-    log_info(f"Validated response: {validated_response}")
-    validation_messages = [] # Initialize an empty list to collect messages
-
-    try:
-        # Receive all validation messages (warnings/info) in response.security_messages from apply_security_rules.
-        await apply_security_rules(validated_response, context)
-    except SecurityValidationError as e:
-        log_info(f"inside except SecurityValidationError: {e}")
-        # Format SecurityValidationError as a dictionary with "Severity" and "Message"
-        validation_messages.append({
-            "severity": e.severity,  # Get severity from the exception object
-            "message": str(e)  # Convert the exception message to string
-        })
-        log_info(f"Security validation error: {str(e)}")
-
-    # Attach all validation messages (errors and warnings/info) to the response
-    # Purpose: For Robustness and User Feedback
-    # Run security rule checks.
-    # Catches SecurityValidationError exceptions (for critical/medium errors).
-    # `apply_security_rules` now populates `response.security_messages` with all validation messages (including warnings/info).
-    # This function then ensures that the `security_messages` from `apply_security_rules`
-    # (and any blocking error messages caught as exceptions) are attached to the final ArchitectureResponse.
-    validated_response.security_messages.extend(validation_messages) # Extend with caught blocking errors (if any)
-    log_info(f"validated_response.security_messages: {validated_response.security_messages}")
-
-    return validated_response
-
-
-
-def format_response(response: Union[ArchitectureResponse, ExpertResponse]) -> JSONResponse:
-    """Format final API response to include all relevant fields, including security_messages."""
-    # log_info(f"inside format_response: {response}")
-    # current_datetime = datetime.now()
-    # formatted_timestamp = current_datetime.strftime("%Y-%m-%d %H:%M:%S") 
-    # log_info(f"current_datetime: {formatted_timestamp}")
-    # response.timestamp = formatted_timestamp
-    # log_info(f"Formatted response: {response}")
-    return response
-
-
-
+        Returns:
+        JSONResponse for API return.
+        """
+        return JSONResponse(content=response.model_dump())
+        text

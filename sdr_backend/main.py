@@ -9,13 +9,58 @@ from config.settings import description
 from config.settings import version
 from fastapi.staticfiles import StaticFiles
 from config.settings import REPORTS_DIR
+from config.settings import ML_MODELS_DIR
+from core.intent_classification.intent_dataset import train_intent_classifier
+from contextlib import asynccontextmanager
+from utils.logger import log_info
+from core.intent_classification.intent_classifier import IntentClassifier
+from core.db.connection_manager import connect_db, disconnect_db, create_tables
+from core.cache.session_manager import SessionManager
+
+
+
+session_manager = SessionManager()
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Startup: Connect to database and Redis
+    log_info("Creating tables...")
+    create_tables()
+
+    log_info("Connecting db...")
+    try:
+        await connect_db()  # Connect to the database
+        log_info("Connected to db...")
+    except Exception as e:
+        log_info(f"Failed to connect to database: {e}")
+        raise 
+    log_info("Connected to db...")
+
+    log_info("Connecting redis session manager...")
+    await session_manager.connect()  # Connect to Redis
+    log_info("Connected to session manager...")
+
+    log_info("Loading pre-trained intent classifier")
+    global classifier
+    classifier = IntentClassifier(model_path=ML_MODELS_DIR)  # Load the model here
+
+    yield
+    # Shutdown: Disconnect from database and Redis
+    await disconnect_db()  # Disconnect from the database
+    log_info("disconnected db...")
+    await session_manager.disconnect()  # Disconnect from Redis
+    log_info("disconnected redis session manager...")
+    log_info("Shutting down")
+
 
 app = FastAPI(
     title=title,
     description=description,
     version=version,
+    lifespan=lifespan
 )
-# In your main FastAPI app
+
+
 app.mount("/reports", StaticFiles(directory=REPORTS_DIR), name="reports")
 # Mount the "outputs" directory as a static files directory
 # app.mount("/outputs", StaticFiles(directory="outputs"), name="outputs")

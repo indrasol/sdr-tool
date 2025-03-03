@@ -5,7 +5,7 @@ import uuid
 import os
 from models.pydantic_models import DiagramContext, NodeContext, EdgeContext
 from services.security_analysis import analyze_security_gaps
-from core.llm_gateway import LLMGateway
+from core.llm.llm_gateway import LLMGateway
 import json
 from config.settings import REPORTS_DIR
 from core.report_manager import ReportManager
