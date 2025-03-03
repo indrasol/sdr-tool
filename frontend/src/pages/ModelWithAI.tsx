@@ -7,6 +7,7 @@ import AppHeader from '@/components/layout/AppHeader';
 import DOMPurify from 'dompurify';
 import ReactMarkdown from 'react-markdown';
 import { Prism as SyntaxHighlighter} from 'react-syntax-highlighter';
+import './processing-animation.css';
 import {
   ReactFlow,
   MiniMap,
@@ -29,7 +30,7 @@ import {  processBackendResponse } from '@/utils/reponseUtils';
 import { tomorrow as tomorrowNight } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import { Message } from '@/utils/types';
 import { FlowControls } from '@/components/ui/flow-controls';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { nodeDefaultStyle } from '@/components/ui/nodeStyles';
 
 const initialNodes =  [
@@ -77,6 +78,8 @@ const ModelWithAI = () => {
   // Generating report state
   const [generatingReport, setGeneratingReport] = useState(false);
 
+  const chatContainerRef = useRef<HTMLDivElement>(null);
+  const navigate = useNavigate();
 
   // Define types for node and edge properties to fix TypeScript errors
   interface NodeProperties {
@@ -205,10 +208,11 @@ const ModelWithAI = () => {
 
       console.log("Request Payload:", requestPayload);
 
-      const response = await fetch('http://localhost:8000/v1/routes/design', {
+      const response = await fetch('http://localhost:8000/v1/routes/dummy_design', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(requestPayload),
+        // body: JSON.stringify(requestPayload),
+        body: JSON.stringify({query: userInput,}),
       });
   
       if (!response.ok) {
@@ -243,6 +247,7 @@ const ModelWithAI = () => {
   };
 
   // NEW: Function to generate a report
+  // const handleGenerateReport = async () => {
   const handleGenerateReport = async () => {
     if (nodes.length === 0) {
       // Don't generate a report for an empty diagram
@@ -611,6 +616,19 @@ const ModelWithAI = () => {
     );
   };
 
+  useEffect(() => {
+    if (chatContainerRef.current) {
+      chatContainerRef.current.scrollTo({
+        top: chatContainerRef.current.scrollHeight,
+        behavior: 'smooth',
+      });
+    }
+  }, [messages, loading]);
+
+  const handleGenerateReportClick = () => {
+    navigate('/generate-report');
+  };
+
   return (
     <div className="h-screen overflow-hidden bg-background">
       <AppHeader />
@@ -645,7 +663,7 @@ const ModelWithAI = () => {
             </div>
 
             {/* Chat Messages */}
-            <div className="flex-1 overflow-auto glass-card p-4 rounded-lg space-y-4 mb-4">
+            <div ref={chatContainerRef} className="flex-1 overflow-auto glass-card p-4 rounded-lg space-y-4 mb-4">
               {activeTab === 'chat' ? (
                 // Existing chat messages
                 messages.map((message) => (
@@ -715,16 +733,20 @@ const ModelWithAI = () => {
                   ))}
                 </div>
               )}
-
-              {/* Loading indicator */}
               {loading && (
-                <div className="flex justify-start">
-                  <div className="max-w-[80%] p-3 rounded-lg bg-secondary text-foreground">
-                    <div className="flex items-center gap-2">
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                      <span>Processing...</span>
-                    </div>
-                  </div>
+                <div style={{ background: 'none', padding: 0, border: 'none' }} className="flex justify-start items-center gap-2">
+                  <span className="processing-text">Processing...</span>
+                  {/* <svg width="40" height="10" viewBox="0 0 40 10" xmlns="http://www.w3.org/2000/svg">
+                    <circle cx="5" cy="5" r="5" fill="rgba(163, 132, 247, 1)">
+                      <animate attributeName="opacity" values="0;1;0" dur="1.5s" repeatCount="indefinite" />
+                    </circle>
+                    <circle cx="20" cy="5" r="5" fill="rgba(163, 132, 247, 1)">
+                      <animate attributeName="opacity" values="0;1;0" dur="1.5s" repeatCount="indefinite" begin="0.3s" />
+                    </circle>
+                    <circle cx="35" cy="5" r="5" fill="rgba(163, 132, 247, 1)">
+                      <animate attributeName="opacity" values="0;1;0" dur="1.5s" repeatCount="indefinite" begin="0.6s" />
+                    </circle>
+                  </svg> */}
                 </div>
               )}
             </div>
@@ -748,7 +770,7 @@ const ModelWithAI = () => {
                 <Button 
                   size="icon" 
                   variant="ghost" 
-                  onClick={handleGenerateReport}
+                  onClick={handleGenerateReportClick}
                   disabled={loading || generatingReport || nodes.length === 0}
                   className="h-8 w-8 text-muted-foreground hover:text-foreground"
                   title="Generate Security Report"

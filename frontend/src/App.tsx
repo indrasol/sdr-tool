@@ -10,6 +10,7 @@ import ModelWithAI from "./pages/ModelWithAI";
 import NotFound from "./pages/NotFound";
 import ProjectList from "./pages/ProjectList";
 import ExistingProject from "./pages/ExistingProject";
+import GenerateReport from "./pages/generateReport";
 
 const queryClient = new QueryClient();
 
@@ -26,6 +27,7 @@ const App = () => (
             <Route path="/create-project" element={<CreateProject />} />
             <Route path="/existing-project" element={<ExistingProject />} />
             <Route path="/model-with-ai" element={<ModelWithAI />} />
+            <Route path="/generate-report" element={<GenerateReport />} />
             <Route path="/project-list" element={<ProjectList />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
