@@ -1,163 +1,131 @@
-from fastapi import APIRouter, HTTPException
-from datetime import datetime
-from utils.logger import log_info
+from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import JSONResponse
-
-# Utils
-
-# Models
-from models.pydantic_models import UserRequest, ArchitectureResponse, ExpertResponse
-
-# Core
-from core.security_layer import SecurityRulesValidator
-from core.llm_gateway import LLMGateway
-
-# Services
+from typing import Union
+from services.auth_handler import get_current_user  # Authentication dependency
+from core.db.connection_manager import get_db     # Database dependency
+from models.db_schema_models import User          # User model
 from services.request_handler import preprocess_request
-from services.response_handler import format_response, process_and_validate_llm_response
-# from services.prompt_handler import build_prompt
+from core.llm.llm_gateway import LLMGateway
+from services.response_handler import ResponseHandler
+from models.new_pydantic_models import (
+    UserRequest,
+    ArchitectureResponse,
+    ExpertResponse,
+    ErrorResponse,
+    ClarificationResponse
+)
+from utils.logger import log_info  # Logging utility
 
-# Exceptions
-from services.exception_handler import RateLimitError, ValidationError
-
-
+# Initialize the router
 router = APIRouter()
 
+# Initialize core components
+# request_handler = RequestHandler()
+llm_gateway = LLMGateway()
+response_handler = ResponseHandler()
 
 @router.post("/design")
-async def process_request(request: UserRequest): 
+async def design_endpoint(
+    request: UserRequest,
+    current_user: User = Depends(get_current_user),
+    db=Depends(get_db)
+) -> JSONResponse:
     """
-    Process user chat requests for architecture design assistance
-    
+    Handles user requests to design secure software architectures.
+
     Args:
-        request: UserRequest containing input and diagram context
-        current_user: Authenticated user making the request
-    
+        request: UserRequest containing query, session_id, and project_id.
+        current_user: Authenticated user object retrieved via dependency.
+        db: Database connection provided via dependency.
+
     Returns:
-        JSONResponse with architecture modifications or expert advice
+        JSONResponse: A validated response (e.g., ArchitectureResponse, ExpertResponse)
+                      or an error/clarification response.
+
+    Raises:
+        HTTPException: For authentication or specific validation failures.
+        ValueError: For invalid input data.
+        Exception: For unexpected server-side errors.
     """
     try:
-        log_info(f"Processing request: {request}")
-
-        # Step 1: Process user request
-        processed_request = await preprocess_request(request)
-        log_info(f"Processed request: {processed_request}")
-
-        # Step 2: Build prompt as per LLM model
-        # enahnced_prompt = await build_prompt(processed_request, model="claude")
-
-        # Step 3: Generate LLM response using user-defined LLM model
-        llm_gateway = LLMGateway()
-        try:
-            llm_response = await llm_gateway.generate_response(
-                processed_request, 
-                model="claude", 
-                query_type="generic_query"
-            )
-        except Exception as llm_error:
-            log_info(f"LLM generation error: {str(llm_error)}")
-            # Create a fallback response when LLM fails
-            return ExpertResponse(
-                timestamp=datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-                expert_message="I'm having trouble processing your request right now.",
-                justification="There was an issue communicating with the AI backend. Please try again shortly or rephrase your query."
-            )
-
-        # Step 3: Process and validate LLM response and format for models
-        try:
-            processed_and_validated_response = await process_and_validate_llm_response(
-                llm_response, 
-                request.diagram_context
-            )
-        except Exception as validation_error:
-            log_info(f"Validation error: {str(validation_error)}")
-            # Return a friendly error response instead of failing
-            return ExpertResponse(
-                timestamp=datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-                expert_message="I had trouble understanding your request in the context of your current architecture.",
-                justification=f"Validation error: {str(validation_error)[:200]}... Please try being more specific or provide more context."
-            )
-
-        # Step 4: Apply security rules if needed if response is ArchitectureResponse
-        if isinstance(processed_and_validated_response, ArchitectureResponse):
-            try:
-                log_info(f"Applying security rules to ArchitectureResponse")
-                security_validator = SecurityRulesValidator()
-                await security_validator.apply_security_rules(
-                    processed_and_validated_response, 
-                    request.diagram_context
-                )
-            except Exception as security_error:
-                log_info(f"Security validation error: {str(security_error)}")
-                # We continue with the response even if security validation fails
-                # but add a warning message to security_messages
-                warning_msg = {
-                    "severity": "HIGH", 
-                    "message": f"Security validation incomplete: {str(security_error)[:100]}..."
-                }
-                if hasattr(processed_and_validated_response, 'security_messages'):
-                    processed_and_validated_response.security_messages.append(warning_msg)
-        
-        # Step 5: Format final response
-        try:
-            formatted_response = format_response(processed_and_validated_response)
-            log_info(f"Formatted response: {formatted_response}")
-            return formatted_response
-        except Exception as format_error:
-            log_info(f"Format error: {str(format_error)}")
-            # If formatting fails, return the raw validated response
-            return processed_and_validated_response
-    
-    except ValidationError as e:
-        log_info(f"Request validation error: {str(e)}")
-        return JSONResponse(
-            status_code=422,
-            content={
-                "detail": f"Validation error: {str(e)}",
-                "type": "validation_error"
-            }
+        # Step 1: Preprocess the request with intent classification
+        processed_request = await preprocess_request(
+            request=request,
+            user_id=current_user.id,
+            db=db
         )
-    except RateLimitError:
-        log_info("Rate limit exceeded")
-        return JSONResponse(
-            status_code=429,
-            content={
-                "detail": "Rate limit exceeded. Please try again later.",
-                "type": "rate_limit_error"
-            }
+        # Expected processed_request format:
+        # {
+        #     "query": str,
+        #     "session_id": str,
+        #     "project_id": str,
+        #     "user_id": str,
+        #     "conversation_history": str,
+        #     "diagram_context": dict,
+        #     "intent": dict (with "intent_type": str)
+        # }
+
+        # Step 2: Generate LLM response based on classified intent
+        intent_type = processed_request["intent"]["intent_type"]
+        llm_response = await llm_gateway.generate_response(
+            processed_request=processed_request,
+            intent_type=intent_type,
+            session_id=request.session_id
         )
+        # llm_response is a Dict[str, Any] containing the raw LLM output
+
+        # Step 3: Process and validate the LLM response
+        validated_response: Union[
+            ArchitectureResponse,
+            ExpertResponse,
+            ErrorResponse,
+            ClarificationResponse
+        ] = await response_handler.process_and_validate_llm_response(
+            processed_request=processed_request,
+            llm_response=llm_response,
+            session_id=request.session_id,
+            intent_type=intent_type
+        )
+
+        # Step 4: Return the validated response as JSON
+        return JSONResponse(content=validated_response.model_dump())
+
+    except HTTPException as e:
+        # Authentication or specific HTTP-related errors
+        return JSONResponse(status_code=e.status_code, content={"detail": e.detail})
+    except ValueError as e:
+        # Input validation errors
+        log_info(f"ValueError in design_endpoint: {str(e)}")
+        return JSONResponse(status_code=400, content={"detail": str(e)})
     except Exception as e:
-        log_info(f"Unexpected error: {str(e)}")
-        # Return a friendly error response
-        return JSONResponse(
-            status_code=500,
-            content={
-                "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-                "expert_message": "I encountered an unexpected error while processing your request.",
-                "justification": "The system experienced an internal error. Please try again later or with a different query.",
-                "type": "server_error"
-            }
-        )
+        # Unexpected errors
+        log_info(f"Unexpected error in design_endpoint: {str(e)}")
+        return JSONResponse(status_code=500, content={"detail": "Internal server error"})
+
     
 
 
 
-# Sampele tests
+# Sampele test scenarios
 
-# NODE INTERACTION
+# Mixed Actions
 
-# ADD
-# Add a Firewall Protection node and an Intrusion Detection System.
+# Design a basic e-commerce system with a web server, application server, and database.
 
-#  MODIFY
-#Scenario 1: give full  node name
-# Update Firewall Protection node to Firewall.
+# Mixed Action : Add + Modify
+# Add a load balancer in front of the web servers and increase the database's security level to high.
 
-#Scenario 2: give partial node name
-# Update Firewall node to firewall.
+# Mixed Action : Add + Remove
+# Remove the application server and replace it with three microservices: an inventory service, a payment service, and a user management service.
 
-# REMOVE
-# Remove the Intrusion Detection System node.   
+# Mixed Action : Modify + Remove
+# Change the web server to use HTTPS and remove the load balancer.
 
-# EXPERT QUERY
-# How to make kubernetes fit in secured architecture
+# Mixed Action : Complex Mixed operations
+# Scale our architecture by adding a caching layer with Redis, implement a message queue between services, make the database redundant, and remove any single points of failure.
+
+# Mixed Action : Rename + Restructure
+# Rename our services with more specific names and restructure to have a three-tier architecture with proper segmentation.
+
+# Mixed Action : Security Focussed Changes
+# Add a firewall to protect our web tier, implement encryption for all data in transit, replace the user management service with an OAuth service, and remove direct database access from the web tier.

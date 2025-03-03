@@ -19,7 +19,7 @@ class DiagramContext(BaseModel):
     edges: List[EdgeContext] = []
     version: int = 1
 
-class UserRequest(BaseModel):
+class OldUserRequest(BaseModel):
     user_input: str = Field(
         ...,
         min_length=2,
