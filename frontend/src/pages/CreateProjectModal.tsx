@@ -134,7 +134,8 @@ export function CreateProjectModal({
       navigate("/project-list"); // Navigate to project-list page
     } catch (err) {
       console.error("Error creating/updating project:", err);
-      setError(err instanceof Error ? err.message : "Failed to save project");
+      navigate("/project-list");
+      // setError(err instanceof Error ? err.message : "Failed to save project");
     } finally {
       setIsSubmitting(false);
     }
