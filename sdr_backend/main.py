@@ -52,7 +52,6 @@ async def lifespan(app: FastAPI):
     log_info("disconnected redis session manager...")
     log_info("Shutting down")
 
-app = FastAPI(lifespan=lifespan)
 
 app = FastAPI(
     title=title,
