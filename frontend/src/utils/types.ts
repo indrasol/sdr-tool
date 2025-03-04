@@ -5,6 +5,7 @@ export type Message = {
     content: string;
     type: 'user' | 'assistant';
     timestamp: Date;
+    className?: string;
   };
   
 export type ToolType = 'select' | 'square' | 'rectangle' | 'circle' | 'ellipse' | 'diamond' | 'arrow' | 'text' | 'eraser' | 'clear' | 'cloud' | 'database' | 'server' | 'folder' | 'file' | 'settings' | 'users' | 'lock' | 'network' | 'code';

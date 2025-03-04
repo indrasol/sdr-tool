@@ -1,6 +1,6 @@
 import { useCallback, useState, useEffect, useRef, memo } from 'react';
 // import { Paperclip, ChevronUp, List, Square, Circle, ArrowRight, Eraser, Pointer, Plus } from 'lucide-react';
-import { Cloud, Database, Server, Folder, File, Settings, Users, Lock, Network, Code, Search, Paperclip, ChevronUp, List, Square, Circle, Eraser, Plus, RectangleHorizontal, Diamond, Type, Loader2, FileText } from 'lucide-react';
+import { Cloud, Database, Server, Folder, File, Settings, Users, Lock, Network, Code, Search, Paperclip, ChevronUp, List, Square, Circle, Eraser, Plus, RectangleHorizontal, Diamond, Type, Loader2, FileText, Save } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import AppHeader from '@/components/layout/AppHeader';
@@ -23,7 +23,8 @@ import {
   ReactFlowProvider,
   getBezierPath,
   EdgeProps, 
-  EdgeLabelRenderer
+  EdgeLabelRenderer,
+  Node
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import {  processBackendResponse } from '@/utils/reponseUtils';
@@ -32,6 +33,15 @@ import { Message } from '@/utils/types';
 import { FlowControls } from '@/components/ui/flow-controls';
 import { useParams, useNavigate } from 'react-router-dom';
 import { nodeDefaultStyle } from '@/components/ui/nodeStyles';
+
+
+interface NodeData {
+  label: string;
+  properties: {
+    node_type?: string; // Optional property
+    [key: string]: any; // Allow additional arbitrary properties
+  };
+}
 
 const initialNodes =  [
   {
@@ -46,21 +56,6 @@ const initialNodes =  [
   },
 ]
 
-// ADD THIS CODE:
-// Define a consistent node style for all nodes
-// const nodeDefaultStyle = {
-//   width: 150,
-//   height: 60,
-//   border: '2px solid rgb(75, 39, 153)', // Purple border from placeholder
-//   borderRadius: '8px',
-//   display: 'flex',
-//   alignItems: 'center',
-//   justifyContent: 'center',
-//   background: 'white',
-//   padding: '8px',
-//   boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)'
-// };
-
 const ModelWithAI = () => {
   const { projectId } = useParams(); // Get projectId from URL params
   const [userInput, setUserInput] = useState('');
@@ -70,6 +65,10 @@ const ModelWithAI = () => {
   const [activeTab, setActiveTab] = useState<'chat' | 'history'>('chat');
   const [messages, setMessages] = useState<Message[]>([]);
   const [activeTool, setActiveTool] = useState<string | null>(null);
+  // session Id state
+  const [sessionId, setSessionId] = useState<string | null>(null);
+
+  const [diagramHistory, setDiagramHistory] = useState<{ messageId: number; nodes: any[]; edges: any[] }[]>([]); // Track diagram state
   const [searchQuery, setSearchQuery] = useState('');
   // Track if we've had first interaction
   const [hadFirstInteraction, setHadFirstInteraction] = useState(false);
@@ -77,71 +76,103 @@ const ModelWithAI = () => {
   const [loading, setLoading] = useState(false);
   // Generating report state
   const [generatingReport, setGeneratingReport] = useState(false);
-
+  const [selectedProject, setSelectedProject] = useState<string | null>(null);
+  const [isTypingEffectActive, setIsTypingEffectActive] = useState(true);
+  const [placeholder, setPlaceholder] = useState('');
   const chatContainerRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
 
-  // Define types for node and edge properties to fix TypeScript errors
-  interface NodeProperties {
-    node_type?: string;
-    [key: string]: any;  // Allow for any other properties
-  }
-  
-  interface EdgeProperties {
-    edge_type?: string;
-    type?: string;
-    [key: string]: any;
-  }
 
-  // NEW: Add session state for better context management
-  const [sessionState, setSessionState] = useState({
-  projectId: projectId || '',
-  currentVersion: 1,
-  conversationHistory: [] as Message[],
-  diagramContext: {
-    nodes: [],
-    edges: []
-  }
-  });
+  // Start a new session when the project is selected
+  const startSession = async () => {
+    if (!projectId) {
+      setMessages((prev) => [
+        ...prev,
+        { id: Date.now(), content: 'Error: No project selected.', type: 'assistant', timestamp: new Date() },
+      ]);
+      return;
+    }
 
-  // NEW: Update session state whenever nodes, edges, or messages change
-  useEffect(() => {
-    setSessionState(prevState => ({
-      ...prevState,
-      currentVersion: version,
-      conversationHistory: messages,
-      diagramContext: {
-        nodes: nodes.map(node => ({
-          id: node.id,
-          type: ((node.data?.properties as NodeProperties | undefined)?.node_type) || node.type,
-          properties: node.data?.properties || {},
-          position: [node.position.x, node.position.y]
-        })),
-        edges: edges.map(edge => ({
-          id: edge.id,
-          source: edge.source,
-          target: edge.target,
-          type: ((edge.data as EdgeProperties | undefined)?.edge_type) || edge.type,
-          properties: edge.data?.properties || {}
-        }))
+    try {
+      const response = await fetch('http://localhost:8000/v1/routes/start_project_session', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ project_id: projectId }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to start session: ${response.status} ${response.statusText}`);
       }
-    }));
-  }, [nodes, edges, messages, version, projectId]);
 
+      const data = await response.json();
+      setSessionId(data.session_id);
+      setMessages((prev) => [
+        ...prev,
+        { id: Date.now(), content: `Session started for project ${projectId} (Session ID: ${data.session_id}).`, type: 'assistant', timestamp: new Date() },
+      ]);
+      console.log('Session started with session_id:', data.session_id);
+    } catch (error: any) {
+      console.error('Failed to start session:', error);
+      setMessages((prev) => [
+        ...prev,
+        { id: Date.now(), content: `Error starting session: ${error.message}. Please try refreshing the page.`, type: 'assistant', timestamp: new Date() },
+      ]);
+    }
+  };
+
+  // Initialize session when component mounts with a projectId
+  useEffect(() => {
+    if (projectId && !sessionId) {
+      startSession();
+    }
+  }, [projectId, sessionId]);
+
+  // useEffect(() => {
+  //   // Only add welcome message if no messages exist yet
+  //   if (messages.length === 0) {
+  //     const welcomeMessage: Message = {
+  //       id: Date.now(),
+  //       content: `
+  //         **Welcome to SecureTrack!**  
+  //         I’m your assistant for designing secure architectures.  
+  //         - Describe your project below to get started.  
+  //         - Or explore the shape tools to begin.  
+  //         Let’s create something secure and amazing!
+  //       `,
+  //       type: 'assistant',
+  //       timestamp: new Date(),
+  //       className: 'welcome-fade-in' // For animation
+  //     };
+  //     setMessages([welcomeMessage]);
+  //   }
+  // }, []);
 
   // Initial welcome message after component mounts
+  // useEffect(() => {
+  //   // Only add welcome message if no messages exist yet
+  //   if (messages.length === 0) {
+  //     const welcomeMessage: Message = {
+  //       id: Date.now(),
+  //       content: "Hey! I'm your secure archietcture design assistant. Describe what you'd like to design, or use the shape tools to get started.",
+  //       type: 'assistant',
+  //       timestamp: new Date()
+  //     };
+  //     setMessages([welcomeMessage]);
+  //   }
+  // }, []);
+
+  // Store diagram state in history after modifications
   useEffect(() => {
-    // Only add welcome message if no messages exist yet
-    if (messages.length === 0) {
-      const welcomeMessage: Message = {
-        id: Date.now(),
-        content: "Hey! I'm your secure archietcture design assistant. Describe what you'd like to design, or use the shape tools to get started.",
-        type: 'assistant',
-        timestamp: new Date()
-      };
-      setMessages([welcomeMessage]);
+    if (sessionId && messages.length > 0) {
+      const lastMessage = messages[messages.length - 1];
+      if (lastMessage.type === 'user') {
+        setDiagramHistory((prev) => [
+          ...prev,
+          { messageId: lastMessage.id, nodes: [...nodes], edges: [...edges] },
+        ]);
+      }
     }
-  }, []);
+  }, [nodes, edges, messages, sessionId]);
 
   const onConnect = useCallback((params) => {
     setEdges((eds) => addEdge({
@@ -152,16 +183,19 @@ const ModelWithAI = () => {
     }, eds));
   }, []);
 
-  // UPDATED: handleSend to preserve existing nodes and edges
+  // Handle sending user input with session context
   const handleSend = async () => {
-    if (!userInput.trim()) return;
-
-    // Set that we've had our first interaction
-    if (!hadFirstInteraction) {
-      setHadFirstInteraction(true);
+    if (!userInput.trim() || !sessionId) {
+      if (!sessionId) {
+        setMessages((prev) => [
+          ...prev,
+          { id: Date.now(), content: 'No active session. Please start a project session first.', type: 'assistant', timestamp: new Date() },
+        ]);
+      }
+      return;
     }
 
-    // Add user message to the chat
+    setHadFirstInteraction(true);
     const newUserMessage: Message = {
       id: Date.now(),
       content: userInput,
@@ -169,161 +203,90 @@ const ModelWithAI = () => {
       timestamp: new Date(),
     };
     setMessages((prev) => [...prev, newUserMessage]);
-    
-    // Clear the input immediately after sending
     setUserInput('');
+    setIsTypingEffectActive(true); // Resume typing effect after sending
     setLoading(true);
 
     try {
-      // NEW: Use sessionState for more consistent context representation
       const requestPayload = {
         user_input: userInput,
+        session_id: sessionId,
         diagram_context: {
-          nodes: nodes.map(node => ({
+          nodes: nodes.map((node) => ({
             id: node.id,
-            type: ((node.data?.properties as NodeProperties | undefined)?.node_type) || node.type,
+            type: (node.data?.properties as { node_type?: string })?.node_type || node.type,
             properties: node.data?.properties || {},
-            position: [node.position.x, node.position.y]
+            position: [node.position.x, node.position.y],
           })),
-          edges: edges.map(edge => ({
+          edges: edges.map((edge) => ({
             id: edge.id,
             source: edge.source,
             target: edge.target,
-            type: ((edge.data as EdgeProperties | undefined)?.edge_type) || edge.type,
-            properties: edge.data?.properties || {}
+            type: edge.data?.edge_type || edge.type,
+            properties: edge.data?.properties || {},
           })),
-          version
+          version,
         },
-        // NEW: Include conversation history for better context
         conversation_history: messages
-          .filter(msg => msg.type !== 'assistant')
-          .map(msg => ({
-            role: msg.type,
-            content: msg.content,
-            timestamp: msg.timestamp
-          })),
+          .filter((msg) => msg.type === 'user')
+          .map((msg) => ({ role: msg.type, content: msg.content, timestamp: msg.timestamp })),
         project_id: projectId,
         compliance_standards: [],
       };
 
-      console.log("Request Payload:", requestPayload);
-
       const response = await fetch('http://localhost:8000/v1/routes/dummy_design', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        // body: JSON.stringify(requestPayload),
-        body: JSON.stringify({query: userInput,}),
+        body: JSON.stringify(requestPayload),
       });
-  
+
       if (!response.ok) {
         throw new Error(`Error: ${response.status} ${response.statusText}`);
       }
 
       const data = await response.json();
-      console.log('Backend response:', data);
+      if (data.version) setVersion(data.version);
 
-      // Update the version if provided
-      if (data.version) {
-        setVersion(data.version);
-      }
-
-      // Process the backend response
+      // Assuming processBackendResponse updates nodes, edges, and messages
       processBackendResponse(data, nodes, edges, setNodes, setEdges, setMessages, hadFirstInteraction);
     } catch (error: any) {
       console.error('Failed to fetch from backend:', error);
-      
-    // NEW: Enhanced error message with recovery suggestion
-    const errorMsg: Message = {
-      id: Date.now(),
-      content: `Error: ${error?.message || 'Failed to contact server.'}\n\nTry simplifying your request or refreshing the page if the problem persists.`,
-      type: 'assistant' as const,
-      timestamp: new Date(),
-    };
-      
-      setMessages((prev) => [...prev, errorMsg]);
+      setMessages((prev) => [
+        ...prev,
+        { id: Date.now(), content: `Error: ${error.message}. Try simplifying your request or refreshing the page.`, type: 'assistant', timestamp: new Date() },
+      ]);
     } finally {
       setLoading(false);
     }
   };
 
-  // NEW: Function to generate a report
-  // const handleGenerateReport = async () => {
-  const handleGenerateReport = async () => {
-    if (nodes.length === 0) {
-      // Don't generate a report for an empty diagram
-      const errorMsg: Message = {
-        id: Date.now(),
-        content: "Please design an architecture first before generating a report.",
-        type: 'assistant',
-        timestamp: new Date()
-      };
-      setMessages(prev => [...prev, errorMsg]);
-      return;
-    }
-
-    setGeneratingReport(true);
-    try {
-
-      // Format nodes and edges with proper type casting for the report
-      const formattedDiagramContext = {
-        nodes: nodes.map(node => ({
-          id: node.id,
-          type: ((node.data?.properties as NodeProperties | undefined)?.node_type) || node.type,
-          properties: node.data?.properties || {},
-          position: [node.position.x, node.position.y]
-        })),
-        edges: edges.map(edge => ({
-          id: edge.id,
-          source: edge.source,
-          target: edge.target,
-          type: ((edge.data as EdgeProperties | undefined)?.edge_type) || edge.type,
-          properties: edge.data?.properties || {}
-        }))
-      };
-      // Implement the report generation API call here
-      const reportRequest = {
-        project_id: projectId,
-        diagram_context: sessionState.diagramContext,
-        conversation_history: sessionState.conversationHistory,
-        format: 'markdown'
-      };
-      
-      // Placeholder for the actual API call
-      // const reportResponse = await fetch('http://localhost:8000/api/routes/generate_report', {
-      //   method: 'POST',
-      //   headers: { 'Content-Type': 'application/json' },
-      //   body: JSON.stringify(reportRequest)
-      // });
-      // For now, just redirect to a report page
-      
-      // Navigate to report page (you'll need to implement this)
-      // history.push(`/projects/${projectId}/report`);
-      
-      console.log("Report generation requested:", reportRequest);
-      
-      // Inform the user (temporary until navigation is implemented)
-      const infoMsg: Message = {
-        id: Date.now(),
-        content: "This feature will be available soon!",
-        type: 'assistant',
-        timestamp: new Date()
-      };
-      setMessages(prev => [...prev, infoMsg]);
-      
-    } catch (error: any) {
-      console.error('Failed to generate report:', error);
-      const errorMsg: Message = {
-        id: Date.now(),
-        content: `Error generating report: ${error?.message || 'Unknown error'}`,
-        type: 'assistant',
-        timestamp: new Date()
-      };
-      setMessages(prev => [...prev, errorMsg]);
-    } finally {
-      setGeneratingReport(false);
+  // Revert to a previous diagram state based on chat history
+  const revertToDiagramState = (messageId: number) => {
+    const historyEntry = diagramHistory.find((entry) => entry.messageId === messageId);
+    if (historyEntry) {
+      setNodes(historyEntry.nodes);
+      setEdges(historyEntry.edges);
+      setMessages((prev) => [
+        ...prev,
+        { id: Date.now(), content: `Reverted diagram to state from message ID ${messageId}.`, type: 'assistant', timestamp: new Date() },
+      ]);
+    } else {
+      setMessages((prev) => [
+        ...prev,
+        { id: Date.now(), content: 'No diagram state found for this message.', type: 'assistant', timestamp: new Date() },
+      ]);
     }
   };
 
+  // Placeholder for processBackendResponse (assumed to exist)
+  const processBackendResponse = (data: any, nodes: any[], edges: any[], setNodes: any, setEdges: any, setMessages: any, hadFirstInteraction: boolean) => {
+    // Example: Update nodes and edges from backend response
+    if (data.nodes) setNodes(data.nodes);
+    if (data.edges) setEdges(data.edges);
+    if (data.message) {
+      setMessages((prev: Message[]) => [...prev, { id: Date.now(), content: data.message, type: 'assistant', timestamp: new Date() }]);
+    }
+  };
   
 
   const addShape = (type: 'square' | 'circle' | 'rectangle' | 'diamond' | 'text' | 'cloud' | 'database' | 'server' | 'folder' | 'file' | 'settings' | 'users' | 'lock' | 'network' | 'code') => {
@@ -629,6 +592,73 @@ const ModelWithAI = () => {
     navigate('/generate-report');
   };
 
+  
+  // Array of phrases related to design and project modeling
+  const phrases = [
+    "Design your system architecture...",
+    "Model your project workflow...",
+    "Create a secure design plan...",
+    "Describe your project vision...",
+    "Sketch your design ideas..."
+  ];
+
+  useEffect(() => {
+    if (!isTypingEffectActive) return;
+  
+    let currentPhraseIndex = 0;
+    let currentCharIndex = 0;
+    let isDeleting = false;
+    const typingSpeed = 100; // Speed of typing (ms per character)
+    const deletingSpeed = 50; // Speed of deleting (ms per character)
+    const pauseBetweenPhrases = 1500; // Pause after typing, before deleting (ms)
+  
+    const type = () => {
+      const currentPhrase = phrases[currentPhraseIndex];
+  
+      if (!isDeleting && currentCharIndex < currentPhrase.length) {
+        // Typing phase: Add one character
+        setPlaceholder(currentPhrase.substring(0, currentCharIndex + 1));
+        currentCharIndex++;
+        setTimeout(type, typingSpeed);
+      } else if (!isDeleting && currentCharIndex === currentPhrase.length) {
+        // Pause phase: Wait after typing the full phrase
+        setTimeout(() => {
+          isDeleting = true;
+          type();
+        }, pauseBetweenPhrases);
+      } else if (isDeleting && currentCharIndex > 0) {
+        // Deleting phase: Remove one character
+        setPlaceholder(currentPhrase.substring(0, currentCharIndex - 1));
+        currentCharIndex--;
+        setTimeout(type, deletingSpeed);
+      } else if (isDeleting && currentCharIndex === 0) {
+        // Transition phase: Move to the next phrase
+        isDeleting = false;
+        currentPhraseIndex = (currentPhraseIndex + 1) % phrases.length;
+        setTimeout(type, typingSpeed);
+      }
+    };
+  
+    // Start the typing effect
+    setTimeout(type, typingSpeed);
+  
+    // Cleanup on unmount or when effect stops
+    return () => {
+      setIsTypingEffectActive(false);
+    };
+  }, [isTypingEffectActive, phrases]);
+
+  const handleInteraction = () => {
+    // Stop the typing effect on user interaction
+    setIsTypingEffectActive(false);
+    setPlaceholder('Describe your project model...');
+  };
+
+  const handleSaveProject = () => {
+    // Your save logic here, e.g., save to local storage or API
+    console.log("Project saved!");
+  };
+
   return (
     <div className="h-screen overflow-hidden bg-background">
       <AppHeader />
@@ -710,8 +740,8 @@ const ModelWithAI = () => {
                       <div className="text-sm text-muted-foreground mb-1">
                         {new Date(message.timestamp).toLocaleString()}
                       </div>
-                      <div className={`flex ${message.type === "assistant" ? "justify-start" : "justify-end"}`}>
-                        <div className={`max-w-[80%] p-3 rounded-lg ${message.type === "assistant" ? "bg-secondary text-foreground" : "bg-primary text-primary-foreground"}`}>
+                      <div className="flex justify-end items-center gap-2">
+                        <div className="max-w-[80%] p-3 rounded-lg bg-primary text-primary-foreground">
                           <ReactMarkdown
                             components={{
                               code({ node, inline, className, children, ...props }) {
@@ -728,52 +758,84 @@ const ModelWithAI = () => {
                             {DOMPurify.sanitize(message.content)}
                           </ReactMarkdown>
                         </div>
+                        {/* Revert to this state button */}
+                        <button
+                          onClick={() => revertToDiagramState(message.id)}
+                          className="text-sm text-primary hover:underline"
+                        >
+                          Revert to this state
+                        </button>
                       </div>
                     </div>
                   ))}
-                </div>
-              )}
-              {loading && (
-                <div style={{ background: 'none', padding: 0, border: 'none' }} className="flex justify-start items-center gap-2">
-                  <span className="processing-text">Processing...</span>
-                  {/* <svg width="40" height="10" viewBox="0 0 40 10" xmlns="http://www.w3.org/2000/svg">
-                    <circle cx="5" cy="5" r="5" fill="rgba(163, 132, 247, 1)">
-                      <animate attributeName="opacity" values="0;1;0" dur="1.5s" repeatCount="indefinite" />
-                    </circle>
-                    <circle cx="20" cy="5" r="5" fill="rgba(163, 132, 247, 1)">
-                      <animate attributeName="opacity" values="0;1;0" dur="1.5s" repeatCount="indefinite" begin="0.3s" />
-                    </circle>
-                    <circle cx="35" cy="5" r="5" fill="rgba(163, 132, 247, 1)">
-                      <animate attributeName="opacity" values="0;1;0" dur="1.5s" repeatCount="indefinite" begin="0.6s" />
-                    </circle>
-                  </svg> */}
-                </div>
-              )}
-            </div>
+              </div>
+            )}
+            {loading && (
+              <div style={{ background: 'none', padding: 0, border: 'none' }} className="flex justify-start items-center gap-2">
+                <span className="processing-text">Processing...</span>
+              </div>
+            )}
+          </div>
 
             {/* Input Area */}
             <div className="relative">
+              {/* Project Selector */}
+              {/* <div className="mb-2">
+                <select
+                  className="w-full p-2 bg-secondary text-foreground rounded-lg focus:ring-2 focus:ring-purple-600"
+                  onChange={(e) => setSelectedProject(e.target.value)}
+                  value={selectedProject || ""}
+                  aria-label="Select a project"
+                >
+                  <option value="" disabled>Select a project</option>
+                  {/* Replace with dynamic project data */}
+                  {/* <option value="P001">Uber.com (P001)</option> */}
+                  {/* <option value="P002">Lyft.com (P002)</option> */}
+                  {/* <option value="P003">Amazon.com (P003)</option> */}
+                {/* </select> */}
+              {/* </div> */}
+
+              {/* Textarea */}
               <Textarea
                 value={userInput}
-                onChange={(e) => setUserInput(e.target.value)}
+                onChange={(e) => {
+                  setUserInput(e.target.value);
+                  handleInteraction(); // Stop typing effect when user types
+                }}
                 onKeyDown={(e) => {
                   if (e.key === 'Enter' && !e.shiftKey) {
                     e.preventDefault();
                     handleSend();
                   }
                 }}
-                placeholder="Start describing your project ..."
-                className="w-full min-h-[60px] pr-[100px] resize-none bg-secondary rounded-lg"
+                onFocus={handleInteraction} // Stop typing effect on focus
+                placeholder={placeholder || 'Describe your project model...'}
+                className="w-full min-h-[60px] pr-[120px] resize-none bg-secondary rounded-lg text-foreground"
+                aria-label="Project description input"
               />
+
+              {/* Buttons */}
               <div className="absolute bottom-2 right-2 flex items-center gap-1">
+                {/* Save Button */}
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  onClick={handleSaveProject} // Define this function to handle saving
+                  className="h-8 w-8 text-muted-foreground hover:text-purple-100"
+                  title="Save Project"
+                  aria-label="Save project manually"
+                >
+                  <Save className="h-5 w-5" />
+                </Button>
                 {/* Report Generation Button */}
-                <Button 
-                  size="icon" 
-                  variant="ghost" 
+                <Button
+                  size="icon"
+                  variant="ghost"
                   onClick={handleGenerateReportClick}
                   disabled={loading || generatingReport || nodes.length === 0}
-                  className="h-8 w-8 text-muted-foreground hover:text-foreground"
+                  className="h-8 w-8 text-muted-foreground hover:text-purple-100"
                   title="Generate Security Report"
+                  aria-label="Generate security report"
                 >
                   {generatingReport ? (
                     <Loader2 className="h-5 w-5 animate-spin" />
@@ -781,22 +843,39 @@ const ModelWithAI = () => {
                     <FileText className="h-5 w-5" />
                   )}
                 </Button>
-                <Button 
-                  size="icon" 
-                  variant="ghost" 
-                  className="h-8 w-8 text-muted-foreground hover:text-foreground"
+
+                {/* Attachment Button with File Input */}
+                <input
+                  type="file"
+                  id="file-upload"
+                  className="hidden"
+                  // onChange={handleFileUpload}
+                />
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  onClick={() => document.getElementById("file-upload")?.click()}
+                  className="h-8 w-8 text-muted-foreground hover:text-purple-100"
+                  title="Attach a file"
+                  aria-label="Attach a file"
                 >
                   <Paperclip className="h-5 w-5" />
                 </Button>
-                <Button 
-                  size="icon" 
-                  variant="ghost" 
-                  className="h-8 w-8 text-muted-foreground hover:text-foreground"
+
+                {/* List Button */}
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  className="h-8 w-8 text-muted-foreground hover:text-purple-100"
+                  title="View list options"
+                  aria-label="View list options"
                 >
                   <List className="h-5 w-5" />
                 </Button>
-                <Button 
-                  size="icon" 
+
+                {/* Send Button */}
+                <Button
+                  size="icon"
                   onClick={handleSend}
                   disabled={!userInput.trim() || loading}
                   className="h-8 w-8"
