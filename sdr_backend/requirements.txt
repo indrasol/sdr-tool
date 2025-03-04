@@ -36,4 +36,4 @@ aioredis
 scikit-learn
 PyJWT
 databases
-python-jose
+python-josegreenlet

@@ -1,18 +1,21 @@
-from databases import Database
-from typing import Dict, Any, List
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.future import select
+from typing import Dict, Any, List, Optional
+from models.db_schema_models import Project, User
+from fastapi import Depends, HTTPException
+from services.auth_handler import get_current_user
+import random
+
 
 class DatabaseManager:
-    def __init__(self):
-        pass  # No initialization needed since we use dependency injection for DB
-
-    async def get_project_data(self, user_id: int, project_id: str, db: Database) -> Dict[str, Any]:
+    async def get_project_data(self, user_id: int, project_code: str, db: AsyncSession) -> Dict[str, Any]:
         """
         Retrieve project data for a given user and project.
 
         Args:
             user_id: The ID of the authenticated user.
-            project_id: The ID of the project.
-            db: Async database instance.
+            project_code: The unique code of the project (e.g., "P123").
+            db: AsyncSession instance.
 
         Returns:
             Dict containing project data with conversation_history and diagram_state.
@@ -20,104 +23,119 @@ class DatabaseManager:
         Raises:
             ValueError: If the project does not exist or user does not have access.
         """
-        query = """
-            SELECT conversation_history, diagram_state 
-            FROM projects 
-            WHERE id = :project_id AND user_id = :user_id
-        """
-        values = {"project_id": project_id, "user_id": user_id}
-        project = await db.fetch_one(query, values)
+        stmt = select(Project).where(Project.project_code == project_code, Project.user_id == user_id)
+        result = await db.execute(stmt)
+        project = result.scalars().first()
 
         if not project:
-            raise ValueError(f"Project {project_id} not found for user {user_id}")
+            raise ValueError(f"Project {project_code} not found for user {user_id}")
 
         return {
-            "conversation_history": project["conversation_history"],
-            "diagram_state": project["diagram_state"]
+            "conversation_history": project.conversation_history,
+            "diagram_state": project.diagram_state
         }
 
     async def update_project_data(
         self,
         user_id: int,
-        project_id: str,
+        project_code: str,
         conversation_history: List[Dict[str, Any]] = None,
         diagram_state: Dict[str, Any] = None,
-        db: Database = None
+        db: AsyncSession = None
     ):
         """
         Update project data for a given user and project.
 
         Args:
             user_id: The ID of the authenticated user.
-            project_id: The ID of the project.
+            project_code: The unique code of the project (e.g., "P123").
             conversation_history: Updated conversation history (optional).
             diagram_state: Updated diagram state (optional).
-            db: Async database instance.
+            db: AsyncSession instance.
+
+        Raises:
+            ValueError: If the project does not exist or user does not have access.
         """
-        # Check if the project exists
-        check_query = "SELECT id FROM projects WHERE id = :project_id AND user_id = :user_id"
-        project = await db.fetch_one(check_query, {"project_id": project_id, "user_id": user_id})
+        stmt = select(Project).where(Project.project_code == project_code, Project.user_id == user_id)
+        result = await db.execute(stmt)
+        project = result.scalars().first()
 
         if not project:
-            raise ValueError(f"Project {project_id} not found for user {user_id}")
-
-        # Prepare update query dynamically
-        update_fields = []
-        values = {"project_id": project_id, "user_id": user_id}
+            raise ValueError(f"Project {project_code} not found for user {user_id}")
 
         if conversation_history is not None:
-            update_fields.append("conversation_history = :conversation_history")
-            values["conversation_history"] = conversation_history
-
+            project.conversation_history = conversation_history
         if diagram_state is not None:
-            update_fields.append("diagram_state = :diagram_state")
-            values["diagram_state"] = diagram_state
+            project.diagram_state = diagram_state
 
-        if update_fields:
-            update_query = f"""
-                UPDATE projects
-                SET {', '.join(update_fields)}
-                WHERE id = :project_id AND user_id = :user_id
-            """
-            await db.execute(update_query, values)
+        await db.commit()
+        await db.refresh(project)
 
-    async def create_project(self, user_id: int, project_name: str, db: Database) -> int:
+    async def create_project(
+        self,
+        user_id: int,
+        project_name: str,
+        tenant_id: int,
+        project_description: Optional[str] = None,
+        db: AsyncSession = None
+    ) -> str:
         """
-        Create a new project for a user.
+        Create a new project associated with a tenant for the authenticated user.
 
         Args:
             user_id: The ID of the authenticated user.
-            project_name: The name of the new project.
-            db: Async database instance.
+            project_name: The name of the project.
+            tenant_id: The ID of the tenant.
+            project_description: Optional description of the project.
+            db: AsyncSession instance.
 
         Returns:
-            The ID of the newly created project.
-        """
-        query = """
-            INSERT INTO projects (user_id, name, conversation_history, diagram_state)
-            VALUES (:user_id, :name, :conversation_history, :diagram_state)
-            RETURNING id
-        """
-        values = {
-            "user_id": user_id,
-            "name": project_name,
-            "conversation_history": [],  # Default empty list
-            "diagram_state": {"nodes": [], "edges": []}  # Default empty diagram
-        }
-        result = await db.fetch_one(query, values)
-        return result["id"]
+            The unique project_code (e.g., "P123") of the created project.
 
-    async def get_user_projects(self, user_id: int, db: Database) -> List[Dict[str, Any]]:
+        Raises:
+            HTTPException: If project creation fails due to database errors.
         """
-        Retrieve all projects for a given user.
+        # Generate a unique project_code (e.g., "P123")
+        while True:
+            random_number = random.randint(100, 999)  # Random 3-digit number (100–999)
+            project_code = f"P{random_number}"
+            stmt = select(Project).where(Project.project_code == project_code)
+            result = await db.execute(stmt)
+            if not result.scalars().first():
+                break  # Unique project_code found
+
+        try:
+            new_project = Project(
+                user_id=user_id,
+                name=project_name,
+                tenant_id=tenant_id,
+                project_code=project_code,
+                description=project_description,
+                conversation_history=[],
+                diagram_state={"nodes": [], "edges": []}
+            )
+            db.add(new_project)
+            await db.commit()
+            await db.refresh(new_project)
+            return new_project.project_code
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=f"Failed to create project: {str(e)}")
+
+    async def get_user_projects(self, user_id: int, tenant_id: Optional[int] = None, db: AsyncSession = None) -> List[Dict[str, Any]]:
+        """
+        Retrieve all projects for a given user, optionally filtered by tenant.
 
         Args:
             user_id: The ID of the authenticated user.
-            db: Async database instance.
+            tenant_id: Optional tenant ID to filter projects.
+            db: AsyncSession instance.
 
         Returns:
-            List of project metadata (id, name).
+            List of project metadata including project_id (project_code), name, etc.
         """
-        query = "SELECT id, name FROM projects WHERE user_id = :user_id"
-        projects = await db.fetch_all(query, {"user_id": user_id})
-        return [{"id": project["id"], "name": project["name"]} for project in projects]
+        stmt = select(Project).where(Project.user_id == user_id)
+        if tenant_id is not None:
+            stmt = stmt.where(Project.tenant_id == tenant_id)
+        result = await db.execute(stmt)
+        projects = result.scalars().all()
+        return [project.to_dict() for project in projects]

@@ -8,7 +8,7 @@ from fastapi import APIRouter
 
 
 # Register Routes
-from v1.api.routes.register.sign_up import router as sign_up_router
+from v1.api.routes.register.register import router as register_router
 from v1.api.routes.register.login import router as login_router
 from v1.api.routes.register.me import router as me_router
 
@@ -42,7 +42,7 @@ router = APIRouter()
 
 
 # Register Routes
-router.include_router(sign_up_router, tags=["Register - sign_up_router"])
+router.include_router(register_router, tags=["Register - sign_up_router"])
 router.include_router(login_router, tags=["Register - login_router"])
 router.include_router(me_router, tags=["Register - me_router"])
 # Model With AI - Design
