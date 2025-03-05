@@ -16,7 +16,7 @@ const Layout = ({ children }: LayoutProps) => {
       {/* <footer className="py-4 border-t border-gray-100 bg-white/80 backdrop-blur-sm">
         <div className="container">
           <div className="flex flex-col md:flex-row justify-between items-center text-xs text-gray-500">
-            <p>© 2023 SecureTrack. All rights reserved.</p>
+            <p>© 2025 SecureTrack. All rights reserved.</p>
             <div className="flex space-x-4 mt-2 md:mt-0">
               <a href="#" className="hover:text-securetrack-purple transition-colors">Terms</a>
               <a href="#" className="hover:text-securetrack-purple transition-colors">Privacy</a>

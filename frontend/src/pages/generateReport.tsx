@@ -1,204 +1,183 @@
-import React, { useState, useEffect } from 'react';
-import { AlertTriangle, Shield, CheckCircle, AlertCircle } from 'lucide-react';
-import { TypeAnimation } from 'react-type-animation';
-import html2canvas from 'html2canvas';
-import jsPDF from 'jspdf';
+
+import React, { useState, useEffect, useRef } from 'react';
+import Layout from '@/components/layout/Layout';
+import { Button } from '@/components/ui/button';
+import { ArrowLeft, Cpu } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { toPng } from 'html-to-image';
+import { useToast } from '@/hooks/use-toast';
+import TitleCard from '@/components/Report/TitleCard';
+import ReportNavigation from '@/components/Report/ReportNavigation';
+import ReportContent from '@/components/Report/ReportContent';
+import { generatePDF, addReportPage, moveReportPage, deleteReportPage } from '@/utils/reportUtils';
 
 const GenerateReport = () => {
+  const navigate = useNavigate();
+  const [currentPage, setCurrentPage] = useState(0);
+  const [isEditing, setIsEditing] = useState(false);
+  const { toast } = useToast();
+  const reportRef = useRef<HTMLDivElement>(null);
+  
+  // Get diagram data from localStorage
+  const [diagramImage, setDiagramImage] = useState<string | null>(null);
+  
+  // Report content state
+  const [reportPages, setReportPages] = useState([
+    {
+      title: "Security Assessment Summary",
+      content: "Based on the current infrastructure diagram, we've identified several key security strengths and areas for improvement. The implementation of a dedicated firewall provides a strong foundation for perimeter security. However, the direct connection between the web server and application server represents a potential vulnerability that should be addressed."
+    },
+    {
+      title: "Identified Security Gaps",
+      content: "1. No network segmentation between web and application tiers\n2. Single firewall represents a potential single point of failure\n3. No encryption shown for database connections\n4. No intrusion detection/prevention system in place\n5. No redundancy or failover mechanisms identified"
+    },
+    {
+      title: "Recommendations",
+      content: "1. Implement a DMZ for web-facing servers\n2. Add a second firewall for defense in depth\n3. Enable TLS encryption for all database connections\n4. Deploy an IDS/IPS solution to monitor for suspicious activity\n5. Implement high availability pairs for critical infrastructure components\n6. Add a web application firewall (WAF) to protect against application-layer attacks"
+    }
+  ]);
 
-  const [showFooter, setShowFooter] = useState(true);
-  const [reportContent, setReportContent] = useState({
-    summary: '',
-    imageUrl: '',
-    gaps: [],
-    recommendations: [],
-  });
-
-  const [isLoading, setIsLoading] = useState(true);
-
+  // Capture diagram from localStorage on mount
   useEffect(() => {
-    // Simulate fetching report data
-    setTimeout(() => {
-      setReportContent({
-        summary: 'This report has identified 3 critical security gaps and provides 3 actionable recommendations to improve your architecture\'s security posture.',
-        imageUrl: 'https://cs.ccsu.edu/~stan/classes/CS410/Notes16/images/06-repository_architecture.png',
-        // imageUrl: 'https://corporate-assets.lucid.co/chart/ee694582-6363-44ea-b6cb-fba0876665a9.png?v=1707851858614',
-        // imageUrl: 'https://usabilitygeek.com/wp-content/uploads/2014/05/architecture-design-inspiration-lead.jpg',
-        gaps: [
-          'Unencrypted data transfer detected in API endpoints',
-          'Weak authentication mechanism in user login',
-          'Lack of input validation leading to potential injection attacks',
-        ],
-        recommendations: [
-          'Enable TLS encryption for all API communications',
-          'Implement multi-factor authentication (MFA) for enhanced security',
-          'Add server-side input validation to prevent injection attacks',
-        ],
-      });
-      setIsLoading(false);
-    }, 1000); // Simulate a 1.5-second delay for report generation
+    const diagramElement = document.getElementById('diagram-container');
+    if (diagramElement) {
+      toPng(diagramElement)
+        .then(dataUrl => {
+          setDiagramImage(dataUrl);
+        })
+        .catch(error => {
+          console.error('Error capturing diagram:', error);
+        });
+    } else {
+      // Try to get diagram from localStorage
+      try {
+        const nodesString = localStorage.getItem('diagramNodes');
+        const edgesString = localStorage.getItem('diagramEdges');
+        
+        if (nodesString && edgesString) {
+          // We have the diagram data but can't render it directly
+          // Instead, we'll just indicate we have diagram data
+          setDiagramImage('placeholder');
+        }
+      } catch (error) {
+        console.error('Error reading diagram from localStorage:', error);
+      }
+    }
   }, []);
 
+  const handleBackClick = () => {
+    navigate('/model-with-ai');
+  };
 
-  const handleDownloadPDF = () => {
-    // Get the container element with all report content
-    const contentElement = document.getElementById('report-content');
-    const imageElement = document.getElementById('report-image') as HTMLImageElement;
-  
-    if (!contentElement) {
-      console.error("Error: Element with ID 'report-content' not found.");
-      alert("Cannot generate PDF: Report content is not available.");
-      return;
-    }
+  const handleContentChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    const updatedPages = [...reportPages];
+    updatedPages[currentPage].content = e.target.value;
+    setReportPages(updatedPages);
+  };
 
-    // Verify that it’s an HTMLImageElement
-    if (!(imageElement instanceof HTMLImageElement)) {
-        console.error("Error: Element with ID 'report-image' is not an image element.");
-        alert("Cannot generate PDF: Report content is not an image.");
-        return;
+  const handleAddPage = (newPage: { title: string; content: string }) => {
+    const updatedPages = addReportPage(reportPages, newPage);
+    setReportPages(updatedPages);
+    // Switch to the newly added page
+    setCurrentPage(updatedPages.length - 1);
+    
+    toast({
+      title: "Section Added",
+      description: `New section "${newPage.title}" has been added to your report.`,
+    });
+  };
+
+  const handleMovePage = (fromIndex: number, toIndex: number) => {
+    const updatedPages = moveReportPage(reportPages, fromIndex, toIndex);
+    setReportPages(updatedPages);
+    
+    // If we're moving the current page, update the current page index
+    if (currentPage === fromIndex) {
+      setCurrentPage(toIndex);
+    } else if (currentPage === toIndex) {
+      // If we're moving a page to the current page's position
+      setCurrentPage(fromIndex);
     }
-  
-    if (contentElement.offsetWidth === 0 || contentElement.offsetHeight === 0) {
-      console.warn("Warning: Element with ID 'report-content' is not visible.");
-      alert("Cannot generate PDF: Report content is not visible.");
-      return;
-    }
-  
-    // Get the image element to ensure it’s loaded
-    // const imageElement = document.getElementById('report-image') as HTMLImageElement;
-    if (imageElement && imageElement.complete && imageElement.naturalHeight !== 0) {
-      const footer = document.querySelector("#footer-buttons"); // Adjust selector
-      footer.classList.add("pdf-hidden");
-        // Image is loaded, proceed with capture
-      html2canvas(contentElement, { scale: 2 }).then((canvas) => {
-        footer.classList.remove("pdf-hidden");
-        const imgData = canvas.toDataURL('image/png');
-        const pdf = new jsPDF('p', 'mm', 'a4');
-        const imgWidth = 190; // Width in mm, leaving 10mm margins
-        const pageHeight = 297; // A4 height in mm
-        const imgHeight = (canvas.height * imgWidth) / canvas.width;
-        let heightLeft = imgHeight;
-        let position = 0;
-  
-        // Add the image to the PDF, handling multiple pages if needed
-        pdf.addImage(imgData, 'PNG', 10, position, imgWidth, imgHeight);
-        heightLeft -= pageHeight;
-  
-        while (heightLeft > 0) {
-          position -= pageHeight;
-          pdf.addPage();
-          pdf.addImage(imgData, 'PNG', 10, position, imgWidth, imgHeight);
-          heightLeft -= pageHeight;
-        }
-  
-        // Generate PDF Blob and open in new tab
-        const pdfBlob = pdf.output('blob');
-        const url = URL.createObjectURL(pdfBlob);
-        window.open(url, '_blank');
-      }).catch((error) => {
-        console.error("Error generating PDF:", error);
-        alert("An error occurred while generating the PDF. Please try again.");
+    
+    toast({
+      title: "Section Moved",
+      description: "Report section has been rearranged successfully.",
+    });
+  };
+
+  const handleDeletePage = (index: number) => {
+    const updatedPages = deleteReportPage(reportPages, index);
+    setReportPages(updatedPages);
+    
+    toast({
+      title: "Section Deleted",
+      description: "Report section has been removed from your report.",
+    });
+  };
+
+  const handleDownload = async () => {
+    if (!reportRef.current) return;
+    
+    try {
+      const pdf = generatePDF(reportPages, diagramImage);
+      
+      // Save the PDF
+      pdf.save('security-assessment-report.pdf');
+      
+      toast({
+        title: "Report Downloaded",
+        description: "Your security assessment report has been downloaded successfully.",
       });
-    } else {
-      console.error("Error: Image is not loaded or invalid.");
-      alert("Cannot generate PDF: The report image is not loaded. Please wait and try again.");
+    } catch (error) {
+      console.error('Error generating PDF:', error);
+      toast({
+        title: "Download Failed",
+        description: "There was an error downloading your report. Please try again.",
+        variant: "destructive",
+      });
     }
   };
+
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-[#F8FAFC] to-[#FFFFFF] p-6">
-      <div id = "report-content" className="w-full max-w-5xl p-6 bg-white border border-[#E5E7EB] rounded-lg shadow-lg">
-        {/* Header */}
-        <h1 className="text-2xl font-bold text-[#6B5BFF] mb-2">Security Architecture Report</h1>
-        <p className="text-sm text-[#9CA3AF] mb-4">Generated on: {new Date().toLocaleDateString()}</p>
+    <Layout>
+      <div className="space-y-6 mt-16">
+        <TitleCard 
+          isEditing={isEditing} 
+          setIsEditing={setIsEditing} 
+          handleDownload={handleDownload} 
+        />
 
-        {/* Image Section with Loading State */}
-        <div className="mb-4 w-full h-64 flex items-center justify-center">
-          {isLoading ? (
-            <div className="w-full h-full bg-gray-200 rounded-md flex items-center justify-center">
-              <p className="text-gray-500">Loading image...</p>
-            </div>
-          ) : (
-            <img
-              id="report-image"
-              src={reportContent.imageUrl}
-              alt="ReactFlow Nodes"
-              className="w-full max-h-64 object-contain rounded-md border border-gray-200 shadow-sm"
-              onLoad={() => console.log("Image loaded successfully")}
-              onError={() => console.error("Image failed to load")}
-            />
-          )}
-        </div>
+        <Button 
+          variant="outline" 
+          onClick={handleBackClick}
+          className="mb-4 transition-all hover:bg-securetrack-green text-securetrack-green border-securetrack-green/50 hover:text-white hover:border-securetrack-green shadow-sm hover:-translate-y-1 duration-300 animate-fade-in"
+        >
+          <ArrowLeft className="mr-2 h-4 w-4" />
+          <Cpu className="mr-2 h-4 w-4" />
+          Back to Guardian AI
+        </Button>
 
-        {/* Summary with Typing Effect */}
-        <div className="mb-6 p-4 bg-[#F8FAFC] border border-[#E5E7EB] rounded-md min-h-[100px] overflow-auto">
-          {!isLoading && (
-            <TypeAnimation
-              sequence={[reportContent.summary]}
-              wrapper="p"
-              cursor={false}
-              speed={45}
-              style={{ fontSize: '16px', color: '#4B5EAA', whiteSpace: 'pre-wrap' }}
-            />
-          )}
-        </div>
-
-        {/* Gaps and Recommendations Cards */}
-        <div className="grid grid-cols-2 gap-4 mb-4">
-          <div className="p-4 bg-white border border-gray-200 rounded-md shadow-sm hover:shadow-md transition-shadow duration-300">
-            <h2 className="text-lg font-bold text-orange-500 flex items-center gap-2">
-              <AlertTriangle className="w-5 h-5" /> Gaps Identified
-            </h2>
-            <ul className="list-disc pl-5 mt-2 text-gray-800">
-              {reportContent.gaps.map((gap, index) => (
-                <li key={index} className="flex items-start gap-2 mb-2">
-                    <AlertCircle className="text-orange-500 h-5 w-5 mt-0.5" />
-                    <TypeAnimation
-                    sequence={[gap]}
-                    wrapper="span"
-                    cursor={false}
-                    speed={50}
-                    style={{ fontSize: '16px', color: '#4B5EAA' }}
-                    />
-                </li>
-              ))}
-            </ul>
-          </div>
-          <div className="p-4 bg-white border border-gray-200 rounded-md shadow-sm hover:shadow-md transition-shadow duration-300">
-            <h2 className="text-lg font-bold text-green-500 flex items-center gap-2">
-              <Shield className="w-5 h-5" /> Secure Recommendations
-            </h2>
-            <ol className="list-decimal pl-5 mt-2 text-gray-800">
-              {reportContent.recommendations.map((rec, index) => (
-                <li key={index} className="flex items-start gap-2 mb-2">
-                  <CheckCircle className="text-green-500 h-5 w-5 mt-0.5" />
-                  <TypeAnimation
-                    sequence={[rec]}
-                    wrapper="span"
-                    cursor={false}
-                    speed={50}
-                    style={{ fontSize: '16px', color: '#4B5EAA' }}
-                  />
-                </li>
-              ))}
-            </ol>
-          </div>
-        </div>
-
-        {/* Footer Buttons */}
-        <div id = "footer-buttons" className="flex justify-end gap-2">
-          <button className="px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 transition-colors duration-300">
-            Edit Report
-          </button>
-          <button 
-            onClick={handleDownloadPDF}
-            className="px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 transition-colors duration-300"
-            disabled={isLoading}
-          >
-            {isLoading ? 'Generating...' : 'Download PDF'}
-          </button>
+        <div className="grid grid-cols-12 gap-4">
+          <ReportNavigation 
+            reportPages={reportPages} 
+            currentPage={currentPage} 
+            setCurrentPage={setCurrentPage}
+            onAddPage={handleAddPage}
+            onMovePage={handleMovePage}
+            onDeletePage={handleDeletePage}
+          />
+          
+          <ReportContent 
+            reportPages={reportPages}
+            currentPage={currentPage}
+            isEditing={isEditing}
+            handleContentChange={handleContentChange}
+            diagramImage={diagramImage}
+            reportRef={reportRef}
+          />
         </div>
       </div>
-    </div>
+    </Layout>
   );
 };
 

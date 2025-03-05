@@ -18,6 +18,7 @@ import ProjectCard from "./components/dashboard/ProjectCard";
 import Dashboard from "./pages/Dashboard";
 import Documents from "./pages/Documents";
 import SOC2 from "./pages/SOC2";
+import Projects from "./pages/Projects";
 
 const queryClient = new QueryClient();
 
@@ -39,6 +40,8 @@ const App = () => (
               <Route path="/existing-project" element={<ExistingProject />} />
               <Route path="/model-with-ai" element={<ModelWithAI />} />
               <Route path="/project-list" element={<ProjectList />} />
+              <Route path="/projects" element={<Projects />} />
+              <Route path="/generate-report" element={<GenerateReport />} />
               <Route path="*" element={<NotFound />} />
               <Route
                 path="/login"

@@ -33,6 +33,8 @@ import { Message } from '@/utils/types';
 import { FlowControls } from '@/components/ui/flow-controls';
 import { useParams, useNavigate } from 'react-router-dom';
 import { nodeDefaultStyle } from '@/components/ui/nodeStyles';
+import { toast } from 'sonner';
+import { useToast } from '@/hooks/use-toast';
 
 
 interface NodeData {
@@ -79,7 +81,11 @@ const ModelWithAI = () => {
   const [selectedProject, setSelectedProject] = useState<string | null>(null);
   const [isTypingEffectActive, setIsTypingEffectActive] = useState(true);
   const [placeholder, setPlaceholder] = useState('');
+  const [placeholderIndex, setPlaceholderIndex] = useState(0);
+  const [typingForward, setTypingForward] = useState(true);
+  const [charIndex, setCharIndex] = useState(0);
   const chatContainerRef = useRef<HTMLDivElement>(null);
+  const { toast } = useToast();
   const navigate = useNavigate();
 
 
@@ -126,40 +132,6 @@ const ModelWithAI = () => {
       startSession();
     }
   }, [projectId, sessionId]);
-
-  // useEffect(() => {
-  //   // Only add welcome message if no messages exist yet
-  //   if (messages.length === 0) {
-  //     const welcomeMessage: Message = {
-  //       id: Date.now(),
-  //       content: `
-  //         **Welcome to SecureTrack!**  
-  //         I’m your assistant for designing secure architectures.  
-  //         - Describe your project below to get started.  
-  //         - Or explore the shape tools to begin.  
-  //         Let’s create something secure and amazing!
-  //       `,
-  //       type: 'assistant',
-  //       timestamp: new Date(),
-  //       className: 'welcome-fade-in' // For animation
-  //     };
-  //     setMessages([welcomeMessage]);
-  //   }
-  // }, []);
-
-  // Initial welcome message after component mounts
-  // useEffect(() => {
-  //   // Only add welcome message if no messages exist yet
-  //   if (messages.length === 0) {
-  //     const welcomeMessage: Message = {
-  //       id: Date.now(),
-  //       content: "Hey! I'm your secure archietcture design assistant. Describe what you'd like to design, or use the shape tools to get started.",
-  //       type: 'assistant',
-  //       timestamp: new Date()
-  //     };
-  //     setMessages([welcomeMessage]);
-  //   }
-  // }, []);
 
   // Store diagram state in history after modifications
   useEffect(() => {
@@ -588,13 +560,30 @@ const ModelWithAI = () => {
     }
   }, [messages, loading]);
 
+  useEffect(() => {
+    toast({
+      title: "AI Assisted Project",
+      description: "Design your security infrastructure using natural language."
+    });
+  }, [toast]);
+
   const handleGenerateReportClick = () => {
+
+    // Store current diagram state in localStorage or context
+    // localStorage.setItem('diagramNodes', JSON.stringify(nodes));
+    // localStorage.setItem('diagramEdges', JSON.stringify(edges));
+
     navigate('/generate-report');
   };
 
   
   // Array of phrases related to design and project modeling
-  const phrases = [
+  const placeholder_messages = [
+    "Describe your security infrastructure requirements...",
+    "Add a firewall between the internet and internal network...",
+    "I need a secure database with encryption...",
+    "Create a DMZ for the web servers...",
+    "Implement zero-trust architecture...",
     "Design your system architecture...",
     "Model your project workflow...",
     "Create a secure design plan...",
@@ -602,52 +591,39 @@ const ModelWithAI = () => {
     "Sketch your design ideas..."
   ];
 
+  // Auto-typing effect for placeholder
   useEffect(() => {
-    if (!isTypingEffectActive) return;
-  
-    let currentPhraseIndex = 0;
-    let currentCharIndex = 0;
-    let isDeleting = false;
-    const typingSpeed = 100; // Speed of typing (ms per character)
-    const deletingSpeed = 50; // Speed of deleting (ms per character)
-    const pauseBetweenPhrases = 1500; // Pause after typing, before deleting (ms)
-  
-    const type = () => {
-      const currentPhrase = phrases[currentPhraseIndex];
-  
-      if (!isDeleting && currentCharIndex < currentPhrase.length) {
-        // Typing phase: Add one character
-        setPlaceholder(currentPhrase.substring(0, currentCharIndex + 1));
-        currentCharIndex++;
-        setTimeout(type, typingSpeed);
-      } else if (!isDeleting && currentCharIndex === currentPhrase.length) {
-        // Pause phase: Wait after typing the full phrase
-        setTimeout(() => {
-          isDeleting = true;
-          type();
-        }, pauseBetweenPhrases);
-      } else if (isDeleting && currentCharIndex > 0) {
-        // Deleting phase: Remove one character
-        setPlaceholder(currentPhrase.substring(0, currentCharIndex - 1));
-        currentCharIndex--;
-        setTimeout(type, deletingSpeed);
-      } else if (isDeleting && currentCharIndex === 0) {
-        // Transition phase: Move to the next phrase
-        isDeleting = false;
-        currentPhraseIndex = (currentPhraseIndex + 1) % phrases.length;
-        setTimeout(type, typingSpeed);
+    const typingSpeed = 100; // ms per character
+    const pauseAtEnd = 2000; // pause at the end of a complete message
+    const pauseAtStart = 700; // pause at the start before typing
+    
+    const timer = setTimeout(() => {
+      if (typingForward) {
+        // Typing forward
+        if (charIndex < placeholder_messages[placeholderIndex].length) {
+          setPlaceholder(placeholder_messages[placeholderIndex].substring(0, charIndex + 1));
+          setCharIndex(charIndex + 1);
+        } else {
+          // Reached the end, pause before starting to delete
+          setTypingForward(false);
+          return pauseAtEnd;
+        }
+      } else {
+        // Deleting
+        if (charIndex > 0) {
+          setPlaceholder(placeholder_messages[placeholderIndex].substring(0, charIndex - 1));
+          setCharIndex(charIndex - 1);
+        } else {
+          // Fully deleted, move to the next placeholder
+          setTypingForward(true);
+          setPlaceholderIndex((placeholderIndex + 1) % placeholder_messages.length);
+          return pauseAtStart;
+        }
       }
-    };
-  
-    // Start the typing effect
-    setTimeout(type, typingSpeed);
-  
-    // Cleanup on unmount or when effect stops
-    return () => {
-      setIsTypingEffectActive(false);
-    };
-  }, [isTypingEffectActive, phrases]);
-
+    }, typingForward ? typingSpeed : typingSpeed / 2);
+    
+    return () => clearTimeout(timer);
+  }, [charIndex, placeholderIndex, typingForward]);
   const handleInteraction = () => {
     // Stop the typing effect on user interaction
     setIsTypingEffectActive(false);
@@ -779,25 +755,10 @@ const ModelWithAI = () => {
 
             {/* Input Area */}
             <div className="relative">
-              {/* Project Selector */}
-              {/* <div className="mb-2">
-                <select
-                  className="w-full p-2 bg-secondary text-foreground rounded-lg focus:ring-2 focus:ring-purple-600"
-                  onChange={(e) => setSelectedProject(e.target.value)}
-                  value={selectedProject || ""}
-                  aria-label="Select a project"
-                >
-                  <option value="" disabled>Select a project</option>
-                  {/* Replace with dynamic project data */}
-                  {/* <option value="P001">Uber.com (P001)</option> */}
-                  {/* <option value="P002">Lyft.com (P002)</option> */}
-                  {/* <option value="P003">Amazon.com (P003)</option> */}
-                {/* </select> */}
-              {/* </div> */}
-
               {/* Textarea */}
               <Textarea
                 value={userInput}
+                // placeholder={placeholder}
                 onChange={(e) => {
                   setUserInput(e.target.value);
                   handleInteraction(); // Stop typing effect when user types
