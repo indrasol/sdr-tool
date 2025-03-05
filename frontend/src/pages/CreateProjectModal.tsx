@@ -90,48 +90,52 @@ export function CreateProjectModal({
         tags,
         modelType: project ? project.modelType : "Model With AI", // Default model type
       };
-      
+      // Create API URL based on whether we're creating or updating
+    const url = project 
+    ? `http://localhost:8000/v1/routes/projects/${project.id}`
+    : 'http://localhost:8000/v1/routes/projects';
       // Send data to API
-      // const response = await fetch('http://localhost:8000/v1/routes/projects', {
-      //   method: project ? 'PUT' : 'POST',
-      //   headers: {
-      //     'Content-Type': 'application/json',
-      //   },
-      //   body: JSON.stringify(payload),
-      // });
+      const response = await fetch(url, {
+        method: project ? 'PUT' : 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload),
+      });
       
-      // if (!response.ok) {
-      //   throw new Error(`API error: ${response.status}`);
-      // }
+      if (!response.ok) {
+        throw new Error(`API error: ${response.status}`);
+      }
       
       // Parse the JSON response
-      // const responseData = await response.json();
+      const responseData = await response.json();
       
       // Create project object with API response data
-      // const newProject: ProjectModal = {
-      //   id: responseData.project_id || (project ? project.id : Date.now().toString()),
-      //   name: responseData.name || name,
-      //   status: responseData.status || status,
-      //   user: responseData.user || (project ? project.user : "Current User"),
-      //   modified: new Date().toLocaleDateString(),
-      //   created: project ? project.created : new Date().toLocaleDateString(),
-      //   priority: responseData.priority || priority,
-      //   modelType: project ? project.modelType : "Model With AI",
-      //   tags,
-      //   description: responseData.description || description,
-      // };
+      const newProject: ProjectModal = {
+        id: responseData.project_id || (project ? project.id : Date.now().toString()),
+        name: responseData.name || name,
+        status: responseData.status || status,
+        user: responseData.user || (project ? project.user : "Current User"),
+        modified: new Date().toLocaleDateString(),
+        created: project ? project.created : new Date().toLocaleDateString(),
+        priority: responseData.priority || priority,
+        modelType: project ? project.modelType : "Model With AI",
+        tags,
+        description: responseData.description || description,
+      };
 
-      // if (project && onSave) {
-      //   onSave(newProject); // Save the edited project
-      // } else {
-      //   addProject(newProject); // Add the new project to the list
-      // }
+      if (project && onSave) {
+        onSave(newProject); // Save the edited project
+      } else {
+        addProject(newProject); // Add the new project to the list
+      }
 
       onOpenChange(false); // Close the dialog
       navigate("/project-list"); // Navigate to project-list page
     } catch (err) {
       console.error("Error creating/updating project:", err);
-      setError(err instanceof Error ? err.message : "Failed to save project");
+      navigate("/project-list");
+      // setError(err instanceof Error ? err.message : "Failed to save project");
     } finally {
       setIsSubmitting(false);
     }

@@ -13,6 +13,7 @@ import ExistingProject from "./pages/ExistingProject";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import { AuthProvider, useAuth } from "./components/context/AuthContext"; // Fixed path
+import GenerateReport from "./pages/generateReport";
 
 const queryClient = new QueryClient();
 

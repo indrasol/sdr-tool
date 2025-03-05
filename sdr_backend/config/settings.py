@@ -60,3 +60,9 @@ OUTPUT_DIR = os.getenv("OUTPUT_FOLDER", os.path.join(BASE_DIR, "output"))
 
 # Reports directory
 REPORTS_DIR = os.getenv("REPORTS_FOLDER", os.path.join(BASE_DIR, "reports"))
+
+# ML Models directory
+ML_MODELS_DIR = os.getenv("ML_MODELS_FOLDER", os.path.join(BASE_DIR, "ml_models/intent_classifier"))
+
+# JWT Secret Key
+JWT_SECRET_KEY = os.getenv("JWT_SECRET_KEY")
