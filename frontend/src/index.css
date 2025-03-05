@@ -139,4 +139,17 @@
   50% {
     opacity: 0.5;
   }
+
+    /* New styles for the report page */
+  .font-playfair {
+    font-family: 'Playfair Display', serif;
+  }
+
+  .font-inter {
+    font-family: 'Inter', sans-serif;
+  }
+
+  .report-card {
+    @apply border-l-4 border-securetrack-purple bg-gray-50 p-4 rounded shadow-sm my-3;
+  }
 }

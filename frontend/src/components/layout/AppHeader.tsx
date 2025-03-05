@@ -24,6 +24,9 @@ const AppHeader = () => {
           <Link to="/dashboard" className="text-sm font-medium hover:text-primary transition-colors">
             Dashboard
           </Link>
+          <Link to="/projects" className="text-sm font-medium hover:text-primary transition-colors">
+            Projects
+          </Link>
           <a href="/documents" className="text-sm font-medium hover:text-primary transition-colors">
             Documents
           </a>
@@ -59,6 +62,9 @@ const AppHeader = () => {
           <nav className="flex flex-col space-y-4">
             <Link to="/dashboard" className="text-sm font-medium hover:text-primary transition-colors">
               Dashboard
+            </Link>
+            <Link to="/projects" className="text-sm font-medium hover:text-primary transition-colors">
+              Projects
             </Link>
             <a href="/documents" className="text-sm font-medium hover:text-primary transition-colors">
               Documents

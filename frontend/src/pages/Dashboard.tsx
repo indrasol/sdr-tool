@@ -16,6 +16,10 @@ import tokenService from "@/utils/tokenService";
 import { useState, useEffect, useContext} from 'react';
 import { useNavigate } from "react-router-dom";
 import AuthContext from "@/components/context/AuthContext";
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Link } from "react-router-dom";
+import { FolderOpen } from "lucide-react";
 
 // Mock user data
 // const user = {
@@ -31,7 +35,28 @@ import AuthContext from "@/components/context/AuthContext";
 //   }
 // };
 
-const Index = () => {
+const ProjectsNavigationCard = () => (
+    <Card className="hover:shadow-md transition-all duration-300 flex flex-col">
+      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+        <CardTitle className="text-md font-medium">View All Projects</CardTitle>
+        <FolderOpen className="h-4 w-4 text-securetrack-purple" />
+      </CardHeader>
+      <CardContent className="flex-1 flex flex-col">
+        <p className="text-sm text-muted-foreground mb-4">
+          Access and manage all your security projects from a central location. Track status, priorities, and deadlines.
+        </p>
+        <div className="mt-auto">
+          <Button asChild className="w-full bg-securetrack-purple hover:bg-securetrack-darkpurple">
+            <Link to="/projects-list">
+              Go to Projects List
+            </Link>
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
+  );
+
+const Dashboard = () => {
     const navigate = useNavigate();
     const { user, isAuthenticated } = useContext(AuthContext);
     const [stats, setStats] = useState({
@@ -104,19 +129,27 @@ const Index = () => {
     if (!user) {
       return <div>Loading user data...</div>;
     }
+
+    const formatName = (name: string) => {
+        return name
+          .split(' ')
+          .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+          .join(' ');
+      };
     return (
         <Layout>
         <div className="space-y-8 mt-16">
-            <WelcomeCard username={user.name} />
+            <WelcomeCard username={formatName(user.name)} />
             
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 animate-fade-in">
             <StatCard
                 title="Projects Created"
                 value={stats.projects}
                 icon={<Briefcase />}
-                description="Total security projects"
+                description="Total Projects"
                 className="animate-fade-up hover:bg-gradient-to-r hover:from-securetrack-purple/5 hover:to-securetrack-green/5"
                 style={{ animationDelay: "0.05s" }}
+                linkTo="/projects"
             />
             <StatCard
                 title="Security Analyses"
@@ -185,4 +218,4 @@ const Index = () => {
     );
 };
 
-export default Index;
+export default Dashboard;
