@@ -7,51 +7,47 @@ from core.db.connection_manager import get_db
 from services.auth_handler import get_password_hash
 from sqlalchemy import insert
 import re
-
+from models.registration_models import RegisterRequest
 router = APIRouter()
 
-@router.post("/sign_up")
+@router.post("/register")
 async def register(
-    tenant_name: str,
-    username: str,
-    email: str,
-    password: str,
-    confirm_password: str,
+    register_request: RegisterRequest,
     db: AsyncSession = Depends(get_db)
 ):
     # Validate mandatory fields
-    if not all([tenant_name.strip(), username.strip(), email.strip(), password.strip(), confirm_password.strip()]):
+    if not all([register_request.tenant_name.strip(), register_request.username.strip(), register_request.email.strip(), register_request.password.strip(), register_request.confirm_password.strip()]):
         raise HTTPException(status_code=400, detail="All fields are mandatory")
 
     # Validate email format
     email_pattern = r'^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$'
-    if not re.match(email_pattern, email):
+    if not re.match(email_pattern, register_request.email):
         raise HTTPException(status_code=400, detail="Invalid email format")
 
     # Check password match
-    if password != confirm_password:
+    if register_request.password != register_request.confirm_password:
         raise HTTPException(status_code=400, detail="Passwords do not match")
 
     # Check for existing username
-    result = await db.execute(select(User).where(User.username == username))
+    result = await db.execute(select(User).where(User.username == register_request.username))
     if result.scalars().first():
-        raise HTTPException(status_code=400, detail="Username already registered")
+        raise HTTPException(status_code=400, detail="Username already taken. Please choose a different username.")
 
     # Check for existing email
-    result = await db.execute(select(User).where(User.email == email))
+    result = await db.execute(select(User).where(User.email == register_request.email))
     if result.scalars().first():
-        raise HTTPException(status_code=400, detail="Email already registered")
+        raise HTTPException(status_code=400, detail="Email already registered") 
 
     # Check if tenant exists or create a new one
-    tenant = (await db.execute(select(Tenant).where(Tenant.name == tenant_name))).scalars().first()
+    tenant = (await db.execute(select(Tenant).where(Tenant.name == register_request.tenant_name))).scalars().first()
     if not tenant:
-        tenant = Tenant(name=tenant_name)
+        tenant = Tenant(name=register_request.tenant_name)
         db.add(tenant)
         await db.flush()  # Get tenant ID
 
     # Create new user
-    hashed_password = get_password_hash(password)
-    new_user = User(username=username, email=email, hashed_password=hashed_password)
+    hashed_password = get_password_hash(register_request.password)
+    new_user = User(username=register_request.username, email=register_request.email, hashed_password=hashed_password)
     db.add(new_user)
     await db.flush()  # Get user ID
 
