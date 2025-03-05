@@ -14,7 +14,7 @@ const Index = () => {
       
       <main className="pt-24 px-6 max-w-7xl mx-auto">
         <div className="mb-8">
-          <h1 className="text-4xl font-bold mb-2">Welcome to SecureReview</h1>
+          <h1 className="text-4xl font-bold mb-2">Welcome to SecureTrack</h1>
           <p className="text-muted-foreground">
             Secure design reviews and SOC 2 assessments made simple
           </p>
