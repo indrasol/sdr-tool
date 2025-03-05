@@ -77,7 +77,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
       // Create form data
       const formData = new URLSearchParams();
-      formData.append('username', username); // username or email validation si done at backend
+      formData.append('username', username); // username or email validation is done at backend
       formData.append('password', password);
       const response = await fetch('http://localhost:8000/v1/routes/login', {
         method: 'POST',

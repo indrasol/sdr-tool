@@ -35,11 +35,6 @@ const HomePage = () => {
     setTimeout(() => setIsRegisterDialogOpen(true), 100);
   };
 
-  // Handle navigation to dashboard
-  const handleDashboardClick = () => {
-    navigate('/dashboard');
-  };
-
   return (
     <div className="flex flex-col min-h-screen bg-gradient-to-b from-gray-50 to-gray-100">
       {/* Navigation Bar */}
@@ -59,24 +54,14 @@ const HomePage = () => {
             </Link>
           </div>
           <div className="flex items-center space-x-4">
-             {/* Dashboard Button */}
-             <Button
-              variant="outline"
-              size="sm"
-              className="flex items-center"
-              onClick={handleDashboardClick}
-            >
-              <LayoutDashboard className="w-4 h-4 mr-2" />
-              Dashboard
-            </Button>
 
             <Button
-              variant="outline"
+              variant="outline" 
               size="sm"
-              className="flex items-center"
+              className="flex items-center gap-1 text-sm font-medium transition-all border-securetrack-purple/50 text-securetrack-purple hover:bg-gradient-to-br from-securetrack-purple to-securetrack-lightpurple hover:text-white hover:border-securetrack-purple shadow-sm hover:-translate-y-1 duration-300"
               onClick={() => setIsLoginDialogOpen(true)}
             >
-              <LogIn className="w-4 h-4 mr-2" />
+              <LogIn className="h-4 w-10" />
               Login
             </Button>
             <Button
