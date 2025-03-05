@@ -12,7 +12,6 @@ interface User {
   id: string;
   name: string;
   email: string;
-  organizationName: string;
   // Add other user properties as needed
 }
 

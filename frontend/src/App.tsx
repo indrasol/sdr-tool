@@ -14,6 +14,10 @@ import Login from "./pages/Login";
 import Register from "./pages/Register";
 import { AuthProvider, useAuth } from "./components/context/AuthContext"; // Fixed path
 import GenerateReport from "./pages/generateReport";
+import ProjectCard from "./components/dashboard/ProjectCard";
+import Dashboard from "./pages/Dashboard";
+import Documents from "./pages/Documents";
+import SOC2 from "./pages/SOC2";
 
 const queryClient = new QueryClient();
 
@@ -28,6 +32,9 @@ const App = () => (
             <Routes>
               <Route path="/" element={<HomePage />} />
               <Route path="/index" element={<Index />} />
+              <Route path="/dashboard" element={<Dashboard />} />   
+              <Route path="/documents" element={<Documents />} />
+              <Route path="/soc2" element={<SOC2 />} />
               <Route path="/create-project" element={<CreateProject />} />
               <Route path="/existing-project" element={<ExistingProject />} />
               <Route path="/model-with-ai" element={<ModelWithAI />} />
