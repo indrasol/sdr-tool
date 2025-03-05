@@ -8,7 +8,6 @@ interface User {
   id: string;
   name: string;
   email: string;
-  organizationName: string;
 }
 
 // Registration data interface
@@ -17,6 +16,7 @@ interface RegisterData {
   name: string;
   email: string;
   password: string;
+  confirmPassword: string;
 }
 
 // Auth context interface
@@ -32,6 +32,7 @@ interface AuthContextType {
 // Create the context with default values
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+
 // Provider component
 interface AuthProviderProps {
   children: ReactNode;
@@ -40,65 +41,50 @@ interface AuthProviderProps {
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
   const navigate = useNavigate();
-  
-  // Derived authentication state
-  const isAuthenticated = !!user;
 
-  // Initialize user from localStorage on mount
+  // Check for existing token/user on component mount
   useEffect(() => {
-    const initializeAuth = async () => {
+    const initAuth = async () => {
       setIsLoading(true);
-      
       try {
-        // Check if we have a token and user data in localStorage
+        const savedUser = tokenService.getUser();
         const token = tokenService.getToken();
-        const userData = tokenService.getUser();
         
-        if (token && userData) {
-          // Validate token by making a request to the server
-          try {
-            const response = await fetch('/api/auth/validate-token', {
-              headers: {
-                'Authorization': `Bearer ${token}`
-              }
-            });
-            
-            if (response.ok) {
-              setUser(userData);
-            } else {
-              // Token is invalid, clear auth data
-              tokenService.clearAuth();
-            }
-          } catch (error) {
-            console.error('Error validating token:', error);
-            // In case of network error, keep the user logged in
-            // but we could also choose to log them out for security
-            setUser(userData);
-          }
+        if (token && savedUser) {
+          setUser(savedUser);
+          setIsAuthenticated(true);
         }
       } catch (error) {
-        console.error('Error initializing auth:', error);
-        tokenService.clearAuth();
+        console.error('Auth initialization error:', error);
+        // Clear potentially invalid auth state
+        tokenService.removeToken();
+        tokenService.removeUser();
       } finally {
         setIsLoading(false);
       }
     };
-    
-    initializeAuth();
+
+    initAuth();
   }, []);
 
   // Login function
-  const login = async (email: string, password: string): Promise<void> => {
+  const login = async (username: string, password: string): Promise<void> => {
     setIsLoading(true);
     
     try {
-      const response = await fetch('/api/auth/login', {
+
+      // Create form data
+      const formData = new URLSearchParams();
+      formData.append('username', username); // username or email validation si done at backend
+      formData.append('password', password);
+      const response = await fetch('http://localhost:8000/v1/routes/login', {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
+          'Content-Type': 'application/x-www-form-urlencoded',
         },
-        body: JSON.stringify({ email, password }),
+        body: formData.toString(),
       });
       
       if (!response.ok) {
@@ -108,15 +94,16 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       
       const data = await response.json();
       
-      // Save token and user data
-      tokenService.setToken(data.token);
+      // Save token (adjust to match backend response key: 'access_token')
+      tokenService.setToken(data.access_token);
       tokenService.setUser(data.user);
       
       // Update state
       setUser(data.user);
+      setIsAuthenticated(true);
       
       // Navigate to dashboard
-      navigate('/dashboard');
+      // setTimeout(() => navigate("/dashboard"), 1000); // 1s delay
     } catch (error: any) {
       console.error('Login error:', error);
       throw error;
@@ -130,17 +117,26 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     setIsLoading(true);
     
     try {
-      const response = await fetch('/api/auth/register', {
+      // Map RegisterData to backend expected fields
+      const payload = {
+        tenant_name: data.organizationName,
+        username: data.name,
+        email: data.email,
+        password: data.password,
+        confirm_password: data.confirmPassword || data.password,
+      };
+      
+      const response = await fetch('http://localhost:8000/v1/routes/register', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(data),
+        body: JSON.stringify(payload),
       });
       
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.message || 'Registration failed');
+        throw new Error(errorData.detail || 'Registration failed');
       }
       
       const responseData = await response.json();

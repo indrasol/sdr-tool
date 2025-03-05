@@ -1,5 +1,5 @@
 import React, { useState, useContext } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Route, Eye, EyeOff, Mail, Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -43,6 +43,7 @@ const Login = ({ isOpen, onOpenChange, onSwitchToRegister }: LoginProps) => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { login } = useContext(AuthContext);
+  const navigate = useNavigate();
 
   // Initialize login form
   const loginForm = useForm<LoginFormValues>({
@@ -61,12 +62,18 @@ const Login = ({ isOpen, onOpenChange, onSwitchToRegister }: LoginProps) => {
     setError(null);
     
     try {
+      // Attempt login via AuthContext
       await login(values.identifier, values.password);
       
       // Success notification and UI update
       toast.success("Login successful!");
       onOpenChange(false);
       loginForm.reset();
+
+      // Introduce a 1-second delay before navigating to "/dashboard"
+      setTimeout(() => {
+        navigate("/dashboard");
+      }, 1000); // 1000ms = 1 second delay
       
       // The redirect is now likely handled by the AuthContext or related navigation guards
     } catch (err: any) {

@@ -6,6 +6,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { toast } from "sonner";
 import { useAuth } from "../components/context/AuthContext";
+import axios, { AxiosError } from 'axios';
 
 import {
   Dialog,
@@ -25,7 +26,12 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 
-// Signup form schema validation
+
+// API base URL (use environment variable in production)
+// const API_BASE_URL = process.env.REACT_APP_API_URL || "http://localhost:8000/v1";
+
+
+// Register form schema validation
 const registerFormSchema = z
   .object({
     organizationName: z.string().min(1, "Organization name is required"),
@@ -75,23 +81,49 @@ const Register: React.FC<RegisterProps> = ({
     setIsLoading(true);
 
     try {
+      // Make API call to backend /sign_up endpoint
       await register({
         organizationName: values.organizationName,
         name: values.name,
         email: values.email,
         password: values.password,
-      });
+        confirmPassword: values.confirmPassword
+      } as const);
 
+      // Show success message
       toast.success("Account created successfully!");
+
+      
+      // Close the dialog
       onOpenChange(false);
-      navigate("/Index");
+    
+      
     } catch (error: any) {
-      console.error("Registration error:", error);
-      toast.error(error.message);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+      // Handle specific backend errors
+      const errorMessage = error.message || "Registration failed";
+
+      if (errorMessage === "Username already taken. Please choose a different username.") {
+        form.setError("name", { message: "Username already taken" });
+        toast.error("Username already taken");
+      } else if (errorMessage === "Email already registered") {
+        form.setError("email", { message: "Email already registered" });
+        toast.error("Email already registered");
+      } else if (errorMessage === "Passwords do not match") {
+        form.setError("confirmPassword", { message: "Passwords do not match" });
+        toast.error("Passwords do not match");
+      } else if (errorMessage === "Invalid email format") {
+        form.setError("email", { message: "Invalid email format" });
+        toast.error("Invalid email format");
+      } else if (errorMessage === "All fields are mandatory") {
+        toast.error("Please fill in all required fields");
+      } else {
+        toast.error(errorMessage); // Display any other unexpected error message
+      }
+        console.error("Registration error:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
@@ -248,7 +280,6 @@ const Register: React.FC<RegisterProps> = ({
                   </FormItem>
                 )}
               />
-
               <Button type="submit" className="w-full" disabled={isLoading}>
                 {isLoading ? "Creating account..." : "Create Account"}
               </Button>

@@ -37,7 +37,7 @@ const HomePage = () => {
 
   // Handle navigation to dashboard
   const handleDashboardClick = () => {
-    navigate('/index');
+    navigate('/dashboard');
   };
 
   return (
