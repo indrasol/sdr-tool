@@ -19,6 +19,9 @@ interface ProjectContentProps {
   hasActiveFilters: boolean;
   onProjectClick: (projectId: string) => void;
   onCreateProject: () => void;
+  onDeleteProject?: (projectId: string) => void;
+  onEditProject?: (projectId: string) => void;
+  viewType?: 'grid' | 'list';
 }
 
 const ProjectContent = ({
@@ -33,7 +36,10 @@ const ProjectContent = ({
   clearFilters,
   hasActiveFilters,
   onProjectClick,
-  onCreateProject
+  onCreateProject,
+  onDeleteProject,
+  onEditProject,
+  viewType = 'grid'
 }: ProjectContentProps) => {
   return (
     <div className="space-y-4">
@@ -55,8 +61,10 @@ const ProjectContent = ({
       ) : (
         <ProjectsGridView 
           projects={projects} 
-          viewType="grid" 
+          viewType={viewType} 
           onProjectClick={onProjectClick} 
+          onDeleteProject={onDeleteProject}
+          onEditProject={onEditProject}
         />
       )}
 

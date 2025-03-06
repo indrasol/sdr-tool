@@ -6,9 +6,17 @@ interface ProjectsGridViewProps {
   projects: Project[];
   viewType: 'grid' | 'list';
   onProjectClick: (projectId: string) => void;
+  onDeleteProject?: (projectId: string) => void;
+  onEditProject?: (projectId: string) => void;
 }
 
-const ProjectsGridView = ({ projects, viewType, onProjectClick }: ProjectsGridViewProps) => {
+const ProjectsGridView = ({ 
+  projects, 
+  viewType, 
+  onProjectClick,
+  onDeleteProject,
+  onEditProject
+}: ProjectsGridViewProps) => {
   if (projects.length === 0) {
     return null;
   }
@@ -23,6 +31,9 @@ const ProjectsGridView = ({ projects, viewType, onProjectClick }: ProjectsGridVi
           key={project.id}
           {...project}
           onClick={() => onProjectClick(project.id)}
+          onDelete={onDeleteProject}
+          onEdit={onEditProject}
+          viewType={viewType}
         />
       ))}
     </div>

@@ -22,7 +22,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
 import { toast } from "sonner";
-import AuthContext from "../components/context/AuthContext";
+import AuthContext from "../components/Auth/AuthContext";
 
 // Login form schema validation
 const loginFormSchema = z.object({

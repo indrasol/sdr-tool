@@ -15,7 +15,7 @@ import TeamMembersCard from "@/components/dashboard/TeamMembersCard";
 import tokenService from "@/utils/tokenService";
 import { useState, useEffect, useContext} from 'react';
 import { useNavigate } from "react-router-dom";
-import AuthContext from "@/components/context/AuthContext";
+import AuthContext from "@/components/Auth/AuthContext";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";

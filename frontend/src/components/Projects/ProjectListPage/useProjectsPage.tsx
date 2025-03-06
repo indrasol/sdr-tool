@@ -1,15 +1,21 @@
-
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useProjects } from '@/hooks/useProjects';
+import { Project, useProjects } from '@/hooks/useProjects';
+import type { ProjectStatus, ProjectPriority } from '@/components/Projects/ProjectCard';
 import { useToast } from '@/hooks/use-toast';
 import type { ProjectTemplateType } from '@/components/Projects/ProjectTemplateSelector';
+import { useAuth } from '@/components/Auth/AuthContext';
 
 export const useProjectsPage = () => {
   const [viewType, setViewType] = useState<'grid' | 'list'>('grid');
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [projectToDelete, setProjectToDelete] = useState<{id: string, name: string} | null>(null);
+  const [projectToEdit, setProjectToEdit] = useState<Project | null>(null);
   const { toast } = useToast();
   const navigate = useNavigate();
+  const { user } = useAuth();
   
   const {
     projects,
@@ -25,87 +31,154 @@ export const useProjectsPage = () => {
     clearFilters,
     hasActiveFilters,
     addProject,
-    loadSampleProjects
+    deleteProject,
+    updateProject,
+    loadSampleProjects,
+    error,
+    isLoading
   } = useProjects();
 
+  // Display error toast if an error occurs from useProjects
+  useEffect(() => {
+    if (error) {
+      toast({
+        title: "Error",
+        description: error,
+        variant: "destructive",
+      });
+    }
+  }, [error, toast]);
+
+  // Handle project click with navigation based on templateType
   const handleProjectClick = (projectId: string) => {
-    const project = projects.find(p => p.id === projectId);
-    
+    const project = projects.find((p) => p.id === projectId);
+
     if (project) {
-      if (project.templateType === 'AI Assisted') {
-        navigate('/model-with-ai');
-      } else if (project.templateType === 'Import Existing') {
-        navigate('/security-analysis');
-      } else {
-        toast({
-          title: "Project Selected",
-          description: `You clicked on project ${projectId}`,
-        });
+      switch (project.templateType) {
+        case 'AI Assisted':
+          navigate('/model-with-ai');
+          break;
+        case 'Import Existing':
+          navigate('/security-analysis');
+          break;
+        case 'Solutions Hub':
+          navigate('/solutions-hub');
+          break;
+        default:
+          toast({
+            title: "Project Selected",
+            description: `You clicked on project ${projectId}`,
+          });
       }
     }
   };
 
+  // Open the create project dialog
   const handleCreateProject = () => {
     setCreateDialogOpen(true);
   };
+
+  const handleEditProject = (projectId: string) => {
+    const project = projects.find(p => p.id === projectId);
+    if (project) {
+      setProjectToEdit(project);
+      setEditDialogOpen(true);
+    }
+  };
+
+  const handleUpdateProject = (projectId: string, updatedData: Partial<Project>) => {
+    updateProject(projectId, updatedData);
+    toast({
+      title: "Project Updated",
+      description: `Project has been updated successfully`,
+    });
+    setEditDialogOpen(false);
+    setProjectToEdit(null);
+  };
+
+  const handleDeleteProject = (projectId: string) => {
+    const project = projects.find(p => p.id === projectId);
+    if (project) {
+      setProjectToDelete({id: project.id, name: project.name});
+      setDeleteDialogOpen(true);
+    }
+  };
+
+  const confirmDeleteProject = () => {
+    if (projectToDelete) {
+      deleteProject(projectToDelete.id);
+      toast({
+        title: "Project Deleted",
+        description: `Project "${projectToDelete.name}" has been deleted`,
+      });
+      setDeleteDialogOpen(false);
+      setProjectToDelete(null);
+    }
+  };
   
-  const handleProjectCreation = (projectData: {
+  // Handle project creation with async API call and "testsdr" condition
+  const handleProjectCreation = async (projectData: {
     name: string;
     description: string;
     priority: 'Low' | 'Medium' | 'High' | 'Critical';
     domain?: string;
     dueDate?: string;
     creator: string;
-    templateType: ProjectTemplateType;
+    templateType?: ProjectTemplateType;
     importedFile?: string;
   }) => {
-    // Generate a random project ID
-    const projectId = 'P' + Math.floor(1000 + Math.random() * 9000).toString();
-    
-    // Check if we should load sample projects
+    // Maintain "testsdr" condition for testing purposes
+    console.log("Entered handleProjectCreation");
     if (projectData.creator === 'testsdr' && allProjects.length === 0) {
       const loaded = loadSampleProjects(projectData.creator);
-      if (!loaded) {
-        // If not loaded, add the new project
-        addProject({
-          id: projectId,
-          name: projectData.name,
-          description: projectData.description,
-          status: 'Not Started',
-          priority: projectData.priority,
-          createdDate: new Date().toISOString().split('T')[0],
-          dueDate: projectData.dueDate,
-          creator: projectData.creator,
-          domain: projectData.domain,
-          templateType: projectData.templateType,
-          importedFile: projectData.importedFile
+      if (loaded) {
+        toast({
+          title: "Sample Projects Loaded",
+          description: "Sample projects have been loaded for testing.",
         });
+        setCreateDialogOpen(false);
+        return; // Exit early if sample projects are loaded
       }
-    } else {
-      // Add the new project
-      addProject({
-        id: projectId,
+    }
+
+    try {
+      console.log("Project data", projectData);
+      const tenantId = user.tenant_ids[0];
+      
+      // Create a new object with default values properly applied
+      const defaultDueDate = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+      
+      // Add project via API (ID is generated by the backend)
+      await addProject({
         name: projectData.name,
         description: projectData.description,
-        status: 'Not Started',
+        tenant_id: tenantId,
+        status: 'Not Started' as ProjectStatus,
         priority: projectData.priority,
         createdDate: new Date().toISOString().split('T')[0],
-        dueDate: projectData.dueDate,
+        dueDate: projectData.dueDate || defaultDueDate, // Use the default if not provided
         creator: projectData.creator,
-        domain: projectData.domain,
-        templateType: projectData.templateType,
-        importedFile: projectData.importedFile
+        domain: projectData.domain || 'General', // Use the default if not provided
+        templateType: projectData.templateType || 'AI Assisted', // Use the default if not provided
+        importedFile: projectData.importedFile || null,
+      });
+
+      toast({
+        title: "Project Created",
+        description: `New project "${projectData.name}" has been created`,
+      });
+    } catch (err) {
+      toast({
+        title: "Error",
+        description: "Failed to create project",
+        variant: "destructive",
       });
     }
-    
-    toast({
-      title: "Project Created",
-      description: `New project "${projectData.name}" has been created`,
-    });
-    
+
     setCreateDialogOpen(false);
   };
 
+  // Handle exporting projects
   const handleExportProjects = () => {
     toast({
       title: "Export Projects",
@@ -113,18 +186,30 @@ export const useProjectsPage = () => {
     });
   };
 
+  // Handle status filter changes with all possible statuses
   const handleStatusFilterChange = (status: string) => {
     if (status === 'All') {
       setStatusFilter('All');
-    } else if (status === 'In Progress') {
-      setStatusFilter('In Progress');
-    } else if (status === 'Completed') {
-      setStatusFilter('Completed');
+    } else if (
+      status === 'Not Started' ||
+      status === 'Started' ||
+      status === 'In Progress' ||
+      status === 'On Hold' ||
+      status === 'Completed'
+    ) {
+      setStatusFilter(status as ProjectStatus);
     } else if (status === 'My') {
-      // This is a custom filter for "My Projects"
-      // Since we don't have a direct "My" filter, we clear filters and apply search for the creator
-      clearFilters();
-      setSearchTerm('testsdr'); // Assuming the current user is "testsdr"
+      if (user && user.name) {
+        clearFilters(); // Clear any existing filters
+        setSearchTerm(user.name); // Dynamically set search term to the user's username
+      } else {
+        // Handle case where user is not logged in
+        toast({
+          title: "Error",
+          description: "Unable to filter 'My Projects'. Please log in.",
+          variant: "destructive",
+        });
+      }
     }
   };
 
@@ -133,6 +218,12 @@ export const useProjectsPage = () => {
     setViewType,
     createDialogOpen,
     setCreateDialogOpen,
+    deleteDialogOpen,
+    setDeleteDialogOpen,
+    projectToDelete,
+    editDialogOpen,
+    setEditDialogOpen,
+    projectToEdit,
     projects,
     allProjects,
     searchTerm,
@@ -147,8 +238,14 @@ export const useProjectsPage = () => {
     hasActiveFilters,
     handleProjectClick,
     handleCreateProject,
+    handleEditProject,
+    handleUpdateProject,
+    handleDeleteProject,
+    confirmDeleteProject,
     handleProjectCreation,
     handleExportProjects,
-    handleStatusFilterChange
+    handleStatusFilterChange,
+    isLoading,
+    error,
   };
 };
