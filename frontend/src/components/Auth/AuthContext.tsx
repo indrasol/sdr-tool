@@ -1,5 +1,5 @@
 import React, { createContext, useState, useContext, useEffect, ReactNode } from "react";
-import { useNavigate } from "react-router-dom";
+import { Navigate, useNavigate } from "react-router-dom";
 import tokenService from "../../utils/tokenService";
   // Assuming this is implemented properly
 
@@ -8,6 +8,7 @@ interface User {
   id: string;
   name: string;
   email: string;
+  tenant_ids: number[];
 }
 
 // Registration data interface
@@ -55,19 +56,23 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         if (token && savedUser) {
           setUser(savedUser);
           setIsAuthenticated(true);
+        } else {
+          // Redirect to login if no token/user found
+          navigate('/login', { replace: true });
         }
       } catch (error) {
         console.error('Auth initialization error:', error);
         // Clear potentially invalid auth state
         tokenService.removeToken();
         tokenService.removeUser();
+        navigate('login', { replace: true })
       } finally {
         setIsLoading(false);
       }
     };
 
     initAuth();
-  }, []);
+  }, [navigate]);
 
   // Login function
   const login = async (username: string, password: string): Promise<void> => {
@@ -94,6 +99,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       
       const data = await response.json();
       
+      console.log("logged in data", data);
+      console.log("logged in user data", data.user);
       // Save token (adjust to match backend response key: 'access_token')
       tokenService.setToken(data.access_token);
       tokenService.setUser(data.user);
@@ -172,7 +179,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     isLoading,
     login,
     register,
-    logout
+    logout,
+    setUser,
+    setIsAuthenticated
   };
 
   return (

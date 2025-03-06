@@ -12,13 +12,15 @@ import ProjectList from "./pages/ProjectList";
 import ExistingProject from "./pages/ExistingProject";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
-import { AuthProvider, useAuth } from "./components/context/AuthContext"; // Fixed path
-import GenerateReport from "./pages/generateReport";
+import { AuthProvider, useAuth } from "./components/Auth/AuthContext"; // Fixed path
+import ProtectedRoute from "./components/Auth/ProtectedRoute";
+import GenerateReport from "./pages/GenerateReport";
 import ProjectCard from "./components/dashboard/ProjectCard";
 import Dashboard from "./pages/Dashboard";
 import Documents from "./pages/Documents";
 import SOC2 from "./pages/SOC2";
 import Projects from "./pages/Projects";
+
 
 const queryClient = new QueryClient();
 
@@ -33,16 +35,6 @@ const App = () => (
             <Routes>
               <Route path="/" element={<HomePage />} />
               <Route path="/index" element={<Index />} />
-              <Route path="/dashboard" element={<Dashboard />} />   
-              <Route path="/documents" element={<Documents />} />
-              <Route path="/soc2" element={<SOC2 />} />
-              <Route path="/create-project" element={<CreateProject />} />
-              <Route path="/existing-project" element={<ExistingProject />} />
-              <Route path="/model-with-ai" element={<ModelWithAI />} />
-              <Route path="/project-list" element={<ProjectList />} />
-              <Route path="/projects" element={<Projects />} />
-              <Route path="/generate-report" element={<GenerateReport />} />
-              <Route path="*" element={<NotFound />} />
               <Route
                 path="/login"
                 element={
@@ -63,6 +55,23 @@ const App = () => (
                   />
                 }
               />
+
+              {/* Protected Routes */}
+              <Route element={<ProtectedRoute />}>
+                <Route path="/dashboard" element={<Dashboard />} />   
+                <Route path="/documents" element={<Documents />} />
+                <Route path="/soc2" element={<SOC2 />} />
+                <Route path="/create-project" element={<CreateProject />} />
+                <Route path="/existing-project" element={<ExistingProject />} />
+                <Route path="/model-with-ai" element={<ModelWithAI />} />
+                <Route path="/project-list" element={<ProjectList />} />
+                <Route path="/projects" element={<Projects />} />
+                <Route path="/generate-report" element={<GenerateReport />} />
+                <Route path="*" element={<NotFound />} />
+              </Route>
+
+              <Route path="*" element={<NotFound />} />
+              
             </Routes>
           </AuthProvider>
         </div>

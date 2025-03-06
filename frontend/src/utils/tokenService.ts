@@ -12,6 +12,7 @@ interface User {
   id: string;
   name: string;
   email: string;
+  tenant_ids: number[];
   // Add other user properties as needed
 }
 
