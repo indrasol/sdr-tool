@@ -1,108 +1,103 @@
-from datetime import datetime, timedelta, timezone
-from jose import jwt, ExpiredSignatureError, JWTError
-from passlib.context import CryptContext
-from typing import Optional
-from sqlalchemy.orm import Session
-from fastapi.openapi.models import OAuthFlows as OAuthFlowsModel
-from fastapi.openapi.models import OAuth2 as OAuth2Model
-from fastapi.security import OAuth2
-from models.db_schema_models import User
+import base64
 from fastapi.security import OAuth2PasswordBearer
-from fastapi import Depends, HTTPException, status
-from core.db.connection_manager import get_db
-from config.settings import JWT_SECRET_KEY
+from fastapi import HTTPException, Header
+from config.settings import SUPABASE_SECRET_KEY, SUPABASE_API_KEY
 from fastapi import FastAPI
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from utils.logger import log_info
 from jwt.exceptions import ExpiredSignatureError, InvalidTokenError
+from core.db.supabase_db import get_supabase_client, run_supabase_async, safe_supabase_operation
+import traceback
+import jwt
+from fastapi import Depends
+from fastapi.security import APIKeyHeader
 
 app = FastAPI()
-# JWT configuration
-SECRET_KEY = JWT_SECRET_KEY  # Replace with a secure, random key
+
 ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 30
 
 
-# OAuth2 scheme for token authentication
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="v1/routes/login")
-
-
-# Password hashing
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-
-# Synchronous methods (CPU-bound)
-# Generate a JWT access token
-def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
-    to_encode = data.copy()
-    log_info(f"Create Access Token Data: {to_encode}")
-    if expires_delta:
-        expire = datetime.now(timezone.utc) + expires_delta
-    else:
-        expire = datetime.now(timezone.utc) + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
-    to_encode.update({"exp": expire})
-    encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
-    return encoded_jwt
-
-# Verify a plain password against a hashed password
-def verify_password(plain_password: str, hashed_password: str):
-    return pwd_context.verify(plain_password, hashed_password)
-
-# Hash a password
-def get_password_hash(password: str):
-    return pwd_context.hash(password)
-
-# Async methods (I/O-bound: database operations)
-async def authenticate_user(username_or_email: str, password: str, db: AsyncSession) -> Optional[User]:
+async def verify_token(authorization: str = Header(None)):
+    """
+    Get authenticated user based on JWT token.
+    
+    Args:
+        Authorization header with token
+        
+    Returns:
+        User data dictionary
+        
+    Raises:
+        HTTPException: If authentication fails
+    """
     try:
-        # Query user by username or email
-        stmt = select(User).where((User.username == username_or_email) | (User.email == username_or_email))
-        result = await db.execute(stmt)
-        user = result.scalars().first()
-        log_info(f"Authenticate User: {user}")
+        if not authorization:
+            raise HTTPException(status_code=401, detail="Missing token")
+    
+        log_info(f"Authorization: {authorization}")
+        token = authorization.split(" ")[1]
+        token = str(token)
+        log_info(f"Token: {token}")
+
+        log_info(f"SUPABASE_SECRET_KEY: {SUPABASE_SECRET_KEY}")
+
+        # Ensure SUPABASE_SECRET_KEY is set and is a string
+        if not SUPABASE_SECRET_KEY or not isinstance(SUPABASE_SECRET_KEY, str):
+            log_info(f"SUPABASE_SECRET_KEY is invalid: type={type(SUPABASE_SECRET_KEY)}, value={SUPABASE_SECRET_KEY}")
+            raise HTTPException(status_code=500, detail="Server configuration error: Missing or invalid secret key")
+
+        # Verify the JWT using the secret from environment variables
+        try:
+            # jwt_secret = base64.b64decode(SUPABASE_SECRET_KEY)
+            payload = jwt.decode(token, SUPABASE_SECRET_KEY, algorithms=["HS256"], audience="authenticated")
+            log_info(f"Payload: {payload}")
+        except ExpiredSignatureError:
+            log_info("Token verification failed: Token expired")
+            raise HTTPException(status_code=401, detail="Token expired")
+        except InvalidTokenError:
+            log_info(f"Token verification failed: Invalid token - {str(e)}")
+            raise HTTPException(status_code=401, detail="Invalid token")
+
+        # Extract the Supabase user ID (assumed to be in the 'sub' claim)
+        user_id = payload.get("sub")
+        if not user_id:
+            log_info("Token payload missing user ID")
+            raise HTTPException(status_code=401, detail="Invalid token payload: Missing user ID")
         
-        if not user:
-            return None
-            
-        # Verify password
-        if not pwd_context.verify(password, user.hashed_password):
-            return None
-            
-        # Explicitly load relationships you'll need
-        await db.refresh(user, ['tenants'])
-        
-        log_info(f"Authenticate User near return: {user}")
-        return user
+        log_info(f"Token valid for Supabase user ID: {user_id}")
+
+        # Use Supabase client to fetch the user data from your 'users' table
+        # supabase = get_supabase_client()
+        # log_info(f"Supabase: {supabase}")
+
+        # def user_operation():
+        #     return supabase.from_("auth.users").select("*").eq("id", user_id).execute()
+
+        # user_response = await safe_supabase_operation(
+        #     user_operation,
+        #     "Failed to fetch user data"
+        # )
+        # log_info(f"User response: {user_response}")
+
+        # if not user_response.data:
+        #     log_info(f"User not found in database for Supabase ID: {user_id}")
+        #     raise HTTPException(status_code=404, detail="User not found in database")
+
+        return user_id
+
+    except HTTPException as http_exc:
+        # Re-raise known HTTP exceptions
+        raise http_exc
     except Exception as e:
-        await db.rollback()
-        log_info(f"Authentication error: {str(e)}")
-        raise
+        # Catch any unexpected exceptions, log them, and return a generic error
+        log_info(f"Unexpected error in verify token authentication: {str(e)}")
+        log_info(traceback.format_exc())
+        raise HTTPException(status_code=500, detail="Authentication system error")
 
 
-# Dependency to get the current user from the token
-async def get_current_user(token: str = Depends(oauth2_scheme), db: AsyncSession = Depends(get_db)):
-    credentials_exception = HTTPException(
-        status_code=status.HTTP_401_UNAUTHORIZED,
-        detail="Could not validate credentials",
-        headers={"WWW-Authenticate": "Bearer"},
-    )
-    try:
-        log_info("Entered get_current_user...")
-        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        log_info(f"Payload: {payload}")
-        username: str = payload.get("sub")
-        if username is None:
-            raise credentials_exception
-    except ExpiredSignatureError:
-        log_info("Token has expired")
-        raise credentials_exception
-    except JWTError as e:
-        log_info(f"JWTError: {str(e)}")
-        raise credentials_exception
-
-    stmt = select(User).where(User.username == username)
-    result = await db.execute(stmt)
-    user = result.scalars().first()
-    if user is None:
-        raise credentials_exception
-    return user
+api_key_header = APIKeyHeader(name="X-API-Key", auto_error=False)
+async def verify_api_key(api_key: str = Depends(api_key_header)):
+    if api_key != SUPABASE_API_KEY:
+        raise HTTPException(status_code=403, detail="Invalid API Key")
+    return api_key

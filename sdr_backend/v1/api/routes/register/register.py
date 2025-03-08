@@ -1,62 +1,153 @@
 # routers/router.py
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Body
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
-from models.db_schema_models import User, Tenant, user_tenant_association
-from core.db.connection_manager import get_db
-from services.auth_handler import get_password_hash
+from models.db_schema_models import User, Tenant, UserTenantAssociation
+from core.db.supabase_db import get_supabase_client, safe_supabase_operation
 from sqlalchemy import insert
 import re
 from models.registration_models import RegisterRequest
+from utils.logger import log_info
+from services.auth_handler import verify_token, verify_api_key
+from config.settings import SUPABASE_SECRET_KEY
+from fastapi.security import APIKeyHeader
+
 router = APIRouter()
+
+
+
+
+supabase = get_supabase_client()
 
 @router.post("/register")
 async def register(
-    register_request: RegisterRequest,
-    db: AsyncSession = Depends(get_db)
+    request_data: RegisterRequest,
+    current_user: dict = Depends(verify_token)
 ):
-    # Validate mandatory fields
-    if not all([register_request.tenant_name.strip(), register_request.username.strip(), register_request.email.strip(), register_request.password.strip(), register_request.confirm_password.strip()]):
-        raise HTTPException(status_code=400, detail="All fields are mandatory")
+    """
+    Register a new user after Supabase authentication and associate with tenant.
 
-    # Validate email format
-    email_pattern = r'^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$'
-    if not re.match(email_pattern, register_request.email):
-        raise HTTPException(status_code=400, detail="Invalid email format")
+    Args:
+        request_data: Contains user_id, tenant_name, email, username.
+        current_user: Verified user from the token.
 
-    # Check password match
-    if register_request.password != register_request.confirm_password:
-        raise HTTPException(status_code=400, detail="Passwords do not match")
+    Returns:
+        Success message.
+    """
+    try :
+        
+        # Check if user already exists
+        def check_user():
+            return supabase.from_("users") \
+                .select("*") \
+                .eq("id", request_data.user_id) \
+                .execute()
+            
+        user_response = await safe_supabase_operation(
+            check_user,
+            "Failed to check if user exists"
+        )
+        
+        if user_response.data:
+            raise HTTPException(status_code=400, detail="User already exists")
+        
+        # Check if user email already exists
+        def check_user_email():
+            return supabase.from_("users") \
+                .select("*") \
+                .eq("email", request_data.email) \
+                .execute()
+        
+        user_email_response = await safe_supabase_operation(
+            check_user_email,
+            "Failed to check if user email exists"
+        )
 
-    # Check for existing username
-    result = await db.execute(select(User).where(User.username == register_request.username))
-    if result.scalars().first():
-        raise HTTPException(status_code=400, detail="Username already taken. Please choose a different username.")
+        if user_email_response.data:
+            raise HTTPException(status_code=400, detail="User email already exists")
 
-    # Check for existing email
-    result = await db.execute(select(User).where(User.email == register_request.email))
-    if result.scalars().first():
-        raise HTTPException(status_code=400, detail="Email already registered") 
+        # Check or create tenant (using organization_name)
+        def check_tenant():
+            return supabase.from_("tenants") \
+                .select("*") \
+                .eq("name", request_data.tenant_name) \
+                .execute()
+            
+        tenant_response = await safe_supabase_operation(
+            check_tenant,
+            "Failed to check if tenant exists"
+        )
+        
+        tenant_id = None
+        if tenant_response.data:
+            tenant_id = tenant_response.data[0]["id"]
+        else:
+            # Create new tenant
+            def create_tenant():
+                return supabase.from_("tenants") \
+                    .insert({"name": request_data.tenant_name}) \
+                    .execute()
+                
+            new_tenant_response = await safe_supabase_operation(
+                create_tenant,
+                "Failed to create tenant"
+            )
+            tenant_id = new_tenant_response.data[0]["id"]
+            log_info(f"Created new tenant: {request_data.tenant_name} with ID: {tenant_id}")
 
-    # Check if tenant exists or create a new one
-    tenant = (await db.execute(select(Tenant).where(Tenant.name == register_request.tenant_name))).scalars().first()
-    if not tenant:
-        tenant = Tenant(name=register_request.tenant_name)
-        db.add(tenant)
-        await db.flush()  # Get tenant ID
+        
+        # Create user with provided details
+        new_user_data = {
+            "id": request_data.user_id,
+            "username": request_data.username,
+            "email": request_data.email
+        }
+        
+        def create_user():
+            return supabase.from_("users") \
+                .insert(new_user_data) \
+                .execute()
+            
+        new_user_response = await safe_supabase_operation(
+            create_user,
+            "Failed to create user"
+        )
+        
+        user_id = new_user_response.data[0]["id"]
+        log_info(f"Created new user with ID: {user_id}")
 
-    # Create new user
-    hashed_password = get_password_hash(register_request.password)
-    new_user = User(username=register_request.username, email=register_request.email, hashed_password=hashed_password)
-    db.add(new_user)
-    await db.flush()  # Get user ID
+        # Associate user with tenant using junction table
+        def associate_user_tenant():
+            return supabase.from_("user_tenant_association") \
+                .insert({
+                    "user_id": user_id,
+                    "tenant_id": tenant_id
+                }) \
+                .execute()
+            
+        await safe_supabase_operation(
+            associate_user_tenant,
+            "Failed to associate user with tenant"
+        )
+        log_info(f"Associated user {user_id} with tenant {tenant_id}")
 
-    # Associate user with tenant
-    await db.execute(
-        insert(user_tenant_association).values(user_id=new_user.id, tenant_id=tenant.id)
-    )
+        return {"message": "User and tenant registered successfully"}
+    except Exception as e:
+        # Cleanup on failure
+        if 'user_id' in locals():
+            supabase.from_("users").delete().eq("id", user_id).execute()
+            supabase.auth.admin.delete_user(user_id)  # Delete from auth.users
+        raise HTTPException(status_code=500, detail=f"Registration failed: {str(e)}")
 
-    # Commit transaction
-    await db.commit()
 
-    return {"message": "Organization and User registered successfully"}
+
+
+
+@router.post("/cleanup-auth-user")
+async def cleanup_auth_user(request_data: dict, api_key: str = Depends(verify_api_key)):
+    user_id = request_data.get("user_id")
+    try:
+        supabase.auth.admin.delete_user(user_id)
+        return {"message": "Auth user deleted successfully"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to delete auth user: {str(e)}")

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Route, Shield, CheckCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -23,16 +23,25 @@ const HomePage = () => {
   const [isRegisterDialogOpen, setIsRegisterDialogOpen] = useState(false);
   const navigate = useNavigate();
 
+  useEffect(() => {
+    console.log("isLoginDialogOpen:", isLoginDialogOpen);
+    console.log("isRegisterDialogOpen:", isRegisterDialogOpen);
+  }, [isLoginDialogOpen, isRegisterDialogOpen]);
   // Switch from register to login
   const switchToLogin = () => {
+    console.log("Switching to login");
     setIsRegisterDialogOpen(false);
+    console.log("Opening login dialog");
     setTimeout(() => setIsLoginDialogOpen(true), 100);
   };
 
   // Switch from login to register
   const switchToRegister = () => {
+    console.log("Switching to register");
     setIsLoginDialogOpen(false);
-    setTimeout(() => setIsRegisterDialogOpen(true), 100);
+    console.log("Opening register dialog");
+    setIsRegisterDialogOpen(true)
+    // setTimeout(() => setIsRegisterDialogOpen(true), 100);
   };
 
   return (

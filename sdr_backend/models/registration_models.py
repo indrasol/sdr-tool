@@ -3,11 +3,10 @@ from pydantic import BaseModel
 
 
 class RegisterRequest(BaseModel):
+    user_id: str
     tenant_name: str
-    username: str
-    email: str
-    password: str
-    confirm_password: str
+    email : str
+    username : str
 
 
 class Token(BaseModel):

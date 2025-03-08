@@ -1,40 +1,40 @@
 from fastapi import APIRouter, Depends, HTTPException
-from fastapi.responses import JSONResponse
-from typing import Union, Optional
-from services.auth_handler import get_current_user  # Authentication dependency
-from core.db.connection_manager import get_db     # Database dependency
-from models.db_schema_models import User          # User model
-from services.request_handler import preprocess_request
-from core.llm.llm_gateway import LLMGateway
-from services.response_handler import ResponseHandler
-from models.new_pydantic_models import (
-    UserRequest,
-    ArchitectureResponse,
-    ExpertResponse,
-    ErrorResponse,
-    ClarificationResponse
-)
-import asyncio
-from utils.logger import log_info  # Logging utility
+# from fastapi.responses import JSONResponse
+# from typing import Union, Optional
+# from services.auth_handler import get_current_user  # Authentication dependency
+# from core.db.connection_manager import get_db     # Database dependency
+# from models.db_schema_models import User          # User model
+# from services.request_handler import preprocess_request
+# from core.llm.llm_gateway import LLMGateway
+# from services.response_handler import ResponseHandler
+# from models.new_pydantic_models import (
+#     UserRequest,
+#     ArchitectureResponse,
+#     ExpertResponse,
+#     ErrorResponse,
+#     ClarificationResponse
+# )
+# import asyncio
+# from utils.logger import log_info  # Logging utility
 
-# Initialize the router
+# # Initialize the router
 router = APIRouter()
 
-# Initialize core components
-# request_handler = RequestHandler()
-llm_gateway = LLMGateway()
-response_handler = ResponseHandler()
+# # Initialize core components
+# # request_handler = RequestHandler()
+# llm_gateway = LLMGateway()
+# response_handler = ResponseHandler()
 
-userquery = "Design a basic e-commerce system with a web server, application server, and database."
+# userquery = "Design a basic e-commerce system with a web server, application server, and database."
 
 @router.post("/dummy_design")
 async def design_endpoint(
-    query: str = userquery,
-    delay_minutes: Optional[float] = 0
+    # query: str = userquery,
+    # delay_minutes: Optional[float] = 0
     # request: UserRequest,
     # current_user: User = Depends(get_current_user),
     # db=Depends(get_db)
-) -> JSONResponse:
+) :
     """
     Handles user requests to design secure software architectures.
 
@@ -92,30 +92,30 @@ async def design_endpoint(
         #     intent_type=intent_type
         # )
 
-    try:
-        delay_minutes = 3
-        # Add delay if requested
-        if delay_minutes > 0:
-            log_info(f"Delaying response for {delay_minutes} minutes")
-            # Convert minutes to seconds for asyncio.sleep
-            await asyncio.sleep(delay_minutes * 60)
+    # try:
+    #     delay_minutes = 3
+    #     # Add delay if requested
+    #     if delay_minutes > 0:
+    #         log_info(f"Delaying response for {delay_minutes} minutes")
+    #         # Convert minutes to seconds for asyncio.sleep
+    #         await asyncio.sleep(delay_minutes * 60)
 
-        validated_response = None
+    #     validated_response = None
 
-        # Step 4: Return the validated response as JSON
-        return JSONResponse(content=validated_response.model_dump())
+    #     # Step 4: Return the validated response as JSON
+    #     return JSONResponse(content=validated_response.model_dump())
 
-    except HTTPException as e:
-        # Authentication or specific HTTP-related errors
-        return JSONResponse(status_code=e.status_code, content={"detail": e.detail})
-    except ValueError as e:
-        # Input validation errors
-        log_info(f"ValueError in design_endpoint: {str(e)}")
-        return JSONResponse(status_code=400, content={"detail": str(e)})
-    except Exception as e:
-        # Unexpected errors
-        log_info(f"Unexpected error in design_endpoint: {str(e)}")
-        return JSONResponse(status_code=500, content={"detail": "Internal server error"})
+    # except HTTPException as e:
+    #     # Authentication or specific HTTP-related errors
+    #     return JSONResponse(status_code=e.status_code, content={"detail": e.detail})
+    # except ValueError as e:
+    #     # Input validation errors
+    #     log_info(f"ValueError in design_endpoint: {str(e)}")
+    #     return JSONResponse(status_code=400, content={"detail": str(e)})
+    # except Exception as e:
+    #     # Unexpected errors
+    #     log_info(f"Unexpected error in design_endpoint: {str(e)}")
+    #     return JSONResponse(status_code=500, content={"detail": "Internal server error"})
 
     
 

@@ -65,4 +65,19 @@ REPORTS_DIR = os.getenv("REPORTS_FOLDER", os.path.join(BASE_DIR, "reports"))
 ML_MODELS_DIR = os.getenv("ML_MODELS_FOLDER", os.path.join(BASE_DIR, "ml_models/intent_classifier"))
 
 # JWT Secret Key
-JWT_SECRET_KEY = os.getenv("JWT_SECRET_KEY")
+SUPABASE_SECRET_KEY = os.getenv("JWT_SECRET_KEY")
+
+# Database
+DB_USER = os.getenv("DB_USER")
+DB_PASSWORD = os.getenv("DB_PASSWORD")
+DB_HOST = os.getenv("DB_HOST")
+DB_PORT = os.getenv("DB_PORT")
+DB_NAME = os.getenv("DB_NAME")
+
+POSTGRES_DATABASE_URL = os.getenv("POSTGRES_DATABASE_URL")
+
+SUPABASE_URL = os.getenv("SUPABASE_URL")
+SUPABASE_KEY = os.getenv("SUPABASE_KEY")
+SUPABASE_PROJECT_URL = os.getenv("SUPABASE_PROJECT_URL")
+SUPABASE_API_KEY = os.getenv("SUPABASE_API_KEY")
+SUPABASE_SECRET_KEY = "KoFjShp0KgS/uKE97puxyOwj/LODCTX5hy9qAW/kmaWOW41Cucazl1RhDJBEdhOkrOrG63PRys40/SKcWzlwgg=="

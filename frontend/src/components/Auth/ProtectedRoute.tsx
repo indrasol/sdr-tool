@@ -1,18 +1,22 @@
-import React from 'react';
-import { Navigate, Outlet } from 'react-router-dom';
-import { useAuth } from './AuthContext';
+import { Outlet } from "react-router-dom";
 
-const ProtectedRoute: React.FC = () => {
+import { Navigate } from "react-router-dom";
+import { useAuth } from "../../components/Auth/AuthContext";
+
+const ProtectedRoute = () => {
   const { isAuthenticated, isLoading } = useAuth();
 
+  // Show a loading state while checking authentication
   if (isLoading) {
-    return <div>Loading...</div>; // Replace with a spinner if desired
+    return <div>Loading...</div>;
   }
 
+  // Redirect to login if not authenticated
   if (!isAuthenticated) {
-    return <Navigate to="/login" replace />;
+    return <Navigate to="/login" />;
   }
 
+  // Render nested routes if authenticated
   return <Outlet />;
 };
 

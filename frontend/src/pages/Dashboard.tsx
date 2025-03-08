@@ -130,16 +130,27 @@ const Dashboard = () => {
       return <div>Loading user data...</div>;
     }
 
-    const formatName = (name: string) => {
-        return name
-          .split(' ')
-          .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
-          .join(' ');
-      };
+    const formatName = (name?: string) => {
+      // If name is undefined or null, provide a default value
+      if (!name) {
+        // Use username if available, otherwise a generic greeting
+        return user.username || user.email || 'Valued User';
+      }
+      
+      return name
+        .replace(/\d/g, '')
+        .split(' ')
+        .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+        .join(' ');
+    };
+
+    // Get username from user object, using fallbacks in case properties are missing
+    const displayName = user.username || user.email || 'Valued User';
+
     return (
         <Layout>
         <div className="space-y-8 mt-16">
-            <WelcomeCard username={formatName(user.name)} />
+            <WelcomeCard username={formatName(displayName)} />
             
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 animate-fade-in">
             <StatCard

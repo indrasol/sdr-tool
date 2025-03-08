@@ -5,6 +5,8 @@ from models.db_schema_models import Project, User
 from fastapi import Depends, HTTPException
 from services.auth_handler import get_current_user
 import random
+from datetime import date
+from utils.logger import log_info
 
 
 class DatabaseManager:
@@ -77,6 +79,14 @@ class DatabaseManager:
         project_name: str,
         tenant_id: int,
         project_description: Optional[str] = None,
+        status: str = "Not Started",
+        priority: Optional[str] = None,
+        created_date: Optional[date] = None,
+        due_date: Optional[date] = None,
+        creator: Optional[str] = None,
+        domain: Optional[str] = None,
+        template_type: Optional[str] = None,
+        imported_file: Optional[str] = None,
         db: AsyncSession = None
     ) -> str:
         """
@@ -87,6 +97,14 @@ class DatabaseManager:
             project_name: The name of the project.
             tenant_id: The ID of the tenant.
             project_description: Optional description of the project.
+            status: The status of the project.
+            priority: The priority of the project.
+            created_date: The creation date of the project.
+            due_date: The due date of the project.
+            creator: The creator of the project.
+            domain: The domain of the project.
+            template_type: The template type of the project.
+            imported_file: The imported file for the project.
             db: AsyncSession instance.
 
         Returns:
@@ -103,7 +121,7 @@ class DatabaseManager:
             result = await db.execute(stmt)
             if not result.scalars().first():
                 break  # Unique project_code found
-
+        log_info(f"Generated project code: {project_code}")
         try:
             new_project = Project(
                 user_id=user_id,
@@ -111,6 +129,14 @@ class DatabaseManager:
                 tenant_id=tenant_id,
                 project_code=project_code,
                 description=project_description,
+                status=status,
+                priority=priority,
+                created_date=created_date,
+                due_date=due_date,
+                creator=creator,
+                domain=domain,
+                template_type=template_type,
+                imported_file=imported_file,
                 conversation_history=[],
                 diagram_state={"nodes": [], "edges": []}
             )

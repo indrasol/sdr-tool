@@ -1,9 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import JSONResponse
 from typing import Union
-from services.auth_handler import get_current_user  # Authentication dependency
-from core.db.connection_manager import get_db     # Database dependency
-from models.db_schema_models import User          # User model
+from services.auth_handler import verify_token  # Authentication dependency
 from services.request_handler import preprocess_request
 from core.llm.llm_gateway import LLMGateway
 from services.response_handler import ResponseHandler
@@ -20,23 +18,20 @@ from utils.logger import log_info  # Logging utility
 router = APIRouter()
 
 # Initialize core components
-# request_handler = RequestHandler()
 llm_gateway = LLMGateway()
 response_handler = ResponseHandler()
 
 @router.post("/design")
 async def design_endpoint(
     request: UserRequest,
-    current_user: User = Depends(get_current_user),
-    db=Depends(get_db)
+    current_user: dict = Depends(verify_token)
 ) -> JSONResponse:
     """
     Handles user requests to design secure software architectures.
 
     Args:
         request: UserRequest containing query, session_id, and project_id.
-        current_user: Authenticated user object retrieved via dependency.
-        db: Database connection provided via dependency.
+        current_user: Authenticated user data retrieved via dependency.
 
     Returns:
         JSONResponse: A validated response (e.g., ArchitectureResponse, ExpertResponse)
@@ -48,17 +43,19 @@ async def design_endpoint(
         Exception: For unexpected server-side errors.
     """
     try:
+        # Log request information
+        log_info(f"Processing design request for user {current_user['supabase_user_id']}, session {request.session_id}")
+        
         # Step 1: Preprocess the request with intent classification
         processed_request = await preprocess_request(
             request=request,
-            user_id=current_user.id,
-            db=db
+            user_id=current_user["supabase_user_id"]
         )
         # Expected processed_request format:
         # {
         #     "query": str,
         #     "session_id": str,
-        #     "project_id": str,
+        #     "project_code": str,  # Changed from project_id to project_code
         #     "user_id": str,
         #     "conversation_history": str,
         #     "diagram_context": dict,
@@ -67,6 +64,8 @@ async def design_endpoint(
 
         # Step 2: Generate LLM response based on classified intent
         intent_type = processed_request["intent"]["intent_type"]
+        log_info(f"Detected intent: {intent_type}")
+        
         llm_response = await llm_gateway.generate_response(
             processed_request=processed_request,
             intent_type=intent_type,
@@ -92,6 +91,7 @@ async def design_endpoint(
 
     except HTTPException as e:
         # Authentication or specific HTTP-related errors
+        log_info(f"HTTPException in design_endpoint: {e.status_code} - {e.detail}")
         return JSONResponse(status_code=e.status_code, content={"detail": e.detail})
     except ValueError as e:
         # Input validation errors
@@ -100,32 +100,7 @@ async def design_endpoint(
     except Exception as e:
         # Unexpected errors
         log_info(f"Unexpected error in design_endpoint: {str(e)}")
-        return JSONResponse(status_code=500, content={"detail": "Internal server error"})
-
-    
-
-
-
-# Sampele test scenarios
-
-# Mixed Actions
-
-# Design a basic e-commerce system with a web server, application server, and database.
-
-# Mixed Action : Add + Modify
-# Add a load balancer in front of the web servers and increase the database's security level to high.
-
-# Mixed Action : Add + Remove
-# Remove the application server and replace it with three microservices: an inventory service, a payment service, and a user management service.
-
-# Mixed Action : Modify + Remove
-# Change the web server to use HTTPS and remove the load balancer.
-
-# Mixed Action : Complex Mixed operations
-# Scale our architecture by adding a caching layer with Redis, implement a message queue between services, make the database redundant, and remove any single points of failure.
-
-# Mixed Action : Rename + Restructure
-# Rename our services with more specific names and restructure to have a three-tier architecture with proper segmentation.
-
-# Mixed Action : Security Focussed Changes
-# Add a firewall to protect our web tier, implement encryption for all data in transit, replace the user management service with an OAuth service, and remove direct database access from the web tier.
+        return JSONResponse(
+            status_code=500, 
+            content={"detail": f"Internal server error: {str(e) if 'production' != 'true' else 'Please try again later.'}"}
+        )

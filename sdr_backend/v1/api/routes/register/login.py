@@ -3,75 +3,96 @@ from datetime import timedelta
 from utils.logger import log_info
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
-from core.db.connection_manager import get_db
-from services.auth_handler import authenticate_user, create_access_token
-from models.registration_models import Token
-from sqlalchemy.ext.asyncio import AsyncSession
-
+from core.db.supabase_db import get_supabase_client, safe_supabase_operation
+from services.auth_handler import verify_token, verify_api_key
+import re
+import traceback
 
 
 router = APIRouter()
 
+@router.post("/get-email")
+async def get_email(request_data: dict, api_key: str = Depends(verify_api_key)):
+    username = request_data.get("username")
+    try:
+        supabase_client = get_supabase_client()
+        def user_operation():
+            return supabase_client.from_("users").select("email").eq("username", username).execute()
+        user_response = await safe_supabase_operation(
+            user_operation,
+            "Failed to fetch email for the username"
+        )
+        log_info(f"User response: {user_response}")
+        return {"message": "Email fetched successfully", "email": user_response.data[0].get("email")}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to fetch email for the username: {str(e)}")
+    
 
-
-
-ACCESS_TOKEN_EXPIRE_MINUTES = 30
 
 @router.post("/login")
-async def login_for_access_token(
-    form_data: OAuth2PasswordRequestForm = Depends(),
-    db: AsyncSession = Depends(get_db)
-):
+async def login(identifier: dict,current_user: dict = Depends(verify_token)):
+    """
+    Login endpoint that verifies the user by email or username.
+    Returns the cleaned username (digits removed) along with other user data.
+
+    Args:
+        identifier: An email or username.
+        current_user: Injected current user from token verification.
+
+    Returns:
+        A JSON response with an authentication message and cleaned username.
+    """
+    supabase_client = get_supabase_client()
     try:
-        # Log the incoming form data for debugging (avoid logging sensitive data in production)
-        log_info(f"Form data received: username={form_data.username}, password=[REDACTED]")
+        # Determine query field based on identifier pattern
+        query_field = "email" if "@" in identifier.get("identifier") else "username"
 
-        # Authenticate the user
-        user = await authenticate_user(form_data.username, form_data.password, db)
-        if not user:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Incorrect username or password",
-                headers={"WWW-Authenticate": "Bearer"},
-            )
+        # Query the "users" table using a safe operation
+        def user_operation():
+            return supabase_client.from_("users").select("*").eq(query_field, identifier.get("identifier")).execute()
 
-        # Generate access token
-        access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
-        
-        # Safely extract tenant IDs
-        tenant_ids = [tenant.id for tenant in user.tenants] if user.tenants else []
-        log_info(f"User tenant IDs: {tenant_ids}")
-
-        access_token = create_access_token(
-            data={"sub": user.username, "tenant_ids": tenant_ids},
-            expires_delta=access_token_expires
+        user_response = await safe_supabase_operation(
+            user_operation,
+            "Failed to fetch user data during login"
         )
-        log_info(f"Generated access token: {access_token}")
-        
-        # Prepare user data for response
-        user_data = {
-            "id": user.id,
-            "name": user.username,
-            "email": user.email,
-        }
 
-        # Return token and user data
+        def user_tenant_operation():
+            return supabase_client.from_("user_tenant_association").select("tenant_id").eq("user_id", user_response.data[0].get("id")).execute()
+
+        user_tenant_response = await safe_supabase_operation(
+            user_tenant_operation,
+            "Failed to fetch user tenant data during login"
+        )
+        log_info(f"User tenant response: {user_tenant_response}")
+
+        if not user_response.data or len(user_response.data) == 0:
+            raise HTTPException(status_code=401, detail="User not found")
+        
+        if not user_tenant_response.data or len(user_tenant_response.data) == 0:
+            raise HTTPException(status_code=401, detail="User tenant not found")
+
+        # Get the user data and clean the username (remove digits)
+        user_data = user_response.data[0]
+        user_id = user_data.get("id", "")
+        raw_username = user_data.get("username", "")
+        email = user_data.get("email", "")
+        tenant_data = user_tenant_response.data[0]
+        tenant_id = tenant_data.get("tenant_id", "")
+        cleaned_username = re.sub(r"\d+", "", raw_username)
+
         return {
-            "access_token": access_token,
-            "token_type": "bearer",
+            "message": "User authenticated",
+            "formatted_username": cleaned_username,
+            "username": raw_username,
+            "email": email,
+            "tenant_id": tenant_id,
+            "user_id": user_id,
             "user": user_data
         }
 
-    except HTTPException as e:
-        # Re-raise HTTP exceptions (e.g., 401 Unauthorized) without rollback
-        log_info(f"Authentication failed: {str(e)}")
-        raise
+    except HTTPException as he:
+        raise he
     except Exception as e:
-        # Handle unexpected errors with rollback for database consistency
-        log_info(f"Login error: {str(e)}")
-        await db.rollback()
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="An unexpected error occurred during login",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
+        log_info(f"Unexpected error in login endpoint: {str(e)}")
+        log_info(traceback.format_exc())
+        raise HTTPException(status_code=500, detail="Internal Server Error")
