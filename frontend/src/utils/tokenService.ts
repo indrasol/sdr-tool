@@ -8,11 +8,11 @@ const TOKEN_KEY = 'app_token';
 const USER_KEY = 'app_user';
 
 // Token service with TypeScript interfaces
-interface User {
+export interface User {
   id: string;
-  name: string;
+  username: string;
   email: string;
-  tenant_ids: number[];
+  tenant_id: number;
   // Add other user properties as needed
 }
 

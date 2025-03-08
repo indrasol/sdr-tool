@@ -33,6 +33,7 @@ const App = () => (
           <Sonner />
           <AuthProvider>
             <Routes>
+              {/* Public Routes */}
               <Route path="/" element={<HomePage />} />
               <Route path="/index" element={<Index />} />
               <Route
@@ -69,9 +70,6 @@ const App = () => (
                 <Route path="/generate-report" element={<GenerateReport />} />
                 <Route path="*" element={<NotFound />} />
               </Route>
-
-              <Route path="*" element={<NotFound />} />
-              
             </Routes>
           </AuthProvider>
         </div>

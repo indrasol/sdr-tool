@@ -1,10 +1,8 @@
-from fastapi import FastAPI, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import JSONResponse
-from services.auth_handler import get_current_user
-from core.db.connection_manager import get_db
-from models.db_schema_models import User
+from services.auth_handler import verify_token
 from core.cache.session_manager import SessionManager
-from core.db.database_manager import DatabaseManager
+from core.db.supabase_manager import SupabaseManager    
 from utils.logger import log_info
 import asyncio
 
@@ -12,15 +10,14 @@ import asyncio
 session_manager = SessionManager()
 
 # Initialize Database Manager
-database_manager = DatabaseManager()
+supabase_manager = SupabaseManager()
 
-router = FastAPI()
+router = APIRouter()
 
 @router.post("/save_project")
 async def save_project(
     session_id: str,
-    current_user: User = Depends(get_current_user),
-    db=Depends(get_db)
+    current_user: dict = Depends(verify_token)
 ):
     """
     Save session data to the database when the user clicks the 'Save' button in the UI.
@@ -28,7 +25,6 @@ async def save_project(
     Args:
         session_id: The session ID to save
         current_user: Authenticated user (via dependency)
-        db: Database connection (via dependency)
 
     Returns:
         JSONResponse: Confirmation of save or error details
@@ -43,35 +39,36 @@ async def save_project(
             )
 
         # Verify session ownership
-        if session_data["user_id"] != current_user.id:
+        if session_data.get("user_id") != current_user["id"]:
             return JSONResponse(
                 status_code=403,
                 content={"detail": "Session does not belong to user"}
             )
 
-        # Validate project_id existence
-        project_id = session_data.get("project_id")
-        if not project_id:
+        # Validate project_code existence
+        project_code = session_data.get("project_code")
+        if not project_code:
             return JSONResponse(
                 status_code=400,
-                content={"detail": "Project ID missing in session data"}
+                content={"detail": "Project code missing in session data"}
             )
 
-        # Save to database (wrap sync call in asyncio.to_thread if synchronous)
-        await database_manager.update_project_data(
-            user_id=current_user.id,
-            project_id=project_id,
-            conversation_history=session_data["conversation_history"],
-            diagram_state=session_data["diagram_state"],
-            db=db
+        # Save to database using the Supabase-compatible database manager
+        await supabase_manager.update_project_data(
+            user_id=current_user["id"],
+            project_code=project_code,
+            conversation_history=session_data.get("conversation_history", []),
+            diagram_state=session_data.get("diagram_state", {"nodes": [], "edges": []})
         )
 
+        log_info(f"Project {project_code} saved successfully for user {current_user['id']}")
         return JSONResponse(
             status_code=200,
             content={"message": "Project saved successfully"}
         )
 
     except HTTPException as e:
+        log_info(f"HTTPException in save_project: {e.detail}")
         return JSONResponse(
             status_code=e.status_code,
             content={"detail": e.detail}
@@ -88,5 +85,5 @@ async def save_project(
         log_info(f"Unexpected error saving project: {str(e)}")
         return JSONResponse(
             status_code=500,
-            content={"detail": "Failed to save project"}
+            content={"detail": f"Failed to save project: {str(e)}"}
         )

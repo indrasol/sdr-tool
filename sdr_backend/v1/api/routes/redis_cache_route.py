@@ -2,21 +2,19 @@
 from fastapi import APIRouter, Depends
 from fastapi.responses import JSONResponse
 from core.cache.session_manager import SessionManager
-from core.db.database_manager import DatabaseManager
-from core.db.connection_manager import get_db
-from models.db_schema_models import User  # Adjust based on your user model
+from core.db.supabase_manager import SupabaseManager
+from models.db_schema_models import User
 from utils.logger import log_info
-from services.auth_handler import get_current_user
-
+from services.auth_handler import verify_token
+from core.db.supabase_db import get_supabase_client, safe_supabase_operation
 router = APIRouter()
 session_manager = SessionManager()
-database_manager = DatabaseManager()
+supabase_manager = SupabaseManager()
 
 @router.post("/start_project_session")
 async def start_project_session(
     project_id: str,
-    current_user: User = Depends(get_current_user),
-    db=Depends(get_db)
+    current_user: User = Depends(verify_token)
 ):
     """
     Create a new session for a specific project.
@@ -28,7 +26,7 @@ async def start_project_session(
         JSONResponse with the session_id
     """
     try:
-        project_data = database_manager.get_project_data(current_user.id, project_id, db)
+        project_data = supabase_manager.get_project_data(current_user.id, project_id)
         if not project_data:
             return JSONResponse(
                 status_code=404,
