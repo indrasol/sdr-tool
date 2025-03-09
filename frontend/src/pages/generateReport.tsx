@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import Layout from '@/components/layout/Layout';
 import { Button } from '@/components/ui/button';
@@ -9,7 +8,12 @@ import { useToast } from '@/hooks/use-toast';
 import TitleCard from '@/components/Report/TitleCard';
 import ReportNavigation from '@/components/Report/ReportNavigation';
 import ReportContent from '@/components/Report/ReportContent';
-import { generatePDF, addReportPage, moveReportPage, deleteReportPage } from '@/utils/reportUtils';
+import { 
+  generatePDF, 
+  addReportPage, 
+  moveReportPage, 
+  deleteReportPage 
+} from '@/utils/reportUtils';
 
 const GenerateReport = () => {
   const navigate = useNavigate();
@@ -109,6 +113,11 @@ const GenerateReport = () => {
     const updatedPages = deleteReportPage(reportPages, index);
     setReportPages(updatedPages);
     
+    // If we're deleting the current page, update the current page index
+    if (currentPage >= updatedPages.length) {
+      setCurrentPage(Math.max(0, updatedPages.length - 1));
+    }
+    
     toast({
       title: "Section Deleted",
       description: "Report section has been removed from your report.",
@@ -140,22 +149,24 @@ const GenerateReport = () => {
 
   return (
     <Layout>
-      <div className="space-y-6 mt-16">
+      <div className="mt-16 space-y-6 bg-gradient-to-br from-blue-50/80 via-white to-green-50/60 min-h-screen rounded-lg p-6">
         <TitleCard 
           isEditing={isEditing} 
           setIsEditing={setIsEditing} 
           handleDownload={handleDownload} 
         />
 
-        <Button 
-          variant="outline" 
-          onClick={handleBackClick}
-          className="mb-4 transition-all hover:bg-securetrack-green text-securetrack-green border-securetrack-green/50 hover:text-white hover:border-securetrack-green shadow-sm hover:-translate-y-1 duration-300 animate-fade-in"
-        >
-          <ArrowLeft className="mr-2 h-4 w-4" />
-          <Cpu className="mr-2 h-4 w-4" />
-          Back to Guardian AI
-        </Button>
+        <div className="flex items-center justify-between">
+          <Button 
+            variant="outline" 
+            onClick={handleBackClick}
+            className="mb-4 transition-all hover:bg-securetrack-lightpurple text-securetrack-purple border-securetrack-purple/50 hover:text-white hover:border-securetrack-purple shadow-sm hover:-translate-y-1 duration-300 animate-fade-in"
+          >
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            <Cpu className="mr-2 h-4 w-4" />
+            Back to AI Design
+          </Button>
+        </div>
 
         <div className="grid grid-cols-12 gap-4">
           <ReportNavigation 

@@ -20,6 +20,8 @@ import Dashboard from "./pages/Dashboard";
 import Documents from "./pages/Documents";
 import SOC2 from "./pages/SOC2";
 import Projects from "./pages/Projects";
+import ModelWithAINew from "./pages/ModelWithAINew";
+import SecurityAnalysis from "./pages/SecurityAnalysis";
 
 
 const queryClient = new QueryClient();
@@ -64,9 +66,11 @@ const App = () => (
                 <Route path="/soc2" element={<SOC2 />} />
                 <Route path="/create-project" element={<CreateProject />} />
                 <Route path="/existing-project" element={<ExistingProject />} />
-                <Route path="/model-with-ai" element={<ModelWithAI />} />
+                <Route path="/model-with-ai" element={<ModelWithAINew />} />
+                {/* <Route path="/model-with-ai" element={<ModelWithAI />} /> */}
                 <Route path="/project-list" element={<ProjectList />} />
                 <Route path="/projects" element={<Projects />} />
+                <Route path="/security-analysis" element={<SecurityAnalysis />} />
                 <Route path="/generate-report" element={<GenerateReport />} />
                 <Route path="*" element={<NotFound />} />
               </Route>

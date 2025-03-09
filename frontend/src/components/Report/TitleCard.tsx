@@ -12,13 +12,12 @@ interface TitleCardProps {
 
 const TitleCard: React.FC<TitleCardProps> = ({ isEditing, setIsEditing, handleDownload }) => {
   return (
-    <div className="bg-gradient-to-r from-securetrack-green/10 via-securetrack-green/5 to-securetrack-purple/10 rounded-lg shadow-md mb-6 overflow-hidden animate-fade-in glass-effect">
-      <div className="h-2 bg-gradient-to-r from-securetrack-green to-securetrack-purple/50"></div>
+    <div className="bg-gradient-to-r from-[#f0f4ff] via-[#e6eeff] to-[#eef1ff] rounded-lg shadow-md mb-6 overflow-hidden animate-fade-in glass-effect border-t-4 border-t-securetrack-purple">
       <div className="p-6">
         <div className="flex justify-between items-center">
           <div className="flex items-center space-x-4">
-            <div className="bg-securetrack-green/10 p-3 rounded-full shadow-md pulse">
-              <ShieldCheck className="h-6 w-6 text-securetrack-green" />
+            <div className="bg-securetrack-purple/10 p-3 rounded-full shadow-md pulse">
+              <ShieldCheck className="h-6 w-6 text-securetrack-purple" />
             </div>
             <div>
               <h1 className="text-3xl font-bold tracking-tight text-gray-800 font-playfair">Security Assessment Report</h1>
@@ -31,14 +30,14 @@ const TitleCard: React.FC<TitleCardProps> = ({ isEditing, setIsEditing, handleDo
             <Button 
               variant="outline" 
               onClick={() => setIsEditing(!isEditing)}
-              className="bg-white/80 text-securetrack-green border-securetrack-green/30 hover:bg-securetrack-green/10 shadow-md transition-all duration-300 hover:-translate-y-1"
+              className="mb-4 transition-all hover:bg-securetrack-lightpurple text-securetrack-purple border-securetrack-purple/50 hover:text-white hover:border-securetrack-purple shadow-sm hover:-translate-y-1 duration-300 animate-fade-in"
             >
               <Edit className="mr-2 h-4 w-4" />
               {isEditing ? "View Mode" : "Edit"}
             </Button>
             <Button 
               onClick={handleDownload}
-              className="bg-securetrack-green text-white hover:bg-securetrack-green/90 font-medium shadow-md transition-all duration-300 hover:-translate-y-1"
+              className="bg-securetrack-purple text-white hover:bg-securetrack-purple/90 shadow-md transition-all duration-300 hover:-translate-y-1"
             >
               <Download className="mr-2 h-4 w-4" />
               Download PDF
