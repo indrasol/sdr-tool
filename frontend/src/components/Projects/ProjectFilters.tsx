@@ -16,7 +16,7 @@ import {
   CommandItem,
   CommandList,
 } from "@/components/ui/command";
-import { ProjectPriority, ProjectStatus } from './ProjectCard';
+import { ProjectPriority, ProjectStatus } from './../Projects/types/projectTypes';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 
@@ -67,14 +67,14 @@ const ProjectFilters: React.FC<ProjectFiltersProps> = ({
   const [priorityOpen, setPriorityOpen] = React.useState(false);
 
   return (
-    <div className="flex flex-col space-y-4 sm:space-y-0 sm:flex-row sm:items-center sm:space-x-4 mb-6">
-      <div className="relative flex-1">
+    <div className="flex items-center gap-2">
+      <div className="relative w-[200px] sm:w-[240px]">
         <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
         <Input
-          placeholder="Search projects by name or description..."
+          placeholder="Search projects..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
-          className="pl-8 bg-white"
+          className="pl-8 bg-white h-9"
         />
         {searchTerm && (
           <Button
@@ -88,103 +88,103 @@ const ProjectFilters: React.FC<ProjectFiltersProps> = ({
         )}
       </div>
 
-      <div className="flex flex-wrap gap-2">
-        <Popover open={statusOpen} onOpenChange={setStatusOpen}>
-          <PopoverTrigger asChild>
-            <Button
-              variant="outline"
-              size="sm"
-              className="text-sm bg-white"
-            >
-              <Filter className="mr-2 h-3.5 w-3.5" />
-              Status: {statusFilter}
-              <ChevronsUpDown className="ml-2 h-3.5 w-3.5" />
-            </Button>
-          </PopoverTrigger>
-          <PopoverContent className="p-0" align="start">
-            <Command>
-              <CommandInput placeholder="Filter statuses..." />
-              <CommandList>
-                <CommandEmpty>No results found</CommandEmpty>
-                <CommandGroup>
-                  {statusOptions.map((option) => (
-                    <CommandItem
-                      key={option.value}
-                      value={option.value}
-                      onSelect={(value) => {
-                        setStatusFilter(value as ProjectStatus | 'All');
-                        setStatusOpen(false);
-                      }}
-                    >
-                      <Check
-                        className={cn(
-                          "mr-2 h-4 w-4",
-                          statusFilter === option.value ? "opacity-100" : "opacity-0"
-                        )}
-                      />
-                      {option.label}
-                    </CommandItem>
-                  ))}
-                </CommandGroup>
-              </CommandList>
-            </Command>
-          </PopoverContent>
-        </Popover>
-
-        <Popover open={priorityOpen} onOpenChange={setPriorityOpen}>
-          <PopoverTrigger asChild>
-            <Button
-              variant="outline"
-              size="sm"
-              className="text-sm bg-white"
-            >
-              <Filter className="mr-2 h-3.5 w-3.5" />
-              Priority: {priorityFilter}
-              <ChevronsUpDown className="ml-2 h-3.5 w-3.5" />
-            </Button>
-          </PopoverTrigger>
-          <PopoverContent className="p-0" align="start">
-            <Command>
-              <CommandInput placeholder="Filter priorities..." />
-              <CommandList>
-                <CommandEmpty>No results found</CommandEmpty>
-                <CommandGroup>
-                  {priorityOptions.map((option) => (
-                    <CommandItem
-                      key={option.value}
-                      value={option.value}
-                      onSelect={(value) => {
-                        setPriorityFilter(value as ProjectPriority | 'All');
-                        setPriorityOpen(false);
-                      }}
-                    >
-                      <Check
-                        className={cn(
-                          "mr-2 h-4 w-4",
-                          priorityFilter === option.value ? "opacity-100" : "opacity-0"
-                        )}
-                      />
-                      {option.label}
-                    </CommandItem>
-                  ))}
-                </CommandGroup>
-              </CommandList>
-            </Command>
-          </PopoverContent>
-        </Popover>
-
-        {hasActiveFilters && (
+      <Popover open={statusOpen} onOpenChange={setStatusOpen}>
+        <PopoverTrigger asChild>
           <Button
-            variant="ghost"
+            variant="outline"
             size="sm"
-            onClick={clearFilters}
-            className="text-sm"
+            className="h-9 text-sm bg-white whitespace-nowrap px-2"
           >
-            <X className="mr-2 h-3.5 w-3.5" />
-            Clear filters
+            <Filter className="mr-1 h-3.5 w-3.5" />
+            Status: {statusFilter}
+            <ChevronsUpDown className="ml-1 h-3.5 w-3.5" />
           </Button>
-        )}
-      </div>
+        </PopoverTrigger>
+        <PopoverContent className="p-0" align="start">
+          <Command>
+            <CommandInput placeholder="Filter statuses..." />
+            <CommandList>
+              <CommandEmpty>No results found</CommandEmpty>
+              <CommandGroup>
+                {statusOptions.map((option) => (
+                  <CommandItem
+                    key={option.value}
+                    value={option.value}
+                    onSelect={(value) => {
+                      setStatusFilter(value as ProjectStatus | 'All');
+                      setStatusOpen(false);
+                    }}
+                    className="hover:bg-securetrack-purple/5"
+                  >
+                    <Check
+                      className={cn(
+                        "mr-2 h-4 w-4",
+                        statusFilter === option.value ? "opacity-100" : "opacity-0"
+                      )}
+                    />
+                    {option.label}
+                  </CommandItem>
+                ))}
+              </CommandGroup>
+            </CommandList>
+          </Command>
+        </PopoverContent>
+      </Popover>
+
+      <Popover open={priorityOpen} onOpenChange={setPriorityOpen}>
+        <PopoverTrigger asChild>
+          <Button
+            variant="outline"
+            size="sm"
+            className="h-9 text-sm bg-white whitespace-nowrap px-2"
+          >
+            <Filter className="mr-1 h-3.5 w-3.5" />
+            Priority: {priorityFilter}
+            <ChevronsUpDown className="ml-1 h-3.5 w-3.5" />
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent className="p-0" align="start">
+          <Command>
+            <CommandInput placeholder="Filter priorities..." />
+            <CommandList>
+              <CommandEmpty>No results found</CommandEmpty>
+              <CommandGroup>
+                {priorityOptions.map((option) => (
+                  <CommandItem
+                    key={option.value}
+                    value={option.value}
+                    onSelect={(value) => {
+                      setPriorityFilter(value as ProjectPriority | 'All');
+                      setPriorityOpen(false);
+                    }}
+                    className="hover:bg-securetrack-purple/5"
+                  >
+                    <Check
+                      className={cn(
+                        "mr-2 h-4 w-4",
+                        priorityFilter === option.value ? "opacity-100" : "opacity-0"
+                      )}
+                    />
+                    {option.label}
+                  </CommandItem>
+                ))}
+              </CommandGroup>
+            </CommandList>
+          </Command>
+        </PopoverContent>
+      </Popover>
+
+      {hasActiveFilters && (
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={clearFilters}
+          className="h-9 text-sm whitespace-nowrap"
+        >
+          <X className="mr-1 h-3.5 w-3.5" />
+          Clear
+        </Button>
+      )}
     </div>
   );
 };

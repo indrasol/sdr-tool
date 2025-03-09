@@ -1,21 +1,29 @@
-import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Project, useProjects } from '@/hooks/useProjects';
-import type { ProjectStatus, ProjectPriority } from '@/components/Projects/ProjectCard';
-import { useToast } from '@/hooks/use-toast';
+
+import { useProjectsView } from './hooks/useProjectsView';
+import { useProjectDialogs } from './hooks/useProjectDialogs';
+import { useProjectOperations } from './hooks/useProjectOperations';
+import { useProjectCRUD } from './hooks/useProjectCRUD';
 import type { ProjectTemplateType } from '@/components/Projects/ProjectTemplateSelector';
-import { useAuth } from '@/components/Auth/AuthContext';
+import type { Project } from '@/hooks/useProjects';
 
 export const useProjectsPage = () => {
-  const [viewType, setViewType] = useState<'grid' | 'list'>('grid');
-  const [createDialogOpen, setCreateDialogOpen] = useState(false);
-  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [editDialogOpen, setEditDialogOpen] = useState(false);
-  const [projectToDelete, setProjectToDelete] = useState<{id: string, name: string} | null>(null);
-  const [projectToEdit, setProjectToEdit] = useState<Project | null>(null);
-  const { toast } = useToast();
-  const navigate = useNavigate();
-  const { user } = useAuth();
+  // Use the smaller, focused hooks
+  const { viewType, setViewType } = useProjectsView();
+  
+  const {
+    createDialogOpen,
+    setCreateDialogOpen,
+    deleteDialogOpen,
+    setDeleteDialogOpen,
+    editDialogOpen,
+    setEditDialogOpen,
+    deleteAllDialogOpen,
+    setDeleteAllDialogOpen,
+    projectToDelete,
+    setProjectToDelete,
+    projectToEdit,
+    setProjectToEdit
+  } = useProjectDialogs();
   
   const {
     projects,
@@ -30,188 +38,66 @@ export const useProjectsPage = () => {
     setTemplateFilter,
     clearFilters,
     hasActiveFilters,
+    handleProjectClick,
+    handleStatusFilterChange,
+    handleExportProjects,
     addProject,
     deleteProject,
+    deleteAllProjects,
     updateProject,
+    loadSampleProjects
+  } = useProjectOperations();
+
+  const {
+    handleCreateProject,
+    handleEditProject,
+    handleUpdateProject,
+    handleDeleteProject,
+    confirmDeleteProject,
+    handleDeleteAllProjects,
+    confirmDeleteAllProjects,
+    handleProjectCreation,
+  } = useProjectCRUD(
+    addProject,
+    updateProject,
+    deleteProject,
+    deleteAllProjects,
     loadSampleProjects,
-    error,
-    isLoading
-  } = useProjects();
+    projects,
+    allProjects
+  );
 
-  // Display error toast if an error occurs from useProjects
-  useEffect(() => {
-    if (error) {
-      toast({
-        title: "Error",
-        description: error,
-        variant: "destructive",
-      });
-    }
-  }, [error, toast]);
-
-  // Handle project click with navigation based on templateType
-  const handleProjectClick = (projectId: string) => {
-    const project = projects.find((p) => p.id === projectId);
-
-    if (project) {
-      switch (project.templateType) {
-        case 'AI Assisted':
-          navigate('/model-with-ai');
-          break;
-        case 'Import Existing':
-          navigate('/security-analysis');
-          break;
-        case 'Solutions Hub':
-          navigate('/solutions-hub');
-          break;
-        default:
-          toast({
-            title: "Project Selected",
-            description: `You clicked on project ${projectId}`,
-          });
-      }
-    }
-  };
-
-  // Open the create project dialog
-  const handleCreateProject = () => {
-    setCreateDialogOpen(true);
-  };
-
-  const handleEditProject = (projectId: string) => {
-    const project = projects.find(p => p.id === projectId);
-    if (project) {
-      setProjectToEdit(project);
-      setEditDialogOpen(true);
-    }
-  };
-
-  const handleUpdateProject = (projectId: string, updatedData: Partial<Project>) => {
-    updateProject(projectId, updatedData);
-    toast({
-      title: "Project Updated",
-      description: `Project has been updated successfully`,
-    });
-    setEditDialogOpen(false);
-    setProjectToEdit(null);
-  };
-
-  const handleDeleteProject = (projectId: string) => {
-    const project = projects.find(p => p.id === projectId);
-    if (project) {
-      setProjectToDelete({id: project.id, name: project.name});
-      setDeleteDialogOpen(true);
-    }
-  };
-
-  const confirmDeleteProject = () => {
-    if (projectToDelete) {
-      deleteProject(projectToDelete.id);
-      toast({
-        title: "Project Deleted",
-        description: `Project "${projectToDelete.name}" has been deleted`,
-      });
-      setDeleteDialogOpen(false);
-      setProjectToDelete(null);
-    }
-  };
+  // Wrapper functions to connect the dialog state with CRUD operations
+  const createProject = () => handleCreateProject(setCreateDialogOpen);
   
-  // Handle project creation with async API call and "testsdr" condition
-  const handleProjectCreation = async (projectData: {
+  const editProject = (projectId: string) => 
+    handleEditProject(projectId, setProjectToEdit, setEditDialogOpen);
+  
+  const updateProjectWithDialogs = (projectId: string, updatedData: Partial<Project>) => 
+    handleUpdateProject(projectId, updatedData, setEditDialogOpen, setProjectToEdit);
+  
+  const deleteProjectWithDialogs = (projectId: string) => 
+    handleDeleteProject(projectId, setProjectToDelete, setDeleteDialogOpen);
+  
+  const confirmDeleteWithDialogs = () => 
+    confirmDeleteProject(projectToDelete, setDeleteDialogOpen, setProjectToDelete);
+  
+  const deleteAllProjectsWithDialogs = () => 
+    handleDeleteAllProjects(setDeleteAllDialogOpen);
+  
+  const confirmDeleteAllWithDialogs = () => 
+    confirmDeleteAllProjects(setDeleteAllDialogOpen);
+  
+  const createProjectWithDialogs = (projectData: {
     name: string;
     description: string;
     priority: 'Low' | 'Medium' | 'High' | 'Critical';
     domain?: string;
     dueDate?: string;
     creator: string;
-    templateType?: ProjectTemplateType;
+    templateType: ProjectTemplateType;
     importedFile?: string;
-  }) => {
-    // Maintain "testsdr" condition for testing purposes
-    console.log("Entered handleProjectCreation");
-    if (projectData.creator === 'testsdr' && allProjects.length === 0) {
-      const loaded = loadSampleProjects(projectData.creator);
-      if (loaded) {
-        toast({
-          title: "Sample Projects Loaded",
-          description: "Sample projects have been loaded for testing.",
-        });
-        setCreateDialogOpen(false);
-        return; // Exit early if sample projects are loaded
-      }
-    }
-
-    try {
-      console.log("Project data", projectData);
-      const tenantId = user.tenant_ids[0];
-      
-      // Create a new object with default values properly applied
-      const defaultDueDate = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
-      
-      // Add project via API (ID is generated by the backend)
-      await addProject({
-        name: projectData.name,
-        description: projectData.description,
-        tenant_id: tenantId,
-        status: 'Not Started' as ProjectStatus,
-        priority: projectData.priority,
-        createdDate: new Date().toISOString().split('T')[0],
-        dueDate: projectData.dueDate || defaultDueDate, // Use the default if not provided
-        creator: projectData.creator,
-        domain: projectData.domain || 'General', // Use the default if not provided
-        templateType: projectData.templateType || 'AI Assisted', // Use the default if not provided
-        importedFile: projectData.importedFile || null,
-      });
-
-      toast({
-        title: "Project Created",
-        description: `New project "${projectData.name}" has been created`,
-      });
-    } catch (err) {
-      toast({
-        title: "Error",
-        description: "Failed to create project",
-        variant: "destructive",
-      });
-    }
-
-    setCreateDialogOpen(false);
-  };
-
-  // Handle exporting projects
-  const handleExportProjects = () => {
-    toast({
-      title: "Export Projects",
-      description: "Projects would be exported as CSV",
-    });
-  };
-
-  // Handle status filter changes with all possible statuses
-  const handleStatusFilterChange = (status: string) => {
-    if (status === 'All') {
-      setStatusFilter('All');
-    } else if (
-      status === 'Not Started' ||
-      status === 'Started' ||
-      status === 'In Progress' ||
-      status === 'On Hold' ||
-      status === 'Completed'
-    ) {
-      setStatusFilter(status as ProjectStatus);
-    } else if (status === 'My') {
-      if (user && user.name) {
-        clearFilters(); // Clear any existing filters
-        setSearchTerm(user.name); // Dynamically set search term to the user's username
-      } else {
-        // Handle case where user is not logged in
-        toast({
-          title: "Error",
-          description: "Unable to filter 'My Projects'. Please log in.",
-          variant: "destructive",
-        });
-      }
-    }
-  };
+  }) => handleProjectCreation(projectData, setCreateDialogOpen);
 
   return {
     viewType,
@@ -220,6 +106,8 @@ export const useProjectsPage = () => {
     setCreateDialogOpen,
     deleteDialogOpen,
     setDeleteDialogOpen,
+    deleteAllDialogOpen,
+    setDeleteAllDialogOpen,
     projectToDelete,
     editDialogOpen,
     setEditDialogOpen,
@@ -237,15 +125,15 @@ export const useProjectsPage = () => {
     clearFilters,
     hasActiveFilters,
     handleProjectClick,
-    handleCreateProject,
-    handleEditProject,
-    handleUpdateProject,
-    handleDeleteProject,
-    confirmDeleteProject,
-    handleProjectCreation,
+    handleCreateProject: createProject,
+    handleEditProject: editProject,
+    handleUpdateProject: updateProjectWithDialogs,
+    handleDeleteProject: deleteProjectWithDialogs,
+    confirmDeleteProject: confirmDeleteWithDialogs,
+    handleDeleteAllProjects: deleteAllProjectsWithDialogs,
+    confirmDeleteAllProjects: confirmDeleteAllWithDialogs,
+    handleProjectCreation: createProjectWithDialogs,
     handleExportProjects,
-    handleStatusFilterChange,
-    isLoading,
-    error,
+    handleStatusFilterChange
   };
 };

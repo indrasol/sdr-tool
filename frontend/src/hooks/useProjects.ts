@@ -1,22 +1,20 @@
-import { useState, useMemo, useEffect } from 'react';
-import type { ProjectStatus, ProjectPriority } from '@/components/Projects/ProjectCard';
+
+import { useState, useMemo } from 'react';
+import type { ProjectStatus, ProjectPriority } from '@/components/Projects/types/projectTypes';
 import type { ProjectTemplateType } from '@/components/Projects/ProjectTemplateSelector';
-import tokenService from '@/utils/tokenService';
-import { useNavigate } from 'react-router-dom';
 
 export interface Project {
   id: string;
   name: string;
   description: string;
-  tenant_id: number;
   status: ProjectStatus;
   priority: ProjectPriority;
   createdDate: string;
-  dueDate: string;
+  dueDate?: string;
   creator: string;
   assignedTo?: string;
   domain?: string;
-  templateType: ProjectTemplateType;
+  templateType?: ProjectTemplateType;
   importedFile?: string;
 }
 
@@ -32,8 +30,7 @@ const sampleProjects: Project[] = [
     dueDate: '2023-07-30',
     creator: 'testsdr',
     domain: 'ecommerce.example.com',
-    templateType: 'AI Assisted',
-    tenant_id: 1
+    templateType: 'AI Assisted'
   },
   {
     id: 'P2345',
@@ -45,8 +42,7 @@ const sampleProjects: Project[] = [
     dueDate: '2023-08-10',
     creator: 'testsdr',
     assignedTo: 'DevOps Team',
-    templateType: 'Solutions Hub',
-    tenant_id: 1
+    templateType: 'Solutions Hub'
   },
   {
     id: 'P3456',
@@ -55,11 +51,9 @@ const sampleProjects: Project[] = [
     status: 'On Hold',
     priority: 'Medium',
     createdDate: '2023-05-20',
-    dueDate: '2023-06-20',
     creator: 'testsdr',
     importedFile: 'network_scan.xml',
-    templateType: 'Import Existing',
-    tenant_id: 1
+    templateType: 'Import Existing'
   },
   {
     id: 'P4567',
@@ -71,8 +65,7 @@ const sampleProjects: Project[] = [
     dueDate: '2023-09-15',
     creator: 'testsdr',
     assignedTo: 'Compliance Team',
-    templateType: 'AI Assisted',
-    tenant_id: 1
+    templateType: 'AI Assisted'
   },
   {
     id: 'P5678',
@@ -84,8 +77,7 @@ const sampleProjects: Project[] = [
     dueDate: '2023-07-01',
     creator: 'testsdr',
     importedFile: 'mobile_scan_results.pdf',
-    templateType: 'Import Existing',
-    tenant_id: 1
+    templateType: 'Import Existing'
   }
 ];
 
@@ -98,59 +90,6 @@ export const useProjects = () => {
   const [statusFilter, setStatusFilter] = useState<ProjectStatus | 'All'>('All');
   const [priorityFilter, setPriorityFilter] = useState<ProjectPriority | 'All'>('All');
   const [templateFilter, setTemplateFilter] = useState<ProjectTemplateType | 'All'>('All');
-  const [isLoading, setIsLoading] = useState<boolean>(false);
-  const [error, setError] = useState<string | null>(null);
-  const navigate = useNavigate();
-
-  // Define fetchProjects function first
-  const fetchProjects = async () => {
-    setIsLoading(true);
-    setError(null);
-    
-    try {
-      const response = await tokenService.authenticatedFetch(
-        'http://localhost:8000/v1/routes/projects',
-        {
-          method: 'GET',
-        }
-      );
-      
-      if (!response.ok) {
-        if (response.status === 401) {
-          tokenService.clearAuth();
-          navigate('/login', { replace: true });
-          throw new Error('Unauthorized - Please log in again');
-        }
-        throw new Error(`Failed to fetch projects: ${response.statusText}`);
-      }
-      
-      const data = await response.json();
-      console.log("Fetched projects:", data);
-      setProjects(data.projects || []);
-    } catch (err: any) {
-      setError(err.message || 'Failed to fetch projects');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const loadSampleProjects = (creatorName: string) => {
-    if (creatorName === 'testsdr') {
-      setProjects(sampleProjects);
-      return true;
-    }
-    return false;
-  };
-
-  // Fetch projects when the component mounts or token changes
-  useEffect(() => {
-    // Only fetch if authenticated
-    if (tokenService.isAuthenticated()) {
-      fetchProjects();
-    } else {
-      navigate('/login', { replace: true });
-    }
-  }, [navigate]);
   
   const filteredProjects = useMemo(() => {
     return projects.filter(project => {
@@ -184,67 +123,16 @@ export const useProjects = () => {
     setTemplateFilter('All');
   };
 
-  // Function to add a new project
-  const addProject = async (projectData: Omit<Project, 'id'>) => {
-    console.log("Entered addProject");
-    setIsLoading(true);
-    setError(null);
-
-    try {
-      // Ensure all required fields have values before sending to API
-      const dataToSend = {
-        ...projectData,
-        // Ensure these fields are never null/undefined
-        dueDate: projectData.dueDate || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-        templateType: projectData.templateType || 'AI Assisted',
-        domain: projectData.domain || 'General',
-      };
-
-      console.log("Data being sent to API:", dataToSend);
-      const response = await tokenService.authenticatedFetch(
-        'http://localhost:8000/v1/routes/projects',
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(dataToSend),
-        }
-      );
-
-      if (!response.ok) {
-        if (response.status === 401) {
-          tokenService.clearAuth();
-          navigate('/login', { replace: true });
-          throw new Error('Unauthorized - Please log in again');
-        }
-        throw new Error(`Failed to create project: ${response.statusText}`);
-      }
-
-      const newProject = await response.json();
-      console.log("New project from API:", newProject);
-      
-      // Update projects state with the new project
-      setProjects(prevProjects => {
-        const updatedProjects = [...prevProjects, newProject];
-        console.log("Updated projects array length:", updatedProjects.length);
-        return updatedProjects;
-      });
-      
-      // Now fetchProjects is defined before being used
-      // fetchProjects();
-      
-      return newProject; // Return the new project for any additional processing
-    } catch (err: any) {
-      setError(err.message || 'Failed to create project');
-      return null;
-    } finally {
-      setIsLoading(false);
-    }
+  const addProject = (project: Project) => {
+    setProjects(prev => [...prev, project]);
   };
 
   const deleteProject = (projectId: string) => {
     setProjects(prev => prev.filter(project => project.id !== projectId));
+  };
+
+  const deleteAllProjects = () => {
+    setProjects([]);
   };
 
   const updateProject = (projectId: string, updatedData: Partial<Project>) => {
@@ -255,7 +143,13 @@ export const useProjects = () => {
     );
   };
 
-  
+  const loadSampleProjects = (creatorName: string) => {
+    if (creatorName === 'testsdr') {
+      setProjects(sampleProjects);
+      return true;
+    }
+    return false;
+  };
   
   return {
     projects: filteredProjects,
@@ -272,9 +166,8 @@ export const useProjects = () => {
     hasActiveFilters,
     addProject,
     deleteProject,
+    deleteAllProjects,
     updateProject,
-    loadSampleProjects,
-    error,
-    isLoading
+    loadSampleProjects
   };
 };
