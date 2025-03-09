@@ -1,8 +1,9 @@
 
 import { Node, Edge } from '@xyflow/react';
+import { CustomNodeData } from './types/diagramTypes';
 
 // Initial nodes for the diagram
-export const diagramNodesState: Node[] = [
+export const diagramNodesState: Node<CustomNodeData>[] = [
   {
     id: 'internet',
     type: 'default',

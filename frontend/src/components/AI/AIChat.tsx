@@ -1,11 +1,14 @@
 
-import React, { useState, useRef, useEffect } from 'react';
-import { Textarea } from '@/components/ui/textarea';
-import { Button } from '@/components/ui/button';
-import { FileText, Send } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import ChatTabs from './ChatTabs';
+import MessageList from './MessageList';
+import ChatInput from './ChatInput';
+import ChatHistory from './ChatHistory';
+import { v4 as uuidv4 } from 'uuid';
 import { cn } from '@/lib/utils';
+import { WallpaperOption } from './types/chatTypes';
 
-interface Message {
+export interface Message {
   role: 'user' | 'assistant';
   content: string;
 }
@@ -16,131 +19,149 @@ interface AIChatProps {
   onGenerateReport: () => void;
 }
 
-const placeholders = [
-  "Describe your security infrastructure requirements...",
-  "Add a firewall between the internet and internal network...",
-  "I need a secure database with encryption...",
-  "Create a DMZ for the web servers...",
-  "Implement zero-trust architecture..."
-];
+interface ChatSession {
+  id: string;
+  date: Date;
+  messages: Message[];
+}
 
 const AIChat: React.FC<AIChatProps> = ({ messages, onSendMessage, onGenerateReport }) => {
-  const [input, setInput] = useState('');
-  const [placeholder, setPlaceholder] = useState('');
-  const [placeholderIndex, setPlaceholderIndex] = useState(0);
-  const [typingForward, setTypingForward] = useState(true);
-  const [charIndex, setCharIndex] = useState(0);
-  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const [activeTab, setActiveTab] = useState<'guardian' | 'history'>('guardian');
+  const [chatHistory, setChatHistory] = useState<ChatSession[]>([]);
+  const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
+  const [currentWallpaper, setCurrentWallpaper] = useState<WallpaperOption>({
+    id: 'default',
+    name: 'Default',
+    bgClass: 'bg-gradient-to-b from-[#f8f9fb] to-[#f1f3f9]',
+    textClass: 'text-gray-900'
+  });
 
-  // Auto-typing effect for placeholder
+  // Load chat history from localStorage on component mount
   useEffect(() => {
-    const typingSpeed = 100; // ms per character
-    const pauseAtEnd = 2000; // pause at the end of a complete message
-    const pauseAtStart = 700; // pause at the start before typing
-    
-    const timer = setTimeout(() => {
-      if (typingForward) {
-        // Typing forward
-        if (charIndex < placeholders[placeholderIndex].length) {
-          setPlaceholder(placeholders[placeholderIndex].substring(0, charIndex + 1));
-          setCharIndex(charIndex + 1);
-        } else {
-          // Reached the end, pause before starting to delete
-          setTypingForward(false);
-          return pauseAtEnd;
-        }
-      } else {
-        // Deleting
-        if (charIndex > 0) {
-          setPlaceholder(placeholders[placeholderIndex].substring(0, charIndex - 1));
-          setCharIndex(charIndex - 1);
-        } else {
-          // Fully deleted, move to the next placeholder
-          setTypingForward(true);
-          setPlaceholderIndex((placeholderIndex + 1) % placeholders.length);
-          return pauseAtStart;
-        }
+    const storedHistory = localStorage.getItem('chatHistory');
+    if (storedHistory) {
+      try {
+        const parsed = JSON.parse(storedHistory);
+        // Convert string dates back to Date objects
+        const historyWithProperDates = parsed.map((session: any) => ({
+          ...session,
+          date: new Date(session.date)
+        }));
+        setChatHistory(historyWithProperDates);
+      } catch (e) {
+        console.error('Failed to parse chat history:', e);
       }
-    }, typingForward ? typingSpeed : typingSpeed / 2);
-    
-    return () => clearTimeout(timer);
-  }, [charIndex, placeholderIndex, typingForward]);
+    }
 
-  // Scroll to bottom of messages
+    // Load saved wallpaper preference
+    const savedWallpaper = localStorage.getItem('chatWallpaper');
+    if (savedWallpaper) {
+      try {
+        setCurrentWallpaper(JSON.parse(savedWallpaper));
+      } catch (e) {
+        console.error('Failed to parse wallpaper settings:', e);
+      }
+    }
+  }, []);
+
+  // Save current session to history when messages change
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages]);
+    if (messages.length > 0 && activeTab === 'guardian') {
+      // If no active session yet, create one
+      if (!activeSessionId) {
+        const newSessionId = uuidv4();
+        setActiveSessionId(newSessionId);
+        const newSession = {
+          id: newSessionId,
+          date: new Date(),
+          messages: [...messages]
+        };
+        
+        setChatHistory(prev => {
+          const updated = [newSession, ...prev];
+          // Save to localStorage
+          localStorage.setItem('chatHistory', JSON.stringify(updated));
+          return updated;
+        });
+      } else {
+        // Update existing session
+        setChatHistory(prev => {
+          const updatedHistory = prev.map(session => 
+            session.id === activeSessionId 
+              ? { ...session, messages: [...messages] } 
+              : session
+          );
+          
+          // Save to localStorage
+          localStorage.setItem('chatHistory', JSON.stringify(updatedHistory));
+          return updatedHistory;
+        });
+      }
+    }
+  }, [messages, activeSessionId, activeTab]);
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (input.trim()) {
-      onSendMessage(input.trim());
-      setInput('');
+  const handleWallpaperChange = (wallpaper: WallpaperOption) => {
+    setCurrentWallpaper(wallpaper);
+    localStorage.setItem('chatWallpaper', JSON.stringify(wallpaper));
+  };
+
+  const handleSelectChat = (chatId: string) => {
+    const selectedChat = chatHistory.find(chat => chat.id === chatId);
+    if (selectedChat) {
+      // Tell the parent component to update its messages
+      onSendMessage(''); // First clear the current message
+      selectedChat.messages.forEach(msg => {
+        if (msg.role === 'user') {
+          onSendMessage(msg.content);
+        }
+      });
+      setActiveSessionId(chatId);
+      setActiveTab('guardian'); // Switch to guardian tab to show the loaded chat
     }
   };
 
+  const handleClearHistory = () => {
+    setChatHistory([]);
+    localStorage.removeItem('chatHistory');
+  };
+
+  const startNewChat = () => {
+    setActiveSessionId(null);
+    onSendMessage(''); // Clear current chat
+  };
+
   return (
-    <div className="flex flex-col h-full">
-      <div className="p-4 border-b">
-        <h3 className="text-lg font-medium">Chat with AI Assistant</h3>
-      </div>
+    <div className={cn("flex flex-col h-full relative overflow-hidden", currentWallpaper.textClass)}>
+      {/* Add the background with the selected wallpaper */}
+      <div className={cn("absolute inset-0 -z-10", currentWallpaper.bgClass)} />
       
-      <div className="flex-grow overflow-y-auto p-4 space-y-4">
-        {messages.length === 0 ? (
-          <div className="text-center text-gray-400 my-8">
-            <p>Start describing your security requirements to the AI</p>
-          </div>
-        ) : (
-          messages.map((message, index) => (
-            <div 
-              key={index} 
-              className={cn(
-                "p-3 rounded-lg max-w-[80%]",
-                message.role === 'user' 
-                  ? "bg-primary text-primary-foreground ml-auto" 
-                  : "bg-muted mr-auto"
-              )}
-            >
-              {message.content}
-            </div>
-          ))
-        )}
-        <div ref={messagesEndRef} />
-      </div>
+      <ChatTabs 
+        activeTab={activeTab} 
+        onTabChange={tab => {
+          setActiveTab(tab);
+          if (tab === 'guardian' && activeSessionId === null && messages.length === 0) {
+            startNewChat();
+          }
+        }} 
+      />
       
-      <div className="p-4 border-t">
-        <form onSubmit={handleSubmit} className="flex gap-2">
-          <Textarea
-            value={input}
-            onChange={e => setInput(e.target.value)}
-            placeholder={placeholder}
-            className="min-h-[60px] flex-grow"
-            onKeyDown={e => {
-              if (e.key === 'Enter' && !e.shiftKey) {
-                e.preventDefault();
-                handleSubmit(e);
-              }
-            }}
+      {activeTab === 'guardian' ? (
+        <>
+          <MessageList messages={messages} />
+          <ChatInput 
+            onSendMessage={onSendMessage} 
+            onGenerateReport={onGenerateReport}
+            hasMessages={messages.length > 0}
+            onWallpaperChange={handleWallpaperChange}
           />
-          <div className="flex flex-col gap-2">
-            <Button 
-              type="submit" 
-              size="icon" 
-              disabled={!input.trim()}
-            >
-              <Send className="h-4 w-4" />
-            </Button>
-            <Button
-              type="button"
-              size="icon"
-              variant="outline"
-              onClick={onGenerateReport}
-            >
-              <FileText className="h-4 w-4" />
-            </Button>
-          </div>
-        </form>
-      </div>
+        </>
+      ) : (
+        <ChatHistory 
+          chatHistory={chatHistory}
+          onSelectChat={handleSelectChat}
+          onClearHistory={handleClearHistory}
+        />
+      )}
     </div>
   );
 };

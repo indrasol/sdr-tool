@@ -1,148 +1,87 @@
 
-import React, { useState, useRef, useEffect } from 'react';
-import { Textarea } from '@/components/ui/textarea';
-import { Button } from '@/components/ui/button';
-import { FileText, Send } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import React, { useCallback, useMemo } from 'react';
+import {
+  ReactFlow,
+  MiniMap,
+  Controls,
+  Background,
+  useNodesState,
+  useEdgesState,
+  NodeTypes
+} from '@xyflow/react';
+import '@xyflow/react/dist/style.css';
+import DiagramToolbar from './DiagramToolbar';
+import CustomNode from './customNode';
+import EditNodeDialog from './EditNodeDialog';
+import { AIFlowDiagramProps, CustomNodeData } from './types/diagramTypes';
+import { useDiagramNodes } from './hooks/useDiagramNodes';
 
-interface Message {
-  role: 'user' | 'assistant';
-  content: string;
-}
+// Register our custom node types with the proper type casting
+const nodeTypes: NodeTypes = {
+  default: CustomNode as any // Using 'any' to bypass the complex type issues
+};
 
-interface AIChatProps {
-  messages: Message[];
-  onSendMessage: (message: string) => void;
-  onGenerateReport: () => void;
-}
+const AIFlowDiagram: React.FC<AIFlowDiagramProps> = ({
+  nodes: initialNodes,
+  edges: initialEdges,
+  setNodes: setNodesExternal,
+  setEdges: setEdgesExternal
+}) => {
+  // Use our custom hook to manage nodes and their interactions
+  const {
+    editNodeDialogOpen,
+    setEditNodeDialogOpen,
+    currentEditNode,
+    prepareNodes,
+    handleConnect,
+    handleAddNode,
+    handleSaveNodeEdit
+  } = useDiagramNodes(initialNodes, initialEdges, setNodesExternal, setEdgesExternal);
 
-const placeholders = [
-  "Describe your security infrastructure requirements...",
-  "Add a firewall between the internet and internal network...",
-  "I need a secure database with encryption...",
-  "Create a DMZ for the web servers...",
-  "Implement zero-trust architecture..."
-];
+  // Apply styling and callbacks to nodes
+  const nodesWithStyles = useMemo(() => {
+    return prepareNodes(initialNodes);
+  }, [initialNodes, prepareNodes]);
 
-const AIChat: React.FC<AIChatProps> = ({ messages, onSendMessage, onGenerateReport }) => {
-  const [input, setInput] = useState('');
-  const [placeholder, setPlaceholder] = useState('');
-  const [placeholderIndex, setPlaceholderIndex] = useState(0);
-  const [typingForward, setTypingForward] = useState(true);
-  const [charIndex, setCharIndex] = useState(0);
-  const messagesEndRef = useRef<HTMLDivElement>(null);
+  // Use ReactFlow hooks to manage nodes and edges
+  const [nodes, setNodes, onNodesChange] = useNodesState(nodesWithStyles);
+  const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
 
-  // Auto-typing effect for placeholder
-  useEffect(() => {
-    const typingSpeed = 100; // ms per character
-    const pauseAtEnd = 2000; // pause at the end of a complete message
-    const pauseAtStart = 700; // pause at the start before typing
-    
-    const timer = setTimeout(() => {
-      if (typingForward) {
-        // Typing forward
-        if (charIndex < placeholders[placeholderIndex].length) {
-          setPlaceholder(placeholders[placeholderIndex].substring(0, charIndex + 1));
-          setCharIndex(charIndex + 1);
-        } else {
-          // Reached the end, pause before starting to delete
-          setTypingForward(false);
-          return pauseAtEnd;
-        }
-      } else {
-        // Deleting
-        if (charIndex > 0) {
-          setPlaceholder(placeholders[placeholderIndex].substring(0, charIndex - 1));
-          setCharIndex(charIndex - 1);
-        } else {
-          // Fully deleted, move to the next placeholder
-          setTypingForward(true);
-          setPlaceholderIndex((placeholderIndex + 1) % placeholders.length);
-          return pauseAtStart;
-        }
-      }
-    }, typingForward ? typingSpeed : typingSpeed / 2);
-    
-    return () => clearTimeout(timer);
-  }, [charIndex, placeholderIndex, typingForward]);
+  // Sync internal state with external state
+  React.useEffect(() => {
+    setNodesExternal(nodes);
+  }, [nodes, setNodesExternal]);
 
-  // Scroll to bottom of messages
-  useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages]);
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (input.trim()) {
-      onSendMessage(input.trim());
-      setInput('');
-    }
-  };
+  React.useEffect(() => {
+    setEdgesExternal(edges);
+  }, [edges, setEdgesExternal]);
 
   return (
-    <div className="flex flex-col h-full">
-      <div className="p-4 border-b">
-        <h3 className="text-lg font-medium">Chat with AI Assistant</h3>
-      </div>
-      
-      <div className="flex-grow overflow-y-auto p-4 space-y-4">
-        {messages.length === 0 ? (
-          <div className="text-center text-gray-400 my-8">
-            <p>Start describing your security requirements to the AI</p>
-          </div>
-        ) : (
-          messages.map((message, index) => (
-            <div 
-              key={index} 
-              className={cn(
-                "p-3 rounded-lg max-w-[80%]",
-                message.role === 'user' 
-                  ? "bg-primary text-primary-foreground ml-auto" 
-                  : "bg-muted mr-auto"
-              )}
-            >
-              {message.content}
-            </div>
-          ))
-        )}
-        <div ref={messagesEndRef} />
-      </div>
-      
-      <div className="p-4 border-t">
-        <form onSubmit={handleSubmit} className="flex gap-2">
-          <Textarea
-            value={input}
-            onChange={e => setInput(e.target.value)}
-            placeholder={placeholder}
-            className="min-h-[60px] flex-grow"
-            onKeyDown={e => {
-              if (e.key === 'Enter' && !e.shiftKey) {
-                e.preventDefault();
-                handleSubmit(e);
-              }
-            }}
-          />
-          <div className="flex flex-col gap-2">
-            <Button 
-              type="submit" 
-              size="icon" 
-              disabled={!input.trim()}
-            >
-              <Send className="h-4 w-4" />
-            </Button>
-            <Button
-              type="button"
-              size="icon"
-              variant="outline"
-              onClick={onGenerateReport}
-            >
-              <FileText className="h-4 w-4" />
-            </Button>
-          </div>
-        </form>
-      </div>
+    <div className="h-full w-full">
+      <ReactFlow
+        nodes={nodes}
+        edges={edges}
+        onNodesChange={onNodesChange}
+        onEdgesChange={onEdgesChange}
+        onConnect={handleConnect}
+        nodeTypes={nodeTypes}
+        fitView
+        attributionPosition="bottom-right"
+      >
+        <Controls />
+        <MiniMap />
+        <Background gap={12} size={1} />
+        <DiagramToolbar onAddNode={handleAddNode} />
+      </ReactFlow>
+
+      <EditNodeDialog
+        open={editNodeDialogOpen}
+        onOpenChange={setEditNodeDialogOpen}
+        node={currentEditNode}
+        onSave={handleSaveNodeEdit}
+      />
     </div>
   );
 };
 
-export default AIChat;
+export default AIFlowDiagram;

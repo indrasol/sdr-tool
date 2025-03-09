@@ -37,7 +37,7 @@ export const useProjectOperations = () => {
     if (project) {
       if (project.templateType === 'AI Assisted') {
         navigate('/model-with-ai');
-      } else if (project.templateType === 'Import Existing') {
+      } else if (project.templateType === 'Import Existing' || project.importedFile) {
         navigate('/security-analysis');
       } else {
         toast({

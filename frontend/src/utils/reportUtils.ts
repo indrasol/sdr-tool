@@ -18,11 +18,13 @@ export const generatePDF = (reportPages: ReportPage[], diagramImage: string | nu
   pdf.setTextColor(124, 101, 246); // Purple color
   pdf.text('Security Assessment Report', 105, 20, { align: 'center' });
   
-  // Add content
+  // Add company name and date
   pdf.setFontSize(12);
   pdf.setTextColor(0, 0, 0);
+  pdf.text('SecureTrack Security Assessment', 20, 30);
+  pdf.text(`Generated: ${new Date().toLocaleDateString()}`, 20, 35);
   
-  let yPosition = 40;
+  let yPosition = 45;
   
   // Add each page
   reportPages.forEach((page, index) => {
@@ -31,11 +33,13 @@ export const generatePDF = (reportPages: ReportPage[], diagramImage: string | nu
       yPosition = 20;
     }
     
-    // Add page title
+    // Add page title with colored background
+    pdf.setFillColor(124, 101, 246, 0.1); // Light purple background
+    pdf.rect(10, yPosition - 5, 190, 10, 'F');
     pdf.setFontSize(16);
     pdf.setTextColor(124, 101, 246);
     pdf.text(page.title, 20, yPosition);
-    yPosition += 10;
+    yPosition += 15;
     
     // Add page content
     pdf.setFontSize(12);
@@ -48,12 +52,31 @@ export const generatePDF = (reportPages: ReportPage[], diagramImage: string | nu
     // Add diagram to first page
     if (index === 0 && diagramImage && diagramImage !== 'placeholder') {
       try {
-        pdf.addImage(diagramImage, 'PNG', 20, 100, 170, 100);
+        // Calculate position after text
+        const textHeight = pdf.getTextDimensions(splitContent).h;
+        const diagramY = yPosition + textHeight + 10;
+        
+        pdf.addImage(diagramImage, 'PNG', 20, diagramY, 170, 100);
+        
+        // Add caption
+        pdf.setFontSize(10);
+        pdf.setTextColor(100, 100, 100);
+        pdf.text('Fig 1: Security Infrastructure Diagram', 105, diagramY + 105, { align: 'center' });
       } catch (error) {
         console.error('Error adding image to PDF:', error);
       }
     }
   });
+  
+  // Add footer with page numbers
+  const pageCount = pdf.getNumberOfPages();
+  for (let i = 1; i <= pageCount; i++) {
+    pdf.setPage(i);
+    pdf.setFontSize(10);
+    pdf.setTextColor(100, 100, 100);
+    pdf.text(`Page ${i} of ${pageCount}`, 105, 285, { align: 'center' });
+    pdf.text('SecureTrack Confidential', 20, 285);
+  }
   
   return pdf;
 };
@@ -93,4 +116,14 @@ export const deleteReportPage = (
   result.splice(index, 1);
   
   return result;
+};
+
+export const generateTableOfContents = (pages: ReportPage[]): string => {
+  let tableOfContents = "Table of Contents\n\n";
+  
+  pages.forEach((page, index) => {
+    tableOfContents += `${index + 1}. ${page.title}\n`;
+  });
+  
+  return tableOfContents;
 };
