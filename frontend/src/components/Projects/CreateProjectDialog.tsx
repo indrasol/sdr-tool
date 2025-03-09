@@ -17,7 +17,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
-import type { ProjectPriority } from '@/components/Projects/ProjectCard';
+import type { ProjectPriority, ProjectStatus } from '@/components/Projects/types/projectTypes';
 
 interface CreateProjectDialogProps {
   open: boolean;
@@ -26,6 +26,7 @@ interface CreateProjectDialogProps {
     name: string;
     description: string;
     priority: ProjectPriority;
+    status: ProjectStatus;
     domain?: string;
     dueDate?: string;
     creator: string;
@@ -39,6 +40,7 @@ const CreateProjectDialog = ({ open, onOpenChange, onCreateProject }: CreateProj
   const [projectName, setProjectName] = useState('');
   const [projectDescription, setProjectDescription] = useState('');
   const [projectPriority, setProjectPriority] = useState<ProjectPriority>('Medium');
+  const [projectStatus, setProjectStatus] = useState<ProjectStatus>('Not Started');
   const [projectDomain, setProjectDomain] = useState('');
   const [projectDueDate, setProjectDueDate] = useState('');
   const [creatorName, setCreatorName] = useState('');
@@ -85,6 +87,7 @@ const CreateProjectDialog = ({ open, onOpenChange, onCreateProject }: CreateProj
       name: projectName,
       description: projectDescription,
       priority: projectPriority,
+      status: projectStatus,
       domain: projectDomain || undefined,
       dueDate: projectDueDate || undefined,
       creator: creatorName,
@@ -97,6 +100,7 @@ const CreateProjectDialog = ({ open, onOpenChange, onCreateProject }: CreateProj
     setProjectName('');
     setProjectDescription('');
     setProjectPriority('Medium');
+    setProjectStatus('Not Started');
     setProjectDomain('');
     setProjectDueDate('');
     setCreatorName('');
@@ -161,6 +165,24 @@ const CreateProjectDialog = ({ open, onOpenChange, onCreateProject }: CreateProj
               </Select>
             </div>
             <div className="space-y-2">
+              <Label htmlFor="project-status">Status</Label>
+              <Select value={projectStatus} onValueChange={(value) => setProjectStatus(value as ProjectStatus)}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select status" />
+                </SelectTrigger>
+                <SelectContent className="bg-white">
+                  <SelectItem value="Not Started">Not Started</SelectItem>
+                  <SelectItem value="Started">Started</SelectItem>
+                  <SelectItem value="In Progress">In Progress</SelectItem>
+                  <SelectItem value="Completed">Completed</SelectItem>
+                  <SelectItem value="On Hold">On Hold</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
               <Label htmlFor="project-due-date">Due Date</Label>
               <Input 
                 id="project-due-date" 
@@ -169,16 +191,15 @@ const CreateProjectDialog = ({ open, onOpenChange, onCreateProject }: CreateProj
                 onChange={(e) => setProjectDueDate(e.target.value)}
               />
             </div>
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="project-domain">Domain/URL (Optional)</Label>
-            <Input 
-              id="project-domain" 
-              placeholder="e.g. example.com" 
-              value={projectDomain}
-              onChange={(e) => setProjectDomain(e.target.value)}
-            />
+            <div className="space-y-2">
+              <Label htmlFor="project-domain">Domain/URL (Optional)</Label>
+              <Input 
+                id="project-domain" 
+                placeholder="e.g. example.com" 
+                value={projectDomain}
+                onChange={(e) => setProjectDomain(e.target.value)}
+              />
+            </div>
           </div>
 
           <div className="space-y-2">

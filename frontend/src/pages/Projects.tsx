@@ -1,142 +1,135 @@
-import React, { useCallback } from 'react';
-import Layout from '@/components/layout/Layout';
 
-// Component Imports
+import Layout from '@/components/layout/Layout';
 import ProjectsListHeader from '@/components/Projects/ProjectsListHeader';
 import CreateProjectDialog from '@/components/Projects/CreateProjectDialog';
-import { useProjectsPage } from '@/components/Projects/ProjectListPage/useProjectsPage';
-import ProjectStats from '@/components/Projects/ProjectListPage/ProjectStats';
-import ProjectContent from '@/components/Projects/ProjectListPage/ProjectContent';
 import DeleteProjectDialog from '@/components/Projects/DeleteProjectDialog';
 import EditProjectDialog from '@/components/Projects/EditProjectDialog';
+import ProjectStats from '@/components/Projects/ProjectListPage/ProjectStats';
+import ProjectContent from '@/components/Projects/ProjectListPage/ProjectContent';
+import { useProjectsPage } from '@/components/Projects/ProjectListPage/useProjectsPage';
+import { motion } from 'framer-motion';
 
 const Projects = () => {
-    const {
-        viewType,
-        setViewType,
-        createDialogOpen,
-        setCreateDialogOpen,
-        deleteDialogOpen,
-        setDeleteDialogOpen,
-        editDialogOpen,
-        setEditDialogOpen,
-        projectToDelete,
-        projectToEdit,
-        projects,
-        allProjects,
-        searchTerm,
-        setSearchTerm,
-        statusFilter,
-        setStatusFilter,
-        priorityFilter,
-        setPriorityFilter,
-        clearFilters,
-        hasActiveFilters,
-        handleProjectClick,
-        handleCreateProject,
-        handleEditProject,
-        handleUpdateProject,
-        handleDeleteProject,
-        confirmDeleteProject,
-        handleProjectCreation,
-        handleExportProjects,
-        handleStatusFilterChange,
-      } = useProjectsPage();
-    
-      // Calculate project counts for header stats
-      const activeProjectsCount = allProjects.filter(p => p.status === 'In Progress' || p.status === 'Started').length;
-      const completedProjectsCount = allProjects.filter(p => p.status === 'Completed').length;
-      const myProjectsCount = allProjects.filter(p => p.creator === 'testsdr').length;
+  const {
+    viewType,
+    setViewType,
+    createDialogOpen,
+    setCreateDialogOpen,
+    deleteDialogOpen,
+    setDeleteDialogOpen,
+    projectToDelete,
+    editDialogOpen,
+    setEditDialogOpen,
+    projectToEdit,
+    projects,
+    allProjects,
+    searchTerm,
+    setSearchTerm,
+    statusFilter,
+    setStatusFilter,
+    priorityFilter,
+    setPriorityFilter,
+    clearFilters,
+    hasActiveFilters,
+    handleProjectClick,
+    handleCreateProject,
+    handleEditProject,
+    handleUpdateProject,
+    handleDeleteProject,
+    confirmDeleteProject,
+    handleProjectCreation,
+    handleExportProjects,
+    handleStatusFilterChange
+  } = useProjectsPage();
 
-      // Memoized callbacks for performance
-      const memoizedHandleProjectClick = useCallback((projectId: string) => {
-        handleProjectClick(projectId);
-      }, [handleProjectClick]);
+  // Calculate project counts for header stats
+  const activeProjectsCount = allProjects.filter(p => p.status === 'In Progress' || p.status === 'Started').length;
+  const completedProjectsCount = allProjects.filter(p => p.status === 'Completed').length;
+  const myProjectsCount = allProjects.filter(p => p.creator === 'testsdr').length;
 
-      const memoizedHandleCreateProject = useCallback(() => {
-        handleCreateProject();
-      }, [handleCreateProject]);
+  const fadeIn = {
+    hidden: { opacity: 0, y: 20 },
+    visible: { 
+      opacity: 1, 
+      y: 0,
+      transition: { 
+        duration: 0.5,
+        staggerChildren: 0.1
+      }
+    }
+  };
 
-      const memoizedHandleEditProject = useCallback((projectId: string) => {
-        handleEditProject(projectId);
-      }, [handleEditProject]);
+  return (
+    <Layout>
+      <motion.div 
+        className="space-y-6 mt-16"
+        initial="hidden"
+        animate="visible"
+        variants={fadeIn}
+      >
+        <ProjectsListHeader 
+          onCreateProject={handleCreateProject}
+          onExportProjects={handleExportProjects}
+          onViewTypeChange={setViewType}
+          onStatusFilterChange={handleStatusFilterChange}
+          totalProjects={allProjects.length}
+          activeProjects={activeProjectsCount}
+          completedProjects={completedProjectsCount}
+          myProjects={myProjectsCount}
+          currentViewType={viewType}
+        />
 
-      const memoizedHandleDeleteProject = useCallback((projectId: string) => {
-        handleDeleteProject(projectId);
-      }, [handleDeleteProject]);
+        <motion.div variants={fadeIn}>
+          <ProjectStats 
+            allProjects={allProjects}
+            onStatusFilterChange={handleStatusFilterChange}
+          />
+        </motion.div>
 
-      const memoizedHandleExportProjects = useCallback(() => {
-        handleExportProjects();
-      }, [handleExportProjects]);
+        <motion.div variants={fadeIn}>
+          <ProjectContent
+            projects={projects}
+            allProjects={allProjects}
+            searchTerm={searchTerm}
+            setSearchTerm={setSearchTerm}
+            statusFilter={statusFilter}
+            setStatusFilter={setStatusFilter}
+            priorityFilter={priorityFilter}
+            setPriorityFilter={setPriorityFilter}
+            clearFilters={clearFilters}
+            hasActiveFilters={hasActiveFilters}
+            onProjectClick={handleProjectClick}
+            onCreateProject={handleCreateProject}
+            onDeleteProject={handleDeleteProject}
+            onEditProject={handleEditProject}
+            viewType={viewType}
+          />
+        </motion.div>
 
-      const memoizedHandleStatusFilterChange = useCallback((status: string) => {
-        handleStatusFilterChange(status);
-      }, [handleStatusFilterChange]);
-    
-      
-      
-      return (
-        <Layout>
-          <div className="space-y-6 mt-16">
-            <ProjectsListHeader 
-              onCreateProject={handleCreateProject}
-              onExportProjects={handleExportProjects}
-              onViewTypeChange={setViewType}
-              onStatusFilterChange={handleStatusFilterChange}
-              totalProjects={allProjects.length}
-              activeProjects={activeProjectsCount}
-              completedProjects={completedProjectsCount}
-              myProjects={myProjectsCount}
-            />
-    
-            <ProjectStats 
-              allProjects={allProjects}
-              onStatusFilterChange={handleStatusFilterChange}
-            />
-    
-            <ProjectContent
-              projects={projects}
-              allProjects={allProjects}
-              searchTerm={searchTerm}
-              setSearchTerm={setSearchTerm}
-              statusFilter={statusFilter}
-              setStatusFilter={setStatusFilter}
-              priorityFilter={priorityFilter}
-              setPriorityFilter={setPriorityFilter}
-              clearFilters={clearFilters}
-              hasActiveFilters={hasActiveFilters}
-              onProjectClick={handleProjectClick}
-              onCreateProject={handleCreateProject}
-              onDeleteProject={handleDeleteProject}
-              onEditProject={handleEditProject}
-              viewType={viewType}
-            />
-    
-            <CreateProjectDialog 
-              open={createDialogOpen} 
-              onOpenChange={setCreateDialogOpen}
-              onCreateProject={handleProjectCreation}
-            />
+        <CreateProjectDialog 
+          open={createDialogOpen} 
+          onOpenChange={setCreateDialogOpen}
+          onCreateProject={handleProjectCreation}
+        />
 
-            {projectToDelete && (
-              <DeleteProjectDialog
-                open={deleteDialogOpen}
-                onOpenChange={setDeleteDialogOpen}
-                projectName={projectToDelete.name}
-                onConfirmDelete={confirmDeleteProject}
-              />
-            )}
+        {projectToDelete && (
+          <DeleteProjectDialog
+            open={deleteDialogOpen}
+            onOpenChange={setDeleteDialogOpen}
+            projectName={projectToDelete.name}
+            onConfirmDelete={confirmDeleteProject}
+          />
+        )}
 
-            <EditProjectDialog
-              open={editDialogOpen}
-              onOpenChange={setEditDialogOpen}
-              project={projectToEdit}
-              onUpdateProject={handleUpdateProject}
-            />
-          </div>
-        </Layout>
-      );
-    };
-    
+        <EditProjectDialog
+          open={editDialogOpen}
+          onOpenChange={setEditDialogOpen}
+          project={projectToEdit}
+          onUpdateProject={handleUpdateProject}
+        />
+      </motion.div>
+    </Layout>
+  );
+};
 
-export default React.memo(Projects);
+export default Projects;

@@ -1,4 +1,5 @@
-import { Download, Grid, ListFilter, PlusCircle, Shield, Search, BarChart3Icon, UserCheck, CheckCircle } from 'lucide-react';
+
+import { Download, Grid, List, PlusCircle, Shield, Search, BarChart3Icon, UserCheck, CheckCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import {
@@ -9,6 +10,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Project } from '@/hooks/useProjects';
+import { motion } from 'framer-motion';
 
 interface ProjectsListHeaderProps {
   onCreateProject: () => void;
@@ -19,6 +21,7 @@ interface ProjectsListHeaderProps {
   activeProjects: number;
   completedProjects: number;
   myProjects: number;
+  currentViewType: 'grid' | 'list';
 }
 
 const ProjectsListHeader = ({ 
@@ -29,7 +32,8 @@ const ProjectsListHeader = ({
   totalProjects,
   activeProjects,
   completedProjects,
-  myProjects
+  myProjects,
+  currentViewType = 'grid'
 }: ProjectsListHeaderProps) => {
   return (
     <div className="space-y-6 animate-fade-in font-sans mb-8">
@@ -37,11 +41,15 @@ const ProjectsListHeader = ({
         <CardContent className="p-6">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6">
             <div className="flex items-center">
-              <div className="h-14 w-14 rounded-full bg-securetrack-purple/10 flex items-center justify-center transition-all duration-300 group-hover:bg-securetrack-purple/20 group-hover:scale-110 mr-4">
+              <motion.div 
+                className="h-14 w-14 rounded-full bg-securetrack-purple/10 flex items-center justify-center mr-4"
+                whileHover={{ scale: 1.1, backgroundColor: 'rgba(124, 101, 246, 0.2)' }}
+                transition={{ type: "spring", stiffness: 400, damping: 10 }}
+              >
                 <Shield className="h-7 w-7 text-securetrack-purple" />
-              </div>
+              </motion.div>
               <div>
-                <h2 className="text-2xl font-bold">Project Dashboard</h2>
+                <h2 className="text-2xl font-bold bg-gradient-to-r from-securetrack-purple to-securetrack-darkpurple bg-clip-text text-transparent">Project Dashboard</h2>
                 <p className="text-muted-foreground">Manage and track your security projects</p>
               </div>
             </div>
@@ -56,46 +64,41 @@ const ProjectsListHeader = ({
                 Export
               </Button>
               
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button 
-                    variant="outline" 
-                    className="transition-all duration-300 hover:border-securetrack-purple hover:text-securetrack-purple"
-                  >
-                    <Search className="h-4 w-4 mr-2" />
-                    View Options
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="bg-white/90 backdrop-blur-sm border-0 shadow-xl">
-                  <DropdownMenuItem onClick={() => onViewTypeChange('grid')} className="cursor-pointer hover:bg-securetrack-purple/10">
-                    <Grid className="h-4 w-4 mr-2 text-securetrack-purple" />
-                    Grid View
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => onViewTypeChange('list')} className="cursor-pointer hover:bg-securetrack-purple/10">
-                    <ListFilter className="h-4 w-4 mr-2 text-securetrack-purple" />
-                    List View
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={onExportProjects} className="cursor-pointer hover:bg-securetrack-purple/10">
-                    <Download className="h-4 w-4 mr-2 text-securetrack-purple" />
-                    Export Projects
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+              <div className="flex rounded-md border border-input overflow-hidden">
+                <Button 
+                  variant={currentViewType === 'grid' ? "default" : "ghost"}
+                  size="sm"
+                  onClick={() => onViewTypeChange('grid')}
+                  className={`rounded-none ${currentViewType === 'grid' ? 'bg-securetrack-purple text-white' : 'text-muted-foreground'}`}
+                >
+                  <Grid className="h-4 w-4" />
+                </Button>
+                <Button 
+                  variant={currentViewType === 'list' ? "default" : "ghost"}
+                  size="sm"
+                  onClick={() => onViewTypeChange('list')}
+                  className={`rounded-none ${currentViewType === 'list' ? 'bg-securetrack-purple text-white' : 'text-muted-foreground'}`}
+                >
+                  <List className="h-4 w-4" />
+                </Button>
+              </div>
               
-              <Button 
-                onClick={onCreateProject} 
-                className="bg-securetrack-purple text-white hover:bg-securetrack-darkpurple transition-all duration-300 shadow-md hover:shadow-lg transform hover:-translate-y-1"
+              <motion.div
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
               >
-                <PlusCircle className="mr-2 h-4 w-4" />
-                Create Project
-              </Button>
+                <Button 
+                  onClick={onCreateProject} 
+                  className="bg-securetrack-purple text-white hover:bg-securetrack-darkpurple transition-all duration-300 shadow-md hover:shadow-lg"
+                >
+                  <PlusCircle className="mr-2 h-4 w-4" />
+                  Create Project
+                </Button>
+              </motion.div>
             </div>
           </div>
         </CardContent>
       </Card>
-
-      {/* Removed duplicate stats cards from here */}
     </div>
   );
 };
