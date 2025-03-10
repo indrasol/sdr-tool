@@ -35,23 +35,23 @@ async def verify_token(authorization: str = Header(None)):
         if not authorization:
             raise HTTPException(status_code=401, detail="Missing token")
     
-        log_info(f"Authorization: {authorization}")
+        # log_info(f"Authorization: {authorization}")
         token = authorization.split(" ")[1]
         token = str(token)
-        log_info(f"Token: {token}")
+        # log_info(f"Token: {token}")
 
-        log_info(f"SUPABASE_SECRET_KEY: {SUPABASE_SECRET_KEY}")
+        # log_info(f"SUPABASE_SECRET_KEY: {SUPABASE_SECRET_KEY}")
 
         # Ensure SUPABASE_SECRET_KEY is set and is a string
         if not SUPABASE_SECRET_KEY or not isinstance(SUPABASE_SECRET_KEY, str):
-            log_info(f"SUPABASE_SECRET_KEY is invalid: type={type(SUPABASE_SECRET_KEY)}, value={SUPABASE_SECRET_KEY}")
+            # log_info(f"SUPABASE_SECRET_KEY is invalid: type={type(SUPABASE_SECRET_KEY)}, value={SUPABASE_SECRET_KEY}")
             raise HTTPException(status_code=500, detail="Server configuration error: Missing or invalid secret key")
 
         # Verify the JWT using the secret from environment variables
         try:
             # jwt_secret = base64.b64decode(SUPABASE_SECRET_KEY)
             payload = jwt.decode(token, SUPABASE_SECRET_KEY, algorithms=["HS256"], audience="authenticated")
-            log_info(f"Payload: {payload}")
+            # log_info(f"Payload: {payload}")
         except ExpiredSignatureError:
             log_info("Token verification failed: Token expired")
             raise HTTPException(status_code=401, detail="Token expired")

@@ -30,7 +30,6 @@ pandas
 accelerate>=0.26.0
 transformers[torch]
 aiosqlite
-databases
 asyncpg
 aioredis
 scikit-learn

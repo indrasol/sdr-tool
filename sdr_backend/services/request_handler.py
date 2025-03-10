@@ -7,7 +7,7 @@ from fastapi import HTTPException, Depends
 
 # Import dependencies
 from core.cache.session_manager import SessionManager
-from core.db.supabase_manager import SupabaseManager
+from services.supabase_manager import SupabaseManager
 from core.intent_classification.intent_classifier import IntentClassifier
 
 # Initialize singletons
