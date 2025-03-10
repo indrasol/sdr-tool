@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import JSONResponse
 from services.auth_handler import verify_token
 from core.cache.session_manager import SessionManager
-from core.db.supabase_manager import SupabaseManager    
+from sdr_backend.services.supabase_manager import SupabaseManager    
 from utils.logger import log_info
 import asyncio
 

@@ -2,12 +2,15 @@
 from fastapi import APIRouter, Depends
 from fastapi.responses import JSONResponse
 from core.cache.session_manager import SessionManager
-from core.db.supabase_manager import SupabaseManager
+from services.supabase_manager import SupabaseManager
 from models.db_schema_models import User
 from utils.logger import log_info
 from services.auth_handler import verify_token
 from core.db.supabase_db import get_supabase_client, safe_supabase_operation
+
+
 router = APIRouter()
+
 session_manager = SessionManager()
 supabase_manager = SupabaseManager()
 
