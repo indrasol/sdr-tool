@@ -8,7 +8,7 @@ import {
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 
-type Status = "None" |"Started" | "In Progress" | "Completed";
+type Status = "Planned" | "In Progress" | "Completed" | "Not Started" | "On Hold";
 
 interface StatusOption {
   value: Status;
@@ -18,10 +18,11 @@ interface StatusOption {
 }
 
 const statusOptions: StatusOption[] = [
-  { value: "None", label: "None", bgColor: "bg-gray-500", textColor: "text-white" },
-  { value: "Started", label: "Started", bgColor: "bg-amber-500", textColor: "text-white" },
-  { value: "In Progress", label: "In Progress", bgColor: "bg-green-600", textColor: "text-white" },
-  { value: "Completed", label: "Completed", bgColor: "bg-gray-800", textColor: "text-white" },
+  { value: "Not Started", label: "Not Started", bgColor: "bg-gray-500", textColor: "text-white" },
+  { value: "Planned", label: "Planned", bgColor: "bg-amber-500", textColor: "text-white" },
+  { value: "In Progress", label: "In Progress", bgColor: "bg-blue-600", textColor: "text-white" },
+  { value: "Completed", label: "Completed", bgColor: "bg-green-800", textColor: "text-white" },
+  { value: "On Hold", label: "On Hold", bgColor: "bg-orange-800", textColor: "text-white" },
 ];
 
 interface StatusDropdownProps {

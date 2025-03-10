@@ -8,7 +8,7 @@ import {
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 
-type Priority = "0-None" | "1-High" | "2-Medium" | "3-Low";
+type Priority = "High" | "Medium" | "Low" | "Critical";
 
 interface PriorityOption {
   value: Priority;
@@ -18,10 +18,11 @@ interface PriorityOption {
 }
 
 const priorityOptions: PriorityOption[] = [
-  { value: "0-None", label: "None", bgColor: "bg-gray-500", textColor: "text-gray-700" },
-  { value: "1-High", label: "High", bgColor: "bg-red-500", textColor: "text-red-700" },
-  { value: "2-Medium", label: "Mid", bgColor: "bg-orange-500", textColor: "text-orange-700" },
-  { value: "3-Low", label: "Low", bgColor: "bg-yellow-500", textColor: "text-green-700" },
+  // { value: "None", label: "None", bgColor: "bg-gray-500", textColor: "text-gray-700" },
+  { value: "High", label: "High", bgColor: "bg-red-500", textColor: "text-red-700" },
+  { value: "Medium", label: "Mid", bgColor: "bg-orange-500", textColor: "text-orange-700" },
+  { value: "Low", label: "Low", bgColor: "bg-yellow-500", textColor: "text-green-700" },
+  { value: "Critical", label: "Critical", bgColor: "bg-red-1000", textColor: "text-red-700" },
 ];
 
 interface PriorityDropdownProps {

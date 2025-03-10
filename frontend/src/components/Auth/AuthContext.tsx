@@ -1,6 +1,7 @@
 import React, { createContext, useState, useContext, useEffect, ReactNode } from "react";
 import { Navigate, useNavigate } from "react-router-dom";
-import tokenService, { User } from "../../utils/tokenService";
+import tokenService from '@/services/tokenService';
+import { User } from '@/interfaces/userInterface';
 import { supabase } from "../../../supabase";
 import { toast } from "sonner";
   // Assuming this is implemented properly
@@ -176,7 +177,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         "username": loginData.username,
         "email": loginData.email,
         "id": loginData.user_id,
-        "tenant_id": loginData.tenant_id,
+        "tenantId": loginData.tenant_id,
       }
   
       // Step 3: Save auth state

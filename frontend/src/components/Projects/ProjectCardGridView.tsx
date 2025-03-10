@@ -5,7 +5,7 @@ import ProjectCardBadges from './ProjectCardBadges';
 import ProjectCardActions from './ProjectCardActions';
 import ProjectCardMetadata from './ProjectCardMetadata';
 import { getBorderColor } from './utils/projectStyleUtils';
-import type { ProjectCardProps } from './types/projectTypes';
+import type { ProjectCardProps } from '../../interfaces/projectInterfaces';
 import { motion } from 'framer-motion';
 
 const ProjectCardGridView: React.FC<ProjectCardProps> = ({
@@ -53,7 +53,7 @@ const ProjectCardGridView: React.FC<ProjectCardProps> = ({
                 priority={priority} 
                 domain={domain} 
                 templateType={templateType}
-                showPriorityText={true}
+                showPriorityText={false}
               />
             </div>
             <div className="flex items-center gap-2">

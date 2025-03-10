@@ -1,4 +1,5 @@
 
+import { useEffect } from 'react'; 
 import Layout from '@/components/layout/Layout';
 import ProjectsListHeader from '@/components/Projects/ProjectsListHeader';
 import CreateProjectDialog from '@/components/Projects/CreateProjectDialog';
@@ -8,8 +9,11 @@ import ProjectStats from '@/components/Projects/ProjectListPage/ProjectStats';
 import ProjectContent from '@/components/Projects/ProjectListPage/ProjectContent';
 import { useProjectsPage } from '@/components/Projects/ProjectListPage/useProjectsPage';
 import { motion } from 'framer-motion';
+import { useAuth } from '@/components/Auth/AuthContext';
+import { useProjectCRUD } from '@/components/Projects/ProjectListPage/hooks/useProjectCRUD'
 
 const Projects = () => {
+  const { user } = useAuth();
   const {
     viewType,
     setViewType,
@@ -23,14 +27,19 @@ const Projects = () => {
     projectToEdit,
     projects,
     allProjects,
+    isLoading,
+    error,
     searchTerm,
     setSearchTerm,
     statusFilter,
     setStatusFilter,
     priorityFilter,
     setPriorityFilter,
+    templateFilter,
+    setTemplateFilter,
     clearFilters,
     hasActiveFilters,
+    pagination,
     handleProjectClick,
     handleCreateProject,
     handleEditProject,
@@ -38,14 +47,33 @@ const Projects = () => {
     handleDeleteProject,
     confirmDeleteProject,
     handleProjectCreation,
-    handleExportProjects,
-    handleStatusFilterChange
+    handleStatusFilterChange,
+    refreshProjects,
+    goToNextPage,
+    goToPreviousPage,
+    changePageSize,
+    isSubmitting
   } = useProjectsPage();
 
+  // Load user projects on component mount
+  useEffect(() => {
+    if (user) {
+      console.log("user : ",user)
+      refreshProjects();
+    }
+  }, [user]);
+
+  // Create a wrapped version of handleProjectCreation that refreshes the projects list
+  // const handleCreateNewProject = async (projectData) => {
+  //   await handleProjectCreation(projectData);
+  //   // After project creation, refresh the project list
+  //   refreshProjects();
+  // };
+
   // Calculate project counts for header stats
-  const activeProjectsCount = allProjects.filter(p => p.status === 'In Progress' || p.status === 'Started').length;
+  const activeProjectsCount = allProjects.filter(p => p.status === 'In Progress' || p.status === 'Not Started').length;
   const completedProjectsCount = allProjects.filter(p => p.status === 'Completed').length;
-  const myProjectsCount = allProjects.filter(p => p.creator === 'testsdr').length;
+  const myProjectsCount = user ? allProjects.filter(p => p.creator === user.username || p.creator === user.email || p.creator === user.id).length : 0;
 
   const fadeIn = {
     hidden: { opacity: 0, y: 20 },
@@ -69,7 +97,6 @@ const Projects = () => {
       >
         <ProjectsListHeader 
           onCreateProject={handleCreateProject}
-          onExportProjects={handleExportProjects}
           onViewTypeChange={setViewType}
           onStatusFilterChange={handleStatusFilterChange}
           totalProjects={allProjects.length}
@@ -110,6 +137,7 @@ const Projects = () => {
           open={createDialogOpen} 
           onOpenChange={setCreateDialogOpen}
           onCreateProject={handleProjectCreation}
+          isSubmitting={isSubmitting}
         />
 
         {projectToDelete && (

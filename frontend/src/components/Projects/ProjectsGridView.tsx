@@ -1,5 +1,5 @@
 
-import { Project } from '@/hooks/useProjects';
+import { Project } from '@/interfaces/projectInterfaces';
 import ProjectCard from '@/components/Projects/ProjectCard';
 
 interface ProjectsGridViewProps {
