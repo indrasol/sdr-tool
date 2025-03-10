@@ -8,7 +8,6 @@ import Index from "./pages/Index";
 import CreateProject from "./pages/CreateProject";
 import ModelWithAI from "./pages/ModelWithAI";
 import NotFound from "./pages/NotFound";
-import ProjectList from "./pages/ProjectList";
 import ExistingProject from "./pages/ExistingProject";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
@@ -20,7 +19,6 @@ import Dashboard from "./pages/Dashboard";
 import Documents from "./pages/Documents";
 import SOC2 from "./pages/SOC2";
 import Projects from "./pages/Projects";
-import ModelWithAINew from "./pages/ModelWithAINew";
 import SecurityAnalysis from "./pages/SecurityAnalysis";
 
 
@@ -66,9 +64,7 @@ const App = () => (
                 <Route path="/soc2" element={<SOC2 />} />
                 <Route path="/create-project" element={<CreateProject />} />
                 <Route path="/existing-project" element={<ExistingProject />} />
-                <Route path="/model-with-ai" element={<ModelWithAINew />} />
-                {/* <Route path="/model-with-ai" element={<ModelWithAI />} /> */}
-                <Route path="/project-list" element={<ProjectList />} />
+                <Route path="/model-with-ai" element={<ModelWithAI />} />
                 <Route path="/projects" element={<Projects />} />
                 <Route path="/security-analysis" element={<SecurityAnalysis />} />
                 <Route path="/generate-report" element={<GenerateReport />} />

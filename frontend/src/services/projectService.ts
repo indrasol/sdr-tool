@@ -5,9 +5,7 @@ import tokenService from './tokenService';
 import { useAuth } from '@/components/Auth/AuthContext'
 
 // The backend URL from environment or hardcoded for now
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
-
-// Interface for project creation payload
+const BASE_API_URL = import.meta.env.VITE_BASE_API_URL
 
 
 // Convert backend project format to frontend Project interface
@@ -71,7 +69,7 @@ const projectService = {
     if (params.limit) queryParams.append('limit', params.limit.toString());
     if (params.offset) queryParams.append('offset', params.offset.toString());
     
-    const response = await fetch(`http://localhost:8000/v1/routes/projects?${queryParams.toString()}`, {
+    const response = await fetch(`${BASE_API_URL}/projects?${queryParams.toString()}`, {
       method: 'GET',
       headers: getAuthHeaders(),
     });
@@ -88,7 +86,7 @@ const projectService = {
   async createProject(project: CreateProjectPayload): Promise<Project> {
     console.log("Entering createProject fuinction...")
     console.log("User : ",project.creator)
-    const response = await fetch(`http://localhost:8000/v1/routes/projects`, {
+    const response = await fetch(`${BASE_API_URL}/projects`, {
       method: 'POST',
       headers: getAuthHeaders(),
       body: JSON.stringify(project),
@@ -107,7 +105,7 @@ const projectService = {
   async getProjectById(projectId: string, tenantId?: number): Promise<Project> {
     const user = tokenService.getUser();
     tenantId = user.tenantId
-    const response = await fetch(`http://localhost:8000/v1/routes/projects/${projectId}`, {
+    const response = await fetch(`${BASE_API_URL}/projects/${projectId}`, {
       method: 'GET',
       headers: getAuthHeaders(),
     });
@@ -160,7 +158,7 @@ const projectService = {
     console.log("Final update payload:", finalPayload);
     
     // Send only the fields that have values
-    const response = await fetch(`http://localhost:8000/v1/routes/projects/${projectId}`, {
+    const response = await fetch(`${BASE_API_URL}/projects/${projectId}`, {
       method: 'PUT',
       headers: getAuthHeaders(),
       body: JSON.stringify(finalPayload),
@@ -190,7 +188,7 @@ const projectService = {
   
   // Delete a project
   async deleteProject(projectId: string): Promise<void> {
-    const response = await fetch(`http://localhost:8000/v1/routes/projects/${projectId}`, {
+    const response = await fetch(`${BASE_API_URL}/projects/${projectId}`, {
       method: 'DELETE',
       headers: getAuthHeaders(),
     });
