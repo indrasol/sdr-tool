@@ -34,6 +34,8 @@ interface AuthProviderProps {
   children: ReactNode;
 }
 
+const BASE_API_URL = import.meta.env.VITE_BASE_API_URL
+
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
@@ -61,7 +63,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           tokenService.setToken(token);
 
           // Verify with backend
-          const response = await fetch("http://localhost:8000/v1/routes/authenticate", {
+          const response = await fetch(`${BASE_API_URL}/authenticate`, {
             headers: { "Authorization": `Bearer ${token}` },
           });
 
@@ -100,7 +102,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         const token = session.access_token;
         tokenService.setToken(token);
         try {
-          const response = await fetch("http://localhost:8000/v1/routes/authenticate", {
+          const response = await fetch(`${BASE_API_URL}/authenticate`, {
             headers: { "Authorization": `Bearer ${token}` },
           });
           if (response.ok) {
@@ -139,7 +141,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         const supabaseKey = import.meta.env.VITE_SUPABASE_API_KEY
         console.log("Supabase key:", supabaseKey);
         // If no '@' is present, assume it's a username and fetch the email from the backend
-        const response = await fetch('http://localhost:8000/v1/routes/get-email', {
+        const response = await fetch(`${BASE_API_URL}/get-email`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'X-API-Key': supabaseKey },
           body: JSON.stringify({ username: identifier }),
@@ -158,7 +160,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       const token = data.session.access_token;
   
       // Step 2: Call backend /login endpoint
-      const response = await fetch('http://localhost:8000/v1/routes/login', {
+      const response = await fetch(`${BASE_API_URL}/login`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -207,7 +209,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   async function retryCleanup(userId: string, retries: number = 3): Promise<void> {
     for (let attempt = 1; attempt <= retries; attempt++) {
       try {
-        const response = await fetch("http://localhost:8000/v1/routes/cleanup-auth-user", {
+        const response = await fetch(`${BASE_API_URL}/cleanup-auth-user`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -284,7 +286,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       console.log("Token:", token);
       
       // Step 4: Register with backend
-      const response = await fetch('http://localhost:8000/v1/routes/register', {
+      const response = await fetch(`${BASE_API_URL}/register`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -325,7 +327,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         try {
           await retryCleanup(user_id);
           const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY
-          await fetch("http://localhost:8000/v1/routes/cleanup-auth-user", {
+          await fetch(`${BASE_API_URL}/cleanup-auth-user`, {
             method: "POST",
             headers: { "Content-Type": "application/json", "X-API-Key": supabaseKey },
             body: JSON.stringify({ user_id: user_id }),

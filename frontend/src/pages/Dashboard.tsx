@@ -21,19 +21,7 @@ import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { FolderOpen } from "lucide-react";
 
-// Mock user data
-// const user = {
-//   name: "Alex Johnson",
-//   role: "Security Analyst",
-//   stats: {
-//     projects: 17,
-//     analyses: 42,
-//     reports: 31,
-//     vulnerabilities: 86,
-//     teamSize: 8,
-//     deadline: "5d"
-//   }
-// };
+const BASE_API_URL = import.meta.env.VITE_BASE_API_URL
 
 const ProjectsNavigationCard = () => (
     <Card className="hover:shadow-md transition-all duration-300 flex flex-col">
@@ -88,7 +76,7 @@ const Dashboard = () => {
           }
   
           // Example API call to get user stats
-          const response = await fetch('http://localhost:8000/v1/routes/user/stats', {
+          const response = await fetch(`${BASE_API_URL}/user/stats`, {
             headers: {
               'Authorization': `Bearer ${token}`
             }
