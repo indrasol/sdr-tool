@@ -25,7 +25,7 @@ interface AuthResponse {
   
   // Import or define apiClient
   import apiClient from '../utils/apiclient'; // Adjust the path as necessary
-  import tokenService from '../utils/tokenService'; // Adjust the path as necessary
+  import tokenService from '../services/tokenService'; // Adjust the path as necessary
   
   // Register user
   export const register = async (userData: RegisterData): Promise<void> => {

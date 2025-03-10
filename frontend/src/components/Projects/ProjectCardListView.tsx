@@ -5,7 +5,7 @@ import ProjectCardBadges from './ProjectCardBadges';
 import ProjectCardActions from './ProjectCardActions';
 import ProjectCardMetadata from './ProjectCardMetadata';
 import { getBorderColor } from './utils/projectStyleUtils';
-import type { ProjectCardProps } from './types/projectTypes';
+import type { ProjectCardProps } from '../../types/projectTypes';
 import { motion } from 'framer-motion';
 
 const ProjectCardListView: React.FC<ProjectCardProps> = ({

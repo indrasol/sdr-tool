@@ -16,7 +16,7 @@ import {
   CommandItem,
   CommandList,
 } from "@/components/ui/command";
-import { ProjectPriority, ProjectStatus } from './../Projects/types/projectTypes';
+import { ProjectPriority, ProjectStatus } from '../../types/projectTypes';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 
@@ -68,7 +68,7 @@ const ProjectFilters: React.FC<ProjectFiltersProps> = ({
 
   return (
     <div className="flex items-center gap-2">
-      <div className="relative w-[200px] sm:w-[240px]">
+      <div className="relative w-[260px] sm:w-[320px] md:w-[400px]">
         <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
         <Input
           placeholder="Search projects..."

@@ -2,19 +2,11 @@
  * Token Service
  * Utility for handling JWT tokens and user data in local storage
  */
+import {User} from '@/interfaces/userInterface'
 
 // Storage keys
 const TOKEN_KEY = 'app_token';
 const USER_KEY = 'app_user';
-
-// Token service with TypeScript interfaces
-export interface User {
-  id: string;
-  username: string;
-  email: string;
-  tenant_id: number;
-  // Add other user properties as needed
-}
 
 /**
  * Get the authentication token from localStorage

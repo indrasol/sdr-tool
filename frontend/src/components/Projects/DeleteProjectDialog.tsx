@@ -1,4 +1,3 @@
-
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -8,13 +7,14 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Trash2 } from "lucide-react";
+import { Trash2, Loader2 } from "lucide-react";
 
 interface DeleteProjectDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   projectName: string;
   onConfirmDelete: () => void;
+  isSubmitting?: boolean;
 }
 
 const DeleteProjectDialog = ({
@@ -22,9 +22,16 @@ const DeleteProjectDialog = ({
   onOpenChange,
   projectName,
   onConfirmDelete,
+  isSubmitting = false
 }: DeleteProjectDialogProps) => {
+  const handleDialogOpenChange = (open: boolean) => {
+    if (!isSubmitting) {
+      onOpenChange(open);
+    }
+  };
+
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={handleDialogOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle className="text-destructive flex items-center gap-2">
@@ -39,13 +46,24 @@ const DeleteProjectDialog = ({
           <Button
             variant="destructive"
             onClick={onConfirmDelete}
+            disabled={isSubmitting}
           >
-            <Trash2 className="h-4 w-4 mr-2" />
-            Delete Project
+            {isSubmitting ? (
+              <>
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                Deleting...
+              </>
+            ) : (
+              <>
+                <Trash2 className="h-4 w-4 mr-2" />
+                Delete Project
+              </>
+            )}
           </Button>
           <Button
             variant="outline"
             onClick={() => onOpenChange(false)}
+            disabled={isSubmitting}
           >
             Cancel
           </Button>
@@ -56,3 +74,60 @@ const DeleteProjectDialog = ({
 };
 
 export default DeleteProjectDialog;
+// import { Button } from "@/components/ui/button";
+// import {
+//   Dialog,
+//   DialogContent,
+//   DialogDescription,
+//   DialogFooter,
+//   DialogHeader,
+//   DialogTitle,
+// } from "@/components/ui/dialog";
+// import { Trash2 } from "lucide-react";
+
+// interface DeleteProjectDialogProps {
+//   open: boolean;
+//   onOpenChange: (open: boolean) => void;
+//   projectName: string;
+//   onConfirmDelete: () => void;
+// }
+
+// const DeleteProjectDialog = ({
+//   open,
+//   onOpenChange,
+//   projectName,
+//   onConfirmDelete,
+// }: DeleteProjectDialogProps) => {
+//   return (
+//     <Dialog open={open} onOpenChange={onOpenChange}>
+//       <DialogContent className="sm:max-w-md">
+//         <DialogHeader>
+//           <DialogTitle className="text-destructive flex items-center gap-2">
+//             <Trash2 className="h-5 w-5" />
+//             Delete Project
+//           </DialogTitle>
+//           <DialogDescription>
+//             Are you sure you want to delete project <span className="font-semibold">"{projectName}"</span>? This action cannot be undone.
+//           </DialogDescription>
+//         </DialogHeader>
+//         <DialogFooter className="flex gap-2 sm:justify-start mt-4">
+//           <Button
+//             variant="destructive"
+//             onClick={onConfirmDelete}
+//           >
+//             <Trash2 className="h-4 w-4 mr-2" />
+//             Delete Project
+//           </Button>
+//           <Button
+//             variant="outline"
+//             onClick={() => onOpenChange(false)}
+//           >
+//             Cancel
+//           </Button>
+//         </DialogFooter>
+//       </DialogContent>
+//     </Dialog>
+//   );
+// };
+
+// export default DeleteProjectDialog;

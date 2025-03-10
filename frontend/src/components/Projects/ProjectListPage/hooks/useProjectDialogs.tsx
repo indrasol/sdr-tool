@@ -1,6 +1,6 @@
 
 import { useState } from 'react';
-import type { Project } from '@/hooks/useProjects';
+import type { Project } from '@/interfaces/projectInterfaces';
 
 /**
  * Hook for managing project dialog states

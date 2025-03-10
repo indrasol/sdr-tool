@@ -3,9 +3,9 @@ import React from 'react';
 import { Badge } from "@/components/ui/badge";
 import { Cpu, FileUp, Puzzle } from "lucide-react";
 import { cn } from "@/lib/utils";
-import type { ProjectStatus, ProjectPriority } from './types/projectTypes';
-import { getStatusColor, getPriorityColor } from './utils/projectStyleUtils';
-import type { ProjectTemplateType } from './ProjectTemplateSelector';
+import type { ProjectStatus, ProjectPriority } from '../../types/projectTypes';
+import { getStatusColor, getPriorityColor, normalizePriority, normalizeStatus } from './utils/projectStyleUtils';
+import type { ProjectTemplateType } from '@/types/projectTypes';
 
 interface ProjectCardBadgesProps {
   status: ProjectStatus;
@@ -33,15 +33,19 @@ const ProjectCardBadges: React.FC<ProjectCardBadgesProps> = ({
   priority,
   domain,
   templateType,
-  showPriorityText = true
+  showPriorityText = false
 }) => {
+
+  // Normalize the status and priority for display
+  const displayStatus = normalizeStatus(status);
+  const displayPriority = normalizePriority(priority);
   return (
     <div className="flex flex-wrap gap-1 mb-2">
       <Badge variant="outline" className={cn("font-normal", getStatusColor(status))}>
-        {status}
+        {displayStatus}
       </Badge>
       <Badge variant="outline" className={cn("font-normal", getPriorityColor(priority))}>
-        {priority}{showPriorityText ? " Priority" : ""}
+        {displayPriority}{showPriorityText ? " Priority" : ""}
       </Badge>
       {domain && (
         <Badge variant="outline" className="bg-securetrack-purple/10 text-securetrack-purple">

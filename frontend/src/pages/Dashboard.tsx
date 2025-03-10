@@ -12,7 +12,7 @@ import ClosedProjectsCard from "@/components/dashboard/ClosedProjectsCard";
 import CustomizeCard from "@/components/dashboard/CustomizeCard";
 import GeneratedReportsCard from "@/components/dashboard/GeneratedReportsCard";
 import TeamMembersCard from "@/components/dashboard/TeamMembersCard";
-import tokenService from "@/utils/tokenService";
+import tokenService from "@/services/tokenService";
 import { useState, useEffect, useContext} from 'react';
 import { useNavigate } from "react-router-dom";
 import AuthContext from "@/components/Auth/AuthContext";

@@ -9,12 +9,11 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Project } from '@/hooks/useProjects';
+import { Project } from '@/interfaces/projectInterfaces';
 import { motion } from 'framer-motion';
 
 interface ProjectsListHeaderProps {
   onCreateProject: () => void;
-  onExportProjects: () => void;
   onViewTypeChange: (viewType: 'grid' | 'list') => void;
   onStatusFilterChange: (status: string) => void;
   totalProjects: number;
@@ -26,7 +25,6 @@ interface ProjectsListHeaderProps {
 
 const ProjectsListHeader = ({ 
   onCreateProject, 
-  onExportProjects, 
   onViewTypeChange,
   onStatusFilterChange,
   totalProjects,
@@ -54,16 +52,7 @@ const ProjectsListHeader = ({
               </div>
             </div>
             
-            <div className="flex gap-3 self-end">
-              <Button 
-                onClick={onExportProjects} 
-                variant="outline" 
-                className="transition-all duration-300 hover:border-securetrack-purple hover:text-securetrack-purple"
-              >
-                <Download className="mr-2 h-4 w-4" />
-                Export
-              </Button>
-              
+            <div className="flex gap-3 self-end">             
               <div className="flex rounded-md border border-input overflow-hidden">
                 <Button 
                   variant={currentViewType === 'grid' ? "default" : "ghost"}
