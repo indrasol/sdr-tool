@@ -48,7 +48,7 @@ RUN pip install --no-cache-dir openai==1.13.3 anthropic==0.8.1
 RUN pip install --no-cache-dir scikit-learn==1.2.2 faiss-cpu==1.7.4
 RUN pip install --no-cache-dir torch==2.0.1
 RUN pip install --no-cache-dir transformers==4.36.2 accelerate==0.26.1
-RUN pip install --no-cache-dir langchain==0.1.11 langchain-openai==0.0.5 langchain-community==0.0.19
+RUN pip install -v --no-cache-dir langchain==0.1.11 langchain-openai==0.0.5 langchain-community==0.0.19
 
 # Create a non-root user and switch to it (commented out as in original)
 # RUN adduser --disabled-password --gecos '' appuser
