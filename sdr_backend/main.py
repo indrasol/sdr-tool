@@ -21,7 +21,7 @@ from contextlib import asynccontextmanager
 from utils.logger import log_info
 from core.intent_classification.intent_classifier import IntentClassifier
 from core.cache.session_manager import SessionManager
-from config.settings import POSTGRES_DATABASE_URL, SUPABASE_URL
+from config.settings import SUPABASE_URL
 from alembic import command
 from alembic.config import Config
 
@@ -74,6 +74,7 @@ origins = [
     "http://127.0.0.1:3000",
     "http://localhost:5173",  # Vite default port
     "http://127.0.0.1:5173",
+    "https://securetrack.netlify.app",
 ]
 
 # Add CORS middleware
