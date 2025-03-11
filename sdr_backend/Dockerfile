@@ -3,6 +3,7 @@ FROM python:3.8.10-slim
 WORKDIR /app
 
 # Install system dependencies needed for building Python packages
+# Removed rustc and cargo, added curl for rustup installation
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
     gcc \
@@ -15,15 +16,20 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libffi-dev \
     libjpeg-dev \
     libopenblas-dev \
-    rustc \
-    cargo \
     tesseract-ocr \
     libtesseract-dev \
     poppler-utils \
+    curl \
     && rm -rf /var/lib/apt/lists/*
 
-# Upgrade pip
-RUN pip install --no-cache-dir --upgrade 'pip>=25.0.1' setuptools wheel
+# Install rustup to get the latest Rust and Cargo
+RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+
+# Add Rust to the PATH
+ENV PATH="/root/.cargo/bin:${PATH}"
+
+# Upgrade pip to the latest available version
+RUN pip install --no-cache-dir --upgrade pip setuptools wheel
 
 # Copy requirements file
 COPY requirements.txt .
@@ -44,11 +50,11 @@ RUN pip install --no-cache-dir torch==2.0.1
 RUN pip install --no-cache-dir transformers==4.36.2 accelerate==0.26.1
 RUN pip install --no-cache-dir langchain==0.1.11 langchain-openai==0.0.5 langchain-community==0.0.19
 
-# Create a non-root user and switch to it
+# Create a non-root user and switch to it (commented out as in original)
 # RUN adduser --disabled-password --gecos '' appuser
 # USER appuser
 
-# Copy application code (as root, then change permissions)
+# Copy application code (as root, then change permissions) (commented out as in original)
 # COPY --chown=appuser:appuser . .
 COPY . .
 
