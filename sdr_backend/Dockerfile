@@ -59,4 +59,4 @@ RUN pip install --no-cache-dir transformers==4.36.2 accelerate==0.26.1
 COPY . .
 
 # Run the application
-CMD uvicorn app.main:app --host 0.0.0.0 --port $PORT
+CMD uvicorn main:app --host 0.0.0.0 --port $PORT
