@@ -38,7 +38,7 @@ async def lifespan(app: FastAPI):
 
     log_info("Loading pre-trained intent classifier")
     global classifier
-    classifier = IntentClassifier(model_path=ML_MODELS_DIR)  # Load the model here
+    # classifier = IntentClassifier(model_path=ML_MODELS_DIR)  # Load the model here
 
     # Apply database migrations with Alembic
     log_info("Loading Alembic configuration...")
