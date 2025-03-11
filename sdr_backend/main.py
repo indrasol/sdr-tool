@@ -62,7 +62,7 @@ app = FastAPI(
 )
 
 
-app.mount("/reports", StaticFiles(directory=REPORTS_DIR), name="reports")
+# app.mount("/reports", StaticFiles(directory=REPORTS_DIR), name="reports")
 # Mount the "outputs" directory as a static files directory
 # app.mount("/outputs", StaticFiles(directory="outputs"), name="outputs")
 
