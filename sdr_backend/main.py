@@ -21,7 +21,7 @@ from contextlib import asynccontextmanager
 from utils.logger import log_info
 from core.intent_classification.intent_classifier import IntentClassifier
 from core.cache.session_manager import SessionManager
-from config.settings import POSTGRES_DATABASE_URL, SUPABASE_URL
+from config.settings import SUPABASE_URL
 from alembic import command
 from alembic.config import Config
 
@@ -38,7 +38,7 @@ async def lifespan(app: FastAPI):
 
     log_info("Loading pre-trained intent classifier")
     global classifier
-    classifier = IntentClassifier(model_path=ML_MODELS_DIR)  # Load the model here
+    # classifier = IntentClassifier(model_path=ML_MODELS_DIR)  # Load the model here
 
     # Apply database migrations with Alembic
     log_info("Loading Alembic configuration...")
@@ -62,7 +62,7 @@ app = FastAPI(
 )
 
 
-app.mount("/reports", StaticFiles(directory=REPORTS_DIR), name="reports")
+# app.mount("/reports", StaticFiles(directory=REPORTS_DIR), name="reports")
 # Mount the "outputs" directory as a static files directory
 # app.mount("/outputs", StaticFiles(directory="outputs"), name="outputs")
 
@@ -74,6 +74,7 @@ origins = [
     "http://127.0.0.1:3000",
     "http://localhost:5173",  # Vite default port
     "http://127.0.0.1:5173",
+    "https://securetrack.netlify.app",
 ]
 
 # Add CORS middleware

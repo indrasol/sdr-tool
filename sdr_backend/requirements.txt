@@ -1,38 +1,45 @@
-fastapi
-uvicorn
-pytesseract
-Pillow
-pdfplumber
-langchain
-openai
-langchain-community
-transformers
-python-dotenv
-torch
-pdf2image
-lxml
-python-docx
-python-pptx
-langchain-openai
-faiss-cpu
-reportlab
-python-multipart
-httpx>=0.24.0
-tenacity>=8.2.2
-pyyaml
-anthropic
-httpx
-pydantic-settings
-redis
-sqlalchemy
-psycopg2-binary
-pandas
-accelerate>=0.26.0
-transformers[torch]
-aiosqlite
-asyncpg
-aioredis
-scikit-learn
-PyJWT
-databases
-python-josegreenlet
+# Web framework and server
+fastapi==0.109.2
+uvicorn==0.27.1
+python-multipart==0.0.9
+httpx==0.24.1
+tenacity==8.2.3
+
+# Document processing
+pytesseract==0.3.10
+Pillow==9.5.0  # Last version supporting Python 3.8
+pdfplumber==0.10.3
+pdf2image==1.17.0
+lxml==4.9.3
+python-docx==1.0.1
+python-pptx==0.6.22
+reportlab==4.0.8
+
+# AI/ML
+langchain>=0.1.0,<0.2.0
+langchain-openai>=0.0.5
+langchain-community>=0.0.19
+openai==1.13.3
+anthropic==0.8.1
+transformers==4.36.2  # Last version supporting Python 3.8 fully
+torch==2.0.1  # Last version supporting Python 3.8
+faiss-cpu==1.7.4
+scikit-learn==1.2.2  # Last version supporting Python 3.8
+accelerate==0.26.1
+
+# Database
+sqlalchemy==2.0.27
+psycopg2-binary==2.9.9
+pandas==2.0.3  # Last version supporting Python 3.8
+aiosqlite==0.19.0
+asyncpg==0.29.0
+redis==5.0.1
+aioredis==2.0.1
+databases==0.8.0
+alembic==1.13.1
+
+# Utils
+python-dotenv==1.0.1
+pydantic-settings==2.1.0
+pyyaml==6.0.1
+PyJWT==2.8.0

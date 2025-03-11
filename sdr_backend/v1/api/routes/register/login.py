@@ -55,6 +55,7 @@ async def login(identifier: dict,current_user: dict = Depends(verify_token)):
             user_operation,
             "Failed to fetch user data during login"
         )
+        log_info(f"User response: {user_response}")
 
         def user_tenant_operation():
             return supabase_client.from_("user_tenant_association").select("tenant_id").eq("user_id", user_response.data[0].get("id")).execute()

@@ -1,20 +1,11 @@
 from supabase import create_client, Client
 from config.settings import SUPABASE_PROJECT_URL, SUPABASE_API_KEY
-from sqlalchemy import create_engine
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker
 from fastapi import HTTPException
 from utils.logger import log_info
 from functools import lru_cache
 import asyncio
 from concurrent.futures import ThreadPoolExecutor
-# supabase: Client = create_client(SUPABASE_PROJECT_URL, SUPABASE_API_KEY)
 
-
-# engine = create_engine(SUPABASE_URL)
-# sessionlocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
-
-# Base = declarative_base()
 
 # Global thread pool for running Supabase operations asynchronously
 thread_pool = ThreadPoolExecutor()
