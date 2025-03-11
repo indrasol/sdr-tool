@@ -19,6 +19,38 @@ router = APIRouter()
 
 supabase = get_supabase_client()
 
+# Helper function to get or create tenant
+async def get_or_create_tenant(tenant_name):
+    def check_tenant():
+        return supabase.from_("tenants") \
+            .select("id") \
+            .eq("name", tenant_name) \
+            .execute()
+        
+    tenant_response = await safe_supabase_operation(
+        check_tenant,
+        "Failed to check if tenant exists"
+    )
+    
+    if tenant_response.data:
+        return tenant_response.data[0]["id"]
+    
+    # Create new tenant
+    def create_tenant():
+        return supabase.from_("tenants") \
+            .insert({"name": tenant_name}) \
+            .execute()
+        
+    new_tenant_response = await safe_supabase_operation(
+        create_tenant,
+        "Failed to create tenant"
+    )
+    
+    tenant_id = new_tenant_response.data[0]["id"]
+    log_info(f"Created new tenant: {tenant_name} with ID: {tenant_id}")
+    
+    return tenant_id
+
 @router.post("/register")
 async def register(
     request_data: RegisterRequest,
@@ -36,64 +68,30 @@ async def register(
     """
     try :
         
-        # Check if user already exists
-        def check_user():
+       # Check if user already exists - checking both user and email in one query
+        def check_user_exists():
             return supabase.from_("users") \
-                .select("*") \
-                .eq("id", request_data.user_id) \
+                .select("id, email") \
+                .or_(f"id.eq.{request_data.user_id},email.eq.{request_data.email}") \
                 .execute()
             
         user_response = await safe_supabase_operation(
-            check_user,
+            check_user_exists,
             "Failed to check if user exists"
         )
         
         if user_response.data:
-            raise HTTPException(status_code=400, detail="User already exists")
+            # Determine which condition was matched
+            for user in user_response.data:
+                if user["id"] == request_data.user_id:
+                    raise HTTPException(status_code=400, detail="User already exists")
+                if user["email"] == request_data.email:
+                    raise HTTPException(status_code=400, detail="User email already exists")
         
-        # Check if user email already exists
-        def check_user_email():
-            return supabase.from_("users") \
-                .select("*") \
-                .eq("email", request_data.email) \
-                .execute()
-        
-        user_email_response = await safe_supabase_operation(
-            check_user_email,
-            "Failed to check if user email exists"
-        )
-
-        if user_email_response.data:
-            raise HTTPException(status_code=400, detail="User email already exists")
-
         # Check or create tenant (using organization_name)
-        def check_tenant():
-            return supabase.from_("tenants") \
-                .select("*") \
-                .eq("name", request_data.tenant_name) \
-                .execute()
-            
-        tenant_response = await safe_supabase_operation(
-            check_tenant,
-            "Failed to check if tenant exists"
-        )
-        
-        tenant_id = None
-        if tenant_response.data:
-            tenant_id = tenant_response.data[0]["id"]
-        else:
-            # Create new tenant
-            def create_tenant():
-                return supabase.from_("tenants") \
-                    .insert({"name": request_data.tenant_name}) \
-                    .execute()
-                
-            new_tenant_response = await safe_supabase_operation(
-                create_tenant,
-                "Failed to create tenant"
-            )
-            tenant_id = new_tenant_response.data[0]["id"]
-            log_info(f"Created new tenant: {request_data.tenant_name} with ID: {tenant_id}")
+       # Check if tenant exists or create a new one
+        tenant_id = await get_or_create_tenant(request_data.tenant_name)
+        log_info(f"Using tenant with ID: {tenant_id}")
 
         
         # Create user with provided details
@@ -116,27 +114,52 @@ async def register(
         user_id = new_user_response.data[0]["id"]
         log_info(f"Created new user with ID: {user_id}")
 
-        # Associate user with tenant using junction table
-        def associate_user_tenant():
+        # Check if association already exists before inserting
+        def check_association():
             return supabase.from_("user_tenant_association") \
-                .insert({
-                    "user_id": user_id,
-                    "tenant_id": tenant_id
-                }) \
+                .select("*") \
+                .eq("user_id", user_id) \
+                .eq("tenant_id", tenant_id) \
                 .execute()
-            
-        await safe_supabase_operation(
-            associate_user_tenant,
-            "Failed to associate user with tenant"
+                
+        association_response = await safe_supabase_operation(
+            check_association,
+            "Failed to check user-tenant association"
         )
-        log_info(f"Associated user {user_id} with tenant {tenant_id}")
+        
+        if not association_response.data:
+            # Associate user with tenant - explicitly excluding the id column
+            def associate_user_tenant():
+                return supabase.from_("user_tenant_association") \
+                    .insert({
+                        "user_id": user_id,
+                        "tenant_id": tenant_id
+                        #Returnign Minimal for better performance
+                    }, returning="minimal") \
+                    .execute()
+                
+            await safe_supabase_operation(
+                associate_user_tenant,
+                "Failed to associate user with tenant"
+            )
+            log_info(f"Associated user {user_id} with tenant {tenant_id}")
 
         return {"message": "User and tenant registered successfully"}
     except Exception as e:
-        # Cleanup on failure
-        if 'user_id' in locals():
-            supabase.from_("users").delete().eq("id", user_id).execute()
-            supabase.auth.admin.delete_user(user_id)  # Delete from auth.users
+        # Cleanup on failure - more robust error handling
+        try:
+            if 'user_id' in locals():
+                log_info(f"Cleaning up failed registration for user {user_id}")
+                # Delete from users table
+                supabase.from_("users").delete().eq("id", user_id).execute()
+                # Delete from auth.users
+                supabase.auth.admin.delete_user(user_id)
+        except Exception as cleanup_error:
+            log_info(f"Error during cleanup: {str(cleanup_error)}")
+            
+        # Re-raise the original exception with more details
+        if isinstance(e, HTTPException):
+            raise e
         raise HTTPException(status_code=500, detail=f"Registration failed: {str(e)}")
 
 

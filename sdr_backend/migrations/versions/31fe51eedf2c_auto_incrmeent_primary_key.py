@@ -19,6 +19,8 @@ depends_on: Union[str, Sequence[str], None] = None
 
 
 def upgrade() -> None:
+    # op.execute("ALTER TABLE user_tenant_association ALTER COLUMN id DROP IDENTITY;")
+    op.execute("ALTER TABLE user_tenant_association ALTER COLUMN id DROP IDENTITY DEFAULT;")
     pass
 
 
