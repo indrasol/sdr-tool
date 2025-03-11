@@ -8,6 +8,7 @@
     "dev": "vite",
     "dev:env": "./start-dev.sh",
     "build": "vite build",
+    "build": "vite build --outDir=dist",
     "build:dev": "vite build --mode development",
     "lint": "eslint .",
     "preview": "vite preview"
