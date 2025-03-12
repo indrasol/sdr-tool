@@ -24,7 +24,8 @@ from core.cache.session_manager import SessionManager
 from config.settings import SUPABASE_URL
 from alembic import command
 from alembic.config import Config
-from v1.api.health.health_monitor import setup_health_monitoring, health_monitor
+from v1.api.health.health_monitor import health_monitor
+from v1.api.routes.health import setup_health_monitoring
 
 
 session_manager = SessionManager()
