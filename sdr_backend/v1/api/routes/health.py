@@ -13,7 +13,7 @@ from v1.api.health.health_monitor import get_api_key
 
 
 # Create router for health endpoints
-health_router = APIRouter()
+router = APIRouter()
 
 @health_router.get("/health", response_model=HealthStatus, dependencies=[Depends(get_api_key)])
 async def health_check(request: Request):
