@@ -24,7 +24,7 @@ from core.cache.session_manager import SessionManager
 from config.settings import SUPABASE_URL
 from alembic import command
 from alembic.config import Config
-
+from v1.api.health.health_monitor import setup_health_monitoring, health_monitor
 
 
 session_manager = SessionManager()
@@ -47,6 +47,12 @@ async def lifespan(app: FastAPI):
     log_info("Applying all pending migrations...")
     # command.upgrade(alembic_cfg, "head")  # Apply migrations to the latest version
     log_info("Database migrations applied successfully.")
+
+    # Initialize health monitoring after app is fully set up
+    log_info("Setting up health monitoring...")
+    # Capture initial route information after all routes are registered
+    health_monitor.capture_routes_info(app)
+    log_info("Health monitoring initialized.")
 
     yield
     await session_manager.disconnect()  # Disconnect from Redis
@@ -85,6 +91,9 @@ app.add_middleware(
     allow_methods=["*"],  # Allows all HTTP methods (GET, POST, etc.)
     allow_headers=["*"],  # Allows all headers
 )
+
+# Set up health monitoring middleware (needs to be after CORS middleware)
+setup_health_monitoring(app, session_manager)
 
 
 # Add custom exception handler for HTTP exceptions
