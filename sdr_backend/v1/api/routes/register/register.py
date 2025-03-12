@@ -71,8 +71,8 @@ async def register(
        # Check if user already exists - checking both user and email in one query
         def check_user_exists():
             return supabase.from_("users") \
-                .select("id, email") \
-                .or_(f"id.eq.{request_data.user_id},email.eq.{request_data.email}") \
+                .select("id, username, email") \
+                .eq("id", request_data.user_id) \
                 .execute()
             
         user_response = await safe_supabase_operation(
@@ -85,8 +85,10 @@ async def register(
             for user in user_response.data:
                 if user["id"] == request_data.user_id:
                     raise HTTPException(status_code=400, detail="User already exists")
+                if user["username"] == request_data.username:
+                    raise HTTPException(status_code=400, detail="Username already taken. Please choose a different one")
                 if user["email"] == request_data.email:
-                    raise HTTPException(status_code=400, detail="User email already exists")
+                    raise HTTPException(status_code=400, detail="Email already registered! Register with a different email")
         
         # Check or create tenant (using organization_name)
        # Check if tenant exists or create a new one
