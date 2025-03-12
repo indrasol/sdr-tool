@@ -19,7 +19,7 @@
     Content-Type = "text/javascript"
     
 [build]
-  command = "npm run build"
+  command = "npm run build:dist"
   publish = "dist"
 
 [[redirects]]

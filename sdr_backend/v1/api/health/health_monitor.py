@@ -7,12 +7,13 @@ import datetime
 import uuid
 from pydantic import BaseModel
 from typing import Dict, List, Optional, Any
-from fastapi import FastAPI, Request, Depends, HTTPException, status, APIRouter
+from fastapi import FastAPI, Header, Request, Depends, HTTPException, Security, status, APIRouter
 from fastapi.security import APIKeyHeader
 from fastapi.responses import JSONResponse
 from models.health_monitoring_models import RequestLog, ErrorLog, HealthStatus
 from config.settings import HEALTH_API_KEY
-
+import secrets
+from utils.logger import log_info
 # Configure logging
 logging.basicConfig(
     level=logging.INFO,
@@ -211,11 +212,31 @@ health_monitor = HealthMonitor()
 API_KEY_NAME = "X-API-Key"
 api_key_header = APIKeyHeader(name=API_KEY_NAME, auto_error=False)
 
-async def get_api_key(api_key_header: str = Depends(api_key_header)):
-    if api_key_header == HEALTH_API_KEY:
-        return api_key_header
-    raise HTTPException(
-        status_code=status.HTTP_401_UNAUTHORIZED,
-        detail="Invalid API Key",
-    )
+async def get_api_key(api_key_header: str = Security(api_key_header)):
+    # Check if environment variable is set
+    log_info(f"HEALTH_API_KEY: {HEALTH_API_KEY}")
+    log_info(f"api_key_header: {api_key_header}")
+    
+    if not HEALTH_API_KEY:
+        print("Error: HEALTH_API_KEY environment variable not set")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="API Key configuration error",
+        )
+    
+    # Check if header is provided
+    if not api_key_header:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="API Key header missing",
+        )
+    
+    # Use constant-time comparison for security
+    if not secrets.compare_digest(api_key_header, HEALTH_API_KEY):
+        print("API key validation failed")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid API Key",
+        )
+    return api_key_header
 

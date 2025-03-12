@@ -1,5 +1,5 @@
 
-from fastapi import FastAPI, Request, Depends, HTTPException, status, APIRouter
+from fastapi import FastAPI, Request, Depends, HTTPException, status, APIRouter, Response
 from v1.api.health.health_monitor import health_monitor
 from models.health_monitoring_models import RequestLog, ErrorLog, HealthStatus  
 from config.settings import HEALTH_API_KEY
@@ -15,10 +15,14 @@ from v1.api.health.health_monitor import get_api_key, health_monitor
 # Create router for health endpoints
 router = APIRouter()
 
-@router.get("/health", response_model=HealthStatus, dependencies=[Depends(get_api_key)])
-async def health_check(request: Request):
+@router.get("/health", response_model=HealthStatus)
+async def health_check(request: Request, api_key: str = Depends(get_api_key), response: Response = None):
     # Check if there's a session_manager in the app state
     session_manager = getattr(request.app.state, "session_manager", None)
+
+    # Set the "X-API-Key" header in the response
+    response.headers["X-API-Key"] = api_key
+    
     return health_monitor.get_health_status(session_manager)
 
 @router.get("/health/public")
