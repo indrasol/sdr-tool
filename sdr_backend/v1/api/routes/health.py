@@ -15,13 +15,13 @@ from v1.api.health.health_monitor import get_api_key
 # Create router for health endpoints
 router = APIRouter()
 
-@health_router.get("/health", response_model=HealthStatus, dependencies=[Depends(get_api_key)])
+@router.get("/health", response_model=HealthStatus, dependencies=[Depends(get_api_key)])
 async def health_check(request: Request):
     # Check if there's a session_manager in the app state
     session_manager = getattr(request.app.state, "session_manager", None)
     return health_monitor.get_health_status(session_manager)
 
-@health_router.get("/health/public")
+@router.get("/health/public")
 async def public_health():
     health = health_monitor.get_health_status()
     # Return limited information for public view
@@ -32,15 +32,15 @@ async def public_health():
         "environment": health.environment
     }
 
-@health_router.get("/health/errors", dependencies=[Depends(get_api_key)])
+@router.get("/health/errors", dependencies=[Depends(get_api_key)])
 async def get_errors():
     return {"errors": health_monitor.error_logs}
 
-@health_router.get("/health/requests", dependencies=[Depends(get_api_key)])
+@router.get("/health/requests", dependencies=[Depends(get_api_key)])
 async def get_requests():
     return {"requests": health_monitor.request_logs}
 
-@health_router.post("/health/clear-logs", dependencies=[Depends(get_api_key)])
+@router.post("/health/clear-logs", dependencies=[Depends(get_api_key)])
 async def clear_logs():
     health_monitor.request_logs = []
     health_monitor.error_logs = []
