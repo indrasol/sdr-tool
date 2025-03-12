@@ -35,6 +35,7 @@ interface AuthProviderProps {
 }
 
 const BASE_API_URL = import.meta.env.VITE_BASE_API_URL
+// const BASE_API_URL = import.meta.env.VITE_DEV_BASE_API_URL
 
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
@@ -130,18 +131,34 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     return () => authListener.subscription.unsubscribe();
   }, [navigate]);
 
+  async function isValidJWT(token: string): Promise<boolean> {
+  // async function isValidJWT(token : any) {
+    // Basic check - a JWT should have 2 dots (3 parts)
+    const parts = token.split('.');
+    if (parts.length !== 3) {
+      console.error("Invalid JWT format - doesn't have 3 parts");
+      return false;
+    }
+  }
+
   // Login function using Supabase
   const login = async (identifier: string, password: string): Promise<void> => {
     setIsLoading(true);
     try {
 
+      console.log("All Vite env variables:", Object.keys(import.meta.env).filter(key => key.startsWith('VITE_')));
+
       // Step 1: Determine if the identifier is an email or username
       let emailToUse = identifier;
       if (!identifier.includes('@')) {
-        const supabaseKey = import.meta.env.VITE_SUPABASE_API_KEY
+        const supabaseKey = import.meta.env.VITE_SUPABASE_SERVICE_KEY
+        // const supabaseKey =eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inlpbmx0cnlhbWxhaWRtZXhwdm54Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc0MTM5ODE2OCwiZXhwIjoyMDU2OTc0MTY4fQ.fij-xrU-WolOzB3L-QhJZP_x11XmBhipfc2enONyuYI
         console.log("Supabase key:", supabaseKey);
+
+        console.log(import.meta.env.VITE_BASE_API_URL)
         // If no '@' is present, assume it's a username and fetch the email from the backend
         const response = await fetch(`${BASE_API_URL}/get-email`, {
+        // const response = await fetch(`http://localhost:8000/v1/routes/get-email`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'X-API-Key': supabaseKey },
           body: JSON.stringify({ username: identifier }),
