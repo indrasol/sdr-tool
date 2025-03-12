@@ -31,7 +31,7 @@ class IntentClassifier:
         if not self._model_files_exist(model_path):
             log_info("Model files not found, training model...")
             os.makedirs(model_path, exist_ok=True)
-            train_intent_classifier(ml_models_dir=model_path)
+            # train_intent_classifier(ml_models_dir=model_path)
 
         #   Trigger lazy loading of tokenizer and model during initialization
         _ = self.tokenizer  # Loads the tokenizer if not already loaded
