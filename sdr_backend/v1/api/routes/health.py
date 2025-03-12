@@ -6,7 +6,7 @@ from config.settings import HEALTH_API_KEY
 import uuid
 import time
 import datetime
-from v1.api.health.health_monitor import get_api_key
+from v1.api.health.health_monitor import get_api_key, health_monitor
 
 
 
