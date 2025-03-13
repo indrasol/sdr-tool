@@ -8,7 +8,7 @@
     "dev": "vite",
     "dev:env": "./start-dev.sh",
     "build": "vite build",
-    "build:dist": "echo \"ENV_CHECK: VITE_API_URL=${VITE_API_URL}\" && vite build --outDir=dist",
+    "build:dist": "echo \"ENV_CHECK: VITE_API_URL=${VITE_BASE_API_URL} VITE_SUPABASE_SERVICE_KEY=${VITE_SUPABASE_SERVICE_KEY} \" && vite build --outDir=dist",
     "build:dev": "vite build --mode development",
     "lint": "eslint .",
     "preview": "vite preview"
