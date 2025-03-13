@@ -1,5 +1,5 @@
 from typing import Dict, Any, List
-from models.pydantic_models import ArchitectureResponse, ExpertResponse
+from models.new_pydantic_models import ArchitectureResponse, ExpertResponse
 from utils.logger import log_info
 
 class ValidationHandler:

@@ -49,7 +49,7 @@ async def design_endpoint(
         # Step 1: Preprocess the request with intent classification
         processed_request = await preprocess_request(
             request=request,
-            user_id=current_user["supabase_user_id"]
+            user_id=current_user
         )
         # Expected processed_request format:
         # {

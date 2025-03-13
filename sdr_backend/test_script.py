@@ -1,9 +1,12 @@
-import jwt
+# Using Python to generate a secure random key
+import secrets
+import requests
 
-token = "eyJhbGciOiJIUzI1NiIsImtpZCI6IkFuNm9vNW8wcG0yWGR2SFUiLCJ0eXAiOiJKV1QifQ..."
-secret = "CA1KEENRvEXLTh9Ug/AFUS4p5by6hW1cRfTO4oU6ctOxS4PGgjzMLGQYN9CTehE1c6S5+nEpDxQcaCaGSvTwWw=="
-try:
-    payload = jwt.decode(token, secret, algorithms=["HS256"])
-    print("Payload:", payload)
-except Exception as e:
-    print("Error:", e)
+
+api_key = secrets.token_urlsafe(32)
+print(f"Generated API Key: {api_key}")
+
+url = "http://localhost:8000/v1/routes/health"
+headers = {"X-API-Key": str(api_key)}
+response = requests.get(url, headers=headers)
+print(response.json())
