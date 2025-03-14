@@ -283,7 +283,8 @@ const HomePage = () => {
       {/* Sign Up Dialog */}
       <Register 
         isOpen={isRegisterDialogOpen}
-        onOpenChange={setIsRegisterDialogOpen}
+        onOpenChange={(open) => setIsRegisterDialogOpen(open)}
+        // onOpenChange={setIsRegisterDialogOpen}
         onSwitchToLogin={switchToLogin}
       />
     </div>
