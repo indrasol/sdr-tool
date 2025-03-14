@@ -6,11 +6,8 @@ pnpm-debug.log*
 lerna-debug.log*
 
 # Dependencies
-node_modules/
 frontend/node_modules/
 
-# Vite dependencies (ignore all deps)
-frontend/node_modules/.vite/deps/*
 
 # Build output
 dist/
