@@ -46,7 +46,7 @@ RUN pip install --no-cache-dir redis==5.0.1 aioredis==2.0.1 databases==0.8.0 ale
 RUN pip install --no-cache-dir python-dotenv==1.0.1 pydantic-settings==2.1.0 pyyaml==6.0.1 PyJWT==2.8.0 pydantic>=2.3.0
 RUN pip install --no-cache-dir openai==1.13.3 anthropic==0.49.0
 RUN pip install --no-cache-dir scikit-learn==1.2.2 faiss-cpu==1.8.0
-RUN pip install --no-cache-dir torch==2.0.1
+RUN pip install --no-cache-dir torch==2.0.1 httpx>=0.20.0
 # RUN pip install --no-cache-dir transformers==4.36.2 accelerate==0.26.1 sentence-transformers==3.2.1
 RUN pip install --no-cache-dir accelerate==1.0.1 sentence-transformers==3.2.1
 RUN pip install --no-cache-dir supabase>=1.0.0 python-jose==3.3.0 postgrest==0.10.6
