@@ -10,10 +10,10 @@ from config.settings import REDIS_DB, REDIS_HOST, REDIS_PASSWORD, REDIS_PORT, SE
 
 
 class SessionManager:
-    def __init__(self, redis_host: str = REDIS_HOST, redis_port: int = REDIS_PORT, redis_db: int = REDIS_DB):
+    def __init__(self, redis_host: str = REDIS_HOST, redis_port: int = REDIS_PORT, redis_db: int = REDIS_DB, redis_password = REDIS_PASSWORD):
         """Initialize the session manager with Redis connection settings."""
         log_info(f"Redis host : {REDIS_HOST}")
-        self.redis_url = f"redis://{redis_host}:{redis_port}/{redis_db}"
+        self.redis_url = f"redis://:{redis_password}@{redis_host}:{redis_port}"
         self.redis_pool = None  # Initialized in connect()
         log_info(f"Redis url : {redis_host}")
         log_info(f"Redis url : {redis_port}")
