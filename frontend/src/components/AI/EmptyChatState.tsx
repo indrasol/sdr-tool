@@ -1,21 +1,24 @@
 
-import React from 'react';
+import React, { useMemo } from 'react';
 import { Bot } from 'lucide-react';
 import { motion } from 'framer-motion';
-import { useTypingEffect } from '@/hooks/useTypingEffect';
+// import { useTypingEffect } from '@/hooks/useTypingEffect';
+import { useSimpleTypingEffect } from '@/hooks/useSimpleTypingEffect';
 import WelcomeCard from './elements/WelcomeCard';
 
 const EmptyChatState: React.FC = () => {
-  // Updated shorter message as requested
-  const welcomeMessage = "Welcome to Guardian AI. I can help design your secure architecture, address compliance needs etc.,";
+  // Memoize the welcome message to ensure it's stable between renders
+  const welcomeMessage = useMemo(() => 
+    "Welcome to Guardian AI. I can help design your secure architecture, address compliance needs etc.,",
+    []
+  );
 
-  // Configure typing effect to run only once
-  const { displayText, isComplete } = useTypingEffect({
-    texts: [welcomeMessage],
+  // Configure typing effect - using memoized array and appropriate settings
+  const { displayText, isComplete } = useSimpleTypingEffect({
+    text: welcomeMessage,
     typingSpeed: 40,
-    pauseAtEnd: 0,
-    pauseAtStart: 500,
-    blinkCursor: true
+    startDelay: 500,
+    showCursor: true
   });
 
   return (

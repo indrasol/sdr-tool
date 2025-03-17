@@ -23,9 +23,6 @@ from v1.api.routes.model_with_ai.dummy_design import router as dummy_design_rout
 # Projects
 from v1.api.routes.projects.projects import router as project_router
 
-# Intent Classification
-from v1.api.routes.predict.predict import router as predict_router
-from v1.api.routes.predict.batch_predict import router as batch_predict_router
 
 # Redis Cache
 from v1.api.routes.redis_cache_route import router as redis_cache_router
@@ -59,10 +56,6 @@ router.include_router(dummy_design_router, tags=["model_with_ai - dummy_design_r
 
 # Projects
 router.include_router(project_router, tags=["Projects - project_router"])
-
-# Intent Classification
-router.include_router(predict_router, tags=["Intent Classification - predict_router"])
-router.include_router(batch_predict_router, tags=["Intent Classification - batch_predict_router"])
 
 # Redis Cache
 router.include_router(redis_cache_router, tags=["Redis Cache - redis_cache_router"])

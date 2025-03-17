@@ -1,16 +1,20 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Body, Depends, HTTPException
+from fastapi.responses import JSONResponse
 from services.auth_handler import verify_token
 from services.supabase_manager import SupabaseManager
 from typing import Optional, Dict, Any
 from models.project_models import ProjectData, UpdateProjectData
+from models.request_models import SaveProjectRequest
 from utils.logger import log_info
 from core.db.supabase_db import get_supabase_client, safe_supabase_operation
 from constants import ProjectStatus, ProjectPriority
+from core.cache.session_manager import SessionManager
 
 router = APIRouter()
 
 # Initialize DatabaseManager
 supabase_manager = SupabaseManager()
+session_manager = SessionManager()
 
 # Create a new project
 @router.post("/projects")
@@ -167,6 +171,7 @@ async def get_project(
             priority_enum = None  # Fallback to None or handle differently
             
         log_info(f"Status enum : {status_enum}")
+        log_info(f"Priority enum : {priority_enum}")
 
         return {
             "id": project_code,
@@ -177,6 +182,8 @@ async def get_project(
             "createdDate": project_response["created_date"],
             "assigned_to": project_response["assigned_to"],
             "dueDate": project_response["due_date"],
+            "diagram_state": project_response["diagram_state"],
+            "conversation_history": project_response["conversation_history"],
             "creator": project_response["creator"],
             "domain": project_response["domain"],
             "templateType": project_response["template_type"],
@@ -348,3 +355,208 @@ async def delete_project(
     except Exception as e:
         log_info(f"Error deleting project {project_code}: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Failed to delete project: {str(e)}")
+    
+
+# Get a specific project
+@router.get("/load_project/{project_code}")
+async def load_project(
+    project_code: str,
+    current_user: dict = Depends(verify_token)
+):
+    """
+    Load a project and create a new session for it.
+    Used when a user returns to continue working on a previously saved project.
+
+    Args:
+        project_id: The project ID to load
+        current_user: Authenticated user (via dependency)
+        session_manager: SessionManager instance (injected)
+        supabase_manager: SupabaseManager instance (injected)
+
+    Returns:
+        JSONResponse: Session ID and project data
+    """
+    try:
+        user_id = current_user
+        if not user_id:
+            return JSONResponse(
+                status_code=400,
+                content={"detail": "Invalid user authentication data"}
+            )
+
+        # Fetch project data from the database
+        project_data = await supabase_manager.get_project_data(
+            user_id=user_id,
+            project_code=project_code
+        )
+
+        if not project_data:
+            log_info(f"Project {project_code} not found for user {user_id}")
+            return JSONResponse(
+                status_code=404,
+                content={"detail": "Project not found"}
+            )
+        
+        log_info(f"Load Project Data : {project_data}")
+
+        # Create a new session for this project
+        session_id = await session_manager.create_project_session(
+            user_id=user_id,
+            project_id=project_code
+        )
+
+        # Get the conversation history and diagram state from project data
+        conversation_history = project_data.get("conversation_history", [])
+        diagram_state = project_data.get("diagram_state", {"nodes": [], "edges": []})
+
+        log_info(f"Diagram state for load project  : {project_data['diagram_state']}")
+        log_info(f"Conversation history for load project  : {project_data['conversation_history']}")
+
+        # Update the diagram state in the session
+        await session_manager.update_diagram_state(
+            session_id=session_id,
+            diagram_state=diagram_state
+        )
+
+        # Add conversation history entries to the session
+        for entry in conversation_history:
+            if "query" in entry and "response" in entry:
+                await session_manager.add_to_conversation(
+                    session_id=session_id,
+                    query=entry["query"],
+                    response=entry["response"]
+                )
+
+        log_info(f"Project {project_code} loaded successfully for user {user_id}")
+        return JSONResponse(
+            status_code=200,
+            content={
+                "session_id": session_id,
+                "project_id": project_code,
+                "diagram_state": diagram_state,
+                "conversation_history": conversation_history,
+                "message": "Project loaded successfully"
+            }
+        )
+
+    except HTTPException as e:
+        log_info(f"HTTPException in load_project: {e.detail}")
+        return JSONResponse(
+            status_code=e.status_code,
+            content={"detail": e.detail}
+        )
+    except Exception as e:
+        log_info(f"Unexpected error loading project: {str(e)}")
+        return JSONResponse(
+            status_code=500,
+            content={"detail": f"Failed to load project: {str(e)}"}
+        )
+
+@router.post("/save_project/{session_id}")
+async def save_project(
+    session_id: str,
+    request_data: SaveProjectRequest = Body(...),
+    current_user: dict = Depends(verify_token)
+):
+    """
+    Save session data to the database when the user clicks the 'Save' button in the UI.
+    Allows sending the current diagram state to ensure it's up to date.
+
+    Args:
+        session_id: The session ID to save (path parameter)
+        request_data: Request body containing session_id and optional diagram_state
+        current_user: Authenticated user (via dependency)
+        session_manager: SessionManager instance (injected)
+        supabase_manager: SupabaseManager instance (injected)
+
+    Returns:
+        JSONResponse: Confirmation of save or error details
+    """
+    try:
+        # Get user ID from the authenticated user
+        user_id = current_user
+        if not user_id:
+            log_info(f"Invalid user authentication data")
+            return JSONResponse(
+                status_code=400,
+                content={"detail": "Invalid user authentication data"}
+            )
+
+        # Retrieve session data - this is already async in the SessionManager
+        try:
+            session_data = await session_manager.get_session(
+                session_id, 
+                expected_user_id=user_id  # Verify user ID right in the get_session call
+            )
+        except HTTPException as e:
+            log_info(f"Session error: {e.detail}")
+            return JSONResponse(
+                status_code=e.status_code,
+                content={"detail": e.detail}
+            )
+
+        # Get project ID from session
+        project_id = session_data.get("project_id")
+        log_info(f"Project id in save project : {project_id}")
+        if not project_id:
+            log_info(f"Project ID missing in session {session_id}")
+            return JSONResponse(
+                status_code=400,
+                content={"detail": "Project ID missing in session data"}
+            )
+        
+        # If diagram state is provided in the request, update it in the session
+        if request_data.diagram_state:
+            await session_manager.update_diagram_state(session_id, request_data.diagram_state)
+            log_info(f"Updated diagram state for session {session_id}")
+    
+
+        # Extend session TTL to keep it alive
+        await session_manager.extend_session_ttl(session_id)
+
+        # Use the diagram state from the request if provided, otherwise fall back to session data
+        session_data_for_reference = await session_manager.get_session(session_id)
+        diagram_state = request_data.diagram_state if request_data.diagram_state else session_data_for_reference.get("diagram_state", {"nodes": [], "edges": []})
+        conversation_history = session_data_for_reference.get("conversation_history", [])
+
+        log_info(f"Diagram state in save project : {diagram_state}")
+        log_info(f"Conversation History in save project : {conversation_history}")
+        
+        # Save to database
+        await supabase_manager.update_project_data(
+            user_id=user_id,
+            project_code=project_id,
+            conversation_history=conversation_history,
+            diagram_state=diagram_state
+        )
+
+        log_info(f"Project {project_id} saved successfully for user {user_id}")
+        return JSONResponse(
+            status_code=200,
+            content={
+                "message": "Project saved successfully", 
+                "session_id": session_id,
+                "project_id": project_id
+            }
+        )
+
+    except HTTPException as e:
+        log_info(f"HTTPException in save_project: {e.detail}")
+        return JSONResponse(
+            status_code=e.status_code,
+            content={"detail": e.detail}
+        )
+    except ValueError as e:
+        # Handle specific database errors
+        log_info(f"ValueError in save_project: {str(e)}")
+        return JSONResponse(
+            status_code=400,
+            content={"detail": str(e)}
+        )
+    except Exception as e:
+        # Handle unexpected errors
+        log_info(f"Unexpected error saving project: {str(e)}")
+        return JSONResponse(
+            status_code=500,
+            content={"detail": f"Failed to save project: {str(e)}"}
+        )

@@ -85,4 +85,10 @@ SUPABASE_SECRET_KEY = os.getenv("SUPABASE_SECRET_KEY")
 
 HEALTH_API_KEY = os.getenv("HEALTH_API_KEY")
 
-print(f"HEALTH_API_KEY: {HEALTH_API_KEY}")
+
+# Redis settings for session management
+REDIS_HOST = "localhost"
+REDIS_PORT = 6379
+REDIS_PASSWORD = ""
+REDIS_DB = 0
+SESSION_EXPIRY = 86400

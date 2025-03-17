@@ -34,8 +34,8 @@ interface AuthProviderProps {
   children: ReactNode;
 }
 
-const BASE_API_URL = import.meta.env.VITE_BASE_API_URL
-// const BASE_API_URL = import.meta.env.VITE_DEV_BASE_API_URL
+// const BASE_API_URL = import.meta.env.VITE_BASE_API_URL
+const BASE_API_URL = import.meta.env.VITE_DEV_BASE_API_URL
 
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
@@ -158,7 +158,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         console.log(import.meta.env.VITE_BASE_API_URL)
         // If no '@' is present, assume it's a username and fetch the email from the backend
         const response = await fetch(`${BASE_API_URL}/get-email`, {
-        // const response = await fetch(`http://localhost:8000/v1/routes/get-email`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'X-API-Key': supabaseKey },
           body: JSON.stringify({ username: identifier }),

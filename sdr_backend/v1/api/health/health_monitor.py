@@ -138,7 +138,7 @@ class HealthMonitor:
             cpu_usage = psutil.cpu_percent(interval=0.1)
             memory_usage = psutil.virtual_memory().percent
         except Exception as e:
-            logger.error(f"Error getting system stats: {e}")
+            log_info(f"Error getting system stats: {e}")
             cpu_usage = 0
             memory_usage = 0
         
@@ -148,7 +148,7 @@ class HealthMonitor:
             try:
                 redis_status = "connected" if session_manager.is_connected else "disconnected"
             except Exception as e:
-                logger.error(f"Error checking Redis status: {e}")
+                log_info(f"Error checking Redis status: {e}")
                 redis_status = f"error: {str(e)}"
         
         # Calculate performance metrics

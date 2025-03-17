@@ -3,10 +3,19 @@ import { ProjectPriority, ProjectStatus, ProjectTemplateType } from '../types/pr
 import { Project,CreateProjectPayload,UpdateProjectPayload, GetProjectsParams } from '../interfaces/projectInterfaces';
 import tokenService from './tokenService';
 import { useAuth } from '@/components/Auth/AuthContext'
+import { BASE_API_URL, getAuthHeaders } from './apiService'
+import { toast, useToast } from '@/hooks/use-toast'
 
 // The backend URL from environment or hardcoded for now
-const BASE_API_URL = import.meta.env.VITE_BASE_API_URL
+// const BASE_API_URL = import.meta.env.VITE_BASE_API_URL
+// const BASE_API_URL = import.meta.env.VITE_DEV_BASE_API_URL
 
+
+interface LoadProjectResponse {
+  sessionId: string,
+  projectId: string,
+  diagram_state: any
+}
 
 // Convert backend project format to frontend Project interface
 const mapBackendToFrontend = (backendProject: any): Project => {
@@ -45,13 +54,13 @@ const mapFrontendToBackend = (frontendProject: Partial<Project>): any => {
 
 
 // Get authenticated request headers
-const getAuthHeaders = () => {
-  const token = tokenService.getToken();
-  return {
-    'Authorization': `Bearer ${token}`,
-    'Content-Type': 'application/json',
-  };
-};
+// const getAuthHeaders = () => {
+//   const token = tokenService.getToken();
+//   return {
+//     'Authorization': `Bearer ${token}`,
+//     'Content-Type': 'application/json',
+//   };
+// };
 
 // Project service API functions
 const projectService = {
@@ -195,6 +204,114 @@ const projectService = {
     
     if (!response.ok) {
       throw new Error(`Failed to delete project: ${response.status}`);
+    }
+  },
+
+  // Function to save a project
+  async saveProject(sessionId: string, diagramState: any): Promise<boolean> {
+    try {
+      console.log(`Saving project with session ID: ${sessionId}`);
+      console.log(`Saving project with diagram state: ${diagramState}`);
+      
+      // Make API call to save_project endpoint
+      const response = await fetch(`${BASE_API_URL}/save_project/${sessionId}`, {
+        method: 'POST',
+        headers: getAuthHeaders(),
+        body: JSON.stringify({
+          session_id: sessionId,
+          diagram_state: diagramState 
+        })
+      });
+
+      // Check if the HTTP response was successful (status in the 200-299 range)
+      if (response.ok) {
+        const savedProjectResp = await response.json();
+        console.log(`Saved Project Response:`, savedProjectResp);
+        
+        // If we have a session_id in the response, log it
+        if (savedProjectResp.session_id) {
+          console.log(`Saved Project session: ${savedProjectResp.session_id}`);
+        }
+        
+        // If we have a project_id in the response, log it
+        if (savedProjectResp.project_id) {
+          console.log(`Saved Project id: ${savedProjectResp.project_id}`);
+        }
+        
+        // Show toast notification
+        toast({
+          title: "Project Saved",
+          description: "Your project has been saved successfully",
+          variant: "default"
+        });
+        
+        return true;
+      } else {
+        // If the response was not OK, try to get error details
+        let errorMessage = 'Failed to save project';
+        try {
+          const errorData = await response.json();
+          errorMessage = errorData.detail || errorMessage;
+        } catch (e) {
+          // If we can't parse the JSON, just use the status text
+          errorMessage = `${errorMessage}: ${response.statusText}`;
+        }
+        
+        console.error(`Error saving project: ${errorMessage}`);
+        toast({
+          title: "Error",
+          description: errorMessage,
+          variant: "destructive"
+        });
+        
+        return false;
+      }
+    } catch (error: any) {
+      console.error('Error saving project:', error);
+      toast({
+        title: "Error",
+        description: error.message || 'Failed to save project',
+        variant: "destructive"
+      });
+      return false;
+    }
+  },
+
+  async loadProject(projectId: string): Promise<any> {
+
+    if (!projectId) {
+      toast({
+        title: "Cannot Load Project",
+        description: "No project id found",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    try {
+      console.log(`Loading project with project ID: ${projectId}`);
+      
+      // Make API call to save_project endpoint
+      const response = await fetch(`${BASE_API_URL}/load_project/${projectId}`, {
+        method: 'GET',
+        headers: getAuthHeaders()
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.detail || 'Failed to load project');
+      }
+
+      const result = await response.json();
+      console.log("Project Load details:", result);
+      return result
+    } catch (error: any) {
+      console.error('Error saving project:', error);
+      toast({
+        title: "Error",
+        description: error.message || 'Failed to save project',
+        variant: "destructive"
+      });
     }
   }
 }

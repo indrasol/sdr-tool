@@ -7,6 +7,7 @@ import { WallpaperOption } from './types/chatTypes';
 
 interface WallpaperPickerProps {
   onWallpaperChange: (wallpaper: WallpaperOption) => void;
+  disabled?: boolean;
 }
 
 const wallpaperOptions: WallpaperOption[] = [
@@ -48,7 +49,7 @@ const wallpaperOptions: WallpaperOption[] = [
   },
 ];
 
-const WallpaperPicker: React.FC<WallpaperPickerProps> = ({ onWallpaperChange }) => {
+const WallpaperPicker: React.FC<WallpaperPickerProps> = ({ onWallpaperChange, disabled = false }) => {
   return (
     <Popover>
       <PopoverTrigger asChild>
@@ -71,6 +72,7 @@ const WallpaperPicker: React.FC<WallpaperPickerProps> = ({ onWallpaperChange }) 
                 option.textClass
               )}
               onClick={() => onWallpaperChange(option)}
+              disabled={disabled}
             >
               {option.name}
             </button>
