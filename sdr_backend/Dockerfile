@@ -38,19 +38,37 @@ COPY requirements.txt .
 # RUN pip install --no-cache-dir -r requirements.txt
 
 # Install packages in groups to isolate issues
-RUN pip install --no-cache-dir fastapi==0.109.2 uvicorn==0.27.1 python-multipart==0.0.9 httpx==0.27.2 tenacity==8.2.3
+# Base packages
+RUN pip install --no-cache-dir fastapi==0.109.2 uvicorn==0.27.1 python-multipart==0.0.9 tenacity==8.2.3
+
+RUN pip install --no-cache-dir pydantic==2.3.0
+
+# Install packages that depend on pydantic
+RUN pip install --no-cache-dir pydantic-settings==2.1.0
+
+# Image processing
 RUN pip install --no-cache-dir pytesseract==0.3.10 Pillow==9.5.0
-# RUN pip install --no-cache-dir pdfplumber==0.10.3 pdf2image==1.17.0 python-docx==1.0.1 python-pptx==0.6.22 reportlab==4.0.8
+
+# Database
 RUN pip install --no-cache-dir sqlalchemy==2.0.27 psycopg2-binary==2.9.9 pandas==2.0.3 aiosqlite==0.19.0 asyncpg==0.29.0
 RUN pip install --no-cache-dir redis==5.0.1 aioredis==2.0.1 databases==0.8.0 alembic==1.13.1
-RUN pip install --no-cache-dir python-dotenv==1.0.1 pydantic-settings==2.1.0 pyyaml==6.0.1 PyJWT==2.8.0 pydantic>=2.3.0
-RUN pip install --no-cache-dir openai==1.13.3 anthropic==0.49.0
+
+# Configuration and utilities
+RUN pip install --no-cache-dir python-dotenv==1.0.1 pyyaml==6.0.1 PyJWT==2.8.0
+
+# AI/LLM packages with explicit dependency order
+# Install httpx first at compatible version
+RUN pip install --no-cache-dir httpx==0.25.0
+# AI packages
+RUN pip install --no-cache-dir openai==1.13.3 anthropic>=0.20.0
+
+# ML packages
 RUN pip install --no-cache-dir scikit-learn==1.2.2 faiss-cpu==1.8.0
 RUN pip install --no-cache-dir torch==2.0.1
-# RUN pip install --no-cache-dir transformers==4.36.2 accelerate==0.26.1 sentence-transformers==3.2.1
 RUN pip install --no-cache-dir accelerate==1.0.1 sentence-transformers==3.2.1
+
+# API clients
 RUN pip install --no-cache-dir supabase>=1.0.0 python-jose==3.3.0 postgrest==0.10.6
-# RUN pip install -v --no-cache-dir langchain==0.1.11 langchain-openai==0.0.5 langchain-community==0.0.19
 
 # Create a non-root user and switch to it (commented out as in original)
 # RUN adduser --disabled-password --gecos '' appuser
