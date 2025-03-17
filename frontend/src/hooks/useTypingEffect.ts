@@ -6,6 +6,7 @@ interface UseTypingEffectOptions {
   pauseAtEnd?: number;
   pauseAtStart?: number;
   blinkCursor?: boolean;
+  shouldType?: boolean;
 }
 
 /**
@@ -17,6 +18,7 @@ export const useTypingEffect = ({
   pauseAtEnd = 2000,
   pauseAtStart = 700,
   blinkCursor = true,
+  shouldType
 }: UseTypingEffectOptions) => {
   const [displayText, setDisplayText] = useState('');
   const [currentTextIndex, setCurrentTextIndex] = useState(0);
@@ -119,6 +121,7 @@ export const useTypingEffect = ({
   return { 
     displayText: blinkCursor ? `${displayText}${cursorHtml}` : displayText,
     rawText, // This is the pure text without any HTML
-    isComplete
+    isComplete,
+    shouldType
   };
 };

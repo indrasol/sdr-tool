@@ -7,23 +7,36 @@ import uuid
 import time
 import datetime
 from v1.api.health.health_monitor import get_api_key, health_monitor
-
-
+from core.cache.session_manager import SessionManager
+from typing import Dict
+import redis
+from config.settings import REDIS_HOST, REDIS_PORT
 
 
 
 # Create router for health endpoints
 router = APIRouter()
 
-@router.get("/health", response_model=HealthStatus)
-async def health_check(request: Request, api_key: str = Depends(get_api_key), response: Response = None):
-    # Check if there's a session_manager in the app state
-    session_manager = getattr(request.app.state, "session_manager", None)
-
-    # Set the "X-API-Key" header in the response
-    response.headers["X-API-Key"] = api_key
+@router.get("/health", response_model=Dict[str, str])
+async def health_check(session_manager: SessionManager = Depends()):
+    """
+    Health check endpoint to verify API is running and dependencies are available.
+    Checks Redis connection for session management.
+    """
+    # Check Redis connection
+    try:
+        # Ping Redis to verify connection
+        redis_client = redis.Redis(host=REDIS_HOST, port=REDIS_PORT)
+        redis_client.ping()
+        redis_status = "healthy"
+    except Exception:
+        redis_status = "unhealthy"
     
-    return health_monitor.get_health_status(session_manager)
+    return {
+        "status": "ok",
+        "redis_status": redis_status,
+        "version": "1.0.0"
+    }
 
 @router.get("/health/public")
 async def public_health():

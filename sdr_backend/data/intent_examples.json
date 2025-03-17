@@ -1,0 +1,63 @@
+{
+  "ArchitectureResponse": [
+    "Add a firewall to the network",
+    "Create a new database server",
+    "Connect the web server to the application server",
+    "Remove the old firewall",
+    "Update the network diagram",
+    "Can you add a load balancer?",
+    "Draw a connection between the API and database",
+    "I need to add encryption to my architecture",
+    "Design a secure network perimeter",
+    "Show me the network topology",
+    "Add security groups to the diagram",
+    "Create a new VPC for this architecture",
+    "Set up a DMZ in the network",
+    "Draw a redundant architecture"
+  ],
+  "ExpertResponse": [
+    "What is a WAF?",
+    "Explain zero trust architecture",
+    "How does TLS work?",
+    "What are the best practices for API security?",
+    "Why is defense in depth important?",
+    "Tell me about cloud security architecture",
+    "Describe the OWASP Top 10",
+    "What's the difference between SIEM and SOAR?",
+    "How does mutual TLS authentication work?",
+    "Explain the security benefits of microsegmentation",
+    "What is the principle of least privilege?",
+    "How does a security control matrix work?",
+    "Tell me about compliance requirements for healthcare",
+    "What is the CAP theorem?"
+  ],
+  "ClarificationResponse": [
+    "What should I do next?",
+    "How do I improve this?",
+    "Can you help me with this?",
+    "I'm not sure what to do",
+    "What do you think?",
+    "Is this secure enough?",
+    "Does this make sense?",
+    "What would you recommend?",
+    "Is there a better approach?",
+    "What's missing from my architecture?",
+    "How can I make this more secure?",
+    "What are my options here?",
+    "I need your input on this design"
+  ],
+  "OutOfContextResponse": [
+    "What's the weather like today?",
+    "Tell me a joke",
+    "How are you doing?",
+    "Who won the game yesterday?",
+    "Thanks for your help",
+    "Good morning",
+    "What's for lunch?",
+    "Hello there",
+    "What's your favorite color?",
+    "Do you like movies?",
+    "How old are you?",
+    "What's your name?"
+  ]
+}

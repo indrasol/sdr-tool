@@ -16,13 +16,17 @@ interface ActionBarProps {
   isProcessing: boolean;
   onWallpaperChange?: (wallpaper: WallpaperOption) => void;
   onGenerateReport?: () => void;
+  onSaveProject?: () => void;
+  isDisabled?: boolean;
 }
 
 const ActionBar: React.FC<ActionBarProps> = ({ 
   isInputEmpty, 
   isProcessing, 
   onWallpaperChange,
-  onGenerateReport
+  onGenerateReport,
+  onSaveProject,
+  isDisabled = false
 }) => {
   return (
     <TooltipProvider>
@@ -31,7 +35,7 @@ const ActionBar: React.FC<ActionBarProps> = ({
           <Tooltip>
             <TooltipTrigger asChild>
               <span>
-                <WallpaperPicker onWallpaperChange={onWallpaperChange} />
+                <WallpaperPicker onWallpaperChange={onWallpaperChange} disabled={isDisabled} />
               </span>
             </TooltipTrigger>
             <TooltipContent side="top">
@@ -39,7 +43,7 @@ const ActionBar: React.FC<ActionBarProps> = ({
             </TooltipContent>
           </Tooltip>
         }
-        <ChatButtons onGenerateReport={onGenerateReport} />
+        <ChatButtons onGenerateReport={onGenerateReport} onSaveProject={onSaveProject} disabled={isDisabled} />
         <SendButton disabled={isInputEmpty} isProcessing={isProcessing} />
       </div>
     </TooltipProvider>

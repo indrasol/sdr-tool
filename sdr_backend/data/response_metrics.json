@@ -1,0 +1,64 @@
+{
+  "total_responses": 62,
+  "feedback_received": 0,
+  "rating_distribution": {
+    "excellent": 0,
+    "good": 0,
+    "neutral": 0,
+    "poor": 0,
+    "incorrect": 0
+  },
+  "category_ratings": {
+    "relevance": {
+      "excellent": 0,
+      "good": 0,
+      "neutral": 0,
+      "poor": 0,
+      "incorrect": 0
+    },
+    "accuracy": {
+      "excellent": 0,
+      "good": 0,
+      "neutral": 0,
+      "poor": 0,
+      "incorrect": 0
+    },
+    "completeness": {
+      "excellent": 0,
+      "good": 0,
+      "neutral": 0,
+      "poor": 0,
+      "incorrect": 0
+    },
+    "clarity": {
+      "excellent": 0,
+      "good": 0,
+      "neutral": 0,
+      "poor": 0,
+      "incorrect": 0
+    },
+    "usefulness": {
+      "excellent": 0,
+      "good": 0,
+      "neutral": 0,
+      "poor": 0,
+      "incorrect": 0
+    },
+    "technical": {
+      "excellent": 0,
+      "good": 0,
+      "neutral": 0,
+      "poor": 0,
+      "incorrect": 0
+    },
+    "security": {
+      "excellent": 0,
+      "good": 0,
+      "neutral": 0,
+      "poor": 0,
+      "incorrect": 0
+    }
+  },
+  "intent_accuracy": {},
+  "common_improvement_tags": {}
+}

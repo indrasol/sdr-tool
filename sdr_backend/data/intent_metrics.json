@@ -1,0 +1,22 @@
+{
+  "classifications": 20,
+  "pattern_matches": 20,
+  "vector_matches": 0,
+  "llm_fallbacks": 0,
+  "confidence_distribution": {
+    "0.0-0.2": 0,
+    "0.2-0.4": 0,
+    "0.4-0.6": 0,
+    "0.6-0.8": 0,
+    "0.8-1.0": 20
+  },
+  "intent_distribution": {
+    "ArchitectureResponse": 20,
+    "ExpertResponse": 0,
+    "ClarificationResponse": 0,
+    "OutOfContextResponse": 0
+  },
+  "avg_classification_time": 0.0001560330390930176,
+  "total_classification_time": 0.0031206607818603516,
+  "last_updated": "2025-03-16T20:13:40.855081"
+}
