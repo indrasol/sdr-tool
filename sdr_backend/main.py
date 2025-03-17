@@ -24,6 +24,8 @@ from utils.logger import log_info
 from core.cache.session_manager import SessionManager
 from config.settings import SUPABASE_URL
 from alembic import command
+import anthropic
+import httpx
 from alembic.config import Config
 from v1.api.health.health_monitor import health_monitor
 from v1.api.routes.health import setup_health_monitoring
@@ -37,6 +39,8 @@ session_manager = SessionManager()
 async def lifespan(app: FastAPI):
 
     log_info("Starting up SecureTrack ")
+    log_info(f"Anthropic version: {anthropic.__version__}")
+    log_info(f"httpx version: {httpx.__version__}")
     # Startup: Connect to database and Redis
     log_info("Connecting redis session manager...")
     
