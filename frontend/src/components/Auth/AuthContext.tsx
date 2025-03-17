@@ -153,7 +153,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       let emailToUse = identifier;
       if (!identifier.includes('@')) {
         const supabaseKey = import.meta.env.VITE_SUPABASE_SERVICE_KEY
-        // const supabaseKey =eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inlpbmx0cnlhbWxhaWRtZXhwdm54Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc0MTM5ODE2OCwiZXhwIjoyMDU2OTc0MTY4fQ.fij-xrU-WolOzB3L-QhJZP_x11XmBhipfc2enONyuYI
         console.log("Supabase key:", supabaseKey);
 
         console.log(import.meta.env.VITE_BASE_API_URL)
@@ -179,10 +178,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       // Step 2: Call backend /login endpoint
       const response = await fetch(`${BASE_API_URL}/login`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
-        },
+        headers: getAuthHeaders(),
         body: JSON.stringify({ "identifier": identifier }),
       });
   
@@ -305,10 +301,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       // Step 4: Register with backend
       const response = await fetch(`${BASE_API_URL}/register`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
-        },
+        headers: getAuthHeaders(),
         body: JSON.stringify({
           user_id: supabaseUser.id,
           tenant_name: data.organizationName,
