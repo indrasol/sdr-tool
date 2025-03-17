@@ -178,7 +178,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       // Step 2: Call backend /login endpoint
       const response = await fetch(`${BASE_API_URL}/login`, {
         method: 'POST',
-        headers: getAuthHeaders(),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
         body: JSON.stringify({ "identifier": identifier }),
       });
   
@@ -301,7 +304,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       // Step 4: Register with backend
       const response = await fetch(`${BASE_API_URL}/register`, {
         method: 'POST',
-        headers: getAuthHeaders(),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
         body: JSON.stringify({
           user_id: supabaseUser.id,
           tenant_name: data.organizationName,
