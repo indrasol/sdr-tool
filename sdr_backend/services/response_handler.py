@@ -2,7 +2,7 @@ from datetime import datetime
 from typing import Dict, Any, Union, Optional
 from fastapi.responses import JSONResponse
 from pydantic import ValidationError as PydanticValidationError
-from core.llm.llm_gateway import llm_gateway  # Assuming this exists for LLM interaction
+# from core.llm.llm_gateway import llm_gateway  # Assuming this exists for LLM interaction
 from services.exception_handler import LLMError  # Custom exception class
 from utils.logger import log_info  # Logging utility
 from services.validation_handler import ValidationHandler  # Updated below

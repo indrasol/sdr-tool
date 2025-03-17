@@ -55,7 +55,7 @@ async def verify_token(authorization: str = Header(None)):
         except ExpiredSignatureError:
             log_info("Token verification failed: Token expired")
             raise HTTPException(status_code=401, detail="Token expired")
-        except InvalidTokenError:
+        except InvalidTokenError as e:
             log_info(f"Token verification failed: Invalid token - {str(e)}")
             raise HTTPException(status_code=401, detail="Invalid token")
 
