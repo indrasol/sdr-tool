@@ -4,7 +4,7 @@ import tokenService from '@/services/tokenService';
 import { User } from '@/interfaces/userInterface';
 import { supabase } from "../../../supabase";
 import { toast } from "sonner";
-import { getAuthHeaders, BASE_API_URL, fetchWithTimeout, DEFAULT_TIMEOUT } from './apiService'
+import { getAuthHeaders, BASE_API_URL, fetchWithTimeout, DEFAULT_TIMEOUT } from '@/services/apiService'
   // Assuming this is implemented properly
 
 // Registration data interface
