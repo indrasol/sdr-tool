@@ -4,6 +4,7 @@ import tokenService from '@/services/tokenService';
 import { User } from '@/interfaces/userInterface';
 import { supabase } from "../../../supabase";
 import { toast } from "sonner";
+import { getAuthHeaders, BASE_API_URL, fetchWithTimeout, DEFAULT_TIMEOUT } from './apiService'
   // Assuming this is implemented properly
 
 // Registration data interface
@@ -35,7 +36,7 @@ interface AuthProviderProps {
 }
 
 // const BASE_API_URL = import.meta.env.VITE_BASE_API_URL
-const BASE_API_URL = import.meta.env.VITE_DEV_BASE_API_URL
+// const BASE_API_URL = import.meta.env.VITE_DEV_BASE_API_URL
 
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
