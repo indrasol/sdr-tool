@@ -220,7 +220,8 @@ async def root():
     """
     return {
         "name": "SecureTrack - A Secure Architecture Analyzer",
-        "version": "1.0.0",
+        "App version": "1.0.0",
+        "python_version": sys.version,
         "docs_url": "/docs",
         "health_check": "https://securetrack.onrender.com/v1/routes/health"
     }
