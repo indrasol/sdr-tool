@@ -58,9 +58,9 @@ RUN pip install --no-cache-dir python-dotenv==1.0.1 pyyaml==6.0.1 PyJWT==2.8.0
 
 # AI/LLM packages with explicit dependency order
 # Install httpx first at compatible version
-RUN pip install --no-cache-dir httpx==0.25.0
+RUN pip install --no-cache-dir httpx==0.27.2
 # AI packages
-RUN pip install --no-cache-dir openai==1.13.3 anthropic>=0.20.0
+RUN pip install --no-cache-dir openai==1.13.3 anthropic==0.49.0
 
 # ML packages
 RUN pip install --no-cache-dir scikit-learn==1.2.2 faiss-cpu==1.8.0
