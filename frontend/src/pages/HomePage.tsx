@@ -40,7 +40,7 @@ const HomePage = () => {
     console.log("Switching to register");
     setIsLoginDialogOpen(false);
     console.log("Opening register dialog");
-    setIsRegisterDialogOpen(true)
+    setIsRegisterDialogOpen(true);
     // setTimeout(() => setIsRegisterDialogOpen(true), 100);
   };
 
@@ -63,9 +63,8 @@ const HomePage = () => {
             </Link>
           </div>
           <div className="flex items-center space-x-4">
-
             <Button
-              variant="outline" 
+              variant="outline"
               size="sm"
               className="flex items-center gap-1 text-sm font-medium transition-all border-securetrack-purple/50 text-securetrack-purple hover:bg-gradient-to-br from-securetrack-purple to-securetrack-lightpurple hover:text-white hover:border-securetrack-purple shadow-sm hover:-translate-y-1 duration-300"
               onClick={() => setIsLoginDialogOpen(true)}
@@ -77,13 +76,11 @@ const HomePage = () => {
               variant="default"
               size="sm"
               className="flex items-center"
-              
               onClick={() => setIsRegisterDialogOpen(true)}
             >
               <UserPlus className="w-4 h-4 mr-2" />
               Register
             </Button>
-            
           </div>
         </div>
       </nav>
@@ -96,7 +93,7 @@ const HomePage = () => {
           <div className="absolute top-0 left-0 w-64 h-64 bg-green-100 rounded-full opacity-20 -translate-x-1/2 -translate-y-1/2"></div>
           <div className="absolute bottom-0 right-0 w-96 h-96 bg-blue-100 rounded-full opacity-30 translate-x-1/3 translate-y-1/4"></div>
           <div className="absolute top-1/3 right-1/4 w-20 h-20 bg-yellow-100 rounded-full opacity-40"></div>
-          
+
           <div className="container mx-auto px-6 relative z-10">
             <div className="grid grid-cols-1 md:grid-cols-12 gap-8 items-center">
               {/* Text Content - Takes up more space on larger screens */}
@@ -105,11 +102,11 @@ const HomePage = () => {
                   Secure Your Projects With Confidence
                 </h1>
                 <p className="text-xl text-gray-600 mb-8 leading-relaxed">
-                  SecureTrack provides industry-leading security monitoring and threat detection 
-                  for all your development projects.
+                  SecureTrack provides industry-leading security monitoring and
+                  threat detection for all your development projects.
                 </p>
                 <div className="flex flex-col sm:flex-row gap-4">
-                  <Button 
+                  <Button
                     variant="default"
                     size="lg"
                     className="flex items-center"
@@ -118,17 +115,16 @@ const HomePage = () => {
                     Get Started
                     <ArrowRight className="ml-2 w-5 h-5" />
                   </Button>
-                  <Button 
-                    variant="outline" 
-                    size="lg"
-                  >
+                  <Button variant="outline" size="lg">
                     Learn More
                   </Button>
                 </div>
-                
+
                 {/* Trust Indicators */}
                 <div className="mt-12 flex flex-wrap items-center gap-6">
-                  <p className="text-sm text-gray-500 font-medium">Trusted by leading companies:</p>
+                  <p className="text-sm text-gray-500 font-medium">
+                    Trusted by leading companies:
+                  </p>
                   <div className="flex space-x-6 opacity-70">
                     {/* Replace with actual company logos */}
                     <div className="h-6 text-gray-400">Company 1</div>
@@ -137,9 +133,54 @@ const HomePage = () => {
                   </div>
                 </div>
               </div>
-              
-              {/* Visual Element - Off-center image/illustration */}
+
+              {/* Visual Element - Off-center video */}
               <div className="md:col-span-5 lg:col-span-6 relative">
+                <div className="bg-white rounded-2xl shadow-xl overflow-hidden transform rotate-2 hover:rotate-0 transition-transform duration-300">
+                  <div className="bg-gray-50 p-6 border-b">
+                    <div className="flex space-x-2">
+                      <div className="w-3 h-3 rounded-full bg-red-400"></div>
+                      <div className="w-3 h-3 rounded-full bg-yellow-400"></div>
+                      <div className="w-3 h-3 rounded-full bg-green-400"></div>
+                    </div>
+                  </div>
+                  <div className="p-6 bg-white">
+                    {/* Replace the Shield icon with video */}
+                    <div className="h-64 rounded-lg overflow-hidden">
+                      <video
+                        className="w-full h-full object-cover"
+                        controls
+                        muted
+                        autoPlay
+                        loop
+                        // playsInline
+                      >
+                        <source
+                          src="/path/to/your/video.mp4"
+                          type="video/mp4"
+                        />
+                        Your browser does not support the video tag.
+                      </video>
+                    </div>
+                    {/* Caption or description below video */}
+                    <div className="mt-4 space-y-2">
+                      <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+                      <div className="h-4 bg-gray-200 rounded w-1/2"></div>
+                      <div className="h-4 bg-gray-200 rounded w-5/6"></div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Keep the floating elements */}
+                <div className="absolute -right-6 -top-6 bg-purple-50 p-4 rounded-lg shadow-md transform rotate-6 hidden md:block">
+                  <CheckCircle className="w-8 h-8 text-primary" />
+                </div>
+                <div className="absolute -left-8 -bottom-8 bg-blue-50 p-4 rounded-lg shadow-md transform -rotate-12 hidden md:block">
+                  <Lock className="w-8 h-8 text-primary" />
+                </div>
+              </div>
+              {/* Visual Element - Off-center image/illustration */}
+              {/* <div className="md:col-span-5 lg:col-span-6 relative">
                 <div className="bg-white rounded-2xl shadow-xl overflow-hidden transform rotate-2 hover:rotate-0 transition-transform duration-300">
                   <div className="bg-gray-50 p-6 border-b">
                     <div className="flex space-x-2">
@@ -158,60 +199,71 @@ const HomePage = () => {
                       <div className="h-4 bg-gray-200 rounded w-5/6"></div>
                     </div>
                   </div>
-                </div>
-                
-                {/* Floating Elements */}
-                <div className="absolute -right-6 -top-6 bg-purple-50 p-4 rounded-lg shadow-md transform rotate-6 hidden md:block">
+                </div> */}
+
+              {/* Floating Elements */}
+              {/* <div className="absolute -right-6 -top-6 bg-purple-50 p-4 rounded-lg shadow-md transform rotate-6 hidden md:block">
                   <CheckCircle className="w-8 h-8 text-primary" />
                 </div>
                 <div className="absolute -left-8 -bottom-8 bg-blue-50 p-4 rounded-lg shadow-md transform -rotate-12 hidden md:block">
                   <Lock className="w-8 h-8 text-primary" />
                 </div>
-              </div>
+              </div> */}
             </div>
           </div>
         </div>
-        
+
         {/* Feature Section */}
         <div className="bg-white py-20">
           <div className="container mx-auto px-6">
-            <h2 className="text-3xl font-bold text-center mb-12">Why Choose SecureTrack?</h2>
-            
+            <h2 className="text-3xl font-bold text-center mb-12">
+              Why Choose SecureTrack?
+            </h2>
+
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
               <Card className="border-0 shadow-lg hover:shadow-xl transition-shadow duration-300">
                 <CardContent className="p-6">
                   <Zap className="w-12 h-12 text-yellow-500 mb-4" />
-                  <h3 className="text-xl font-semibold mb-3">Real-time Protection</h3>
+                  <h3 className="text-xl font-semibold mb-3">
+                    Real-time Protection
+                  </h3>
                   <p className="text-gray-600">
-                    Monitor your projects in real-time with instant alerts and notifications for any security threats.
+                    Monitor your projects in real-time with instant alerts and
+                    notifications for any security threats.
                   </p>
                 </CardContent>
               </Card>
-              
+
               <Card className="border-0 shadow-lg hover:shadow-xl transition-shadow duration-300">
                 <CardContent className="p-6">
                   <Lock className="w-12 h-12 text-blue-500 mb-4" />
-                  <h3 className="text-xl font-semibold mb-3">Advanced Security</h3>
+                  <h3 className="text-xl font-semibold mb-3">
+                    Advanced Security
+                  </h3>
                   <p className="text-gray-600">
-                    Industry-leading encryption and security protocols to keep your data safe at all times.
+                    Industry-leading encryption and security protocols to keep
+                    your data safe at all times.
                   </p>
                 </CardContent>
               </Card>
-              
+
               <Card className="border-0 shadow-lg hover:shadow-xl transition-shadow duration-300">
                 <CardContent className="p-6">
                   <LineChart className="w-12 h-12 text-green-500 mb-4" />
-                  <h3 className="text-xl font-semibold mb-3">Detailed Analytics</h3>
+                  <h3 className="text-xl font-semibold mb-3">
+                    Detailed Analytics
+                  </h3>
                   <p className="text-gray-600">
-                    Comprehensive analytics and reporting to help you understand your security posture.
+                    Comprehensive analytics and reporting to help you understand
+                    your security posture.
                   </p>
                 </CardContent>
               </Card>
             </div>
-            
+
             <div className="mt-16 text-center">
-              <Button 
-                size="lg" 
+              <Button
+                size="lg"
                 variant="default"
                 className="flex items-center px-8"
                 onClick={() => setIsRegisterDialogOpen(true)}
@@ -235,38 +287,93 @@ const HomePage = () => {
                 </span>
               </div>
               <p className="text-gray-400 text-sm">
-                Providing industry-leading security solutions for your projects since 2023.
+                Providing industry-leading security solutions for your projects
+                since 2023.
               </p>
             </div>
-            
+
             <div>
               <h3 className="font-semibold text-lg mb-4">Company</h3>
               <ul className="space-y-2">
-                <li><Link to="/about" className="text-gray-400 hover:text-white">About Us</Link></li>
-                <li><Link to="/careers" className="text-gray-400 hover:text-white">Careers</Link></li>
-                <li><Link to="/contact" className="text-gray-400 hover:text-white">Contact</Link></li>
+                <li>
+                  <Link to="/about" className="text-gray-400 hover:text-white">
+                    About Us
+                  </Link>
+                </li>
+                <li>
+                  <Link
+                    to="/careers"
+                    className="text-gray-400 hover:text-white"
+                  >
+                    Careers
+                  </Link>
+                </li>
+                <li>
+                  <Link
+                    to="/contact"
+                    className="text-gray-400 hover:text-white"
+                  >
+                    Contact
+                  </Link>
+                </li>
               </ul>
             </div>
-            
+
             <div>
               <h3 className="font-semibold text-lg mb-4">Resources</h3>
               <ul className="space-y-2">
-                <li><Link to="/blog" className="text-gray-400 hover:text-white">Blog</Link></li>
-                <li><Link to="/documentation" className="text-gray-400 hover:text-white">Documentation</Link></li>
-                <li><Link to="/support" className="text-gray-400 hover:text-white">Support</Link></li>
+                <li>
+                  <Link to="/blog" className="text-gray-400 hover:text-white">
+                    Blog
+                  </Link>
+                </li>
+                <li>
+                  <Link
+                    to="/documentation"
+                    className="text-gray-400 hover:text-white"
+                  >
+                    Documentation
+                  </Link>
+                </li>
+                <li>
+                  <Link
+                    to="/support"
+                    className="text-gray-400 hover:text-white"
+                  >
+                    Support
+                  </Link>
+                </li>
               </ul>
             </div>
-            
+
             <div>
               <h3 className="font-semibold text-lg mb-4">Legal</h3>
               <ul className="space-y-2">
-                <li><Link to="/terms" className="text-gray-400 hover:text-white">Terms of Service</Link></li>
-                <li><Link to="/privacy" className="text-gray-400 hover:text-white">Privacy Policy</Link></li>
-                <li><Link to="/cookies" className="text-gray-400 hover:text-white">Cookie Policy</Link></li>
+                <li>
+                  <Link to="/terms" className="text-gray-400 hover:text-white">
+                    Terms of Service
+                  </Link>
+                </li>
+                <li>
+                  <Link
+                    to="/privacy"
+                    className="text-gray-400 hover:text-white"
+                  >
+                    Privacy Policy
+                  </Link>
+                </li>
+                <li>
+                  <Link
+                    to="/cookies"
+                    className="text-gray-400 hover:text-white"
+                  >
+                    Cookie Policy
+                  </Link>
+                </li>
               </ul>
             </div>
           </div>
-          
+
           <div className="mt-12 pt-8 border-t border-gray-700 text-center text-gray-400 text-sm">
             <p>&copy; 2025 SecureTrack. All rights reserved.</p>
           </div>
@@ -274,14 +381,14 @@ const HomePage = () => {
       </footer>
 
       {/* Login Dialog */}
-      <Login 
+      <Login
         isOpen={isLoginDialogOpen}
         onOpenChange={setIsLoginDialogOpen}
         onSwitchToRegister={switchToRegister}
       />
-      
+
       {/* Sign Up Dialog */}
-      <Register 
+      <Register
         isOpen={isRegisterDialogOpen}
         onOpenChange={(open) => setIsRegisterDialogOpen(open)}
         // onOpenChange={setIsRegisterDialogOpen}
@@ -292,5 +399,3 @@ const HomePage = () => {
 };
 
 export default HomePage;
-
-

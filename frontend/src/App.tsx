@@ -36,6 +36,7 @@ const App = () => (
               {/* Public Routes */}
               <Route path="/" element={<HomePage />} />
               <Route path="/index" element={<Index />} />
+              
               <Route
                 path="/login"
                 element={
@@ -64,7 +65,7 @@ const App = () => (
                 <Route path="/soc2" element={<SOC2 />} />
                 <Route path="/create-project" element={<CreateProject />} />
                 <Route path="/existing-project" element={<ExistingProject />} />
-                <Route path="/model-with-ai" element={<ModelWithAI />} />
+                <Route path="/model-with-ai" element={<ModelWithAI />} /> 
                 <Route path="/ai-assisted" element={<AiAssisted />} />
                 <Route path="/projects" element={<Projects />} />
                 <Route path="/security-analysis" element={<SecurityAnalysis />} />
