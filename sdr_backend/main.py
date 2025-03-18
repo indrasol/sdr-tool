@@ -222,7 +222,7 @@ async def root():
         "name": "SecureTrack - A Secure Architecture Analyzer",
         "version": "1.0.0",
         "docs_url": "/docs",
-        "health_check": f"{https://securetrack.onrender.com/v1/routes}/health"
+        "health_check": "https://securetrack.onrender.com/v1/routes/health"
     }
 
 if __name__ == "__main__":
