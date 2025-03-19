@@ -54,7 +54,9 @@ export const useProjectOperations = () => {
     
     if (project) {
       if (project.templateType === 'AI Assisted') {
-        navigate('/model-with-ai', { state: { projectId } });
+        // Pass the project ID in state for the AiAssisted component to use
+        console.log(`Navigating to AI Assisted with project ID: ${projectId}`);
+        navigate('/ai-assisted', { state: { projectId } });
       } else if (project.templateType === 'Import Existing' || project.importedFile) {
         navigate('/security-analysis', { state: { projectId } });
       } else {

@@ -44,7 +44,7 @@ class SupabaseManager:
     
     async def update_project_data(
         self,
-        user_id: int,
+        user_id: str,
         project_code: str,
         conversation_history: List[Dict[str, Any]] = None,
         diagram_state: Dict[str, Any] = None

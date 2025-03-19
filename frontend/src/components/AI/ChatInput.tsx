@@ -2,21 +2,26 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Textarea } from '@/components/ui/textarea';
 import BotIcon from './elements/BotIcon';
 import ActionBar from './ActionBar';
-import PlaceholderText from './PlaceholderText';
+// Import as a utility function, not a component
+import { getPlaceholderText } from '@/utils/placeholderUtils';
 import { WallpaperOption } from './types/chatTypes';
 
 interface ChatInputProps {
   onSendMessage: (message: string) => void;
   onGenerateReport: () => void;
+  onSaveProject?: () => void; 
   hasMessages?: boolean;
   onWallpaperChange?: (wallpaper: WallpaperOption) => void;
+  isDisabled?: boolean;
 }
 
 const ChatInput: React.FC<ChatInputProps> = ({ 
   onSendMessage, 
   onGenerateReport, 
+  onSaveProject,
   hasMessages = false,
-  onWallpaperChange
+  onWallpaperChange,
+  isDisabled = false
 }) => {
   const [input, setInput] = useState('');
   const [hasInteracted, setHasInteracted] = useState(false);
@@ -85,6 +90,12 @@ const ChatInput: React.FC<ChatInputProps> = ({
     if (!hasInteracted) {
       setHasInteracted(true);
     }
+
+    // Ensure cursor is at the end when focused
+    if (textareaRef.current) {
+      const length = textareaRef.current.value.length;
+      textareaRef.current.setSelectionRange(length, length);
+    }
   };
 
   const handleInputFocus = () => {
@@ -98,14 +109,19 @@ const ChatInput: React.FC<ChatInputProps> = ({
   };
 
   // Get placeholder text as a string
-  const placeholderText = PlaceholderText({ 
-    hasMessages, 
-    messagesSent, 
-    hasInteracted 
-  });
+  const placeholderText = isDisabled 
+    ? "Waiting for Guardian AI's response..." 
+    : getPlaceholderText(hasMessages, messagesSent, hasInteracted);
 
   // Only show the bot icon when there are messages or messages were sent, and no text in the input
   const showBotIcon = (hasMessages || messagesSent) && !input;
+
+  // Ensure cursor stays at proper position when showBotIcon changes
+  useEffect(() => {
+    if (input.length > 0 && document.activeElement === textareaRef.current) {
+      focusTextareaAtEnd();
+    }
+  }, [showBotIcon, input]);
 
   return (
     <div className="p-3 bg-white border-t">
@@ -129,16 +145,16 @@ const ChatInput: React.FC<ChatInputProps> = ({
             }}
             style={{ 
               textAlign: 'left', 
-              textIndent: '0px',
+              paddingLeft: showBotIcon ? '112px' : '16px',
               paddingTop: '8px',
               paddingBottom: '8px',
-              caretColor: 'auto',
+              caretColor: '#8a7af8',
               direction: 'ltr',
               unicodeBidi: 'normal',
               textTransform: 'none',
-              msTextAutospace: 'none',
-              wordSpacing: 'normal',
-              textJustify: 'initial'
+              // msTextAutospace: 'none',
+              // wordSpacing: 'normal',
+              // textJustify: 'initial'
             }}
           />
           
@@ -148,7 +164,9 @@ const ChatInput: React.FC<ChatInputProps> = ({
             isInputEmpty={!input.trim()} 
             isProcessing={isProcessing}
             onGenerateReport={onGenerateReport}
+            onSaveProject={onSaveProject}
             onWallpaperChange={onWallpaperChange}
+            isDisabled={isDisabled}
           />
         </div>
       </form>
@@ -160,6 +178,10 @@ export default ChatInput;
 
 
 
+
+function focusTextareaAtEnd() {
+  throw new Error('Function not implemented.');
+}
 // import React, { useState } from 'react';
 // import { Textarea } from '@/components/ui/textarea';
 // import BotIcon from './elements/BotIcon';

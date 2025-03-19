@@ -1,9 +1,11 @@
 # main.py
+import time
 import uvicorn
 from fastapi import FastAPI
 from v1.api.routes.routes import router as api_router
 from fastapi.middleware.cors import CORSMiddleware
 import asyncio
+import uuid
 # from config.settings import origins
 from config.settings import title
 from config.settings import description
@@ -19,35 +21,39 @@ from fastapi import Request
 from core.intent_classification.intent_dataset import train_intent_classifier
 from contextlib import asynccontextmanager
 from utils.logger import log_info
-from core.intent_classification.intent_classifier import IntentClassifier
 from core.cache.session_manager import SessionManager
 from config.settings import SUPABASE_URL
 from alembic import command
+import anthropic
+import httpx
 from alembic.config import Config
 from v1.api.health.health_monitor import health_monitor
 from v1.api.routes.health import setup_health_monitoring
+from services.logging import setup_logging
 
 
 session_manager = SessionManager()
+# logger = setup_logging()
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+
+    log_info("Starting up SecureTrack ")
+    log_info(f"Anthropic version: {anthropic.__version__}")
+    log_info(f"httpx version: {httpx.__version__}")
     # Startup: Connect to database and Redis
     log_info("Connecting redis session manager...")
+    
     await session_manager.connect()  # Connect to Redis
     log_info("Connected to session manager...")
 
-    log_info("Loading pre-trained intent classifier")
-    global classifier
-    # classifier = IntentClassifier(model_path=ML_MODELS_DIR)  # Load the model here
-
     # Apply database migrations with Alembic
-    log_info("Loading Alembic configuration...")
+    # logger.info("Loading Alembic configuration...")
     # alembic_cfg = Config("alembic.ini")  # Load config from alembic.ini
     # alembic_cfg.set_main_option("sqlalchemy.url", SUPABASE_URL)  # Set the database URL
-    log_info("Applying all pending migrations...")
+    # logger.info("Applying all pending migrations...")
     # command.upgrade(alembic_cfg, "head")  # Apply migrations to the latest version
-    log_info("Database migrations applied successfully.")
+    # logger.info("Database migrations applied successfully.")
 
     # Initialize health monitoring after app is fully set up
     log_info("Setting up health monitoring...")
@@ -62,9 +68,9 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(
-    title=title,
-    description=description,
-    version=version,
+    title="SecureTrack - A Secure Architecture Analyzer",
+    description="Analyzes security architecture documents and images to identify gaps and provide recommendations.",
+    version="1.0.0",
     lifespan=lifespan
 )
 
@@ -96,8 +102,86 @@ app.add_middleware(
 # Set up health monitoring middleware (needs to be after CORS middleware)
 setup_health_monitoring(app, session_manager)
 
+# Add request ID middleware
+# @app.middleware("http")
+# async def request_middleware(request: Request, call_next):
+#     """
+#     Middleware to add request ID and timing information.
+#     """
+#     # Generate unique request ID
+#     request_id = str(uuid.uuid4())
+#     request.state.request_id = request_id
+    
+#     # Track request timing
+#     start_time = time.time()
+    
+#     # Process request
+#     try:
+#         response = await call_next(request)
+        
+#         # Add request ID and processing time headers
+#         process_time = time.time() - start_time
+#         response.headers["X-Request-ID"] = request_id
+#         response.headers["X-Process-Time"] = str(process_time)
+        
+#         # Log request details
+#         logger.info(
+#             f"Request processed",
+#             extra={
+#                 "props": {
+#                     "request_id": request_id,
+#                     "method": request.method,
+#                     "path": request.url.path,
+#                     "status_code": response.status_code,
+#                     "process_time": process_time
+#                 }
+#             }
+#         )
+        
+#         return response
+#     except Exception as e:
+#         # Log error details
+#         logger.error(
+#             f"Request failed: {str(e)}",
+#             exc_info=True,
+#             extra={
+#                 "props": {
+#                     "request_id": request_id,
+#                     "method": request.method,
+#                     "path": request.url.path
+#                 }
+#             }
+#         )
+        
+#         # Re-raise to be handled by exception handlers
+#         raise
 
-# Add custom exception handler for HTTP exceptions
+
+# # Exception handlers
+# @app.exception_handler(RequestValidationError)
+# async def validation_exception_handler(request: Request, exc: RequestValidationError):
+#     """
+#     Handle validation errors in request data.
+#     """
+#     logger.warning(
+#         "Validation error",
+#         extra={
+#             "props": {
+#                 "request_id": getattr(request.state, "request_id", "unknown"),
+#                 "errors": exc.errors()
+#             }
+#         }
+#     )
+    
+#     return JSONResponse(
+#         status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+#         content={
+#             "detail": exc.errors(),
+#             "request_id": getattr(request.state, "request_id", "unknown")
+#         }
+#     )
+
+# Custom exception handler for HTTP exceptions
 @app.exception_handler(StarletteHTTPException)
 async def http_exception_handler(request: Request, exc: StarletteHTTPException):
     log_info(f"HTTP exception: {exc.detail}, status_code: {exc.status_code}")
@@ -106,7 +190,7 @@ async def http_exception_handler(request: Request, exc: StarletteHTTPException):
         content={"detail": exc.detail},
     )
 
-# Add custom exception handler for validation errors
+# Custom exception handler for validation errors
 @app.exception_handler(RequestValidationError)
 async def validation_exception_handler(request: Request, exc: RequestValidationError):
     log_info(f"Validation error: {str(exc)}")
@@ -128,6 +212,19 @@ async def generic_exception_handler(request: Request, exc: Exception):
 # Include our API routes under the /api prefix
 app.include_router(api_router, prefix="/v1/routes")
 
+# Root endpoint
+@app.get("/")
+async def root():
+    """
+    Root endpoint providing basic API information.
+    """
+    return {
+        "name": "SecureTrack - A Secure Architecture Analyzer",
+        "App version": "1.0.0",
+        "python_version": sys.version,
+        "docs_url": "/docs",
+        "health_check": "https://securetrack.onrender.com/v1/routes/health"
+    }
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)
