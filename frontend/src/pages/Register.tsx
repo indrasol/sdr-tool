@@ -244,7 +244,7 @@ const Register: React.FC<RegisterProps> = ({
                       <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                       <FormControl>
                         <Input
-                          placeholder="••••••••"
+                          placeholder="Type your password again"
                           type={showConfirmPassword ? "text" : "password"}
                           className="pl-10 pr-10"
                           {...field}
