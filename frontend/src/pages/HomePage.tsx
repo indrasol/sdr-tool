@@ -145,8 +145,10 @@ const HomePage = () => {
                     </div>
                   </div>
                   <div className="p-6 bg-white">
+
                     {/* Replace the Shield icon with video */}
-                    <div className="h-64 rounded-lg overflow-hidden">
+                    
+                    {/* <div className="h-64 rounded-lg overflow-hidden">
                       <video
                         className="w-full h-full object-cover"
                         controls
@@ -161,8 +163,17 @@ const HomePage = () => {
                         />
                         Your browser does not support the video tag.
                       </video>
-                    </div>
+                    </div> */}
                     {/* Caption or description below video */}
+
+                    <div className="h-64 rounded-lg bg-gray-100 flex items-center justify-center">
+                      <div className="text-center p-4">
+                        <p className="text-xl font-medium text-gray-600">
+                          Product Video Coming Soon...
+                        </p>
+                      </div>
+                    </div>
+
                     <div className="mt-4 space-y-2">
                       <div className="h-4 bg-gray-200 rounded w-3/4"></div>
                       <div className="h-4 bg-gray-200 rounded w-1/2"></div>
