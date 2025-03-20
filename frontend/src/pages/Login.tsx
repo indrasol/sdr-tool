@@ -100,10 +100,10 @@ const Login = ({ isOpen, onOpenChange, onSwitchToRegister }: LoginProps) => {
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={(onOpenChange) => {
+    <Dialog open={isOpen} onOpenChange={(open) => {
       // Prevent closing the dialog while login is in progress
-      // if (isLoading && !open) return;
-      // onOpenChange(open);
+      if (isLoading && !open) return;
+      onOpenChange(open);
     }}>
       <DialogContent className="sm:max-w-[425px] p-0 overflow-hidden rounded-2xl">
         <div className="flex flex-col">
@@ -163,7 +163,7 @@ const Login = ({ isOpen, onOpenChange, onSwitchToRegister }: LoginProps) => {
                         <FormControl>
                           <Input
                             className="pl-10 pr-10"
-                            placeholder="••••••••"
+                            placeholder="Type your password"
                             type={showPassword ? "text" : "password"}
                             {...field}
                             autoComplete="current-password"
