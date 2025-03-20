@@ -30,6 +30,7 @@ from alembic.config import Config
 from v1.api.health.health_monitor import health_monitor
 from v1.api.routes.health import setup_health_monitoring
 from services.logging import setup_logging
+import sys
 
 
 session_manager = SessionManager()
