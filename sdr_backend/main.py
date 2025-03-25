@@ -89,6 +89,7 @@ origins = [
     "http://localhost:5173",  # Vite default port
     "http://127.0.0.1:5173",
     "https://securetrackv1.netlify.app",
+    "https://development--securetrackv1.netlify.app"
 ]
 
 # Add CORS middleware
