@@ -1,99 +1,180 @@
-
 import React, { useState } from 'react';
-import { motion } from 'framer-motion';
-import { Search, X, Square, LayoutGrid, Circle, Type, Database, Cloud, Server, Folder, File, Settings, Users, Shield, Network, Code } from 'lucide-react';
-import { Node, XYPosition, useReactFlow } from '@xyflow/react';
+import { Filter, ChevronLeft, ChevronRight } from 'lucide-react';
+import { toolbarItems } from './toolbar/ToolbarItems';
+import { getCategoryStyle } from './utils/nodeStyles';
+import ToolbarSearch from './toolbar/ToolbarSearch';
+import ToolbarContent from './toolbar/ToolbarContent';
+import ToolbarFilters from './toolbar/ToolbarFilters';
+import { DiagramToolbarProps } from './toolbar/ToolbarTypes';
 
-interface DiagramToolbarProps {
-  onAddNode: (nodeType: string, position: XYPosition) => void;
+interface ExtendedDiagramToolbarProps extends DiagramToolbarProps {
+  isExpanded?: boolean;
+  onToggleExpand?: (expanded: boolean) => void;
 }
 
-const toolbarItems = [
-  { icon: Square, label: 'Square' },
-  { icon: LayoutGrid, label: 'Rectangle' },
-  { icon: Circle, label: 'Circle' },
-  { icon: Type, label: 'Text' },
-  { icon: Database, label: 'Database' },
-  { icon: Cloud, label: 'Cloud' },
-  { icon: Server, label: 'Server' },
-  { icon: Folder, label: 'Folder' },
-  { icon: File, label: 'File' },
-  { icon: Settings, label: 'Settings' },
-  { icon: Users, label: 'Users' },
-  { icon: Shield, label: 'Security' },
-  { icon: Network, label: 'Network' },
-  { icon: Code, label: 'Code' },
-];
-
-const DiagramToolbar: React.FC<DiagramToolbarProps> = ({ onAddNode }) => {
+const DiagramToolbar: React.FC<ExtendedDiagramToolbarProps> = ({ 
+  onAddNode, 
+  isExpanded = true,
+  onToggleExpand
+}) => {
   const [searchTerm, setSearchTerm] = useState('');
-  const { screenToFlowPosition } = useReactFlow();
+  const [activeCategory, setActiveCategory] = useState<string | null>(null);
+  const [isFiltersOpen, setIsFiltersOpen] = useState(false);
+  const [selectedProviders, setSelectedProviders] = useState<string[]>([]);
+  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
+  const [isCollapsed, setIsCollapsed] = useState(!isExpanded);
 
   const handleClearSearch = () => {
     setSearchTerm('');
   };
 
-  const handleToolClick = (toolType: string) => {
-    // Calculate a position in the center of the viewport
-    const centerPosition = screenToFlowPosition({
-      x: window.innerWidth / 2,
-      y: window.innerHeight / 2,
-    });
-    
-    onAddNode(toolType, centerPosition);
+  const toggleFilters = () => {
+    setIsFiltersOpen(!isFiltersOpen);
   };
 
-  const filteredTools = searchTerm
-    ? toolbarItems.filter(tool => 
-        tool.label.toLowerCase().includes(searchTerm.toLowerCase())
-      )
-    : toolbarItems;
+  const toggleCollapse = () => {
+    const newCollapsedState = !isCollapsed;
+    setIsCollapsed(newCollapsedState);
+    
+    if (onToggleExpand) {
+      onToggleExpand(!newCollapsedState);
+    }
+  };
+
+  const toggleProvider = (provider: string) => {
+    setSelectedProviders(prev => 
+      prev.includes(provider) 
+        ? prev.filter(p => p !== provider) 
+        : [...prev, provider]
+    );
+  };
+
+  const toggleCategory = (category: string) => {
+    setSelectedCategories(prev => 
+      prev.includes(category) 
+        ? prev.filter(c => c !== category) 
+        : [...prev, category]
+    );
+  };
+
+  const resetFilters = () => {
+    setSelectedProviders([]);
+    setSelectedCategories([]);
+    setActiveCategory(null);
+    setSearchTerm('');
+  };
+
+  const handleToolClick = (tool: typeof toolbarItems[0]) => {
+    const centerPosition = {
+      x: 250,
+      y: 150,
+    };
+    
+    const IconComponent = tool.icon;
+    
+    let iconColor = tool.color;
+    let iconBgColor = tool.bgColor;
+    
+    if (!iconColor || !iconBgColor) {
+      const categoryStyle = getCategoryStyle(tool.category);
+      iconColor = categoryStyle.color;
+      iconBgColor = categoryStyle.bgColor;
+    }
+    
+    const iconRenderer = () => {
+      return {
+        component: IconComponent,
+        props: {
+          size: 16,
+          className: "text-white"
+        },
+        bgColor: iconBgColor
+      };
+    };
+    
+    onAddNode(tool.label, centerPosition, iconRenderer);
+  };
+
+  const filteredTools = toolbarItems.filter(tool => {
+    const matchesSearch = tool.label.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesCategory = !activeCategory || tool.category === activeCategory;
+    const matchesProvider = selectedProviders.length === 0 || 
+      (tool.provider && selectedProviders.includes(tool.provider));
+    const matchesSelectedCategory = selectedCategories.length === 0 ||
+      selectedCategories.includes(tool.category);
+    
+    return matchesSearch && matchesCategory && matchesProvider && matchesSelectedCategory;
+  });
+
+  const categories = ['All', ...new Set(toolbarItems.map(item => item.category))];
+  const providers = ['AWS', 'Azure', 'GCP', 'Generic'];
+
+  if (isCollapsed) {
+    return (
+      <div className="h-full flex flex-col border-l border-gray-200 bg-white w-12">
+        <button 
+          onClick={toggleCollapse}
+          className="h-12 flex items-center justify-center hover:bg-gray-100 transition-colors"
+        >
+          <ChevronLeft size={16} />
+        </button>
+        <div className="flex-1 flex items-center justify-center">
+          <div className="transform -rotate-90 whitespace-nowrap text-gray-500 text-xs font-medium tracking-wide">
+            Diagram Tool bar
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="absolute top-0 left-0 right-0 z-10 bg-white shadow-md">
-      <div className="p-4">
-        <div className="relative mb-3">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={16} />
-          <input
-            type="text"
-            placeholder="Search tools..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-10 pr-10 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-securetrack-purple/20 focus:border-securetrack-purple"
-          />
-          {searchTerm && (
-            <button 
-              onClick={handleClearSearch}
-              className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+    <div className="h-full flex flex-col relative">
+      <div className="flex-1 flex flex-col h-full w-full bg-white shadow-sm overflow-hidden relative">
+        <div className="border-b border-gray-100 p-3 flex-shrink-0">
+          <div className="flex items-center gap-2">
+            <button
+              onClick={toggleCollapse}
+              className="p-1 hover:bg-gray-100 rounded-md flex-shrink-0"
             >
-              <X size={16} />
+              <ChevronRight size={16} className="text-gray-500" />
             </button>
+            <div className="flex-1">
+              <ToolbarSearch 
+                searchTerm={searchTerm}
+                setSearchTerm={setSearchTerm}
+                handleClearSearch={handleClearSearch}
+              />
+            </div>
+            <button
+              onClick={toggleFilters}
+              className="p-1 hover:bg-gray-100 rounded-md flex-shrink-0"
+            >
+              <Filter size={16} />
+            </button>
+          </div>
+        </div>
+        
+        <div className="flex-1 overflow-hidden relative">
+          <ToolbarContent 
+            filteredTools={filteredTools}
+            handleToolClick={handleToolClick}
+            isFiltersOpen={isFiltersOpen}
+          />
+          
+          {isFiltersOpen && (
+            <ToolbarFilters 
+              isOpen={isFiltersOpen}
+              onClose={toggleFilters}
+              providers={providers}
+              selectedProviders={selectedProviders}
+              toggleProvider={toggleProvider}
+              categories={categories.filter(c => c !== 'All')}
+              selectedCategories={selectedCategories}
+              toggleCategory={toggleCategory}
+              resetFilters={resetFilters}
+            />
           )}
         </div>
-        
-        <div className="flex flex-wrap gap-2">
-          {filteredTools.map((tool, index) => (
-            <motion.button
-              key={tool.label}
-              onClick={() => handleToolClick(tool.label)}
-              className="flex items-center justify-center gap-2 px-3 py-2 border border-gray-200 rounded-lg hover:bg-gray-50 hover:border-gray-300 transition-colors"
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              initial={{ opacity: 0, y: -10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: index * 0.03 }}
-            >
-              <tool.icon size={16} className="text-securetrack-purple" />
-              <span className="text-sm">{tool.label}</span>
-            </motion.button>
-          ))}
-        </div>
-        
-        {filteredTools.length === 0 && (
-          <div className="text-center py-4 text-gray-500">
-            No tools match your search
-          </div>
-        )}
       </div>
     </div>
   );

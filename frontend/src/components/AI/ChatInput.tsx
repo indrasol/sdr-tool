@@ -2,21 +2,29 @@ import React, { useState } from 'react';
 import { Textarea } from '@/components/ui/textarea';
 import BotIcon from './elements/BotIcon';
 import ActionBar from './ActionBar';
-import PlaceholderText from './PlaceholderText';
+import PlaceholderText, { getStaticPlaceholderText } from './PlaceholderText';
 import { WallpaperOption } from './types/chatTypes';
 
 interface ChatInputProps {
   onSendMessage: (message: string) => void;
-  onGenerateReport: () => void;
   hasMessages?: boolean;
+  onGenerateReport?: () => void;
+  onSaveProject?: () => void;
   onWallpaperChange?: (wallpaper: WallpaperOption) => void;
+  isThinking?: boolean;
+  projectId?: string;
+  isLoadedProject?: boolean;
 }
 
 const ChatInput: React.FC<ChatInputProps> = ({ 
   onSendMessage, 
-  onGenerateReport, 
   hasMessages = false,
-  onWallpaperChange
+  onGenerateReport,
+  onSaveProject,
+  onWallpaperChange,
+  isThinking = false,
+  projectId = '',
+  isLoadedProject = false
 }) => {
   const [input, setInput] = useState('');
   const [hasInteracted, setHasInteracted] = useState(false);
@@ -26,7 +34,7 @@ const ChatInput: React.FC<ChatInputProps> = ({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (input.trim()) {
+    if (input.trim() && !isThinking) {
       setIsProcessing(true);
       onSendMessage(input.trim());
       setInput('');
@@ -52,56 +60,69 @@ const ChatInput: React.FC<ChatInputProps> = ({
     }
   };
 
-  // Get placeholder text as a string
-  const placeholderText = PlaceholderText({ 
+  // Get placeholder text props
+  const placeholderProps = { 
     hasMessages, 
     messagesSent, 
     hasInteracted 
-  });
+  };
 
   // Only show the bot icon when there are messages or messages were sent, and no text in the input
   const showBotIcon = (hasMessages || messagesSent) && !input;
+  
+  // Determine if we should show the typing effect placeholder
+  const showTypingPlaceholder = !input && !isThinking && !hasInteracted && !messagesSent && !hasMessages;
+  
+  // Only set static placeholder when NOT showing the typing effect - leave completely empty when showing typing effect
+  const staticPlaceholder = showTypingPlaceholder ? "" : (isThinking ? "" : (showBotIcon ? "" : getStaticPlaceholderText(placeholderProps)));
 
   return (
-    <div className="p-3 bg-white border-t">
+    <div className="p-3 bg-white border-t sticky bottom-0 z-10 shadow-sm">
       <form onSubmit={handleSubmit} className="space-y-2">
         <div className="relative">
           <Textarea
             value={input}
             onChange={handleInputChange}
             onFocus={handleInputFocus}
-            placeholder={showBotIcon ? "" : placeholderText}
+            placeholder={staticPlaceholder}
             className={`min-h-[24px] max-h-[50px] rounded-xl border-gray-200 
               focus:border-securetrack-purple focus:ring-securetrack-purple/20 
-              transition-all shadow-sm text-left ${showBotIcon ? 'pl-28 pr-24' : 'pr-24'}`}
+              transition-all shadow-sm text-left ${showBotIcon ? 'pl-28 pr-24' : 'pr-24'}
+              ${isThinking ? 'bg-gray-50' : ''}`}
             onKeyDown={e => {
-              if (e.key === 'Enter' && !e.shiftKey) {
+              if (e.key === 'Enter' && !e.shiftKey && !isThinking) {
                 e.preventDefault();
                 handleSubmit(e);
               }
             }}
+            disabled={isThinking}
             style={{ 
-              textAlign: 'left', 
-              textIndent: '0px',
-              paddingTop: '8px',
-              paddingBottom: '8px',
+              paddingLeft: showBotIcon ? '7rem' : '1rem',
+              textAlign: 'left',
               caretColor: 'auto',
               direction: 'ltr',
-              unicodeBidi: 'normal',
-              textTransform: 'none',
-              msTextAutospace: 'none',
-              wordSpacing: 'normal',
-              textJustify: 'initial'
+              textIndent: '0px'
             }}
           />
           
           <BotIcon showIcon={showBotIcon} />
           
+          {/* Typing effect placeholder - appears as an overlay */}
+          {showTypingPlaceholder && (
+            <div className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none">
+              <PlaceholderText 
+                hasMessages={hasMessages} 
+                messagesSent={messagesSent} 
+                hasInteracted={hasInteracted} 
+              />
+            </div>
+          )}
+          
           <ActionBar 
             isInputEmpty={!input.trim()} 
-            isProcessing={isProcessing}
-            onGenerateReport={onGenerateReport}
+            isProcessing={isProcessing || isThinking}
             onWallpaperChange={onWallpaperChange}
+            projectId={projectId}
           />
         </div>
       </form>

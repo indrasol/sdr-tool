@@ -568,12 +568,12 @@ const AiAssisted = () => {
     }
   };
 
-
+ 
 
   return (
     <Layout>
       <div className="fixed top-16 left-0 right-0 bottom-0 overflow-hidden flex flex-col mt-2">
-        <div className="flex-1 flex gap-4 h-full overflow-hidden">
+       <div className="flex-1 flex gap-4 h-full overflow-hidden">
           <div className="w-full lg:w-1/3 overflow-hidden shadow-md rounded-r-xl">
             <AIChat 
               messages={messages} 

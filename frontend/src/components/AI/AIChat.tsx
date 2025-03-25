@@ -259,6 +259,8 @@ const AIChat: React.FC<AIChatProps> = ({
           <MessageList 
             messages={messages} 
             isLoading={isLoading}
+            isThinking={isLoading} 
+            thinking={thinking}
             isLoadedProject={isLoadedProject}
           />
           
@@ -284,7 +286,10 @@ const AIChat: React.FC<AIChatProps> = ({
             onSaveProject={onSaveProject}
             hasMessages={messages.length > 0}
             onWallpaperChange={handleWallpaperChange}
-            isDisabled={isLoading}
+            // isDisabled={isLoading}
+            isThinking={isLoading}
+            projectId={projectId}
+            isLoadedProject={isLoadedProject}
           />
         </>
       ) : (
