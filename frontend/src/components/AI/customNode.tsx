@@ -3,11 +3,13 @@ import React from 'react';
 import { Handle, Position, NodeResizer } from '@xyflow/react';
 import NodeContextToolbar from './NodeContextToolbar';
 import { NodeProps } from './types/diagramTypes';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 const CustomNode = ({ 
   id, 
   data, 
-  selected 
+  selected,
+  style
 }: NodeProps) => {
   // Ensure data is always defined with default values
   const nodeData = data || { label: 'Node' };
@@ -17,6 +19,7 @@ const CustomNode = ({
     label: string;
     description?: string;
     nodeType?: string;
+    iconRenderer?: () => { component: React.ElementType; props: any; bgColor: string };
     onEdit?: (id: string, label: string) => void;
     onDelete?: (id: string) => void;
   };
@@ -25,6 +28,7 @@ const CustomNode = ({
   const label = safeData.label || 'Node';
   const description = safeData.description || '';
   const nodeType = safeData.nodeType || 'Component';
+  const iconRenderer = safeData.iconRenderer;
 
   const handleEdit = (nodeId: string) => {
     if (safeData.onEdit) {
@@ -44,16 +48,42 @@ const CustomNode = ({
     console.log(`Info toggle for node ${nodeId}`);
   };
 
+  // Check if this is an AWS or cloud related node for special styling
+  const isCloudNode = nodeType.includes('AWS') || 
+                     ['EC2', 'RDS', 'S3', 'Lambda', 'CloudFront', 'IAM'].some(
+                       awsService => nodeType.includes(awsService)
+                     );
+
+  // Render the icon component if iconRenderer is provided
+  const renderIcon = () => {
+    if (iconRenderer) {
+      const iconData = iconRenderer();
+      const IconComponent = iconData.component;
+      return (
+        <div className="flex items-center justify-center w-full h-full">
+          <div 
+            className="w-5 h-5 flex items-center justify-center rounded" 
+            style={{ backgroundColor: iconData.bgColor }}
+          >
+            <IconComponent {...iconData.props} size={10} />
+          </div>
+        </div>
+      );
+    }
+    return null;
+  };
+
   return (
     <>
       {/* Add the NodeResizer component that appears when the node is selected */}
       {selected && (
         <NodeResizer 
-          minWidth={100}
-          minHeight={50}
+          minWidth={70}
+          minHeight={30}
           isVisible={!!selected}
           lineClassName="border-securetrack-purple"
-          handleClassName="h-3 w-3 bg-white border-2 border-securetrack-purple rounded"
+          handleClassName="h-2 w-2 bg-white border-2 border-securetrack-purple rounded"
+          handleStyle={{ borderWidth: 2 }}
         />
       )}
       
@@ -70,14 +100,45 @@ const CustomNode = ({
         onInfoToggle={handleInfoToggle}
       />
 
-      <div className="custom-node flex items-center justify-center w-full h-full bg-white rounded-lg border border-gray-200 p-2 shadow-sm">
-        <div className="font-medium text-center">
+      <div 
+        className={`custom-node flex flex-col items-center justify-center w-full h-full bg-white rounded-lg border ${selected ? 'border-securetrack-purple border-2' : 'border-gray-200'} p-1 shadow-sm transition-all duration-200 ${selected ? 'shadow-md' : ''}`}
+        style={style}
+      >
+        {iconRenderer && (
+          <div className="mb-1">
+            {renderIcon()}
+          </div>
+        )}
+        <div className={`font-medium text-center text-xs ${isCloudNode ? 'text-securetrack-purple' : ''}`}>
           {label}
         </div>
+        
+        {description && (
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div className="text-[9px] text-gray-500 mt-0.5 truncate max-w-full text-center cursor-help">
+                  {description.length > 12 ? `${description.substring(0, 12)}...` : description}
+                </div>
+              </TooltipTrigger>
+              <TooltipContent className="bg-white z-[9999] text-xs p-2">
+                {description}
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        )}
       </div>
 
-      <Handle type="target" position={Position.Left} />
-      <Handle type="source" position={Position.Right} />
+      <Handle 
+        type="target" 
+        position={Position.Left} 
+        className="w-1.5 h-1.5 border-2 border-securetrack-purple bg-white"
+      />
+      <Handle 
+        type="source" 
+        position={Position.Right} 
+        className="w-1.5 h-1.5 border-2 border-securetrack-purple bg-white"
+      />
     </>
   );
 };

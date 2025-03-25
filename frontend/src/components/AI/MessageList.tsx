@@ -8,12 +8,17 @@ import './MessageList.css'
 
 interface MessageListProps {
   messages: Message[];
+  isThinking: boolean;
+  thinking?: { text: string; hasRedactedContent: boolean } | null;
+  error?: string | null;
   isLoading?: boolean;
   isLoadedProject?: boolean;
 }
 
-const MessageList: React.FC<MessageListProps> = ({ messages, isLoading = false, isLoadedProject = false  }) => {
+const MessageList: React.FC<MessageListProps> = ({ messages, isThinking = false, thinking = null, error = null, isLoading = false, isLoadedProject = false  }) => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  // console.log("MessageList rendering with messages:", messages);
 
   // Scroll to bottom of messages
   useEffect(() => {
@@ -64,3 +69,118 @@ const MessageList: React.FC<MessageListProps> = ({ messages, isLoading = false, 
 };
 
 export default MessageList;
+
+// import React, { useRef, useEffect } from 'react';
+// import ChatMessage, { Message } from './ChatMessage';
+// import EmptyChatState from './EmptyChatState';
+// import ThinkingIndicator from './Thinkingindicator';
+// import { ScrollArea } from '@/components/ui/scroll-area';
+// import { Alert, AlertDescription } from '@/components/ui/alert';
+// import ThinkingDisplay from './ThinkingDisplay';
+
+// interface MessageListProps {
+//   messages: Message[];
+//   isThinking?: boolean;
+//   thinking?: { text: string; hasRedactedContent: boolean } | null;
+//   error?: string | null;
+//   isLoadedProject?: boolean; // Add this prop to track if project was loaded
+// }
+
+// const MessageList: React.FC<MessageListProps> = ({ 
+//   messages, 
+//   isThinking = false, 
+//   thinking = null,
+//   error = null,
+//   isLoadedProject = false // Default to false if not provided
+// }) => {
+//   const messagesEndRef = useRef<HTMLDivElement>(null);
+//   const scrollAreaRef = useRef<HTMLDivElement>(null);
+
+//   // Fixed scroll to bottom implementation
+//   useEffect(() => {
+//     if (messagesEndRef.current) {
+//       setTimeout(() => {
+//         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+//       }, 50);
+//     }
+//   }, [messages, isThinking, error, thinking]);
+
+//   // useEffect(() => {
+//   //   console.log("Messages state updated:", messages);
+//   // }, [messages]);
+  
+
+
+//   return (
+//     <div className="flex-grow overflow-hidden relative" style={{ height: 'calc(100vh - 180px)' }}>
+//       <ScrollArea className="h-full pr-1 absolute inset-0" scrollHideDelay={300}>
+//         <div className="p-4 pb-20" ref={scrollAreaRef}>
+//           <div className="flex flex-col space-y-3">
+//             {messages.length === 0 && !isThinking && !error ? (
+//               <EmptyChatState />
+//             ) : (
+//               <>
+//                 {messages.map((message, index) => {
+//                   // Determine if this message should skip the typing animation:
+//                   // 1. If it's explicitly marked as already typed
+//                   // 2. If it's marked as pre-existing
+//                   // 3. If we're loading a project and this isn't the most recent message
+//                   const shouldSkipTyping = 
+//                   message.isAlreadyTyped === true || 
+//                   message.isPreExisting === true || 
+//                   (isLoadedProject && index < messages.length - 1);
+
+//                   // console.log(`Messages inside render : ${message}`)
+//                   // console.log(`Messages already typed : ${message.isAlreadyTyped}`)
+//                   // console.log(`shouldSkipTyping  : ${shouldSkipTyping}`)
+                  
+//                   return (
+//                     <ChatMessage 
+//                       key={index} 
+//                       message={message}
+//                       isLoadedProject={isLoadedProject}
+//                       // message={{
+//                       //   ...message,
+//                       //   isAlreadyTyped: shouldSkipTyping
+//                       // }} 
+//                       index={index} 
+//                     />
+//                   );
+//                 })}
+//               </>
+//             )}
+            
+//             {/* Error message */}
+//             {error && (
+//               <Alert variant="destructive" className="my-2">
+//                 <AlertDescription>{error}</AlertDescription>
+//               </Alert>
+//             )}
+            
+//             {/* Position the thinking indicator within the message flow */}
+//             {isThinking && (
+//               <div className="py-2 mb-4">
+//                 <ThinkingIndicator />
+//               </div>
+//             )}
+            
+//             {/* Thinking content display */}
+//             {thinking && thinking.text && (
+//               <div className="my-2">
+//                 <ThinkingDisplay
+//                   thinking={thinking.text}
+//                   hasRedactedThinking={thinking.hasRedactedContent}
+//                 />
+//               </div>
+//             )}
+            
+//             {/* This invisible element helps with scrolling to the bottom */}
+//             <div ref={messagesEndRef} className="h-4" />
+//           </div>
+//         </div>
+//       </ScrollArea>
+//     </div>
+//   );
+// };
+
+// export default MessageList;
