@@ -188,7 +188,9 @@ async def get_project(
             "domain": project_response["domain"],
             "templateType": project_response["template_type"],
             "importedFile": project_response["imported_file"],
-            "tenantId": project_response["tenant_id"]
+            "tenantId": project_response["tenant_id"],
+            "dfd_data": project_response["dfd_data"],
+            "threat_model_id": project_response["threat_model_id"]
         }
 
     except HTTPException:

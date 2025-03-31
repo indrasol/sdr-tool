@@ -1,21 +1,24 @@
 import React, { useState } from 'react';
 import { Filter, ChevronLeft, ChevronRight } from 'lucide-react';
 import { toolbarItems } from './toolbar/ToolbarItems';
+import { dfdToolbarItems } from '@/components/AI/toolbar/DFDToolbarItems';
 import { getCategoryStyle } from './utils/nodeStyles';
 import ToolbarSearch from './toolbar/ToolbarSearch';
 import ToolbarContent from './toolbar/ToolbarContent';
 import ToolbarFilters from './toolbar/ToolbarFilters';
-import { DiagramToolbarProps } from './toolbar/ToolbarTypes';
+import { DiagramToolbarProps } from '@/components/AI/toolbar/ToolbarTypes';
 
 interface ExtendedDiagramToolbarProps extends DiagramToolbarProps {
   isExpanded?: boolean;
   onToggleExpand?: (expanded: boolean) => void;
+  viewMode?: 'AD' | 'DFD';
 }
 
 const DiagramToolbar: React.FC<ExtendedDiagramToolbarProps> = ({ 
   onAddNode, 
   isExpanded = true,
-  onToggleExpand
+  onToggleExpand,
+  viewMode = 'AD'
 }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
@@ -23,6 +26,9 @@ const DiagramToolbar: React.FC<ExtendedDiagramToolbarProps> = ({
   const [selectedProviders, setSelectedProviders] = useState<string[]>([]);
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [isCollapsed, setIsCollapsed] = useState(!isExpanded);
+
+  // Use appropriate toolbar items based on viewMode
+  const items = viewMode === 'DFD' ? dfdToolbarItems : toolbarItems;
 
   const handleClearSearch = () => {
     setSearchTerm('');
@@ -64,7 +70,7 @@ const DiagramToolbar: React.FC<ExtendedDiagramToolbarProps> = ({
     setSearchTerm('');
   };
 
-  const handleToolClick = (tool: typeof toolbarItems[0]) => {
+  const handleToolClick = (tool: typeof items[0]) => {
     const centerPosition = {
       x: 250,
       y: 150,
@@ -95,7 +101,7 @@ const DiagramToolbar: React.FC<ExtendedDiagramToolbarProps> = ({
     onAddNode(tool.label, centerPosition, iconRenderer);
   };
 
-  const filteredTools = toolbarItems.filter(tool => {
+  const filteredTools = items.filter(tool => {
     const matchesSearch = tool.label.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesCategory = !activeCategory || tool.category === activeCategory;
     const matchesProvider = selectedProviders.length === 0 || 
@@ -106,8 +112,11 @@ const DiagramToolbar: React.FC<ExtendedDiagramToolbarProps> = ({
     return matchesSearch && matchesCategory && matchesProvider && matchesSelectedCategory;
   });
 
-  const categories = ['All', ...new Set(toolbarItems.map(item => item.category))];
-  const providers = ['AWS', 'Azure', 'GCP', 'Generic'];
+  // Get categories and providers from the active items list
+  const categories = ['All', ...Array.from(new Set(items.map(item => item.category)))] as string[];
+  const providers = viewMode === 'DFD' 
+    ? [] // No providers filtering for DFD
+    : ['AWS', 'Azure', 'GCP', 'Generic'];
 
   if (isCollapsed) {
     return (
@@ -120,7 +129,7 @@ const DiagramToolbar: React.FC<ExtendedDiagramToolbarProps> = ({
         </button>
         <div className="flex-1 flex items-center justify-center">
           <div className="transform -rotate-90 whitespace-nowrap text-gray-500 text-xs font-medium tracking-wide">
-            Diagram Tool bar
+            {viewMode === 'DFD' ? 'Threat Model Components' : 'Diagram Tool bar'}
           </div>
         </div>
       </div>
@@ -145,12 +154,14 @@ const DiagramToolbar: React.FC<ExtendedDiagramToolbarProps> = ({
                 handleClearSearch={handleClearSearch}
               />
             </div>
-            <button
-              onClick={toggleFilters}
-              className="p-1 hover:bg-gray-100 rounded-md flex-shrink-0"
-            >
-              <Filter size={16} />
-            </button>
+            {providers.length > 0 && (
+              <button
+                onClick={toggleFilters}
+                className="p-1 hover:bg-gray-100 rounded-md flex-shrink-0"
+              >
+                <Filter size={16} />
+              </button>
+            )}
           </div>
         </div>
         
@@ -161,7 +172,7 @@ const DiagramToolbar: React.FC<ExtendedDiagramToolbarProps> = ({
             isFiltersOpen={isFiltersOpen}
           />
           
-          {isFiltersOpen && (
+          {isFiltersOpen && providers.length > 0 && (
             <ToolbarFilters 
               isOpen={isFiltersOpen}
               onClose={toggleFilters}
