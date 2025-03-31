@@ -47,7 +47,11 @@ class SupabaseManager:
         user_id: str,
         project_code: str,
         conversation_history: List[Dict[str, Any]] = None,
-        diagram_state: Dict[str, Any] = None
+        diagram_state: Dict[str, Any] = None,
+        # pytm_model_code: Optional[str] = None,
+        dfd_data: Dict[str, Any] = None,
+        threat_model_id: Optional[str] = None,
+        dfd_generation_status: str = None
     ):
         """
         Update project data for a given user and project.
@@ -57,6 +61,7 @@ class SupabaseManager:
             project_code: The unique code of the project (e.g., "P123").
             conversation_history: Updated conversation history (optional).
             diagram_state: Updated diagram state (optional).
+            dfd_generation_status: Status of DFD generation 
 
         Raises:
             ValueError: If the project does not exist or user does not have access.
@@ -77,6 +82,19 @@ class SupabaseManager:
             update_data["conversation_history"] = conversation_history
         if diagram_state is not None:
             update_data["diagram_state"] = diagram_state
+        # if pytm_model_code is not None:
+        #     update_data["pytm_model_code"] = pytm_model_code
+        if dfd_data is not None:
+            update_data["dfd_data"] = dfd_data
+        if threat_model_id is not None:
+            update_data["threat_model_id"] = threat_model_id
+        if dfd_generation_status is not None:
+            # Convert dictionary to JSON string before storing
+            if isinstance(dfd_generation_status, dict):
+                import json
+                update_data["dfd_generation_status"] = json.dumps(dfd_generation_status)
+            else:
+                update_data["dfd_generation_status"] = dfd_generation_status
         
         def update_project():
             return self.supabase.from_("projects").update(update_data).eq("project_code", project_code).eq("user_id", user_id).execute()
@@ -223,6 +241,7 @@ class SupabaseManager:
         priority: Optional[ProjectPriority] = None,
         sort_by: Optional[str] = "created_date",
         sort_order: Optional[str] = "desc",
+        project_code_filter: Optional[str] = None,
         limit: int = 10,
         offset: int = 0
     ) -> List[Dict[str, Any]]:
@@ -241,6 +260,8 @@ class SupabaseManager:
             query = query.eq("status", status.value)  # Use enum string value for query
         if priority is not None:
             query = query.eq("priority", priority.value)  # Use enum string value for query
+        if project_code_filter:
+            query = query.eq("project_code", project_code_filter)
 
         # Apply sorting
         if sort_by and sort_order:
@@ -312,5 +333,8 @@ class SupabaseManager:
             "created_at": created_at,
             "updated_at": updated_at,
             "conversation_history": project.get("conversation_history", []),
-            "diagram_state": project.get("diagram_state", {"nodes": [], "edges": []})
+            "diagram_state": project.get("diagram_state", {"nodes": [], "edges": []}),
+            # "pytm_model_code": project.get("pytm_model_code"),
+            "dfd_data": project.get("dfd_data"),
+            "threat_model_id": project.get("threat_model_id")
         }

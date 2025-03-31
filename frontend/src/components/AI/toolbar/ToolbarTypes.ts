@@ -1,14 +1,15 @@
-
 import { Node } from '@xyflow/react';
 import { CustomNodeData } from '../types/diagramTypes';
 
 export interface ToolbarItem {
   icon: React.ElementType;
   label: string;
-  category: 'General' | 'AWS' | 'Network' | 'Security' | 'Azure' | 'GCP' | 'DevOps' | 'Infrastructure' | 'IoT' | 'Containers' | 'Database' | 'Analytics' | 'Storage' | 'Compute' | 'Serverless' | 'Messaging';
+  category: 'General' | 'AWS' | 'Network' | 'Security' | 'Azure' | 'GCP' | 'DevOps' | 'Infrastructure' | 'IoT' | 'Containers' | 'Database' | 'Analytics' | 'Storage' | 'Compute' | 'Serverless' | 'Messaging' | 
+    // DFD-specific categories
+    'DFD Elements' | 'External Entities' | 'Processes' | 'Data Stores' | 'Security Controls' | 'Boundaries';
   color?: string;
   bgColor?: string;
-  provider?: 'AWS' | 'Azure' | 'GCP' | 'Generic';
+  provider?: 'AWS' | 'Azure' | 'GCP' | 'Generic' | 'DFD';
   tags?: string[];
 }
 

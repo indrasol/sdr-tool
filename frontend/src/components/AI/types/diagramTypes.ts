@@ -25,11 +25,15 @@ export interface NodeEditData {
   description?: string;
 }
 
+type ViewMode = 'AD' | 'DFD';
+
 export interface AIFlowDiagramProps {
   nodes: Node<CustomNodeData>[];
   edges: Edge[];
   setNodes: React.Dispatch<React.SetStateAction<Node<CustomNodeData>[]>>;
   setEdges: React.Dispatch<React.SetStateAction<Edge[]>>;
+  viewMode: ViewMode; // Receive view mode
+  onSwitchView: (mode: ViewMode) => void; 
   onZoomIn?: () => void;
   onZoomOut?: () => void;
   onFitView?: () => void;

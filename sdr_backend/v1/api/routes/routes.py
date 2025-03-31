@@ -13,7 +13,6 @@ from v1.api.routes.register.login import router as login_router
 from v1.api.routes.register.auth import router as auth_router
 # Model With AI -  Design
 from v1.api.routes.model_with_ai.design import router as design_router
-from v1.api.routes.model_with_ai.dummy_design import router as dummy_design_router
 # Model With AI - Reports
 # from v1.api.routes.model_with_ai.reports.generate_report import router as generate_report_router
 # from v1.api.routes.model_with_ai.reports.update_report import router as update_report_router
@@ -30,6 +29,10 @@ from v1.api.routes.redis_cache_route import router as redis_cache_router
 # Health
 from v1.api.routes.health import router as health_router
 
+#Threat Model
+# from v1.api.routes.model_with_ai.dfd import router as dfd_router
+from v1.api.routes.model_with_ai.threat_model import router as threat_model_router
+
 
 router = APIRouter()
 
@@ -43,9 +46,10 @@ router = APIRouter()
 router.include_router(register_router, tags=["Register - sign_up_router"])
 router.include_router(login_router, tags=["Register - login_router"])
 router.include_router(auth_router, tags=["Register - auth_router"])
-# Model With AI - Design
+
+# Model With AI 
 router.include_router(design_router, tags=["model_with_ai - design_router"])
-router.include_router(dummy_design_router, tags=["model_with_ai - dummy_design_router"])
+router.include_router(threat_model_router, tags=["model_with_ai - threat_model_router"])
 
 # Model With AI - Reports
 # router.include_router(generate_report_router, tags=["model_with_ai - generate_report_router"])

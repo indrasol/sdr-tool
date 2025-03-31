@@ -41,6 +41,9 @@ class Project(Base):
     due_date = Column(Date, nullable=True)  
     creator = Column(String, nullable=False)  
     assigned_to = Column(String, nullable=True)  
+    threat_model_id = Column(String, nullable=True, index=True)
+    dfd_generation_status = Column(String, nullable=True, index=True)
+    dfd_data = Column(JSONB, default=None)
     domain = Column(String, nullable=True)  
     template_type = Column(String, nullable=True)  
     imported_file = Column(String, nullable=True)  
@@ -51,6 +54,7 @@ class Project(Base):
     tenant = relationship("Tenant", back_populates="projects")
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+    diagram_updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
 
     def to_dict(self):
         """Convert project to a dictionary for JSON response."""
@@ -71,7 +75,11 @@ class Project(Base):
             "created_at": self.created_at.isoformat() if self.created_at else None,
             "updated_at": self.updated_at.isoformat() if self.updated_at else None,
             "conversation_history": self.conversation_history,
-            "diagram_state": self.diagram_state
+            "diagram_state": self.diagram_state,
+            "threat_model_id" : self.threat_model_id,
+            "dfd_data" : self.dfd_model,
+            "dfd_generation_status" : self.dfd_generation_status,
+            "diagram_updated_at" : self.diagram_updated_at
         }
 class Tenant(Base):
     __tablename__ = "tenants"

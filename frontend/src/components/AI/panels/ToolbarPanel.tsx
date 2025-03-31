@@ -1,12 +1,13 @@
-
 import React, { useState } from 'react';
 import DiagramToolbar from '../DiagramToolbar';
 
 interface ToolbarPanelProps {
   onAddNode: (nodeType: string, position: { x: number; y: number }, iconRenderer?: any) => void;
+  viewMode?: 'AD' | 'DFD';
 }
 
-const ToolbarPanel: React.FC<ToolbarPanelProps> = ({ onAddNode }) => {
+const ToolbarPanel: React.FC<ToolbarPanelProps> = ({ onAddNode, viewMode = 'AD' }) => {
+  console.log('ToolbarPanel rendering'); // Debug statement
   const [isExpanded, setIsExpanded] = useState(true);
   
   const handleToggleExpand = (expanded: boolean) => {
@@ -19,6 +20,7 @@ const ToolbarPanel: React.FC<ToolbarPanelProps> = ({ onAddNode }) => {
         onAddNode={onAddNode}
         isExpanded={isExpanded}
         onToggleExpand={handleToggleExpand}
+        viewMode={viewMode}
       />
     </div>
   );

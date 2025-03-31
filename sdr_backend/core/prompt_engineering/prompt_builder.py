@@ -253,12 +253,77 @@ class PromptBuilder:
         
         return prompt
     
+    # Add to your existing PromptBuilder class
+    async def build_dfd_prompt(
+        self, 
+        query: str, 
+        conversation_history: List[Dict[str, Any]], 
+        diagram_state: Optional[Dict[str, Any]]
+    ) -> str:
+        """
+        Build a prompt for DFD and threat analysis.
+        
+        Args:
+            query: The user's query
+            conversation_history: List of previous exchanges
+            diagram_state: Current state of the diagram
+            
+        Returns:
+            A formatted prompt string
+        """
+        # Format conversation history
+        formatted_history = await self._format_conversation_history(conversation_history)
+        
+        prompt = f"""
+        You are Guardian AI, an expert cybersecurity architecture assistant specializing in threat modeling.
+        You are analyzing a Data Flow Diagram (DFD) that represents system architecture and data flows.
+        
+        # DFD Context:
+        The diagram shows components, boundaries, and data flows in the system.
+        Threats have been identified based on STRIDE threat modeling methodology:
+        - Spoofing: Impersonating something or someone else
+        - Tampering: Modifying data or code
+        - Repudiation: Claiming to not have performed an action
+        - Information Disclosure: Exposing information to unauthorized individuals
+        - Denial of Service: Denying or degrading service to users
+        - Elevation of Privilege: Gaining capabilities without proper authorization
+        
+        # Conversation History:
+        {formatted_history}
+        
+        # User Request:
+        {query}
+        
+        Think deeply about the security implications of the DFD and the user's question.
+        Consider potential threats, vulnerabilities, and security controls that should be in place.
+        
+        When providing your response, use this JSON structure:
+        ```json
+        {{
+            "message": "Your detailed explanation or answer to the user's question",
+            "confidence": 0.95,
+            "threats_to_explain": [
+                // IDs of specific threats to highlight and explain (if relevant)
+            ],
+            "recommendations": [
+                // Security recommendations based on the identified threats
+            ]
+        }}
+        ```
+        
+        Provide concrete, actionable security advice based on the DFD and identified threats.
+        Focus on practical mitigations rather than theoretical concerns.
+        """
+        
+        return prompt
+    
     async def build_prompt_by_intent(
         self,
         intent: ResponseType,
         query: str,
         conversation_history: List[Dict[str, Any]],
-        diagram_state: Optional[Dict[str, Any]] = None
+        diagram_state: Optional[Dict[str, Any]] = None,
+        view_mode: str = "AD"
     ) -> str:
         """
         Build a prompt based on the detected user intent.
@@ -268,10 +333,17 @@ class PromptBuilder:
             query: The user's query
             conversation_history: List of previous exchanges
             diagram_state: Current state of the architecture diagram
+            view_mode: Current view mode (AD or DFD)
             
         Returns:
             A formatted prompt string
         """
+
+        # Special handling for DFD view mode
+        if view_mode == "DFD":
+            return await self.build_dfd_prompt(query, conversation_history, diagram_state)
+
+        
         if intent == ResponseType.ARCHITECTURE:
             return await self.build_architecture_prompt(query, conversation_history, diagram_state)
         elif intent == ResponseType.EXPERT:

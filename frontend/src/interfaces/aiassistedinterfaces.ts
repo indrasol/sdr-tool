@@ -7,6 +7,7 @@ export interface DesignRequest {
       edges: any[];
     };
     session_id?: string;
+    view_mode: string;
   }
   
   export enum ResponseType {
@@ -70,3 +71,51 @@ export interface DesignRequest {
     // Out-of-context-specific fields
     suggestion?: string;
   }
+
+  export interface DFDGenerationStartedResponse {
+    message: string;
+    project_code: string;
+    detail?: string;
+  }
+
+  export interface DFDElement {
+    id: string;
+    type: string;
+    label: string;
+    properties: Record<string, unknown>;
+    boundary_id?: string;
+  }
+
+export interface DFDDataFlow {
+    id: string;
+    source: string;
+    target: string;
+    label: string;
+    properties: Record<string, unknown>;
+}
+
+export interface DFDBoundary {
+    id: string;
+    label: string;
+    element_ids: string[];
+}
+
+export interface DFDThreat {
+    id: string;
+    description: string;
+    severity: string;
+    target_element_id: string;
+    target_element_type: string;
+    title?: string;
+    status?: string;
+}
+
+export interface DFDData {
+    threat_model_id: string;
+    nodes: DFDElement[];
+    edges: DFDDataFlow[];
+    boundaries: DFDBoundary[];
+    threats: DFDThreat[];
+    generated_at: string;
+    name?: string;
+}
