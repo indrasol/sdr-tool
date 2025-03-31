@@ -1,127 +1,140 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 
 interface UseTypingEffectOptions {
-  texts: string[];
+  text: string;
   typingSpeed?: number;
-  pauseAtEnd?: number;
-  pauseAtStart?: number;
   blinkCursor?: boolean;
   shouldType?: boolean;
 }
 
-/**
- * Custom hook for creating a typewriter effect.
- */
 export const useTypingEffect = ({
-  texts,
-  typingSpeed = 100,
-  pauseAtEnd = 2000,
-  pauseAtStart = 700,
+  text = '',
+  typingSpeed = 5,
   blinkCursor = true,
-  shouldType
+  shouldType = true
 }: UseTypingEffectOptions) => {
   const [displayText, setDisplayText] = useState('');
-  const [currentTextIndex, setCurrentTextIndex] = useState(0);
-  const [charIndex, setCharIndex] = useState(0);
-  const [isTypingForward, setIsTypingForward] = useState(true);
-  const [showCursor, setShowCursor] = useState(true);
   const [isComplete, setIsComplete] = useState(false);
-  const [blinkCount, setBlinkCount] = useState(0);
-  const [blinkTimeout, setBlinkTimeout] = useState<NodeJS.Timeout | null>(null);
-
-  // Blinking cursor effect
+  
+  // Track if the hook is mounted to avoid state updates after unmount
+  const isMounted = useRef(true);
+  // Track current position in text
+  const currentPosition = useRef(0);
+  // Track last update time for performance optimization
+  const lastUpdateTime = useRef(Date.now());
+  // Store the text to be typed to avoid rerenders changing it mid-typing
+  const textToType = useRef(text);
+  
+  // Set up cleanup on unmount
   useEffect(() => {
-    if (!blinkCursor) return;
-    
-    let cursorInterval: NodeJS.Timeout;
-    
-    if (isComplete) {
-      // If typing is complete, blink exactly 2 times then hide cursor
-      if (blinkCount < 4) { // 4 state changes = 2 complete blinks (on->off->on->off)
-        const blinkTimer = setTimeout(() => {
-          setShowCursor(prev => !prev);
-          setBlinkCount(prev => prev + 1);
-        }, 500);
-        
-        setBlinkTimeout(blinkTimer);
-        return () => clearTimeout(blinkTimer);
-      } else {
-        setShowCursor(false);
-      }
-    } else {
-      // During typing, keep cursor visible without blinking
-      setShowCursor(true);
+    return () => {
+      isMounted.current = false;
+    };
+  }, []);
+
+  // Update the text to type if it changes
+  useEffect(() => {
+    textToType.current = text;
+    // Reset state when text changes
+    setDisplayText('');
+    setIsComplete(false);
+    currentPosition.current = 0;
+    lastUpdateTime.current = Date.now();
+  }, [text]);
+  
+  // Handle the typing animation
+  useEffect(() => {
+    // If we shouldn't animate or no text, just show the full text immediately
+    if (!shouldType || !textToType.current) {
+      setDisplayText(textToType.current);
+      setIsComplete(true);
+      return;
     }
     
-    return () => {
-      if (cursorInterval) clearInterval(cursorInterval);
-      if (blinkTimeout) clearTimeout(blinkTimeout);
-    };
-  }, [blinkCursor, isComplete, blinkCount, blinkTimeout]);
-
-  useEffect(() => {
-    if (!texts || texts.length === 0) return;
-
-    // For single text with no loop, just type it out once
-    const isSingleUse = texts.length === 1 && pauseAtEnd === 0;
+    // If we've typed everything, mark as complete
+    if (currentPosition.current >= textToType.current.length) {
+      if (!isComplete) {
+        setIsComplete(true);
+      }
+      return;
+    }
     
-    const timer = setTimeout(() => {
-      const currentFullText = texts[currentTextIndex];
-
-      if (isTypingForward) {
-        // Typing forward
-        if (charIndex < currentFullText.length) {
-          setDisplayText(currentFullText.substring(0, charIndex + 1));
-          setCharIndex(charIndex + 1);
-        } else {
-          // Reached the end
-          if (isSingleUse) {
-            setIsComplete(true);
-            setBlinkCount(0); // Reset blink count to start the final 2 blinks
-            return;
+    // Function to perform typing animation
+    const performTyping = () => {
+      if (!isMounted.current) return;
+      
+      const now = Date.now();
+      const elapsed = now - lastUpdateTime.current;
+      
+      // Only update if enough time has passed based on typing speed
+      if (elapsed >= typingSpeed) {
+        // Calculate how many characters to type
+        // We want Claude-like typing - not too fast, not too slow
+        const baseChars = Math.max(1, Math.floor(elapsed / typingSpeed));
+        
+        // Type faster for longer content but preserve the Claude-like rhythm
+        // Logarithmic scaling to handle very long content
+        const lengthFactor = Math.log10(Math.max(10, textToType.current.length / 100));
+        const charsToType = Math.min(5, Math.max(1, Math.round(baseChars * lengthFactor * 0.5)));
+        
+        // Slow down typing near paragraph and line endings to emulate natural pausing
+        const lookAhead = textToType.current.substring(
+          currentPosition.current, 
+          currentPosition.current + 20
+        );
+        
+        // If we're approaching a paragraph or line break, type slower
+        const nearBreak = /[.!?]\s|\n/.test(lookAhead.substring(0, 3));
+        const actualCharsToType = nearBreak ? 1 : charsToType;
+        
+        // Calculate new position, ensuring we don't go beyond text length
+        let newPosition = Math.min(
+          textToType.current.length, 
+          currentPosition.current + actualCharsToType
+        );
+        
+        // Special handling for newlines and punctuation to create natural pauses
+        if (nearBreak && newPosition < textToType.current.length) {
+          // Find the next break point
+          const nextBreak = textToType.current.substring(newPosition).search(/[.!?]\s|\n/);
+          if (nextBreak > -1 && nextBreak < 10) {
+            // Include the break point in this chunk to create a natural pause
+            newPosition = newPosition + nextBreak + 1;
           }
-          
-          // Pause before starting to delete
-          setIsTypingForward(false);
-          return pauseAtEnd;
         }
-      } else {
-        // Deleting
-        if (charIndex > 0) {
-          setDisplayText(currentFullText.substring(0, charIndex - 1));
-          setCharIndex(charIndex - 1);
-        } else {
-          // Fully deleted, move to the next text
-          setIsTypingForward(true);
-          setCurrentTextIndex((currentTextIndex + 1) % texts.length);
-          return pauseAtStart;
+        
+        // Add the next characters
+        setDisplayText(textToType.current.substring(0, newPosition));
+        
+        // Update position and timestamp
+        currentPosition.current = newPosition;
+        lastUpdateTime.current = now;
+        
+        // Add delays near paragraph endings to simulate natural pausing
+        if (textToType.current.charAt(newPosition - 1) === '\n' || 
+            /[.!?]\s/.test(textToType.current.substring(newPosition - 2, newPosition))) {
+          // Add extra delay after paragraph or sentence endings
+          lastUpdateTime.current = now - (typingSpeed * 0.5);
         }
       }
-    }, isTypingForward ? typingSpeed : typingSpeed / 2);
+      
+      // Continue animation if not complete
+      if (currentPosition.current < textToType.current.length) {
+        requestAnimationFrame(performTyping);
+      } else {
+        setIsComplete(true);
+      }
+    };
     
-    return () => clearTimeout(timer);
-  }, [
-    charIndex, 
-    currentTextIndex, 
-    isTypingForward, 
-    texts, 
-    typingSpeed, 
-    pauseAtEnd, 
-    pauseAtStart
-  ]);
+    // Start typing animation
+    const animationFrame = requestAnimationFrame(performTyping);
+    return () => cancelAnimationFrame(animationFrame);
+  }, [shouldType, isComplete, typingSpeed]);
 
-  // Return only the raw text without any HTML, useful for places where we don't want HTML tags
-  const rawText = displayText;
-
-  // Create the AI icon cursor HTML
-  const cursorHtml = showCursor && blinkCursor ? 
-    `<span class="inline-flex ml-1 text-securetrack-purple"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="opacity-80"><path d="M12 8V4H8"></path><rect width="16" height="12" x="4" y="8" rx="2"></rect><path d="M2 14h2"></path><path d="M20 14h2"></path><path d="M15 13v2"></path><path d="M9 13v2"></path></svg></span>` : 
-    `<span class="inline-block w-0 h-0"></span>`;
-
-  return { 
-    displayText: blinkCursor ? `${displayText}${cursorHtml}` : displayText,
-    rawText, // This is the pure text without any HTML
+  return {
+    displayText: displayText,
+    rawText: displayText, // Pure text without any HTML
     isComplete,
-    shouldType
+    progress: textToType.current ? currentPosition.current / textToType.current.length : 1
   };
 };

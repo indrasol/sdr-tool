@@ -1,64 +1,29 @@
 // src/services/designService.ts
-import { DesignRequest, DesignResponse, ResponseType, ArchitectureResponse, ExpertResponse, ClarificationResponse, OutOfContextResponse } from '@/interfaces/aiassistedinterfaces';
+import { DesignRequest, DesignResponse, ResponseType, ArchitectureResponse, DFDData, ExpertResponse, ClarificationResponse, OutOfContextResponse, DFDGenerationStartedResponse } from '@/interfaces/aiassistedinterfaces';
 import tokenService from '@/services/tokenService';
 import { getAuthHeaders, BASE_API_URL, fetchWithTimeout, DEFAULT_TIMEOUT } from './apiService'
 
-// Get authenticated request headers
-// const getAuthHeaders = () => {
-//   const token = tokenService.getToken();
-//   return {
-//     'Authorization': `Bearer ${token}`,
-//     'Content-Type': 'application/json',
-//   };
-// };
-
-// const BASE_API_URL = import.meta.env.VITE_BASE_API_URL
-// const BASE_API_URL = import.meta.env.VITE_DEV_BASE_API_URL;
-// Default timeout for requests (60 seconds)
-// const DEFAULT_TIMEOUT = 60000;
-
-// Function to create a request with timeout
-// const fetchWithTimeout = async (url: string, options: RequestInit, timeout = DEFAULT_TIMEOUT) => {
-//   const controller = new AbortController();
-//   const id = setTimeout(() => controller.abort(), timeout);
-  
-//   // Include the abort signal in the options
-//   const optionsWithSignal = {
-//     ...options,
-//     signal: controller.signal
-//   };
-  
-//   try {
-//     const response = await fetch(url, optionsWithSignal);
-//     clearTimeout(id);
-//     return response;
-//   } catch (error) {
-//     clearTimeout(id);
-//     if (error.name === 'AbortError') {
-//       throw new Error('Request timed out. The operation might be taking too long to complete.');
-//     }
-//     throw error;
-//   }
-// };
+export type DesignServiceResponse = DesignResponse | DFDGenerationStartedResponse;
 
 export const sendDesignRequest = async (
   request: DesignRequest, 
   showThinking: boolean = true,
-  timeout: number = DEFAULT_TIMEOUT
-): Promise<DesignResponse> => {
+  timeout: number = DEFAULT_TIMEOUT,
+  toast?: any // Add optional toast parameter
+): Promise<DesignServiceResponse> => {
+
   try {
     const queryParams = new URLSearchParams();
     queryParams.append('show_thinking', showThinking.toString());
-    
-    // Add complexity hint param to help the backend optimize
-    if (request.diagram_state && 
-        request.diagram_state.nodes && 
-        request.diagram_state.nodes.length > 10) {
-      // For complex diagrams, indicate to the backend this is complex
-      queryParams.append('complexity', 'high');
+
+    // Ensure view_mode is always included in the request body
+    const body = { ...request };
+    if (!body.view_mode) {
+      body.view_mode = 'AD'; // Default to AD if not provided
     }
     
-    console.log("Design Request : ", request);
+    console.log("Sending Design Request : ", request);
+
     const response = await fetchWithTimeout(
       `${BASE_API_URL}/design?${queryParams.toString()}`,
       {
@@ -69,19 +34,37 @@ export const sendDesignRequest = async (
       timeout
     );
 
-    // Handle different error cases
+    // --- Handle Specific Status Codes ---
+
+    // 202 Accepted: DFD Generation Started
+    if (response.status === 202) {
+      const data = await response.json();
+      console.log("DFD Generation Started:", data);
+      // Return the specific response type for 202
+      return {
+        message: data.message || "DFD generation process started.",
+        project_code: data.project_code || request.project_id,
+        detail: data.detail || "The threat model is being generated in the background.",
+        status: 202 // Add status for easy checking later
+      } as DFDGenerationStartedResponse; // Type assertion
+    }
+
+    // Handle Authentication Errors
     if (response.status === 401 || response.status === 403) {
       throw new Error('Authentication error. Please login again.');
     }
 
+    // Handle Not Found
     if (response.status === 404) {
       throw new Error('API endpoint not found.');
     }
     
+    // Handle Timeouts indicated by gateway/server
     if (response.status === 408 || response.status === 504) {
       throw new Error('The request timed out. Your query might be too complex or the server is busy. Try a simpler query or try again later.');
     }
 
+    // Handle other non-OK responses (including 400, 500, 503 etc.)
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
       
@@ -97,27 +80,31 @@ export const sendDesignRequest = async (
     const responseData = await response.json();
     console.log("Raw response data:", responseData);
 
+    // Basic validation
+    if (!responseData || !responseData.response || !responseData.response.response_type) {
+      console.error("Invalid response structure received:", responseData);
+      // Only show toast if it was provided
+      if (toast) {
+        toast({ title: "Error", description: "Received an invalid response from the server.", variant: "destructive" });
+      }
+      throw new Error("Invalid response structure");
+    }
+
     // Create a properly structured DesignResponse object
     const designResponse: DesignResponse = {
       response: responseData.response,
       show_thinking: responseData.show_thinking,
-      response_id: responseData.response_id
+      response_id: responseData.response_id,
+      // top-level fields only if they exist in the raw response
+      ...(responseData.diagram_updates && { diagram_updates: responseData.diagram_updates }),
+      ...(responseData.nodes_to_add && { nodes_to_add: responseData.nodes_to_add }),
+      ...(responseData.edges_to_add && { edges_to_add: responseData.edges_to_add }),
+      ...(responseData.elements_to_remove && { elements_to_remove: responseData.elements_to_remove }),
+      ...(responseData.references && { references: responseData.references }),
+      ...(responseData.related_concepts && { related_concepts: responseData.related_concepts }),
+      ...(responseData.questions && { questions: responseData.questions }),
+      ...(responseData.suggestion && { suggestion: responseData.suggestion }),
     };
-
-    // Copy specific fields based on response type
-    if (responseData.response?.response_type === ResponseType.ARCHITECTURE) {
-      designResponse.diagram_updates = responseData.diagram_updates || {};
-      designResponse.nodes_to_add = responseData.nodes_to_add || [];
-      designResponse.edges_to_add = responseData.edges_to_add || [];
-      designResponse.elements_to_remove = responseData.elements_to_remove || [];
-    } else if (responseData.response?.response_type === ResponseType.EXPERT) {
-      designResponse.references = responseData.references || [];
-      designResponse.related_concepts = responseData.related_concepts || [];
-    } else if (responseData.response?.response_type === ResponseType.CLARIFICATION) {
-      designResponse.questions = responseData.questions || [];
-    } else if (responseData.response?.response_type === ResponseType.OUT_OF_CONTEXT) {
-      designResponse.suggestion = responseData.suggestion || undefined;
-    }
 
     // Add type assertion for the response
     const typedResponse = buildTypedResponse(designResponse);
@@ -126,6 +113,10 @@ export const sendDesignRequest = async (
     return typedResponse;
   } catch (error) {
     console.error('Error in sendDesignRequest:', error);
+    // Avoid duplicate toasts if already handled specific statuses and toast is provided
+    if (toast && !(error instanceof Error && (error.message.includes('Authentication error') || error.message.includes('timed out') || error.message.includes('API endpoint not found')))) {
+      toast({ title: "Request Failed", description: error.message || "An unknown error occurred", variant: "destructive" });
+    }
     throw error;
   }
 };
@@ -163,9 +154,61 @@ function buildTypedResponse(response: DesignResponse): DesignResponse {
 }
 
 // Optional: Add a function to handle simpler requests with shorter timeout
-export const sendSimpleDesignRequest = (request: DesignRequest, showThinking: boolean = true) => {
+export const sendSimpleDesignRequest = (request: DesignRequest, showThinking: boolean = true, toast?: any) => {
   // For simpler queries, use a shorter timeout (15 seconds)
-  return sendDesignRequest(request, showThinking, 15000);
+  return sendDesignRequest(request, showThinking, 15000, toast);
 };
 
+// Service function to get Threat Model
 
+export const getThreatModel = async (projectCode: string, toast?: any): Promise<DFDData> => {
+  try {
+      const response = await fetchWithTimeout(
+          `${BASE_API_URL}/projects/${projectCode}/threatmodel`,
+          {
+              method: 'GET',
+              headers: getAuthHeaders(),
+          },
+          DEFAULT_TIMEOUT // Use standard timeout
+      );
+
+      if (response.status === 404) {
+            // Don't throw error, return null or specific object to indicate not found
+            console.log(`Threat model not found for project ${projectCode}`);
+            // It's better to handle this in the component, throw for actual errors
+            throw new Error('Threat model not generated yet.');
+      }
+
+      if (response.status === 401 || response.status === 403) {
+            if (toast) {
+                toast({ title: "Authentication Error", description: "Please login again.", variant: "destructive" });
+            }
+            throw new Error('Authentication error.');
+      }
+
+      if (!response.ok) {
+          let errorDetail = `Failed to fetch threat model: ${response.statusText}`;
+          try {
+              const errorData = await response.json();
+              errorDetail = errorData.detail || JSON.stringify(errorData);
+          } catch (e) { /* Ignore JSON parsing error */ }
+          if (toast) {
+              toast({ title: "Error", description: errorDetail, variant: "destructive" });
+          }
+          throw new Error(errorDetail);
+      }
+
+      // Parse the response data
+      const data = await response.json();
+      console.log('Threat model data:', data);
+      return data as DFDData;
+  } catch (error) {
+      console.error('Error in getThreatModel:', error);
+        if (!error.message.includes('Threat model not generated yet.')) {
+            if (toast) {
+                toast({ title: "Error Fetching DFD", description: error.message || "Could not retrieve threat model", variant: "destructive" });
+            }
+        }
+      throw error; // Re-throw
+  }
+};

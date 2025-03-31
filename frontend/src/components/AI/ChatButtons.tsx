@@ -1,15 +1,13 @@
 
 import React from 'react';
 import { Button } from '@/components/ui/button';
-import { Image, PaperclipIcon, FileText, Save } from 'lucide-react';
+import { Image, PaperclipIcon } from 'lucide-react';
 import { motion } from 'framer-motion';
-import { useNavigate } from 'react-router-dom';
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger
 } from '@/components/ui/tooltip';
-import { cn } from '@/lib/utils';
 
 const iconVariants = {
   hover: {
@@ -19,46 +17,17 @@ const iconVariants = {
   }
 };
 
-interface ChatButtonsProps {
-  onGenerateReport?: () => void;
-  onSaveProject?: () => void;
-  disabled?: boolean;
-}
-
-const ChatButtons: React.FC<ChatButtonsProps> = ({ onGenerateReport, onSaveProject, disabled = false }) => {
-  const navigate = useNavigate();
-
-  const handleGenerateReportClick = () => {
-    if (onGenerateReport) {
-      onGenerateReport();
-    } else {
-      navigate('/generate-report');
-    }
-  };
-
-  // Function to handle save button click
-  const handleSaveClick = () => {
-    if (onSaveProject) {
-      onSaveProject();
-    }
-  };
-
+const ChatButtons: React.FC = () => {
   return (
     <>
       <Tooltip>
         <TooltipTrigger asChild>
-          <motion.div whileHover={disabled ? undefined : "hover"} variants={iconVariants}>
+          <motion.div whileHover="hover" variants={iconVariants}>
             <Button 
               type="button" 
               size="icon" 
               variant="ghost" 
-              className={cn(
-                "h-6 w-6 text-gray-500 rounded-lg",
-                disabled 
-                  ? "opacity-50 cursor-not-allowed" 
-                  : "hover:text-securetrack-purple hover:bg-securetrack-purple/10"
-              )}
-              disabled={disabled}
+              className="h-6 w-6 text-gray-500 hover:text-securetrack-purple hover:bg-securetrack-purple/10 rounded-lg"
             >
               <Image className="h-3 w-3" />
             </Button>
@@ -71,18 +40,12 @@ const ChatButtons: React.FC<ChatButtonsProps> = ({ onGenerateReport, onSaveProje
       
       <Tooltip>
         <TooltipTrigger asChild>
-          <motion.div whileHover={disabled ? undefined : "hover"} variants={iconVariants}>
+          <motion.div whileHover="hover" variants={iconVariants}>
             <Button 
               type="button" 
               size="icon" 
               variant="ghost" 
-              className={cn(
-                "h-6 w-6 text-gray-500 rounded-lg",
-                disabled 
-                  ? "opacity-50 cursor-not-allowed" 
-                  : "hover:text-securetrack-purple hover:bg-securetrack-purple/10"
-              )}
-              disabled={disabled}
+              className="h-6 w-6 text-gray-500 hover:text-securetrack-purple hover:bg-securetrack-purple/10 rounded-lg"
             >
               <PaperclipIcon className="h-3 w-3" />
             </Button>
@@ -90,56 +53,6 @@ const ChatButtons: React.FC<ChatButtonsProps> = ({ onGenerateReport, onSaveProje
         </TooltipTrigger>
         <TooltipContent side="top">
           <p>File Upload</p>
-        </TooltipContent>
-      </Tooltip>
-      
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <motion.div whileHover={disabled ? undefined : "hover"} variants={iconVariants}>
-            <Button 
-              type="button" 
-              size="icon" 
-              variant="ghost" 
-              className={cn(
-                "h-6 w-6 text-gray-500 rounded-lg",
-                disabled 
-                  ? "opacity-50 cursor-not-allowed" 
-                  : "hover:text-securetrack-purple hover:bg-securetrack-purple/10"
-              )}
-              onClick={handleGenerateReportClick}
-              disabled={disabled}
-            >
-              <FileText className="h-3 w-3" />
-            </Button>
-          </motion.div>
-        </TooltipTrigger>
-        <TooltipContent side="top">
-          <p>Generate Report</p>
-        </TooltipContent>
-      </Tooltip>
-      
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <motion.div whileHover={disabled ? undefined : "hover"} variants={iconVariants}>
-            <Button 
-              type="button" 
-              size="icon" 
-              variant="ghost" 
-              className={cn(
-                "h-6 w-6 text-gray-500 rounded-lg",
-                disabled 
-                  ? "opacity-50 cursor-not-allowed" 
-                  : "hover:text-securetrack-purple hover:bg-securetrack-purple/10"
-              )}
-              onClick={handleSaveClick}
-              disabled={disabled}
-            >
-              <Save className="h-3 w-3" />
-            </Button>
-          </motion.div>
-        </TooltipTrigger>
-        <TooltipContent side="top">
-          <p>Save</p>
         </TooltipContent>
       </Tooltip>
     </>

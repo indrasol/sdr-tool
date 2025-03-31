@@ -1,0 +1,8 @@
+.react-flow__edge-path {
+    stroke: #9333ea; /* Match dataFlow color */
+    stroke-width: 2px;
+    visibility: visible !important;
+  }
+  .react-flow__edges {
+    pointer-events: all !important;
+  }

@@ -1,25 +1,16 @@
 
-import React, { useMemo } from 'react';
+import React, { useRef, useEffect } from 'react';
 import { Bot } from 'lucide-react';
 import { motion } from 'framer-motion';
-// import { useTypingEffect } from '@/hooks/useTypingEffect';
-import { useSimpleTypingEffect } from '@/hooks/useSimpleTypingEffect';
 import WelcomeCard from './elements/WelcomeCard';
 
 const EmptyChatState: React.FC = () => {
-  // Memoize the welcome message to ensure it's stable between renders
-  const welcomeMessage = useMemo(() => 
-    "Welcome to Guardian AI. I can help design your secure architecture, address compliance needs etc.,",
-    []
-  );
-
-  // Configure typing effect - using memoized array and appropriate settings
-  const { displayText, isComplete } = useSimpleTypingEffect({
-    text: welcomeMessage,
-    typingSpeed: 40,
-    startDelay: 500,
-    showCursor: true
-  });
+  // Updated shorter message
+  const welcomeMessage = "Welcome to Guardian AI. I can help design your secure architecture, address compliance needs etc.,";
+  
+  // Instead of using the typing effect hook directly which causes infinite loops,
+  // we'll just pass the static message to WelcomeCard
+  const isComplete = true;
 
   return (
     <div className="flex flex-col items-center justify-center h-full text-center text-gray-400 my-8 space-y-6">
@@ -57,7 +48,7 @@ const EmptyChatState: React.FC = () => {
         className="max-w-md w-full"
       >
         <WelcomeCard 
-          displayText={displayText} 
+          displayText={welcomeMessage} 
           isTypingComplete={isComplete} 
         />
       </motion.div>

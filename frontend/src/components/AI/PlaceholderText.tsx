@@ -1,7 +1,7 @@
 
 import React from 'react';
-import { useTypingEffect } from '@/hooks/useTypingEffect';
 import { Bot } from 'lucide-react';
+import { useTypingEffect } from '@/hooks/useTypingEffect';
 
 interface PlaceholderTextProps {
   hasMessages: boolean;
@@ -9,7 +9,7 @@ interface PlaceholderTextProps {
   hasInteracted: boolean;
 }
 
-// Placeholders for typing effect
+// Placeholders
 const placeholders = [
   "Describe your security infrastructure requirements...",
   "Add a firewall between the internet and internal network...",
@@ -26,28 +26,45 @@ export const GuardianAIPlaceholder: React.FC = () => (
   </div>
 );
 
-// This function returns a string for use as placeholder text
-const PlaceholderText = ({ 
+// This returns a component with typing effect for use as placeholder
+const PlaceholderText: React.FC<PlaceholderTextProps> = ({ 
+  hasMessages, 
+  messagesSent, 
+  hasInteracted 
+}) => {
+  // If there are messages, we show a static placeholder
+  if (hasMessages || messagesSent) {
+    return <span>Ask Guardian AI...</span>;
+  }
+  
+  // If user has interacted but no messages, show static placeholder
+  if (hasInteracted) {
+    return <span>Type your message...</span>;
+  }
+  
+  // For initial state, show typing effect with random placeholders
+  const { displayText } = useTypingEffect({
+    texts: placeholders,
+    typingSpeed: 50,
+    pauseAtEnd: 3000,
+    pauseAtStart: 500,
+    blinkCursor: false
+  });
+  
+  return <span dangerouslySetInnerHTML={{ __html: displayText }} />;
+};
+
+// This function returns a string for simple placeholder use cases
+export const getStaticPlaceholderText = ({ 
   hasMessages, 
   messagesSent, 
   hasInteracted 
 }: PlaceholderTextProps): string => {
-  // Get the typing effect but use rawText instead of displayText with HTML
-  const { rawText } = useTypingEffect({
-    texts: placeholders,
-    typingSpeed: 80,
-    pauseAtEnd: 2000,
-    pauseAtStart: 700,
-    blinkCursor: false // We'll handle the cursor separately
-  });
-
-  // Determine what to show as placeholder
-  // Only show typing effect when there are no messages and user hasn't interacted
-  const placeholderText = hasMessages || messagesSent 
-    ? "Ask Guardian AI..." // String placeholder when there are messages
-    : (hasInteracted ? "Type your message..." : rawText);
-
-  return placeholderText;
+  const randomPlaceholder = placeholders[Math.floor(Math.random() * placeholders.length)];
+  
+  return hasMessages || messagesSent 
+    ? "Ask Guardian AI..." 
+    : (hasInteracted ? "Type your message..." : randomPlaceholder);
 };
 
 export default PlaceholderText;

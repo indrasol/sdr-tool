@@ -109,6 +109,12 @@
   animation: gradient-animation 5s ease infinite;
 }
 
+.react-flow__edge-path {
+  stroke: #9333ea !important;
+  stroke-width: 2px !important;
+  visibility: visible !important;
+}
+
 @keyframes gradient-animation {
   0% { background-position: 0% 50%; }
   50% { background-position: 100% 50%; }

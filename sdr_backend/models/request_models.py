@@ -11,6 +11,7 @@ class DesignRequest(BaseModel):
     diagram_state: Optional[Dict[str, Any]] = Field(None, description="Current state of the architecture diagram")
     session_id: Optional[str] = Field(None, description="Session identifier if available")
     retry_mode: Optional[bool] = Field(None, description="Whether to retry the request")
+    view_mode: Optional[str] = Field("AD", description="Current view mode (AD or DFD)")
 
 
 class SaveProjectRequest(BaseModel):
