@@ -5,9 +5,9 @@ export const nodeDefaults: { style: CSSProperties } = {
   style: {
     border: '1px solid #7C65F6', // Guardian AI purple border
     borderRadius: '5px', // Even smaller border radius
-    padding: '4px', // Further reduced padding
-    boxShadow: '0 2px 5px rgba(0,0,0,0.08)',
-    backgroundColor: 'white',
+    // padding: '4px', // Further reduced padding
+    // boxShadow: '0 2px 5px rgba(0,0,0,0.08)',
+    // backgroundColor: 'white',
     fontSize: '10px', // Smaller font size
     minWidth: '70px', // Smaller minimum width
     maxWidth: '100px', // Smaller max width

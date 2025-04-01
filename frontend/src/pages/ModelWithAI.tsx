@@ -297,8 +297,8 @@ const ModelWithAI = () => {
     };
   }, [nodes.length, edges.length, isLayouting, applyLayout, isProjectLoading]);
 
-  const fixedExpandedWidth = 600;
-  const collapsedWidth = 48;
+  const fixedExpandedWidth = 400;
+  const collapsedWidth = 40;
 
   // Initialize component and load project if available
   useEffect(() => {

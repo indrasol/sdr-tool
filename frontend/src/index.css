@@ -1,9 +1,12 @@
+/* Import fonts */
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap');
 
+/* Tailwind directives */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
+/* Root variables and base styles */
 @layer base {
   :root {
     --background: 220 33% 98%;
@@ -55,16 +58,18 @@
 
 @layer base {
   * {
-    @apply border-border;
+    border: 1px solid var(--border);
   }
   body {
     @apply bg-background text-foreground font-sans;
-    font-family: 'Inter', sans-serif;
+    font-family: Geneva, Tahoma, Verdana, sans-serif;
+    
   }
 }
 
+/* Utility classes */
 .glass-card {
-  @apply bg-white bg-opacity-50 backdrop-blur-lg border border-white border-opacity-20 shadow-lg;
+  @apply bg-white bg-opacity-50 backdrop-blur-lg border border-white border-opacity-20 shadow-none;
 }
 
 .shimmer {
@@ -81,19 +86,43 @@
 
 /* React Flow Customization */
 .react-flow__node {
-  @apply glass-card;
+  box-shadow: var(--xy-node-boxshadow-default)!important;
+  border-radius: var(--xy-node-border-radius-default);
+  background-color: var(--xy-node-background-color-default);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  padding: 0px !important;
+  
+  @apply glass-card; 
 }
 
-.react-flow__node-input {
+/* .react-flow__node-input {
   @apply border-2 border-primary;
-}
+} */
 
-.react-flow__controls {
+/* .react-flow__controls {
   @apply glass-card !important;
-}
+} */
 
 .react-flow__minimap {
   @apply glass-card !important;
+}
+
+
+/* Option 1 (from AIFlowDiagram.css): */
+
+.react-flow__edge-path {
+  stroke: #9333ea!important;/* Match dataFlow color */
+  stroke-width: 2px !important;
+  visibility: visible !important;
+  stroke-dasharray: 5, 3 !important; /* Creates dotted/dashed line pattern */
+}
+
+/* This selector is only in AIFlowDiagram.css */
+.react-flow__edges {
+  pointer-events: all !important;
 }
 
 .glass-effect {
@@ -109,12 +138,7 @@
   animation: gradient-animation 5s ease infinite;
 }
 
-.react-flow__edge-path {
-  stroke: #9333ea !important;
-  stroke-width: 2px !important;
-  visibility: visible !important;
-}
-
+/* Animations */
 @keyframes gradient-animation {
   0% { background-position: 0% 50%; }
   50% { background-position: 100% 50%; }
@@ -145,17 +169,37 @@
   50% {
     opacity: 0.5;
   }
+}
 
-    /* New styles for the report page */
-  .font-playfair {
-    font-family: 'Playfair Display', serif;
-  }
+/* Report page styles */
+.font-playfair {
+  font-family: 'Playfair Display', serif;
+}
 
-  .font-inter {
-    font-family: 'Inter', sans-serif;
-  }
+.font-inter {
+  font-family: 'Inter', sans-serif;
+}
 
-  .report-card {
-    @apply border-l-4 border-securetrack-purple bg-gray-50 p-4 rounded shadow-sm my-3;
-  }
+.report-card {
+  @apply border-l-4 border-securetrack-purple bg-gray-50 p-4 rounded shadow-sm my-3;
+}
+
+/* Node customization styles derived from customNode.tsx */
+.custom-node {
+  transition: all 0.2s;
+}
+
+/* Handle styles from customNode.tsx */
+.react-flow__handle {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+.react-flow__handle-left {
+  left: -5px;
+}
+
+.react-flow__handle-right {
+  right: -5px;
 }
