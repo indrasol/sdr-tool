@@ -326,8 +326,8 @@ const ModelWithAI = () => {
     };
   }, [nodes.length, edges.length, isLayouting, applyLayout, isProjectLoading]);
 
-  const fixedExpandedWidth = 600;
-  const collapsedWidth = 48;
+  const fixedExpandedWidth = 400;
+  const collapsedWidth = 40;
 
   // Utility function for saving project with current state
   const saveCurrentState = useCallback(

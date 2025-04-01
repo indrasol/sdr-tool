@@ -20,6 +20,7 @@ import { AIFlowDiagramProps } from './types/diagramTypes';
 import { useDiagramNodes } from './hooks/useDiagramNodes';
 import { edgeStyles } from './utils/edgeStyles';
 import DiagramActions from './DiagramActions';
+import FlowLegend from './FlowLegend';
 import dagre from 'dagre';
 import './AIFlowDiagram.css';
 import { AlertTriangle, Loader2, EyeOff, Eye } from 'lucide-react';

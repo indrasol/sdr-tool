@@ -1,9 +1,12 @@
+/* Import fonts */
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap');
 
+/* Tailwind directives */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
+/* Root variables and base styles */
 @layer base {
   :root {
     --background: 220 33% 98%;
@@ -55,16 +58,18 @@
 
 @layer base {
   * {
-    @apply border-border;
+    border: 1px solid var(--border);
   }
   body {
     @apply bg-background text-foreground font-sans;
-    font-family: 'Inter', sans-serif;
+    font-family: Geneva, Tahoma, Verdana, sans-serif;
+    
   }
 }
 
+/* Utility classes */
 .glass-card {
-  @apply bg-white bg-opacity-50 backdrop-blur-lg border border-white border-opacity-20 shadow-lg;
+  @apply bg-white bg-opacity-50 backdrop-blur-lg border border-white border-opacity-20 shadow-none;
 }
 
 .shimmer {
@@ -90,14 +95,29 @@
 
 .react-flow__node-input {
   @apply border-2 border-primary;
-}
+} */
 
-.react-flow__controls {
+/* .react-flow__controls {
   @apply glass-card !important;
-}
+} */
 
 .react-flow__minimap {
   @apply glass-card !important;
+}
+
+
+/* Option 1 (from AIFlowDiagram.css): */
+
+.react-flow__edge-path {
+  stroke: #9333ea!important;/* Match dataFlow color */
+  stroke-width: 2px !important;
+  visibility: visible !important;
+  stroke-dasharray: 5, 3 !important; /* Creates dotted/dashed line pattern */
+}
+
+/* This selector is only in AIFlowDiagram.css */
+.react-flow__edges {
+  pointer-events: all !important;
 }
 
 .glass-effect {
