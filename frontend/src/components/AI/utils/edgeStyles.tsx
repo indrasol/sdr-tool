@@ -2,57 +2,56 @@
 // This should replace your current edgeStyles.js file
 
 export const edgeStyles = {
-    // Default edge style (fallback)
-    default: {
-      stroke: '#555',
-      strokeWidth: 2,
-    },
-    
-    // Data flow connections (API, services)
-    dataFlow: {
-      stroke: '#1d4ed8', // blue
-      strokeWidth: 2,
-    },
-    
-    // Network connections
-    network: {
-      stroke: '#0369a1', // blue
-      strokeWidth: 2,
-    },
-    
-    // Database connections
-    database: {
-      stroke: '#15803d', // green
-      strokeWidth: 2,
-    },
-    
-    // Log and monitoring connections
-    log: {
-      stroke: '#a16207', // amber
-      strokeWidth: 2,
-      strokeDasharray: '5,5',
-    },
-    
-    // Security-related connections
-    security: {
-      stroke: '#9333ea', // purple
-      strokeWidth: 2,
-    },
-    
-    // Secure connections (SSL/TLS)
-    'secure-connection': {
-      stroke: '#16a34a', // green
-      strokeWidth: 2,
-    },
-    
-    // Vulnerable or insecure connections
-    vulnerable: {
-      stroke: '#dc2626', // red
-      strokeWidth: 2,
-      strokeDasharray: '3,3',
-    }
-  };
+  // Default edge style (fallback)
+  default: {
+    stroke: '#cccccc', /* Light gray */
+    strokeWidth: 1,
+  },
   
+  // Data flow connections (API, services)
+  dataFlow: {
+    stroke: '#cccccc', /* Light gray */
+    strokeWidth: 1,
+  },
+  
+  // Network connections
+  network: {
+    stroke: '#cccccc', /* Light gray */
+    strokeWidth: 1,
+  },
+  
+  // Database connections
+  database: {
+    stroke: '#cccccc', /* Light gray */
+    strokeWidth: 1,
+  },
+  
+  // Log and monitoring connections
+  log: {
+    stroke: '#cccccc', /* Light gray */
+    strokeWidth: 1,
+    /* Removed strokeDasharray */
+  },
+  
+  // Security-related connections
+  security: {
+    stroke: '#cccccc', /* Light gray */
+    strokeWidth: 1,
+  },
+  
+  // Secure connections (SSL/TLS)
+  'secure-connection': {
+    stroke: '#cccccc', /* Light gray */
+    strokeWidth: 1,
+  },
+  
+  // Vulnerable or insecure connections
+  vulnerable: {
+    stroke: '#cccccc', /* Light gray */
+    strokeWidth: 1,
+    /* Removed strokeDasharray */
+  }
+};
   // Centralized function to determine edge type based on connected nodes
   export const determineEdgeType = (sourceId, targetId, nodes = []) => {
     // Find the source and target nodes

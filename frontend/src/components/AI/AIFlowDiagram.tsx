@@ -1,4 +1,10 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import {
   ReactFlow,
   MiniMap,
@@ -11,24 +17,29 @@ import {
   MarkerType,
   Node,
   Edge,
-} from '@xyflow/react';
-import '@xyflow/react/dist/style.css';
-import CustomNode from './customNode';
-import CommentNode from './CommentNode';
-import EditNodeDialog from './EditNodeDialog';
-import { AIFlowDiagramProps } from './types/diagramTypes';
-import { useDiagramNodes } from './hooks/useDiagramNodes';
-import { edgeStyles } from './utils/edgeStyles';
-import DiagramActions from './DiagramActions';
-import FlowLegend from './FlowLegend';
-import dagre from 'dagre';
-import './AIFlowDiagram.css';
-
+} from "@xyflow/react";
+import "@xyflow/react/dist/style.css";
+import CustomNode from "./customNode";
+import CommentNode from "./CommentNode";
+import EditNodeDialog from "./EditNodeDialog";
+import { AIFlowDiagramProps } from "./types/diagramTypes";
+import { useDiagramNodes } from "./hooks/useDiagramNodes";
+import { edgeStyles } from "./utils/edgeStyles";
+import DiagramActions from "./DiagramActions";
+import FlowLegend from "./FlowLegend";
+import dagre from "dagre";
+import "./AIFlowDiagram.css";
 
 // Layout algorithm function - uses dagre to calculate node positions
-export const getLayoutedElements = (nodes, edges, direction = 'TB', nodeWidth = 172, nodeHeight = 36) => {
+export const getLayoutedElements = (
+  nodes,
+  edges,
+  direction = "TB",
+  nodeWidth = 172,
+  nodeHeight = 36
+) => {
   if (!nodes || nodes.length === 0) {
-    console.warn('No nodes provided for layout');
+    console.warn("No nodes provided for layout");
     return { nodes: [], edges: [] };
   }
 
@@ -40,11 +51,11 @@ export const getLayoutedElements = (nodes, edges, direction = 'TB', nodeWidth = 
 
     // Add nodes to the graph with dimensions
     nodes.forEach((node) => {
-      const width = node.data?.width || nodeWidth; 
+      const width = node.data?.width || nodeWidth;
       const height = node.data?.height || nodeHeight;
-      dagreGraph.setNode(node.id, { 
-        width: width, 
-        height: height 
+      dagreGraph.setNode(node.id, {
+        width: width,
+        height: height,
       });
     });
 
@@ -63,33 +74,35 @@ export const getLayoutedElements = (nodes, edges, direction = 'TB', nodeWidth = 
     // Get the positions from the layout algorithm
     const layoutedNodes = nodes.map((node) => {
       const nodeWithPosition = dagreGraph.node(node.id);
-      
+
       if (!nodeWithPosition) {
         console.warn(`Node ${node.id} not found in layout results`);
         return node;
       }
 
-      const useExistingPosition = node.position && node.position.x !== 0 && node.position.y !== 0;
-      
+      const useExistingPosition =
+        node.position && node.position.x !== 0 && node.position.y !== 0;
+
       return {
         ...node,
         // Only set position if the node doesn't already have one or is a new node
-        position: node.position && 
-                 node.position.x !== undefined && 
-                 node.position.y !== undefined && 
-                 node.position.x !== 0 && 
-                 node.position.y !== 0
-          ? node.position 
-          : {
-              x: nodeWithPosition.x - nodeWidth / 2,
-              y: nodeWithPosition.y - nodeHeight / 2,
-            },
+        position:
+          node.position &&
+          node.position.x !== undefined &&
+          node.position.y !== undefined &&
+          node.position.x !== 0 &&
+          node.position.y !== 0
+            ? node.position
+            : {
+                x: nodeWithPosition.x - nodeWidth / 2,
+                y: nodeWithPosition.y - nodeHeight / 2,
+              },
       };
     });
 
     return { nodes: layoutedNodes, edges };
   } catch (error) {
-    console.error('Error in layout algorithm:', error);
+    console.error("Error in layout algorithm:", error);
     return { nodes, edges }; // Return original nodes and edges on error
   }
 };
@@ -116,15 +129,18 @@ const AIFlowDiagram: React.FC<AIFlowDiagramProps> = ({
 }): React.ReactNode => {
   // Add state for layout functionality if not provided from parent
   const [internalIsLayouting, setInternalIsLayouting] = useState(false);
-  const effectiveIsLayouting = externalIsLayouting !== undefined ? externalIsLayouting : internalIsLayouting;
-  
+  const effectiveIsLayouting =
+    externalIsLayouting !== undefined
+      ? externalIsLayouting
+      : internalIsLayouting;
+
   // Add state for data flow diagram toggle
   const [isDataFlowActive, setIsDataFlowActive] = useState(false);
   // Store the original diagram nodes and edges
   const originalDiagramRef = useRef({ nodes: [], edges: [] });
   // Store the data flow diagram nodes and edges
   const dataFlowDiagramRef = useRef({ nodes: [], edges: [] });
-  
+
   const previousNodesLengthRef = useRef(initialNodes?.length || 0);
   const previousEdgesLengthRef = useRef(initialEdges?.length || 0);
   const layoutTimeoutRef = useRef(null);
@@ -133,27 +149,33 @@ const AIFlowDiagram: React.FC<AIFlowDiagramProps> = ({
   // For performance optimization and smoother interactions
   const nodesCountRef = useRef(initialNodes?.length || 0);
   const edgesCountRef = useRef(initialEdges?.length || 0);
-  
+
   // Register custom node types
-  const nodeTypes = useMemo(() => ({
-    default: CustomNode,
-    comment: CommentNode,
-  }), []);
+  const nodeTypes = useMemo(
+    () => ({
+      default: CustomNode,
+      comment: CommentNode,
+    }),
+    []
+  );
 
   // Default edge options
-  const defaultEdgeOptions = useMemo(() => ({
-    type: 'smoothstep',
-    markerEnd: {
-      type: MarkerType.ArrowClosed,
-      width: 20,
-      height: 20,
-      color: '#555',
-    },
-    style: {
-      strokeWidth: 2,
-      stroke: '#555',
-    },
-  }), []);
+  const defaultEdgeOptions = useMemo(
+    () => ({
+      type: "smoothstep",
+      markerEnd: {
+        type: MarkerType.ArrowClosed,
+        width: 10, // Smaller arrow width
+        height: 10, // Smaller arrow height
+        color: "#000000", // Black arrow
+      },
+      style: {
+        strokeWidth: 1, // Thinner line
+        stroke: "#cccccc", // Light gray
+      },
+    }),
+    []
+  );
 
   const reactFlowInstance = useRef(null);
   const [didFitView, setDidFitView] = useState(false);
@@ -173,19 +195,22 @@ const AIFlowDiagram: React.FC<AIFlowDiagramProps> = ({
   const hasSyncedInitialData = useRef(false);
 
   // Optimized node change handler to prevent unnecessary updates
-  const handleNodesChange = useCallback((changes) => {
-    // Track if we're currently dragging nodes
-    const isDraggingNow = changes.some(change => 
-      change.type === 'position' && change.dragging === true
-    );
-    
-    // Update dragging state for our debounced state sync
-    if (isDraggingNow) {
-      isDragging.current = true;
-    }
-  
-    onNodesChange(changes);
-  }, [onNodesChange]);
+  const handleNodesChange = useCallback(
+    (changes) => {
+      // Track if we're currently dragging nodes
+      const isDraggingNow = changes.some(
+        (change) => change.type === "position" && change.dragging === true
+      );
+
+      // Update dragging state for our debounced state sync
+      if (isDraggingNow) {
+        isDragging.current = true;
+      }
+
+      onNodesChange(changes);
+    },
+    [onNodesChange]
+  );
 
   // Use custom hook to manage nodes and their interactions
   const {
@@ -204,118 +229,128 @@ const AIFlowDiagram: React.FC<AIFlowDiagramProps> = ({
       return [];
     }
 
-    return edgesToProcess.map(edge => {
-      if (!edge.source || !edge.target) {
-        console.warn('Skipping invalid edge:', edge);
-        return null;
-      }
-
-      // Determine edge type
-      const edgeType = edge.type || 'smoothstep';
-      
-      // Get styling for this edge type
-      const typeStyle = edgeStyles[edgeType] || edgeStyles.dataFlow || {};
-      
-      return {
-        ...edge,
-        id: edge.id || `edge-${edge.source}-${edge.target}-${Date.now()}`,
-        type: 'smoothstep', // Force consistency in edge type
-        animated: edgeType === 'dataFlow' || edgeType === 'database',
-        markerEnd: {
-          type: MarkerType.ArrowClosed,
-          width: 15,
-          height: 15,
-          color: typeStyle.stroke || '#555'
-        },
-        style: {
-          strokeWidth: 2,
-          stroke: typeStyle.stroke || '#555',
-          ...(edge.style || {}),
+    return edgesToProcess
+      .map((edge) => {
+        if (!edge.source || !edge.target) {
+          console.warn("Skipping invalid edge:", edge);
+          return null;
         }
-      };
-    }).filter(Boolean);
+
+        // Determine edge type
+        const edgeType = edge.type || "smoothstep";
+
+        // Get styling for this edge type
+        const typeStyle = edgeStyles[edgeType] || edgeStyles.dataFlow || {};
+        // In the processEdges function
+        return {
+          ...edge,
+          id: edge.id || `edge-${edge.source}-${edge.target}-${Date.now()}`,
+          type: "smoothstep", // Force consistency in edge type
+          animated: edgeType === "dataFlow" || edgeType === "database",
+          markerEnd: {
+            type: MarkerType.ArrowClosed,
+            width: 10, // Smaller arrow width
+            height: 10, // Smaller arrow height
+            color: "#000000", // Black arrow
+          },
+          style: {
+            strokeWidth: 1, // Thinner line
+            stroke: "#cccccc", // Light gray
+            ...(edge.style || {}),
+          },
+        };
+      })
+      .filter(Boolean);
   }, []);
 
   // Handle initial sync of nodes and edges - ONCE only
   useEffect(() => {
     if (initialRenderRef.current && initialNodes && initialNodes.length > 0) {
-      console.log('Initial sync of nodes and edges');
+      console.log("Initial sync of nodes and edges");
       // First process nodes
       const preparedNodes = prepareNodes(initialNodes);
-      
+
       // Then process edges
-      const processedEdges = initialEdges && initialEdges.length > 0 
-        ? processEdges(initialEdges) 
-        : [];
-      
+      const processedEdges =
+        initialEdges && initialEdges.length > 0
+          ? processEdges(initialEdges)
+          : [];
+
       // Update state
       setNodes(preparedNodes);
       setEdges(processedEdges);
-      
+
       // Store original diagram for toggling
       originalDiagramRef.current = {
         nodes: preparedNodes,
-        edges: processedEdges
+        edges: processedEdges,
       };
-      
+
       // Create empty data flow diagram (no nodes, no edges)
       dataFlowDiagramRef.current = {
         nodes: [],
-        edges: []
+        edges: [],
       };
-      
+
       // Mark initial render as complete
       initialRenderRef.current = false;
       hasSyncedInitialData.current = true;
     }
-  }, [initialNodes, initialEdges, prepareNodes, processEdges, setNodes, setEdges]);
+  }, [
+    initialNodes,
+    initialEdges,
+    prepareNodes,
+    processEdges,
+    setNodes,
+    setEdges,
+  ]);
 
   // Apply layout when nodes or edges change significantly - but NOT on initial render
   useEffect(() => {
     // Skip if not yet synced initial data, or no nodes, or currently layouting
     if (
-      !hasSyncedInitialData.current || 
-      initialNodes.length === 0 || 
+      !hasSyncedInitialData.current ||
+      initialNodes.length === 0 ||
       effectiveIsLayouting ||
       initialRenderRef.current
     ) {
       return;
     }
-    
+
     // Check if nodes or edges count changed (something added or removed)
-    const nodesCountChanged = initialNodes.length !== previousNodesLengthRef.current;
-    const edgesCountChanged = initialEdges.length !== previousEdgesLengthRef.current;
-    
+    const nodesCountChanged =
+      initialNodes.length !== previousNodesLengthRef.current;
+    const edgesCountChanged =
+      initialEdges.length !== previousEdgesLengthRef.current;
+
     // Update the refs with current counts
     previousNodesLengthRef.current = initialNodes.length;
     previousEdgesLengthRef.current = initialEdges.length;
-    
+
     // If something changed, apply layout with a delay
-    if ((nodesCountChanged || edgesCountChanged)) {
+    if (nodesCountChanged || edgesCountChanged) {
       // Clear any existing timeout
       if (layoutTimeoutRef.current) {
         clearTimeout(layoutTimeoutRef.current);
       }
-      
+
       if (setInternalIsLayouting) setInternalIsLayouting(true);
-      
+
       // Apply layout with a slight delay to batch changes
       layoutTimeoutRef.current = setTimeout(() => {
         // First prepare nodes with proper styles
         const preparedNodes = prepareNodes(initialNodes);
         // Then process edges with proper styling
         const processedEdges = processEdges(initialEdges);
-        
+
         // Now apply layout
-        const { nodes: layoutedNodes, edges: layoutedEdges } = getLayoutedElements(
-          preparedNodes,
-          processedEdges
-        );
-        
+        const { nodes: layoutedNodes, edges: layoutedEdges } =
+          getLayoutedElements(preparedNodes, processedEdges);
+
         // Update the nodes with new positions
         setNodes(layoutedNodes);
         setEdges(layoutedEdges);
-        
+
         // Wait a bit and then fit view to show all elements
         setTimeout(() => {
           if (reactFlowInstance.current) {
@@ -325,13 +360,21 @@ const AIFlowDiagram: React.FC<AIFlowDiagramProps> = ({
         }, 300);
       }, 200);
     }
-    
+
     return () => {
       if (layoutTimeoutRef.current) {
         clearTimeout(layoutTimeoutRef.current);
       }
     };
-  }, [initialNodes, initialEdges, effectiveIsLayouting, prepareNodes, processEdges, setNodes, setEdges]);
+  }, [
+    initialNodes,
+    initialEdges,
+    effectiveIsLayouting,
+    prepareNodes,
+    processEdges,
+    setNodes,
+    setEdges,
+  ]);
 
   // Handle node position changes more efficiently to prevent flickering
   useEffect(() => {
@@ -340,14 +383,14 @@ const AIFlowDiagram: React.FC<AIFlowDiagramProps> = ({
       isInitialMount.current = false;
       return;
     }
-    
+
     // Don't do immediate state updates when we're dragging or layouting
     if (isDragging.current || effectiveIsLayouting) {
       // Clear any existing timeout
       if (dragTimeoutRef.current) {
         clearTimeout(dragTimeoutRef.current);
       }
-      
+
       // Set a new timeout to sync state after dragging stops
       dragTimeoutRef.current = setTimeout(() => {
         if (nodes.length > 0 && setNodesExternal) {
@@ -359,7 +402,7 @@ const AIFlowDiagram: React.FC<AIFlowDiagramProps> = ({
       // Not dragging - sync immediately for other updates
       setNodesExternal(nodes);
     }
-    
+
     // Cleanup timeout on unmount
     return () => {
       if (dragTimeoutRef.current) {
@@ -378,20 +421,21 @@ const AIFlowDiagram: React.FC<AIFlowDiagramProps> = ({
   // Handle connect event
   const handleConnect = useCallback(
     (params) => {
-      console.log('Connection created:', params);
+      console.log("Connection created:", params);
+      // In the handleConnect function
       const newEdge = {
         ...params,
-        type: 'smoothstep',
+        type: "smoothstep",
         markerEnd: {
           type: MarkerType.ArrowClosed,
-          width: 15,
-          height: 15,
-          color: '#555',
+          width: 10, // Smaller arrow width
+          height: 10, // Smaller arrow height
+          color: "#000000", // Black arrow
         },
         style: {
-          strokeWidth: 2,
-          stroke: '#555',
-        }
+          strokeWidth: 1, // Thinner line
+          stroke: "#cccccc", // Light gray
+        },
       };
       hookHandleConnect(newEdge);
     },
@@ -400,29 +444,29 @@ const AIFlowDiagram: React.FC<AIFlowDiagramProps> = ({
 
   // Internal layout function if no external one is provided
   const internalOnLayout = useCallback(() => {
-    console.log('Applying internal layout, nodes:', nodes.length);
+    console.log("Applying internal layout, nodes:", nodes.length);
     if (effectiveIsLayouting || nodes.length === 0) return;
-    
+
     if (setInternalIsLayouting) setInternalIsLayouting(true);
-    
+
     // Get current nodes and edges
     const currentNodes = nodes;
     const currentEdges = edges;
-    
+
     // Apply layout
     const { nodes: layoutedNodes, edges: layoutedEdges } = getLayoutedElements(
       currentNodes,
       currentEdges,
-      'TB',  // Top to Bottom direction
-      150,   // Node width
-      36     // Node height
+      "TB", // Top to Bottom direction
+      150, // Node width
+      36 // Node height
     );
-    
+
     // Update state
-    console.log('Setting layouted nodes:', layoutedNodes.length);
+    console.log("Setting layouted nodes:", layoutedNodes.length);
     setNodes(layoutedNodes);
     setEdges(layoutedEdges);
-    
+
     // Fit view and reset layout flag
     setTimeout(() => {
       if (reactFlowInstance.current) {
@@ -430,12 +474,19 @@ const AIFlowDiagram: React.FC<AIFlowDiagramProps> = ({
       }
       if (setInternalIsLayouting) setInternalIsLayouting(false);
     }, 300);
-  }, [nodes, edges, setNodes, setEdges, effectiveIsLayouting, setInternalIsLayouting]);
+  }, [
+    nodes,
+    edges,
+    setNodes,
+    setEdges,
+    effectiveIsLayouting,
+    setInternalIsLayouting,
+  ]);
 
   // Add this effect to handle switching between viewModes
   useEffect(() => {
     // When switching to DFD mode, we need to handle the DFD visualization
-    if (viewMode === 'DFD') {
+    if (viewMode === "DFD") {
       // We'll let ModelWithAI handle fetching and setting the data
       // console.log('AIFlowDiagram: DFD mode active');
     } else {
@@ -445,7 +496,7 @@ const AIFlowDiagram: React.FC<AIFlowDiagramProps> = ({
 
   // Use external layout function if provided, otherwise use internal
   const handleLayout = useCallback(() => {
-    console.log('Layout triggered, using:', onLayout ? 'external' : 'internal');
+    console.log("Layout triggered, using:", onLayout ? "external" : "internal");
     if (onLayout) {
       onLayout();
     } else {
@@ -485,7 +536,13 @@ const AIFlowDiagram: React.FC<AIFlowDiagramProps> = ({
 
   // Handle save action
   const handleSave = () => {
-    console.log('Saving diagram...', nodes?.length, 'nodes and', edges?.length, 'edges');
+    console.log(
+      "Saving diagram...",
+      nodes?.length,
+      "nodes and",
+      edges?.length,
+      "edges"
+    );
     if (onSave) {
       onSave();
     }
@@ -493,50 +550,53 @@ const AIFlowDiagram: React.FC<AIFlowDiagramProps> = ({
 
   // Handle generate report action
   const handleGenerateReport = () => {
-    console.log('Generating report...');
+    console.log("Generating report...");
     if (onGenerateReport) {
       return onGenerateReport();
     }
-    return '/report';
+    return "/report";
   };
 
   // Store the instance of ReactFlow when it's initialized
-  const onInit = useCallback((instance) => {
-    reactFlowInstance.current = instance;
-    console.log('ReactFlow instance initialized');
+  const onInit = useCallback(
+    (instance) => {
+      reactFlowInstance.current = instance;
+      console.log("ReactFlow instance initialized");
 
-    // Force a fit view after a short delay
-    setTimeout(() => {
-      if (reactFlowInstance.current && !didFitView) {
-        console.log('Fitting view to diagram content');
-        reactFlowInstance.current.fitView({ padding: 0.2 });
-        setDidFitView(true);
-        
-        // Apply initial layout if we have multiple nodes
-        if (nodes.length > 1) {
-          console.log('Applying initial layout');
-          handleLayout();
+      // Force a fit view after a short delay
+      setTimeout(() => {
+        if (reactFlowInstance.current && !didFitView) {
+          console.log("Fitting view to diagram content");
+          reactFlowInstance.current.fitView({ padding: 0.2 });
+          setDidFitView(true);
+
+          // Apply initial layout if we have multiple nodes
+          if (nodes.length > 1) {
+            console.log("Applying initial layout");
+            handleLayout();
+          }
         }
-      }
-    }, 200);
-  }, [didFitView, handleLayout, nodes.length]);
+      }, 200);
+    },
+    [didFitView, handleLayout, nodes.length]
+  );
 
   // Handler for toggling data flow diagram view
   const handleToggleDataFlow = useCallback(() => {
     // Toggle the state
-    setIsDataFlowActive(prevState => {
+    setIsDataFlowActive((prevState) => {
       const newState = !prevState;
-      console.log('Toggling data flow diagram view:', newState ? 'ON' : 'OFF');
-      
+      console.log("Toggling data flow diagram view:", newState ? "ON" : "OFF");
+
       if (newState) {
         // Save current diagram state if needed
         if (!isDataFlowActive && nodes.length > 0) {
           originalDiagramRef.current = {
             nodes: [...nodes],
-            edges: [...edges]
+            edges: [...edges],
           };
         }
-        
+
         // Switch to data flow diagram (empty)
         setNodes([]);
         setEdges([]);
@@ -545,7 +605,7 @@ const AIFlowDiagram: React.FC<AIFlowDiagramProps> = ({
         setNodes(originalDiagramRef.current.nodes);
         setEdges(originalDiagramRef.current.edges);
       }
-      
+
       return newState;
     });
   }, [isDataFlowActive, nodes, edges, setNodes, setEdges]);
@@ -570,7 +630,7 @@ const AIFlowDiagram: React.FC<AIFlowDiagramProps> = ({
       />
       <div className="flex-1 overflow-hidden bg-white relative">
         {/* Display a watermark for DFD mode */}
-        {viewMode === 'DFD' && (
+        {viewMode === "DFD" && (
           <div className="absolute top-2 right-2 bg-securetrack-purple/10 text-securetrack-purple px-3 py-1 rounded text-sm font-medium z-10">
             Threat Model View
           </div>
@@ -578,9 +638,9 @@ const AIFlowDiagram: React.FC<AIFlowDiagramProps> = ({
         <ReactFlow
           nodes={nodes}
           edges={edges}
-          onNodesChange={viewMode === 'AD' ? handleNodesChange : undefined}
-          onEdgesChange={viewMode === 'AD' ? onEdgesChange : undefined}
-          onConnect={viewMode === 'AD' ? handleConnect : undefined}
+          onNodesChange={viewMode === "AD" ? handleNodesChange : undefined}
+          onEdgesChange={viewMode === "AD" ? onEdgesChange : undefined}
+          onConnect={viewMode === "AD" ? handleConnect : undefined}
           nodeTypes={nodeTypes}
           defaultEdgeOptions={defaultEdgeOptions}
           onInit={onInit}
@@ -588,26 +648,26 @@ const AIFlowDiagram: React.FC<AIFlowDiagramProps> = ({
           attributionPosition="bottom-right"
           panOnScroll
           zoomOnScroll
-          selectionOnDrag={viewMode === 'AD'} // Only allow selection in AD mode
-          nodesDraggable={viewMode === 'AD'} // Only allow dragging in AD mode
-          nodesConnectable={viewMode === 'AD'} // Only allow connections in AD mode
-          elementsSelectable={viewMode === 'AD'} // Only allow selection in AD mode
+          selectionOnDrag={viewMode === "AD"} // Only allow selection in AD mode
+          nodesDraggable={viewMode === "AD"} // Only allow dragging in AD mode
+          nodesConnectable={viewMode === "AD"} // Only allow connections in AD mode
+          elementsSelectable={viewMode === "AD"} // Only allow selection in AD mode
         >
           <MiniMap
-            nodeStrokeColor={(n) => (n.selected ? '#ff0072' : '#7C65F6')}
+            nodeStrokeColor={(n) => (n.selected ? "#ff0072" : "#7C65F6")}
             nodeColor={(n) => {
               const nodeType = n.data?.nodeType;
-              return nodeType ? '#FF9900' : '#ffffff';
+              return nodeType ? "#FF9900" : "#ffffff";
             }}
             nodeBorderRadius={8}
           />
           <Background gap={12} size={1} color="#f8f8f8" />
-          
+
           {/* Add the FlowLegend component with dynamic edges and nodes */}
           <FlowLegend edges={edges} nodes={nodes} />
-          
+
           <Panel position="top-right" className="flex gap-2">
-            {viewMode === 'AD' && (
+            {viewMode === "AD" && (
               <>
                 <div className="p-2 bg-white rounded shadow-sm text-xs">
                   <span className="font-bold">{edges.length}</span> connections
@@ -617,11 +677,11 @@ const AIFlowDiagram: React.FC<AIFlowDiagramProps> = ({
                   className="p-2 bg-white rounded shadow-sm text-xs hover:bg-gray-100 transition-colors"
                   disabled={effectiveIsLayouting}
                 >
-                  {effectiveIsLayouting ? 'Arranging...' : 'Auto-arrange'}
+                  {effectiveIsLayouting ? "Arranging..." : "Auto-arrange"}
                 </button>
               </>
             )}
-            {viewMode === 'DFD' && (
+            {viewMode === "DFD" && (
               <div className="p-2 bg-securetrack-lightpurple/15 rounded shadow-sm text-xs text-securetrack-purple">
                 Threat Model View Active
               </div>
@@ -631,7 +691,7 @@ const AIFlowDiagram: React.FC<AIFlowDiagramProps> = ({
       </div>
 
       {/* Show edit node dialog only in AD mode */}
-      {viewMode === 'AD' && editNodeDialogOpen && currentEditNode && (
+      {viewMode === "AD" && editNodeDialogOpen && currentEditNode && (
         <EditNodeDialog
           open={editNodeDialogOpen}
           onOpenChange={setEditNodeDialogOpen}
@@ -644,8 +704,6 @@ const AIFlowDiagram: React.FC<AIFlowDiagramProps> = ({
 };
 
 export default AIFlowDiagram;
-
-
 
 // import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 // import {
@@ -672,7 +730,6 @@ export default AIFlowDiagram;
 // import dagre from 'dagre';
 // import './AIFlowDiagram.css';
 
-
 // // Layout algorithm function - uses dagre to calculate node positions
 // export const getLayoutedElements = (nodes, edges, direction = 'TB', nodeWidth = 172, nodeHeight = 36) => {
 //   if (!nodes || nodes.length === 0) {
@@ -688,11 +745,11 @@ export default AIFlowDiagram;
 
 //     // Add nodes to the graph with dimensions
 //     nodes.forEach((node) => {
-//       const width = node.data?.width || nodeWidth; 
+//       const width = node.data?.width || nodeWidth;
 //       const height = node.data?.height || nodeHeight;
-//       dagreGraph.setNode(node.id, { 
-//         width: width, 
-//         height: height 
+//       dagreGraph.setNode(node.id, {
+//         width: width,
+//         height: height
 //       });
 //     });
 
@@ -711,23 +768,23 @@ export default AIFlowDiagram;
 //     // Get the positions from the layout algorithm
 //     const layoutedNodes = nodes.map((node) => {
 //       const nodeWithPosition = dagreGraph.node(node.id);
-      
+
 //       if (!nodeWithPosition) {
 //         console.warn(`Node ${node.id} not found in layout results`);
 //         return node;
 //       }
 
 //       const useExistingPosition = node.position && node.position.x !== 0 && node.position.y !== 0;
-      
+
 //       return {
 //         ...node,
 //         // Only set position if the node doesn't already have one or is a new node
-//         position: node.position && 
-//                  node.position.x !== undefined && 
-//                  node.position.y !== undefined && 
-//                  node.position.x !== 0 && 
+//         position: node.position &&
+//                  node.position.x !== undefined &&
+//                  node.position.y !== undefined &&
+//                  node.position.x !== 0 &&
 //                  node.position.y !== 0
-//           ? node.position 
+//           ? node.position
 //           : {
 //               x: nodeWithPosition.x - nodeWidth / 2,
 //               y: nodeWithPosition.y - nodeHeight / 2,
@@ -765,14 +822,14 @@ export default AIFlowDiagram;
 //   // Add state for layout functionality if not provided from parent
 //   const [internalIsLayouting, setInternalIsLayouting] = useState(false);
 //   const effectiveIsLayouting = externalIsLayouting !== undefined ? externalIsLayouting : internalIsLayouting;
-  
+
 //   // Add state for data flow diagram toggle
 //   const [isDataFlowActive, setIsDataFlowActive] = useState(false);
 //   // Store the original diagram nodes and edges
 //   const originalDiagramRef = useRef({ nodes: [], edges: [] });
 //   // Store the data flow diagram nodes and edges
 //   const dataFlowDiagramRef = useRef({ nodes: [], edges: [] });
-  
+
 //   const previousNodesLengthRef = useRef(initialNodes?.length || 0);
 //   const previousEdgesLengthRef = useRef(initialEdges?.length || 0);
 //   const layoutTimeoutRef = useRef(null);
@@ -781,7 +838,7 @@ export default AIFlowDiagram;
 //   // For performance optimization and smoother interactions
 //   const nodesCountRef = useRef(initialNodes?.length || 0);
 //   const edgesCountRef = useRef(initialEdges?.length || 0);
-  
+
 //   // Register custom node types
 //   const nodeTypes = useMemo(() => ({
 //     default: CustomNode,
@@ -823,15 +880,15 @@ export default AIFlowDiagram;
 //   // Optimized node change handler to prevent unnecessary updates
 //   const handleNodesChange = useCallback((changes) => {
 //     // Track if we're currently dragging nodes
-//     const isDraggingNow = changes.some(change => 
+//     const isDraggingNow = changes.some(change =>
 //       change.type === 'position' && change.dragging === true
 //     );
-    
+
 //     // Update dragging state for our debounced state sync
 //     if (isDraggingNow) {
 //       isDragging.current = true;
 //     }
-  
+
 //     onNodesChange(changes);
 //   }, [onNodesChange]);
 
@@ -860,10 +917,10 @@ export default AIFlowDiagram;
 
 //       // Determine edge type
 //       const edgeType = edge.type || 'smoothstep';
-      
+
 //       // Get styling for this edge type
 //       const typeStyle = edgeStyles[edgeType] || edgeStyles.dataFlow || {};
-      
+
 //       return {
 //         ...edge,
 //         id: edge.id || `edge-${edge.source}-${edge.target}-${Date.now()}`,
@@ -890,28 +947,28 @@ export default AIFlowDiagram;
 //       console.log('Initial sync of nodes and edges');
 //       // First process nodes
 //       const preparedNodes = prepareNodes(initialNodes);
-      
+
 //       // Then process edges
-//       const processedEdges = initialEdges && initialEdges.length > 0 
-//         ? processEdges(initialEdges) 
+//       const processedEdges = initialEdges && initialEdges.length > 0
+//         ? processEdges(initialEdges)
 //         : [];
-      
+
 //       // Update state
 //       setNodes(preparedNodes);
 //       setEdges(processedEdges);
-      
+
 //       // Store original diagram for toggling
 //       originalDiagramRef.current = {
 //         nodes: preparedNodes,
 //         edges: processedEdges
 //       };
-      
+
 //       // Create empty data flow diagram (no nodes, no edges)
 //       dataFlowDiagramRef.current = {
 //         nodes: [],
 //         edges: []
 //       };
-      
+
 //       // Mark initial render as complete
 //       initialRenderRef.current = false;
 //       hasSyncedInitialData.current = true;
@@ -922,48 +979,48 @@ export default AIFlowDiagram;
 //   useEffect(() => {
 //     // Skip if not yet synced initial data, or no nodes, or currently layouting
 //     if (
-//       !hasSyncedInitialData.current || 
-//       initialNodes.length === 0 || 
+//       !hasSyncedInitialData.current ||
+//       initialNodes.length === 0 ||
 //       effectiveIsLayouting ||
 //       initialRenderRef.current
 //     ) {
 //       return;
 //     }
-    
+
 //     // Check if nodes or edges count changed (something added or removed)
 //     const nodesCountChanged = initialNodes.length !== previousNodesLengthRef.current;
 //     const edgesCountChanged = initialEdges.length !== previousEdgesLengthRef.current;
-    
+
 //     // Update the refs with current counts
 //     previousNodesLengthRef.current = initialNodes.length;
 //     previousEdgesLengthRef.current = initialEdges.length;
-    
+
 //     // If something changed, apply layout with a delay
 //     if ((nodesCountChanged || edgesCountChanged)) {
 //       // Clear any existing timeout
 //       if (layoutTimeoutRef.current) {
 //         clearTimeout(layoutTimeoutRef.current);
 //       }
-      
+
 //       if (setInternalIsLayouting) setInternalIsLayouting(true);
-      
+
 //       // Apply layout with a slight delay to batch changes
 //       layoutTimeoutRef.current = setTimeout(() => {
 //         // First prepare nodes with proper styles
 //         const preparedNodes = prepareNodes(initialNodes);
 //         // Then process edges with proper styling
 //         const processedEdges = processEdges(initialEdges);
-        
+
 //         // Now apply layout
 //         const { nodes: layoutedNodes, edges: layoutedEdges } = getLayoutedElements(
 //           preparedNodes,
 //           processedEdges
 //         );
-        
+
 //         // Update the nodes with new positions
 //         setNodes(layoutedNodes);
 //         setEdges(layoutedEdges);
-        
+
 //         // Wait a bit and then fit view to show all elements
 //         setTimeout(() => {
 //           if (reactFlowInstance.current) {
@@ -973,7 +1030,7 @@ export default AIFlowDiagram;
 //         }, 300);
 //       }, 200);
 //     }
-    
+
 //     return () => {
 //       if (layoutTimeoutRef.current) {
 //         clearTimeout(layoutTimeoutRef.current);
@@ -988,14 +1045,14 @@ export default AIFlowDiagram;
 //       isInitialMount.current = false;
 //       return;
 //     }
-    
+
 //     // Don't do immediate state updates when we're dragging or layouting
 //     if (isDragging.current || effectiveIsLayouting) {
 //       // Clear any existing timeout
 //       if (dragTimeoutRef.current) {
 //         clearTimeout(dragTimeoutRef.current);
 //       }
-      
+
 //       // Set a new timeout to sync state after dragging stops
 //       dragTimeoutRef.current = setTimeout(() => {
 //         if (nodes.length > 0 && setNodesExternal) {
@@ -1007,7 +1064,7 @@ export default AIFlowDiagram;
 //       // Not dragging - sync immediately for other updates
 //       setNodesExternal(nodes);
 //     }
-    
+
 //     // Cleanup timeout on unmount
 //     return () => {
 //       if (dragTimeoutRef.current) {
@@ -1050,13 +1107,13 @@ export default AIFlowDiagram;
 //   const internalOnLayout = useCallback(() => {
 //     console.log('Applying internal layout, nodes:', nodes.length);
 //     if (effectiveIsLayouting || nodes.length === 0) return;
-    
+
 //     if (setInternalIsLayouting) setInternalIsLayouting(true);
-    
+
 //     // Get current nodes and edges
 //     const currentNodes = nodes;
 //     const currentEdges = edges;
-    
+
 //     // Apply layout
 //     const { nodes: layoutedNodes, edges: layoutedEdges } = getLayoutedElements(
 //       currentNodes,
@@ -1065,12 +1122,12 @@ export default AIFlowDiagram;
 //       172,   // Node width
 //       36     // Node height
 //     );
-    
+
 //     // Update state
 //     console.log('Setting layouted nodes:', layoutedNodes.length);
 //     setNodes(layoutedNodes);
 //     setEdges(layoutedEdges);
-    
+
 //     // Fit view and reset layout flag
 //     setTimeout(() => {
 //       if (reactFlowInstance.current) {
@@ -1159,7 +1216,7 @@ export default AIFlowDiagram;
 //         console.log('Fitting view to diagram content');
 //         reactFlowInstance.current.fitView({ padding: 0.2 });
 //         setDidFitView(true);
-        
+
 //         // Apply initial layout if we have multiple nodes
 //         if (nodes.length > 1) {
 //           console.log('Applying initial layout');
@@ -1175,7 +1232,7 @@ export default AIFlowDiagram;
 //     setIsDataFlowActive(prevState => {
 //       const newState = !prevState;
 //       console.log('Toggling data flow diagram view:', newState ? 'ON' : 'OFF');
-      
+
 //       if (newState) {
 //         // Save current diagram state if needed
 //         if (!isDataFlowActive && nodes.length > 0) {
@@ -1184,7 +1241,7 @@ export default AIFlowDiagram;
 //             edges: [...edges]
 //           };
 //         }
-        
+
 //         // Switch to data flow diagram (empty)
 //         setNodes([]);
 //         setEdges([]);
@@ -1193,7 +1250,7 @@ export default AIFlowDiagram;
 //         setNodes(originalDiagramRef.current.nodes);
 //         setEdges(originalDiagramRef.current.edges);
 //       }
-      
+
 //       return newState;
 //     });
 //   }, [isDataFlowActive, nodes, edges, setNodes, setEdges]);
