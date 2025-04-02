@@ -95,11 +95,11 @@
 
 .react-flow__node-input {
   @apply border-2 border-primary;
-} */
+} 
 
-/* .react-flow__controls {
+.react-flow__controls {
   @apply glass-card !important;
-} */
+} 
 
 .react-flow__minimap {
   @apply glass-card !important;
@@ -109,10 +109,10 @@
 /* Option 1 (from AIFlowDiagram.css): */
 
 .react-flow__edge-path {
-  stroke: #9333ea!important;/* Match dataFlow color */
-  stroke-width: 2px !important;
+  stroke: #cccccc !important; /* Light gray instead of purple */
+  stroke-width: 1px !important; /* Thinner line */
   visibility: visible !important;
-  stroke-dasharray: 5, 3 !important; /* Creates dotted/dashed line pattern */
+  /* Removed stroke-dasharray to eliminate dotted lines */
 }
 
 /* This selector is only in AIFlowDiagram.css */
