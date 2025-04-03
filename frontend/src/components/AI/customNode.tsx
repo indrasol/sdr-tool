@@ -124,7 +124,7 @@ const CustomNode = ({ id, data, selected, style }: NodeProps) => {
           </div>
         )}
         
-        <div className="font-bold text-center break-words" style={{ color: nodeColors.primary, fontSize: '10px',fontWeight: 900 }}>
+        <div className="font-Extrabold text-center break-words" style={{ color: 'black', fontSize: '10px',fontWeight: 900 }}>
           {label}
         </div>
       </div>

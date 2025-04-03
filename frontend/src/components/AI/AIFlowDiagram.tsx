@@ -28,7 +28,7 @@ import { edgeStyles } from "./utils/edgeStyles";
 import DiagramActions from "./DiagramActions";
 import FlowLegend from "./FlowLegend";
 import dagre from "dagre";
-import "./AIFlowDiagram.css";
+// import "./AIFlowDiagram.css";
 
 // Layout algorithm function - uses dagre to calculate node positions
 export const getLayoutedElements = (
