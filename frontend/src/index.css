@@ -1,3 +1,4 @@
+/* stylelint-disable at-rule-no-unknown */
 /* Import fonts */
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap');
 
@@ -87,12 +88,14 @@
 /* React Flow Customization */
 .react-flow__node {
   box-shadow: var(--xy-node-boxshadow-default)!important;
-  
   display: flex;
   justify-content: center;
   align-items: center;
   text-align: center;
   padding: 0px !important;
+  width: 80px !important;
+  height: 80px !important;
+  aspect-ratio: 1 / 1 !important;
   
   @apply glass-card; 
 }
@@ -110,18 +113,50 @@
 }
 
 
-/* Option 1 (from AIFlowDiagram.css): */
+/* AIFlowDiagram.css */
 
 .react-flow__edge-path {
-  stroke: #cccccc !important; /* Light gray instead of purple */
+  stroke: #888 !important; /* Light gray */
   stroke-width: 1px !important; /* Thinner line */
   visibility: visible !important;
   /* Removed stroke-dasharray to eliminate dotted lines */
 }
 
-/* This selector is only in AIFlowDiagram.css */
-.react-flow__edges {
-  pointer-events: all !important;
+/* Edge handling for better visibility when overlapping */
+.react-flow__edge {
+  z-index: 1;
+  pointer-events: all;
+}
+
+.react-flow__edge:hover {
+  z-index: 2;
+}
+
+.react-flow__edge.selected {
+  z-index: 3;
+}
+
+/* Make the edge path wider on hover for easier selection */
+.react-flow__edge:hover .react-flow__edge-path {
+  stroke-width: 2px !important;
+  stroke: #888 !important;
+  cursor: pointer;
+}
+
+/* When selected, make edge even more visible */
+.react-flow__edge.selected .react-flow__edge-path {
+  stroke-width: 2px !important;
+  stroke: #888 !important;
+}
+
+/* Enhanced arrow markers */
+.react-flow__edge .react-flow__edge-path {
+  stroke-width: 1.5px !important; 
+}
+
+.react-flow__edge-marker {
+  transform-origin: center;
+  transform-box: fill-box;
 }
 
 .glass-effect {
@@ -197,7 +232,7 @@
 .react-flow__handle {
   width: 8px;
   height: 8px;
-  border-radius: 50%;
+  /* border-radius: 50%; */
 }
 
 .react-flow__handle-left {
@@ -206,4 +241,169 @@
 
 .react-flow__handle-right {
   right: -5px;
+}
+
+/* ========================================================= */
+/* AI Chat Styles (from AI.css)                             */
+/* ========================================================= */
+
+.AIChat-wrapper > div {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* Make sure the messages container scrolls, not the whole chat */
+.AIChat-wrapper .messages-container {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+/* Fix the input at the bottom */
+.AIChat-wrapper .input-container {
+  position: sticky;
+  bottom: 0;
+  background: white;
+  padding: 1rem;
+  border-top: 1px solid #e5e7eb;
+}
+
+/* ========================================================= */
+/* Thinking Display Styles (from ThinkingDisplay.css)       */
+/* ========================================================= */
+
+.thinking-container {
+  width: 100%;
+  margin: 8px 0;
+  border-radius: 8px;
+  background-color: #f5f7ff;
+  overflow: hidden;
+}
+
+.thinking-toggle {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  background-color: #e8ecff;
+  border: none;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  color: #4a57b9;
+  text-align: left;
+}
+
+.thinking-toggle:hover {
+  background-color: #dce3ff;
+}
+
+.toggle-icon {
+  transition: transform 0.2s ease;
+}
+
+.toggle-icon.expanded {
+  transform: rotate(180deg);
+}
+
+.thinking-content {
+  padding: 16px;
+  font-size: 14px;
+  line-height: 1.5;
+  color: #333;
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.thinking-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.thinking-title {
+  font-weight: 600;
+  color: #4a57b9;
+}
+
+.redacted-notice {
+  font-size: 12px;
+  color: #9e5400;
+  background-color: #fff3e0;
+  padding: 4px 8px;
+  border-radius: 4px;
+}
+
+.thinking-text {
+  white-space: pre-wrap;
+  font-family: monospace;
+  background-color: #ffffff;
+  padding: 12px;
+  border-radius: 6px;
+  border: 1px solid #e0e0e0;
+}
+
+/* ========================================================= */
+/* Message List Styles (from MessageList.css)               */
+/* ========================================================= */
+
+.typing-indicator {
+  display: flex;
+  align-items: center;
+  column-gap: 6px;
+  padding: 4px 8px;
+}
+
+.typing-indicator span {
+  height: 8px;
+  width: 8px;
+  background-color: #9ca3af;
+  border-radius: 50%;
+  display: inline-block;
+  animation: bounce 1s infinite alternate;
+}
+
+.typing-indicator span:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.typing-indicator span:nth-child(3) {
+  animation-delay: 0.4s;
+}
+
+/* Note: The bounce animation is already defined earlier in the file */
+
+/* ========================================================= */
+/* Chat Message Styles (from ChatMessage.css)               */
+/* ========================================================= */
+
+.message-content {
+  line-height: 1.5;
+}
+
+.markdown-content h3 {
+  color: #180404;
+  margin-top: 0.5rem;
+  margin-bottom: 0.25rem;
+}
+
+.markdown-content p {
+  margin-bottom: 0.5rem;
+}
+
+.markdown-content ul, .markdown-content ol {
+  margin-left: 1rem;
+  margin-bottom: 0.5rem;
+}
+
+.markdown-content li {
+  margin-bottom: 0.25rem;
+}
+
+.markdown-content strong {
+  font-weight: 600;
 }

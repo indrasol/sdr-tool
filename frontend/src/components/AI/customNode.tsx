@@ -77,7 +77,7 @@ const CustomNode = ({ id, data, selected, style }: NodeProps) => {
       const IconComponent = iconData.component;
       return (
         <div className="flex items-center justify-center p-1 rounded-full bg-opacity-30" style={{ backgroundColor: `${nodeColors.primary}20` }}>
-          <IconComponent {...iconData.props} size={20} color={nodeColors.primary} />
+          <IconComponent {...iconData.props} size={30} color={nodeColors.primary} />
         </div>
       );
     }
@@ -88,8 +88,8 @@ const CustomNode = ({ id, data, selected, style }: NodeProps) => {
     <>
       {selected && (
         <NodeResizer 
-          minWidth={80}
-          minHeight={80}
+          minWidth={40}
+          minHeight={40}
           isVisible={!!selected}
           lineClassName="border-securetrack-purple"
           handleClassName="h-2 w-2 bg-white border-2 border-securetrack-purple rounded"
@@ -111,8 +111,8 @@ const CustomNode = ({ id, data, selected, style }: NodeProps) => {
         style={{
           ...style,
           backgroundColor: nodeColors.background,
-          border: selected ? `0px solid ${nodeColors.primary}` : `0px solid ${nodeColors.primary}`,
-          borderRadius: '30px',
+          // border: selected ? `0px solid ${nodeColors.primary}` : `0px solid ${nodeColors.primary}`,
+          // borderRadius: '30px',
           position: 'relative',
           padding: '0px',
           aspectRatio: '1 / 1',
@@ -141,7 +141,6 @@ const CustomNode = ({ id, data, selected, style }: NodeProps) => {
           boxShadow: `0 0 0 1px rgba(255, 255, 255, 0.8)`
         }}
       />
-
       <Handle 
         type="source" 
         position={Position.Right} 

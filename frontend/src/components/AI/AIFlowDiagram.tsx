@@ -28,15 +28,15 @@ import { edgeStyles } from "./utils/edgeStyles";
 import DiagramActions from "./DiagramActions";
 import FlowLegend from "./FlowLegend";
 import dagre from "dagre";
-// import "./AIFlowDiagram.css";
+//import "./AIFlowDiagram.css";
 
 // Layout algorithm function - uses dagre to calculate node positions
 export const getLayoutedElements = (
   nodes,
   edges,
   direction = "TB",
-  nodeWidth = 172,
-  nodeHeight = 36
+  nodeWidth = 40,
+  nodeHeight = 40
 ) => {
   if (!nodes || nodes.length === 0) {
     console.warn("No nodes provided for layout");
@@ -165,14 +165,15 @@ const AIFlowDiagram: React.FC<AIFlowDiagramProps> = ({
       type: "smoothstep",
       markerEnd: {
         type: MarkerType.ArrowClosed,
-        width: 10, // Smaller arrow width
-        height: 10, // Smaller arrow height
+        width: 12, // Smaller arrow width
+        height: 12, // Smaller arrow height
         color: "#000000", // Black arrow
       },
       style: {
         strokeWidth: 1, // Thinner line
-        stroke: "#cccccc", // Light gray
+        stroke: "#888", // Light gray
       },
+      curvature: 0.8, // Add this line to create more pronounced curves
     }),
     []
   );
@@ -249,13 +250,13 @@ const AIFlowDiagram: React.FC<AIFlowDiagramProps> = ({
           animated: edgeType === "dataFlow" || edgeType === "database",
           markerEnd: {
             type: MarkerType.ArrowClosed,
-            width: 10, // Smaller arrow width
-            height: 10, // Smaller arrow height
+            width: 12, // Smaller arrow width
+            height: 12, // Smaller arrow height
             color: "#000000", // Black arrow
           },
           style: {
             strokeWidth: 1, // Thinner line
-            stroke: "#cccccc", // Light gray
+            stroke: "#888", // Light gray
             ...(edge.style || {}),
           },
         };
@@ -428,13 +429,13 @@ const AIFlowDiagram: React.FC<AIFlowDiagramProps> = ({
         type: "smoothstep",
         markerEnd: {
           type: MarkerType.ArrowClosed,
-          width: 10, // Smaller arrow width
-          height: 10, // Smaller arrow height
+          width: 12, // Smaller arrow width
+          height: 12, // Smaller arrow height
           color: "#000000", // Black arrow
         },
         style: {
           strokeWidth: 1, // Thinner line
-          stroke: "#cccccc", // Light gray
+          stroke: "#888", // Light gray
         },
       };
       hookHandleConnect(newEdge);
@@ -458,8 +459,8 @@ const AIFlowDiagram: React.FC<AIFlowDiagramProps> = ({
       currentNodes,
       currentEdges,
       "TB", // Top to Bottom direction
-      150, // Node width
-      36 // Node height
+      80, // Node width
+      80 // Node height
     );
 
     // Update state
@@ -652,6 +653,12 @@ const AIFlowDiagram: React.FC<AIFlowDiagramProps> = ({
           nodesDraggable={viewMode === "AD"} // Only allow dragging in AD mode
           nodesConnectable={viewMode === "AD"} // Only allow connections in AD mode
           elementsSelectable={viewMode === "AD"} // Only allow selection in AD mode
+          // Add these properties for no overlap edges:
+          defaultViewport={{ x: 0, y: 0, zoom: 1 }}
+          elevateEdgesOnSelect={true}
+          disableKeyboardA11y={false}
+          autoPanOnConnect={true}
+          connectionRadius={20}
         >
           <MiniMap
             nodeStrokeColor={(n) => (n.selected ? "#ff0072" : "#7C65F6")}

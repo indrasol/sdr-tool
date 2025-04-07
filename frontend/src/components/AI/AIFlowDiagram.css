@@ -1,8 +1,0 @@
-.react-flow__edge-path {
-  stroke: #cccccc; /* Light gray instead of purple */
-  stroke-width: 1px; /* Thinner line */
-  visibility: visible !important;
-}
-.react-flow__edges {
-  pointer-events: all !important;
-}
