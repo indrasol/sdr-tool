@@ -1,3 +1,4 @@
+/* stylelint-disable at-rule-no-unknown */
 /* Import fonts */
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap');
 
@@ -106,18 +107,50 @@
 }
 
 
-/* Option 1 (from AIFlowDiagram.css): */
+/* AIFlowDiagram.css */
 
 .react-flow__edge-path {
-  stroke: #cccccc !important; /* Light gray instead of purple */
+  stroke: #888 !important; /* Light gray */
   stroke-width: 1px !important; /* Thinner line */
   visibility: visible !important;
   /* Removed stroke-dasharray to eliminate dotted lines */
 }
 
-/* This selector is only in AIFlowDiagram.css */
-.react-flow__edges {
-  pointer-events: all !important;
+/* Edge handling for better visibility when overlapping */
+.react-flow__edge {
+  z-index: 1;
+  pointer-events: all;
+}
+
+.react-flow__edge:hover {
+  z-index: 2;
+}
+
+.react-flow__edge.selected {
+  z-index: 3;
+}
+
+/* Make the edge path wider on hover for easier selection */
+.react-flow__edge:hover .react-flow__edge-path {
+  stroke-width: 2px !important;
+  stroke: #888 !important;
+  cursor: pointer;
+}
+
+/* When selected, make edge even more visible */
+.react-flow__edge.selected .react-flow__edge-path {
+  stroke-width: 2px !important;
+  stroke: #888 !important;
+}
+
+/* Enhanced arrow markers */
+.react-flow__edge .react-flow__edge-path {
+  stroke-width: 1.5px !important; 
+}
+
+.react-flow__edge-marker {
+  transform-origin: center;
+  transform-box: fill-box;
 }
 
 .glass-effect {
