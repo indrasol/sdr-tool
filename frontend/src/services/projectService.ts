@@ -211,7 +211,7 @@ const projectService = {
   async saveProject(sessionId: string, diagramState: any): Promise<boolean> {
     try {
       console.log(`Saving project with session ID: ${sessionId}`);
-      console.log(`Saving project with diagram state: ${diagramState}`);
+      console.log(`Diagram state summary: ${diagramState.nodes.length} nodes, ${diagramState.edges.length} edges`);
       
       // Make API call to save_project endpoint
       const response = await fetch(`${BASE_API_URL}/save_project/${sessionId}`, {
@@ -244,6 +244,11 @@ const projectService = {
           description: "Your project has been saved successfully",
           variant: "default"
         });
+        
+        // Log conversation history if available
+        if (savedProjectResp.conversation_history) {
+          console.log(`Saved conversation history: ${savedProjectResp.conversation_history.length} messages`);
+        }
         
         return true;
       } else {

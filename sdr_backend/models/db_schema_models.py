@@ -1,11 +1,16 @@
-from sqlalchemy import Column, Integer, String, ForeignKey
+from sqlalchemy import Column, Integer, String, ForeignKey, DateTime, Text, ARRAY, JSON, Float, Date, Boolean
 from sqlalchemy.orm import relationship
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy import DateTime, Enum
+from sqlalchemy import Enum as SQLAlchemyEnum
 from sqlalchemy.sql import func
 from sqlalchemy.dialects.postgresql import JSONB, ARRAY
 from sqlalchemy import Date
 from constants import ProjectPriority, ProjectStatus
+from uuid import uuid4
+from enum import Enum
+from datetime import datetime, timezone
+from typing import Optional, List, Dict, Any, Union
+from pydantic import BaseModel, Field
 
 # Base class for declarative models
 Base = declarative_base()
@@ -35,8 +40,8 @@ class Project(Base):
     user_id = Column(String, ForeignKey("users.id"), nullable=False)
     name = Column(String, nullable=False)
     description = Column(String, nullable=True)
-    status = Column(Enum(ProjectStatus), default=ProjectStatus.NOT_STARTED, nullable=False)
-    priority = Column(Enum(ProjectPriority), nullable=True)
+    status = Column(SQLAlchemyEnum(ProjectStatus), default=ProjectStatus.NOT_STARTED, nullable=False)
+    priority = Column(SQLAlchemyEnum(ProjectPriority), nullable=True)
     created_date = Column(Date, server_default=func.current_date(), nullable=False)  # Default to current date
     due_date = Column(Date, nullable=True)  
     creator = Column(String, nullable=False)  
@@ -95,3 +100,51 @@ class Role(Base):
     user_id = Column(String, ForeignKey("users.id"))
     tenant_id = Column(Integer, ForeignKey("tenants.id"))
     role_name = Column(String)  # e.g., "admin", "editor"
+
+class Session(Base):
+    """SQLAlchemy model for sessions table.
+    
+    Maps to the sessions table in the database. This table tracks active sessions
+    for users and projects, allowing session resumption beyond Redis TTL expiry.
+    """
+    __tablename__ = 'sessions'
+    
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    session_id = Column(String, nullable=False, unique=True, index=True)
+    user_id = Column(String, nullable=False, index=True)
+    project_id = Column(String, nullable=False, index=True)
+    created_at = Column(DateTime(timezone=True), nullable=False, server_default=func.now())
+    last_accessed = Column(DateTime(timezone=True), nullable=False, server_default=func.now(), onupdate=func.now())
+    is_active = Column(Boolean, nullable=False, default=True)
+    
+    def __repr__(self):
+        return f"<Session(session_id='{self.session_id}', user_id='{self.user_id}', project_id='{self.project_id}')>"
+
+class Sessions(BaseModel):
+    """
+    Sessions table model - Tracks active sessions for users and projects.
+    This provides persistence for session IDs beyond Redis TTL expiry.
+    
+    The actual session content is stored in Redis, while this table
+    stores metadata about sessions to allow users to resume their work.
+    """
+    id: Optional[int] = Field(None, description="Auto-increment primary key")
+    session_id: str = Field(..., description="Unique session identifier (UUID)")
+    user_id: str = Field(..., description="User ID associated with the session")
+    project_id: str = Field(..., description="Project ID associated with the session")
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc), description="Session creation timestamp")
+    last_accessed: datetime = Field(default_factory=lambda: datetime.now(timezone.utc), description="Last time the session was accessed")
+    is_active: bool = Field(default=True, description="Whether the session is still active")
+    
+    class Config:
+        orm_mode = True
+        schema_extra = {
+            "example": {
+                "session_id": "550e8400-e29b-41d4-a716-446655440000",
+                "user_id": "user123",
+                "project_id": "project456",
+                "created_at": "2023-09-01T12:00:00Z",
+                "last_accessed": "2023-09-01T14:30:00Z",
+                "is_active": True
+            }
+        }
