@@ -10,6 +10,10 @@ export interface Message {
   content: string;
   isPreExisting?: boolean;
   isAlreadyTyped?: boolean;
+  id?: number;
+  timestamp?: string;
+  changed?: boolean;
+  diagramState?: any;
 }
 
 interface ChatMessageProps {
@@ -43,12 +47,30 @@ const ChatMessage: React.FC<ChatMessageProps> = ({ message, index, isLoadedProje
   // Initialize hasTyped based on message properties
   const [hasTyped, setHasTyped] = useState(message.isPreExisting || message.isAlreadyTyped || false);
   
+  // Use memo to create a unique message key from content to help React identify each message
+  // This prevents unnecessary re-animations when tabs are switched
+  const messageKey = React.useMemo(() => {
+    return message.id ? `msg-${message.id}` : 
+           message.timestamp ? `msg-${message.timestamp}` : 
+           `msg-${index}-${safeContent.substring(0, 20)}`;
+  }, [message.id, message.timestamp, safeContent, index]);
+  
   // Reference to the message container for auto-scrolling
   const messageRef = useRef(null);
 
   // Only use typing effect for non-empty assistant messages that haven't been typed yet
   const isAssistantMessage = message.role === 'assistant';
-  const shouldAnimate = isAssistantMessage && !hasTyped && safeContent.length > 0;
+  const shouldAnimate = isAssistantMessage && !hasTyped && safeContent.length > 0 && !message.isAlreadyTyped;
+  
+  // Immediately mark revert response messages as typed
+  useEffect(() => {
+    if (isAssistantMessage && safeContent.includes("Successfully reverted to")) {
+      setHasTyped(true);
+    }
+  }, [isAssistantMessage, safeContent]);
+
+  // Check if this message changed the diagram (for UI indication)
+  const changedDiagram = Boolean(message.changed);
   
   // Format content for the final display
   const formattedContent = isAssistantMessage ? enhanceTextFormatting(safeContent) : safeContent;
@@ -215,9 +237,16 @@ const ChatMessage: React.FC<ChatMessageProps> = ({ message, index, isLoadedProje
         ) : (
           <span className="flex items-center gap-1">
             <Bot size={14} className="text-securetrack-purple" />
+            {changedDiagram && (
+              <span className="ml-1 text-xs bg-securetrack-purple/20 text-securetrack-purple px-1.5 py-0.5 rounded-full">
+                Updated diagram
+              </span>
+            )}
           </span>
         )}
-        • {new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+        • {message.timestamp 
+            ? new Date(message.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+            : new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
       </div>
     </motion.div>
   );
