@@ -330,9 +330,12 @@ const ModelWithAI = () => {
     return () => {
       console.log("ModelWithAI component unmounting, cleaning up...");
       if (sessionIdRef.current) {
-        const currentDiagramState = { nodes: nodesRef.current, edges: edgesRef.current };
-        projectService.saveProject(sessionIdRef.current, currentDiagramState).catch(err => {
-          console.error("Error saving project on unmount:", err);
+        console.log(`Saving project on unmount with session ID: ${sessionIdRef.current}`);
+        console.log(`Current message count: ${messages.length}`);
+        
+        // Use our utility function for more reliable saving
+        saveCurrentState().catch(err => {
+          console.error("Failed to save project on unmount:", err);
         });
       }
     };
@@ -771,7 +774,17 @@ const ModelWithAI = () => {
         if (projectData.conversation_history && Array.isArray(projectData.conversation_history)) {
           const formattedMessages = projectData.conversation_history
             .map((entry) => {
-              if (entry.query && entry.response) {
+              // Handle new format with id, role, content fields
+              if (entry.role && entry.content) {
+                return {
+                  role: entry.role,
+                  content: entry.content, 
+                  isPreExisting: true,
+                  timestamp: entry.timestamp || new Date().toISOString()
+                };
+              } 
+              // Handle old format with query and response fields
+              else if (entry.query && entry.response) {
                 return [
                   { role: 'user', content: entry.query, isPreExisting: true },
                   { role: 'assistant', content: entry.response.message || entry.response, isPreExisting: true },
@@ -781,6 +794,7 @@ const ModelWithAI = () => {
             })
             .flat();
           setMessages(formattedMessages);
+          console.log("Formatted messages for display:", formattedMessages);
         }
 
         setProjectLoaded(true);
@@ -817,17 +831,17 @@ const ModelWithAI = () => {
     setIsLoading(true);
 
     try {
-      console.log(`Saving project with session ID: ${sessionId}`);
-      const currentDiagramState = { nodes, edges };
-      const response = await projectService.saveProject(sessionId, currentDiagramState);
-      console.log(`Saved Response: ${response}`);
-
-      if (response) {
+      console.log(`Manual save initiated for session ID: ${sessionId}`);
+      const result = await saveCurrentState();
+      
+      if (result) {
         toast({
           title: "Project Saved",
           description: `Project ${projectId} saved successfully`,
           variant: "default",
         });
+      } else {
+        throw new Error("Save operation failed");
       }
     } catch (error) {
       console.error('Error saving project:', error);
@@ -863,7 +877,14 @@ const ModelWithAI = () => {
       return;
     }
 
-    setMessages((prev) => [...prev, { role: 'user', content: message }]);
+    // Add user message with timestamp
+    const timestamp = new Date().toISOString();
+    setMessages((prev) => [...prev, { 
+      role: 'user', 
+      content: message,
+      timestamp: timestamp
+    }]);
+    
     setShowReferences(false);
     setShowRelatedConcepts(false);
     setShowClarificationQuestions(false);
@@ -875,7 +896,6 @@ const ModelWithAI = () => {
     setError(null);
 
     try {
-
       // Check if this is a DFD generation command
       const isDfdCommand = (message) => {
         const lowerCaseMessage = message.toLowerCase();
@@ -912,11 +932,13 @@ const ModelWithAI = () => {
         // This is a DFD generation started response
         console.log("DFD generation started:", response.message);
         
-        // Add assistant message about DFD generation
+        // Add assistant message about DFD generation with timestamp
+        const responseTimestamp = new Date().toISOString();
         setMessages((prev) => [...prev, { 
           role: 'assistant', 
           content: response.message || "I've started generating the Data Flow Diagram. This might take a moment.",
-          isAlreadyTyped: false
+          isAlreadyTyped: false,
+          timestamp: responseTimestamp
         }]);
         
         // Set DFD status and start polling
@@ -930,11 +952,15 @@ const ModelWithAI = () => {
         }
         
         console.log("Adding AI response:", response.response.message);
+        
+        // Add assistant message with timestamp
+        const responseTimestamp = new Date().toISOString();
         setMessages((prev) => [...prev, { 
           role: 'assistant', 
           content: response.response.message,
-          isAlreadyTyped: false
-        }]); 
+          isAlreadyTyped: false,
+          timestamp: responseTimestamp
+        }]);
 
         if (response.response.thinking) {
           console.log("Processing thinking content");
@@ -1238,49 +1264,14 @@ const ModelWithAI = () => {
       setIsCancelling(true);
       
       try {
-        const response = await fetchWithTimeout(
-          `${BASE_API_URL}/projects/${projectId}/threatmodel/cancel`,
-          {
-            method: 'POST',
-            headers: getAuthHeaders(),
-          },
-          5000 // 5 second timeout
-        );
-        
-        if (response.ok) {
-          const result = await response.json();
-          
           // Immediately switch back to AD view
           setViewMode('AD');
-          
-          // Clear any DFD polling interval
-          if (dfdPollingInterval) {
-            clearInterval(dfdPollingInterval);
-            setDfdPollingInterval(null);
-          }
-          
-          // Reset DFD generation status
-          setDfdGenerationStatus('idle');
-          
+          handleSwitchView('AD');
           toast({
             title: 'Generation Cancelled',
             description: 'Threat model generation has been cancelled. Switched back to Architecture Diagram.',
             variant: 'default',
           });
-          
-          // Force a state refresh after a short delay to ensure clean transition
-          setTimeout(() => {
-            setDfdData(null);
-          }, 500);
-        } else {
-          // Show error toast if cancellation failed
-          toast({
-            title: 'Cancellation Failed',
-            description: 'Unable to cancel the threat model generation. Please try again.',
-            variant: 'destructive',
-          });
-          setIsCancelling(false);
-        }
       } catch (error) {
         console.error("Error cancelling generation:", error);
         toast({
@@ -1366,9 +1357,9 @@ const ModelWithAI = () => {
   const combinedAddNode = useCallback(
     (nodeType, position, iconRenderer) => {
       handleAddNodeWithType(nodeType, position, iconRenderer);
-      handleAddNode(nodeType, position, iconRenderer);
+      // handleAddNode(nodeType, position, iconRenderer);
     },
-    [handleAddNodeWithType, handleAddNode]
+    [handleAddNodeWithType]
   );
 
   const handleActualSave = async () => {
@@ -1385,10 +1376,23 @@ const ModelWithAI = () => {
   const handleRevertToDiagramState = (messageContent, diagramState) => {
     if (diagramState && diagramState.nodes && diagramState.edges) {
       const revertMessage = `Reverting diagram to state before: "${messageContent}" modification`;
+      
+      // Add revert messages with timestamps
+      const userTimestamp = new Date().toISOString();
+      const aiTimestamp = new Date(Date.now() + 1000).toISOString(); // Slightly after user message
+      
       setMessages((prev) => [
         ...prev,
-        { role: 'user', content: `Revert diagram to state before: "${messageContent}" modification` },
-        { role: 'assistant', content: revertMessage },
+        { 
+          role: 'user', 
+          content: `Revert diagram to state before: "${messageContent}" modification`,
+          timestamp: userTimestamp
+        },
+        { 
+          role: 'assistant', 
+          content: revertMessage,
+          timestamp: aiTimestamp 
+        },
       ]);
       
       // Clear existing state first
@@ -1457,6 +1461,26 @@ const ModelWithAI = () => {
   const handleDFDFitView = useCallback(() => {
     if (dfdReactFlowInstance.current) {
       dfdReactFlowInstance.current.fitView({ padding: 0.2, duration: 300 });
+    }
+  }, []);
+
+  // Utility function for saving project with current state
+  const saveCurrentState = useCallback(async () => {
+    if (!sessionIdRef.current) {
+      console.warn("Cannot save - no session ID available");
+      return;
+    }
+    
+    console.log(`Saving project with session ID: ${sessionIdRef.current}`);
+    const currentDiagramState = { nodes: nodesRef.current, edges: edgesRef.current };
+    
+    try {
+      const result = await projectService.saveProject(sessionIdRef.current, currentDiagramState);
+      console.log(`Project save result: ${result ? 'success' : 'failed'}`);
+      return result;
+    } catch (err) {
+      console.error("Error saving project:", err);
+      return false;
     }
   }, []);
 

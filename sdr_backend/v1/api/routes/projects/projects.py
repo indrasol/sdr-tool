@@ -9,6 +9,7 @@ from utils.logger import log_info
 from core.db.supabase_db import get_supabase_client, safe_supabase_operation
 from constants import ProjectStatus, ProjectPriority
 from core.cache.session_manager import SessionManager
+from datetime import datetime, timezone, timedelta
 
 router = APIRouter()
 
@@ -421,13 +422,67 @@ async def load_project(
         )
 
         # Add conversation history entries to the session
-        for entry in conversation_history:
-            if "query" in entry and "response" in entry:
-                await session_manager.add_to_conversation(
-                    session_id=session_id,
-                    query=entry["query"],
-                    response=entry["response"]
+        log_info(f"Processing {len(conversation_history)} conversation history entries")
+        
+        # First, determine the format of our conversation history
+        uses_role_format = any("role" in entry for entry in conversation_history if isinstance(entry, dict))
+        uses_query_format = any("query" in entry for entry in conversation_history if isinstance(entry, dict))
+        log_info(f"Conversation format - Role based: {uses_role_format}, Query based: {uses_query_format}")
+        
+        # Process role-based format (new format)
+        if uses_role_format:
+            # Get all user messages
+            user_messages = [msg for msg in conversation_history if isinstance(msg, dict) and msg.get("role") == "user"]
+            log_info(f"Found {len(user_messages)} user messages")
+            
+            # Sort user messages by ID if possible
+            if all("id" in msg for msg in user_messages):
+                user_messages.sort(key=lambda msg: msg.get("id", 0))
+            
+            # Process each user message and its corresponding assistant response
+            for user_msg in user_messages:
+                user_content = user_msg.get("content", "")
+                user_id = user_msg.get("id")
+                
+                # Find corresponding assistant message (should be the next message with id = user_id + 1)
+                ai_response = next(
+                    (msg for msg in conversation_history 
+                     if isinstance(msg, dict) and msg.get("role") == "assistant" and msg.get("id") == user_id + 1), 
+                    None
                 )
+                
+                if ai_response:
+                    log_info(f"Adding conversation pair: User message {user_id} with AI response {ai_response.get('id')}")
+                    
+                    await session_manager.add_to_conversation(
+                        session_id=session_id,
+                        query=user_content,
+                        response={
+                            "message": ai_response.get("content", ""),
+                            "response_type": ai_response.get("response_type", "Message")
+                        },
+                        diagram_state=ai_response.get("diagram_state"),
+                        changed=ai_response.get("changed", False)
+                    )
+                else:
+                    log_info(f"No matching assistant response found for user message {user_id}")
+        
+        # Process query-based format (old format)
+        elif uses_query_format:
+            # Process entries with query and response fields
+            for i, entry in enumerate(conversation_history):
+                if isinstance(entry, dict) and "query" in entry and "response" in entry:
+                    log_info(f"Adding conversation pair {i+1} from query-based format")
+                    await session_manager.add_to_conversation(
+                        session_id=session_id,
+                        query=entry["query"],
+                        response=entry["response"]
+                    )
+        
+        # Get the final session data to verify the conversation was loaded correctly
+        final_session_data = await session_manager.get_session(session_id)
+        final_conversation = final_session_data.get("conversation_history", [])
+        log_info(f"Final session has {len(final_conversation)} messages in conversation history")
 
         log_info(f"Project {project_code} loaded successfully for user {user_id}")
         return JSONResponse(
@@ -521,8 +576,13 @@ async def save_project(
         diagram_state = request_data.diagram_state if request_data.diagram_state else session_data_for_reference.get("diagram_state", {"nodes": [], "edges": []})
         conversation_history = session_data_for_reference.get("conversation_history", [])
 
-        log_info(f"Diagram state in save project : {diagram_state}")
-        log_info(f"Conversation History in save project : {conversation_history}")
+        log_info(f"Diagram state in save project : Nodes: {len(diagram_state.get('nodes', []))}, Edges: {len(diagram_state.get('edges', []))}")
+        log_info(f"Conversation History in save project : {len(conversation_history)} messages")
+        
+        # Sort conversation history by ID if present to maintain order
+        if conversation_history and all("id" in msg for msg in conversation_history if isinstance(msg, dict)):
+            conversation_history.sort(key=lambda x: x.get("id", 0) if isinstance(x, dict) and "id" in x else 0)
+            log_info(f"Sorted conversation history by ID")
         
         # Save to database
         await supabase_manager.update_project_data(
@@ -538,7 +598,8 @@ async def save_project(
             content={
                 "message": "Project saved successfully", 
                 "session_id": session_id,
-                "project_id": project_id
+                "project_id": project_id,
+                "conversation_history": conversation_history
             }
         )
 
@@ -562,3 +623,239 @@ async def save_project(
             status_code=500,
             content={"detail": f"Failed to save project: {str(e)}"}
         )
+
+@router.get("/projects/{project_code}/history")
+async def get_project_history(
+    project_code: str,
+    days: int = 10,
+    current_user: dict = Depends(verify_token)
+):
+    """
+    Retrieve user messages from the past specified number of days, 
+    with an indication of which messages caused system changes.
+    
+    Args:
+        project_code: The unique identifier for the project
+        days: Number of days to look back (default: 10)
+        current_user: Authenticated user (via dependency)
+        
+    Returns:
+        List of user messages with metadata including whether they changed the system
+    """
+    try:
+        user_id = current_user
+        if not user_id:
+            raise HTTPException(status_code=401, detail="User not authenticated")
+        
+        # Get project data from supabase
+        project_data = await supabase_manager.get_project_data(
+            user_id=user_id,
+            project_code=project_code
+        )
+        
+        if not project_data:
+            raise HTTPException(status_code=404, detail=f"Project {project_code} not found")
+        
+        # Get conversation history
+        conversation_history = project_data.get("conversation_history", [])
+        
+        # Calculate the cutoff date (days ago from now)
+        cutoff_date = datetime.now(timezone.utc) - timedelta(days=days)
+        
+        # Filter user messages from the past specified days
+        user_messages = []
+        
+        for entry in conversation_history:
+            # Handle both old and new format of conversation history
+            if "id" in entry and "role" in entry:
+                # New format with explicit IDs and roles
+                if entry["role"] == "user":
+                    try:
+                        # Parse timestamp
+                        timestamp = datetime.fromisoformat(entry["timestamp"].replace('Z', '+00:00'))
+                        
+                        # Check if message is within the specified timeframe
+                        if timestamp >= cutoff_date:
+                            # Find the corresponding AI response to check if it changed the diagram
+                            changed = False
+                            diagram_state = None
+                            
+                            # Look for the next message which should be the AI response
+                            for i, potential_response in enumerate(conversation_history):
+                                if "id" in potential_response and potential_response.get("id") == entry["id"] + 1:
+                                    changed = potential_response.get("changed", False)
+                                    diagram_state = potential_response.get("diagram_state")
+                                    break
+                            
+                            user_messages.append({
+                                "id": entry["id"],
+                                "content": entry["content"],
+                                "timestamp": entry["timestamp"],
+                                "changed": changed,
+                                "has_diagram_state": diagram_state is not None
+                            })
+                    except (ValueError, KeyError) as e:
+                        # Skip entries with invalid timestamps or missing required fields
+                        log_info(f"Skipping entry due to error: {str(e)}")
+                        continue
+            else:
+                # Old format with query/response structure
+                if "query" in entry and "timestamp" in entry:
+                    try:
+                        # Parse timestamp
+                        timestamp = datetime.fromisoformat(entry["timestamp"].replace('Z', '+00:00'))
+                        
+                        # Check if message is within the specified timeframe
+                        if timestamp >= cutoff_date:
+                            # For old format, we can't reliably determine if it changed the diagram
+                            user_messages.append({
+                                "id": None,  # No ID in old format
+                                "content": entry["query"],
+                                "timestamp": entry["timestamp"],
+                                "changed": False,  # Can't determine for old format
+                                "has_diagram_state": False
+                            })
+                    except (ValueError, KeyError) as e:
+                        # Skip entries with invalid timestamps
+                        log_info(f"Skipping entry due to error: {str(e)}")
+                        continue
+        
+        # Sort messages by timestamp, newest first
+        user_messages.sort(key=lambda x: x["timestamp"], reverse=True)
+        
+        return {"messages": user_messages}
+    
+    except HTTPException as e:
+        raise e
+    except Exception as e:
+        log_info(f"Error retrieving project history: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to retrieve project history: {str(e)}")
+
+@router.post("/projects/{project_code}/revert/{message_id}")
+async def revert_to_message(
+    project_code: str,
+    message_id: int,
+    current_user: dict = Depends(verify_token)
+):
+    """
+    Revert diagram state to the version that existed after a specific message in the conversation history.
+    
+    Args:
+        project_code: The unique identifier for the project
+        message_id: The ID of the user message to revert to
+        current_user: Authenticated user (via dependency)
+        
+    Returns:
+        Dictionary with success message and updated diagram state
+    """
+    try:
+        user_id = current_user
+        if not user_id:
+            raise HTTPException(status_code=401, detail="User not authenticated")
+        
+        # Get project data from supabase
+        project_data = await supabase_manager.get_project_data(
+            user_id=user_id,
+            project_code=project_code
+        )
+        
+        if not project_data:
+            raise HTTPException(status_code=404, detail=f"Project {project_code} not found")
+        
+        # Get conversation history
+        conversation_history = project_data.get("conversation_history", [])
+        
+        # Find the message we want to revert to
+        target_user_message = None
+        target_ai_response = None
+        saved_diagram_state = None
+        
+        # First, find the user message with the given ID
+        for entry in conversation_history:
+            if "id" in entry and entry["id"] == message_id and entry.get("role") == "user":
+                target_user_message = entry
+                # Now find the corresponding AI response (should be the next message)
+                expected_ai_id = message_id + 1
+                for ai_entry in conversation_history:
+                    if "id" in ai_entry and ai_entry["id"] == expected_ai_id and ai_entry.get("role") == "assistant":
+                        target_ai_response = ai_entry
+                        saved_diagram_state = ai_entry.get("diagram_state")
+                        break
+                break
+        
+        if not target_user_message:
+            raise HTTPException(status_code=404, detail=f"Message with ID {message_id} not found")
+        
+        if not saved_diagram_state:
+            raise HTTPException(
+                status_code=400, 
+                detail="Cannot revert to this message as it has no associated diagram state"
+            )
+        
+        # Update the project with the reverted diagram state
+        await supabase_manager.update_project_data(
+            user_id=user_id,
+            project_code=project_code,
+            diagram_state=saved_diagram_state
+        )
+        
+        # Check for existing active sessions for this user and project
+        active_sessions = await session_manager.get_active_sessions_for_user(user_id, project_code)
+        session_id = None
+        
+        if active_sessions:
+            # Use the most recent active session
+            session_id = active_sessions[0]["session_id"]
+            log_info(f"Using existing active session {session_id} for revert operation")
+        else:
+            # Create a new session
+            session_id = await session_manager.create_project_session(user_id, project_code)
+            log_info(f"Created new session {session_id} for revert operation")
+        
+        # Update session with the reverted diagram state
+        await session_manager.update_diagram_state(session_id, saved_diagram_state)
+        
+        # Add a reverting message to the conversation history
+        user_revert_message = f"Revert diagram to state after: \"{target_user_message.get('content')}\""
+        ai_response_message = f"Successfully reverted to diagram state after message: \"{target_user_message.get('content')}\""
+        
+        await session_manager.add_to_conversation(
+            session_id,
+            user_revert_message,
+            {
+                "message": ai_response_message,
+                "response_type": "SystemNotification"
+            }
+        )
+        
+        # Update the conversation history in the database as well
+        new_conversation_entry = {
+            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "query": user_revert_message,
+            "response": {
+                "message": ai_response_message,
+                "response_type": "SystemNotification"
+            }
+        }
+        
+        updated_conversation_history = conversation_history + [new_conversation_entry]
+        
+        await supabase_manager.update_project_data(
+            user_id=user_id,
+            project_code=project_code,
+            conversation_history=updated_conversation_history
+        )
+        
+        return {
+            "message": "Successfully reverted to previous diagram state",
+            "diagram_state": saved_diagram_state,
+            "session_id": session_id,
+            "revert_message": user_revert_message,
+            "response_message": ai_response_message
+        }
+    
+    except HTTPException as e:
+        raise e
+    except Exception as e:
+        log_info(f"Error reverting to message state: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to revert to message state: {str(e)}")

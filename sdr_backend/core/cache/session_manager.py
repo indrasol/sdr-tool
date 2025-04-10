@@ -7,6 +7,7 @@ from contextlib import asynccontextmanager
 from fastapi import HTTPException
 from utils.logger import log_info
 from config.settings import REDIS_DB, REDIS_HOST, REDIS_PASSWORD, REDIS_PORT, SESSION_EXPIRY
+from core.db.supabase_db import get_supabase_client, safe_supabase_operation
 
 
 class SessionManager:
@@ -39,6 +40,7 @@ class SessionManager:
     async def create_project_session(self, user_id: str, project_id: str) -> str:
         """
         Create a new session for a specific project and user.
+        This will create the session in both Redis and Supabase.
         
         Args:
             user_id: The authenticated user's ID
@@ -50,9 +52,11 @@ class SessionManager:
         if not self.redis_pool:
             await self.connect()
             
+        # Generate a unique session ID
         session_id = str(uuid.uuid4())
         timestamp = datetime.now(timezone.utc).isoformat()
 
+        # Create Redis session data
         session_data = {
             "user_id": user_id,
             "project_id": project_id,
@@ -68,11 +72,31 @@ class SessionManager:
         }
 
         try:
+            # 1. Create the session in Redis
             await self.redis_pool.setex(
                 f"session:{session_id}",
                 SESSION_EXPIRY,  # 24-hour TTL
                 json.dumps(session_data)
             )
+            
+            # 2. Also persist session metadata in Supabase for long-term tracking
+            supabase = get_supabase_client()
+            
+            def create_session_record():
+                return supabase.from_("sessions").insert({
+                    "session_id": session_id,
+                    "user_id": user_id,
+                    "project_id": project_id,
+                    "created_at": timestamp,
+                    "last_accessed": timestamp,
+                    "is_active": True
+                }).execute()
+                
+            await safe_supabase_operation(
+                create_session_record,
+                f"Failed to create session record in Supabase for session {session_id}"
+            )
+            
             log_info(f"Created session {session_id} for user {user_id} and project {project_id}")
             return session_id
         except Exception as e:
@@ -102,8 +126,68 @@ class SessionManager:
         session_data_str = await self.redis_pool.get(f"session:{session_id}")
         
         if not session_data_str:
-            log_info(f"Session {session_id} not found or expired")
-            raise HTTPException(status_code=404, detail=f"Session {session_id} not found or expired")
+            log_info(f"Session {session_id} not found or expired in Redis")
+            
+            # Attempt to check if this is a valid session in Supabase
+            try:
+                supabase = get_supabase_client()
+                
+                def check_session():
+                    return supabase.from_("sessions").select("*").eq("session_id", session_id).eq("is_active", True).execute()
+                
+                session_check = await safe_supabase_operation(
+                    check_session,
+                    f"Failed to check session {session_id} in Supabase"
+                )
+                
+                if session_check.data and len(session_check.data) > 0:
+                    log_info(f"Session {session_id} found in Supabase but expired in Redis. Recreating Redis session.")
+                    
+                    session_record = session_check.data[0]
+                    user_id = session_record["user_id"]
+                    project_id = session_record["project_id"]
+                    
+                    # Create a fresh Redis session
+                    fresh_session_data = {
+                        "user_id": user_id,
+                        "project_id": project_id,
+                        "created_at": session_record["created_at"],
+                        "last_updated": datetime.now(timezone.utc).isoformat(),
+                        "conversation_history": [],  # Empty as we'll reload this from DB
+                        "diagram_state": {},  # Empty as we'll reload this from DB
+                        "thinking_history": [],
+                        "thinking_signatures": {},
+                        "redacted_thinking_count": 0,
+                        "classification_metadata": [],
+                        "feedback_history": []
+                    }
+                    
+                    await self.redis_pool.setex(
+                        f"session:{session_id}",
+                        SESSION_EXPIRY,
+                        json.dumps(fresh_session_data)
+                    )
+                    
+                    # Update last_accessed in Supabase
+                    def update_last_accessed():
+                        return supabase.from_("sessions").update({
+                            "last_accessed": datetime.now(timezone.utc).isoformat()
+                        }).eq("session_id", session_id).execute()
+                    
+                    await safe_supabase_operation(
+                        update_last_accessed,
+                        f"Failed to update last_accessed for session {session_id}"
+                    )
+                    
+                    return fresh_session_data
+                else:
+                    log_info(f"Session {session_id} not found in Supabase")
+                    raise HTTPException(status_code=404, detail=f"Session {session_id} not found or expired")
+            except HTTPException:
+                raise
+            except Exception as e:
+                log_info(f"Error checking session in Supabase: {str(e)}")
+                raise HTTPException(status_code=404, detail=f"Session {session_id} not found or expired")
 
         try:
             session_data = json.loads(session_data_str)
@@ -132,13 +216,38 @@ class SessionManager:
             if expected_user_id and session_data["user_id"] != expected_user_id:
                 log_info(f"Session user ID mismatch: expected {expected_user_id}, got {session_data['user_id']}")
                 raise HTTPException(status_code=403, detail="Session does not match user")
+            
+            # Log conversation history info for debugging
+            conversation_history = session_data.get("conversation_history", [])
+            if conversation_history:
+                log_info(f"Session {session_id} has {len(conversation_history)} messages in conversation history")
+                # Check if we have id-based messages or old format
+                has_ids = any("id" in msg for msg in conversation_history if isinstance(msg, dict))
+                log_info(f"Conversation format - Has IDs: {has_ids}")
+            
+            # Update last_accessed in Supabase
+            try:
+                supabase = get_supabase_client()
+                
+                def update_last_accessed():
+                    return supabase.from_("sessions").update({
+                        "last_accessed": datetime.now(timezone.utc).isoformat()
+                    }).eq("session_id", session_id).execute()
+                
+                await safe_supabase_operation(
+                    update_last_accessed,
+                    f"Failed to update last_accessed for session {session_id}"
+                )
+            except Exception as e:
+                # Non-critical error, just log it
+                log_info(f"Failed to update last_accessed for session {session_id} in Supabase: {str(e)}")
                 
             return session_data
         except json.JSONDecodeError:
             log_info(f"Failed to parse session data as JSON: {session_data_str[:100]}...")
             raise HTTPException(status_code=500, detail="Invalid session data format")
 
-    async def add_to_conversation(self, session_id: str, query: str, response: Dict[str, Any]) -> bool:
+    async def add_to_conversation(self, session_id: str, query: str, response: Dict[str, Any], diagram_state: Optional[Dict[str, Any]] = None, changed: bool = False) -> bool:
         """
         Add a query-response pair to the conversation history.
         
@@ -146,6 +255,8 @@ class SessionManager:
             session_id: The unique session identifier
             query: The user's query
             response: The system's response data
+            diagram_state: Current diagram state after applying changes (optional)
+            changed: Flag indicating if the diagram was modified (optional)
             
         Returns:
             bool: True if successful, False otherwise
@@ -158,19 +269,59 @@ class SessionManager:
             
             # Add to conversation history
             conversation = session_data.get("conversation_history", [])
-            conversation.append({
-                "timestamp": datetime.now(timezone.utc).isoformat(),
-                "query": query,
-                "response": response
-            })
+            
+            # Get the current conversation length for logging
+            original_length = len(conversation)
+            
+            # Generate unique message IDs for the conversation pair
+            last_id = 0
+            if conversation and isinstance(conversation[-1], dict) and "id" in conversation[-1]:
+                last_id = conversation[-1]["id"]
+            
+            # User message with ID
+            user_message = {
+                "id": last_id + 1,
+                "role": "user",
+                "content": query,
+                "timestamp": datetime.now(timezone.utc).isoformat()
+            }
+            
+            # AI response with ID, diagram state and changed flag
+            ai_response = {
+                "id": last_id + 2,
+                "role": "assistant",
+                "content": response.get("message", ""),
+                "timestamp": datetime.now(timezone.utc).isoformat()
+            }
+            
+            # Add diagram state and changed flag if provided
+            if diagram_state:
+                ai_response["diagram_state"] = diagram_state
+                ai_response["changed"] = changed
+            
+            # Log every message addition to debug communication history issues
+            log_info(f"Adding user message {user_message['id']} to session {session_id}: {query[:30]}...")
+            log_info(f"Adding AI response {ai_response['id']} to session {session_id}: {ai_response['content'][:30]}...")
+            
+            # Add both messages to conversation history
+            conversation.append(user_message)
+            conversation.append(ai_response)
+            
+            # Ensure sorted order by ID
+            conversation.sort(key=lambda x: x.get("id", 0) if isinstance(x, dict) and "id" in x else 0)
             
             # Limit conversation history to last 20 exchanges to prevent bloat
-            if len(conversation) > 20:
-                conversation = conversation[-20:]
+            if len(conversation) > 40:  # 20 exchanges = 40 messages
+                original_length = len(conversation)
+                conversation = conversation[-40:]
+                log_info(f"Trimmed conversation history from {original_length} to {len(conversation)} messages")
             
             # Update session with new conversation history
             session_data["conversation_history"] = conversation
             session_data["last_updated"] = datetime.now(timezone.utc).isoformat()
+            
+            # Log the change in conversation length
+            log_info(f"Session {session_id} conversation history: {original_length} -> {len(conversation)} messages")
             
             # Update in Redis
             await self.redis_pool.setex(
@@ -451,7 +602,7 @@ class SessionManager:
 
     async def extend_session_ttl(self, session_id: str, ttl_seconds: int = SESSION_EXPIRY) -> None:
         """
-        Extend the time-to-live (TTL) of a session.
+        Extend the time-to-live (TTL) of a session in Redis and update last_accessed in Supabase.
         
         Args:
             session_id: The unique session identifier
@@ -464,15 +615,58 @@ class SessionManager:
             await self.connect()
             
         if not await self.redis_pool.exists(f"session:{session_id}"):
-            log_info(f"Session {session_id} not found for TTL extension")
-            raise HTTPException(status_code=404, detail=f"Session {session_id} not found or expired")
+            log_info(f"Session {session_id} not found in Redis for TTL extension")
             
+            # Check if session exists in Supabase
+            try:
+                supabase = get_supabase_client()
+                
+                def check_session():
+                    return supabase.from_("sessions").select("*").eq("session_id", session_id).eq("is_active", True).execute()
+                
+                session_check = await safe_supabase_operation(
+                    check_session,
+                    f"Failed to check session {session_id} in Supabase"
+                )
+                
+                if not session_check.data or len(session_check.data) == 0:
+                    raise HTTPException(status_code=404, detail=f"Session {session_id} not found or expired")
+                
+                # Session exists in Supabase but not in Redis - this will be handled by get_session
+                log_info(f"Session {session_id} found in Supabase but not in Redis. Will be recreated when accessed.")
+                return
+            except HTTPException:
+                raise
+            except Exception as e:
+                log_info(f"Error checking session in Supabase: {str(e)}")
+                raise HTTPException(status_code=404, detail=f"Session {session_id} not found or expired")
+            
+        # Extend Redis TTL
         await self.redis_pool.expire(f"session:{session_id}", ttl_seconds)
-        log_info(f"Extended TTL for session {session_id} to {ttl_seconds} seconds")
+        
+        # Update last_accessed in Supabase
+        try:
+            supabase = get_supabase_client()
+            
+            def update_last_accessed():
+                return supabase.from_("sessions").update({
+                    "last_accessed": datetime.now(timezone.utc).isoformat()
+                }).eq("session_id", session_id).execute()
+            
+            await safe_supabase_operation(
+                update_last_accessed,
+                f"Failed to update last_accessed for session {session_id}"
+            )
+            
+            log_info(f"Extended TTL for session {session_id} to {ttl_seconds} seconds and updated last_accessed")
+        except Exception as e:
+            # Non-critical error, just log it
+            log_info(f"Failed to update last_accessed for session {session_id} in Supabase: {str(e)}")
+            log_info(f"Extended TTL for session {session_id} to {ttl_seconds} seconds in Redis only")
 
     async def delete_session(self, session_id: str) -> None:
         """
-        Delete a session from Redis.
+        Delete a session from both Redis and mark it as inactive in Supabase.
         
         Args:
             session_id: The unique session identifier
@@ -487,15 +681,61 @@ class SessionManager:
             await self.connect()
             
         try:
+            # Delete from Redis
             deleted = await self.redis_pool.delete(f"session:{session_id}")
             if deleted:
-                log_info(f"Deleted session {session_id}")
+                log_info(f"Deleted session {session_id} from Redis")
             else:
-                log_info(f"Session {session_id} not found for deletion")
+                log_info(f"Session {session_id} not found in Redis for deletion")
+            
+            # Mark as inactive in Supabase
+            supabase = get_supabase_client()
+            
+            def mark_inactive():
+                return supabase.from_("sessions").update({
+                    "is_active": False
+                }).eq("session_id", session_id).execute()
+            
+            await safe_supabase_operation(
+                mark_inactive,
+                f"Failed to mark session {session_id} as inactive in Supabase"
+            )
+            
+            log_info(f"Marked session {session_id} as inactive in Supabase")
         except Exception as e:
             log_info(f"Error deleting session {session_id}: {str(e)}")
             raise HTTPException(status_code=500, detail=f"Failed to delete session: {str(e)}")
-    
+
+    async def get_active_sessions_for_user(self, user_id: str, project_id: Optional[str] = None) -> List[Dict[str, Any]]:
+        """
+        Get all active sessions for a user, optionally filtered by project.
+        
+        Args:
+            user_id: The user ID to get sessions for
+            project_id: Optional project ID to filter by
+            
+        Returns:
+            List of session records from Supabase
+        """
+        try:
+            supabase = get_supabase_client()
+            
+            def get_sessions():
+                query = supabase.from_("sessions").select("*").eq("user_id", user_id).eq("is_active", True)
+                if project_id:
+                    query = query.eq("project_id", project_id)
+                return query.order("last_accessed", desc=True).execute()
+            
+            sessions_response = await safe_supabase_operation(
+                get_sessions,
+                f"Failed to get active sessions for user {user_id}"
+            )
+            
+            return sessions_response.data or []
+        except Exception as e:
+            log_info(f"Error getting active sessions for user {user_id}: {str(e)}")
+            return []
+
     async def add_classification_metadata(self, session_id: str, metadata: Dict[str, Any]) -> bool:
         """
         Add classification metadata to the session for analysis and continuous learning.

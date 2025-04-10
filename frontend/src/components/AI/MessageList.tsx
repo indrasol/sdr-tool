@@ -1,5 +1,4 @@
-
-import React, { useRef, useEffect } from 'react';
+import React, { useRef, useEffect, useState } from 'react';
 import ChatMessage, { Message } from './ChatMessage';
 import EmptyChatState from './EmptyChatState';
 import { motion } from 'framer-motion'
@@ -17,13 +16,84 @@ interface MessageListProps {
 
 const MessageList: React.FC<MessageListProps> = ({ messages, isThinking = false, thinking = null, error = null, isLoading = false, isLoadedProject = false  }) => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const processedMessageIds = useRef<Set<number>>(new Set());
+  const containerRef = useRef<HTMLDivElement>(null);
+  const isScrolledToBottom = useRef<boolean>(true);
+  
+  // Track which messages we've already rendered to prevent re-typing
+  const [processedMessages, setProcessedMessages] = useState<Message[]>([]);
 
-  // console.log("MessageList rendering with messages:", messages);
-
-  // Scroll to bottom of messages
+  // Scroll to bottom of messages when new messages are added
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages]);
+    if (isScrolledToBottom.current) {
+      setTimeout(() => {
+        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+      }, 100);
+    }
+  }, [messages, processedMessages]);
+  
+  // Track scroll position to determine if we should auto-scroll
+  useEffect(() => {
+    const handleScroll = () => {
+      if (containerRef.current) {
+        const { scrollTop, scrollHeight, clientHeight } = containerRef.current;
+        // Consider "scrolled to bottom" if within 100px of the bottom
+        isScrolledToBottom.current = scrollHeight - scrollTop - clientHeight < 100;
+      }
+    };
+    
+    const container = containerRef.current;
+    if (container) {
+      container.addEventListener('scroll', handleScroll);
+      // Check initial scroll position
+      handleScroll();
+      
+      return () => {
+        container.removeEventListener('scroll', handleScroll);
+      };
+    }
+  }, []);
+  
+  // Force scroll to bottom when component mounts
+  useEffect(() => {
+    setTimeout(() => {
+      messagesEndRef.current?.scrollIntoView({ behavior: 'auto' });
+      isScrolledToBottom.current = true;
+    }, 200);
+  }, []);
+
+  // Process new messages to prevent re-typing after revert
+  useEffect(() => {
+    // Process new messages to ensure only unprocessed ones get the typing animation
+    const newProcessedMessages = messages.map(msg => {
+      // Consider a message processed if:
+      // 1. It has preExisting flag
+      // 2. We've seen its ID before
+      // 3. It has isAlreadyTyped flag
+      // 4. It's from a loaded project and is not the most recent message (optimization)
+      const isProcessed = 
+        msg.isPreExisting || 
+        (msg.id !== undefined && processedMessageIds.current.has(msg.id)) ||
+        msg.isAlreadyTyped ||
+        (isLoadedProject && msg.role === 'assistant'); // Make all assistant messages in loaded projects skip typing
+      
+      // Add IDs of processed messages to our tracking set
+      if (msg.id !== undefined) {
+        processedMessageIds.current.add(msg.id);
+      }
+      
+      // Return the message with isAlreadyTyped flag set if it's been processed
+      return {
+        ...msg,
+        isAlreadyTyped: isProcessed
+      };
+    });
+    
+    setProcessedMessages(newProcessedMessages);
+    
+    // Log the processed messages for debugging
+    console.log(`Processed ${newProcessedMessages.length} messages, ${newProcessedMessages.filter(m => m.isAlreadyTyped).length} already typed`);
+  }, [messages, isLoadedProject]);
 
   // Loading indicator animation variants
   const loadingVariants = {
@@ -32,12 +102,17 @@ const MessageList: React.FC<MessageListProps> = ({ messages, isThinking = false,
   };
 
   return (
-    <div className="flex-grow overflow-y-auto p-4 space-y-4">
+    <div ref={containerRef} className="flex-grow overflow-y-auto p-4 space-y-4 messages-container">
       {messages.length === 0 ? (
         <EmptyChatState />
       ) : (
-        messages.map((message, index) => (
-          <ChatMessage key={index} message={message} index={index} isLoadedProject={isLoadedProject} />
+        processedMessages.map((message, index) => (
+          <ChatMessage 
+            key={`msg-${message.id || index}-${message.role}`} 
+            message={message} 
+            index={index} 
+            isLoadedProject={isLoadedProject} 
+          />
         ))
       )}
       {/* Loading indicator */}

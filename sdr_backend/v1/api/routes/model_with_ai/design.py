@@ -601,6 +601,9 @@ async def design_endpoint(
                 session_id = await session_manager.create_project_session(current_user, request.project_id)
                 session_data = await session_manager.get_session(session_id)
             
+            # Store the original diagram state for comparison later
+            original_diagram_state = request.diagram_state or session_data.get("diagram_state", {})
+            
             # Update diagram state if provided
             if request.diagram_state:
                 log_info(f"Updating diagram state for session {session_id}")
@@ -967,12 +970,34 @@ async def design_endpoint(
             }
             
             log_info(f"Response Data : {response_data}")
-            # Schedule background task to update conversation history
+            
+            # Now get the updated session data to check for changes in diagram
+            updated_session_data = await session_manager.get_session(session_id)
+            updated_diagram_state = updated_session_data.get("diagram_state", {})
+            
+            # Check if diagram state was changed by this interaction
+            diagram_changed = False
+            if processed_response.response_type == ResponseType.ARCHITECTURE:
+                # For architecture responses, check if diagram was modified
+                if processed_response.diagram_updates or processed_response.nodes_to_add or processed_response.edges_to_add or processed_response.elements_to_remove:
+                    diagram_changed = True
+                else:
+                    # Compare original and updated diagram states to detect changes
+                    original_nodes = len(original_diagram_state.get("nodes", []))
+                    original_edges = len(original_diagram_state.get("edges", []))
+                    updated_nodes = len(updated_diagram_state.get("nodes", []))
+                    updated_edges = len(updated_diagram_state.get("edges", []))
+                    
+                    diagram_changed = (original_nodes != updated_nodes) or (original_edges != updated_edges)
+            
+            # Schedule background task to update conversation history with diagram state and change flag
             background_tasks.add_task(
                 session_manager.add_to_conversation,
                 session_id,
                 request.query,
-                response_data
+                response_data,
+                updated_diagram_state if diagram_changed else None,
+                diagram_changed
             )
 
             # Track metrics if we have a response learning service
