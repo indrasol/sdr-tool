@@ -1,6 +1,6 @@
 // src/components/AI/ThinkingDisplay.tsx
 import React, { useState } from 'react';
-import './ThinkingDisplay.css'
+// import './ThinkingDisplay.css'
 
 interface ThinkingDisplayProps {
   thinking?: string;
