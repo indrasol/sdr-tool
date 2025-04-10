@@ -4,7 +4,7 @@ import ChatMessage, { Message } from './ChatMessage';
 import EmptyChatState from './EmptyChatState';
 import { motion } from 'framer-motion'
 import { Bot } from 'lucide-react';
-import './MessageList.css'
+// import './MessageList.css'
 
 interface MessageListProps {
   messages: Message[];
