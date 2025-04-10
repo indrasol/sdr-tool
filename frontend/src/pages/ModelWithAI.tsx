@@ -1264,50 +1264,14 @@ const ModelWithAI = () => {
       setIsCancelling(true);
       
       try {
-        // const response = await fetchWithTimeout(
-        //   `${BASE_API_URL}/projects/${projectId}/threatmodel/cancel`,
-        //   {
-        //     method: 'POST',
-        //     headers: getAuthHeaders(),
-        //   },
-        //   5000 // 5 second timeout
-        // );
-        
-        // if (response.ok) {
-        //   const result = await response.json();
-          
           // Immediately switch back to AD view
           setViewMode('AD');
           handleSwitchView('AD');
-          
-          // Clear any DFD polling interval
-          // if (dfdPollingInterval) {
-          //   clearInterval(dfdPollingInterval);
-          //   setDfdPollingInterval(null);
-          // }
-          
-          // // Reset DFD generation status
-          // setDfdGenerationStatus('idle');
-          
           toast({
             title: 'Generation Cancelled',
             description: 'Threat model generation has been cancelled. Switched back to Architecture Diagram.',
             variant: 'default',
           });
-          
-          // Force a state refresh after a short delay to ensure clean transition
-          // setTimeout(() => {
-          //   setDfdData(null);
-          // }, 500);
-        // } else {
-        //   // Show error toast if cancellation failed
-        //   toast({
-        //     title: 'Cancellation Failed',
-        //     description: 'Unable to cancel the threat model generation. Please try again.',
-        //     variant: 'destructive',
-        //   });
-        //   setIsCancelling(false);
-        // }
       } catch (error) {
         console.error("Error cancelling generation:", error);
         toast({
