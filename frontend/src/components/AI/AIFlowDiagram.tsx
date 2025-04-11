@@ -17,61 +17,17 @@ import {
   MarkerType,
   Node,
   Edge,
-} from '@xyflow/react';
-import '@xyflow/react/dist/style.css';
-import CustomNode from './customNode';
-import CommentNode from './CommentNode';
-import EditNodeDialog from './EditNodeDialog';
-import { AIFlowDiagramProps } from './types/diagramTypes';
-import { useDiagramNodes } from './hooks/useDiagramNodes';
-import { edgeStyles } from './utils/edgeStyles';
-import DiagramActions from './DiagramActions';
-import FlowLegend from './FlowLegend';
-import dagre from 'dagre';
-import './AIFlowDiagram.css';
-import { AlertTriangle, Loader2, EyeOff, Eye } from 'lucide-react';
-import { runThreatAnalysis } from '@/services/designService';
-import { useToast } from '@/hooks/use-toast';
-import { ThreatItem } from '@/interfaces/aiassistedinterfaces';
-import ThreatPanel from './ThreatPanel';
-import RemoteSvgIcon from './icons/RemoteSvgIcon';
-import { mapNodeTypeToIcon } from '../AI/utils/mapNodeTypeToIcon';
+} from "@xyflow/react";
+import "@xyflow/react/dist/style.css";
+import CustomNode from "./customNode";
+import CommentNode from "./CommentNode";
+import EditNodeDialog from "./EditNodeDialog";
+import { AIFlowDiagramProps } from "./types/diagramTypes";
+import { useDiagramNodes } from "./hooks/useDiagramNodes";
+import { edgeStyles } from "./utils/edgeStyles";
+import DiagramActions from "./DiagramActions";
+import dagre from "dagre";
 
-// Helper function to check if two arrays of nodes or edges are deeply equal by comparing their essential properties
-const areArraysEqual = (arr1: any[], arr2: any[], isNodes = true) => {
-  if (!arr1 || !arr2) return arr1 === arr2;
-  if (arr1.length !== arr2.length) return false;
-  
-  // Create a map of IDs to array indices for faster lookups
-  const map2 = new Map(arr2.map((item, index) => [item.id, index]));
-  
-  // Check each item in arr1 exists in arr2 with the same essential properties
-  return arr1.every(item1 => {
-    // Get the corresponding item from arr2
-    const index2 = map2.get(item1.id);
-    if (index2 === undefined) return false;
-    
-    const item2 = arr2[index2];
-    
-    if (isNodes) {
-      // For nodes, check position and essential data properties
-      return (
-        item1.position?.x === item2.position?.x &&
-        item1.position?.y === item2.position?.y &&
-        item1.data?.label === item2.data?.label &&
-        item1.data?.nodeType === item2.data?.nodeType &&
-        item1.data?.description === item2.data?.description
-      );
-    } else {
-      // For edges, check source, target, and type
-      return (
-        item1.source === item2.source &&
-        item1.target === item2.target &&
-        item1.type === item2.type
-      );
-    }
-  });
-};
 
 // Layout algorithm function - uses dagre to calculate node positions
 export const getLayoutedElements = (nodes, edges, direction = 'TB', nodeWidth = 172, nodeHeight = 36, forceLayout = false) => {
@@ -1075,31 +1031,8 @@ const AIFlowDiagram: React.FC<AIFlowDiagramProps> = ({
           </Panel>
           
           <Background gap={12} size={1} color="#f8f8f8" />
+
           
-          {/* Add a left-side panel for the Run Threat Analysis button */}
-          {viewMode === 'AD' && (
-            <Panel position="top-left" className="ml-4 mt-3">
-              <button
-                onClick={handleRunThreatAnalysis}
-                disabled={runningThreatAnalysis}
-                className="p-2 bg-gradient-to-r from-red-100 to-red-200 rounded shadow-sm text-xs hover:from-red-200 hover:to-red-300 text-red-700 transition-all font-medium flex items-center gap-1 border border-red-200"
-              >
-                {runningThreatAnalysis ? (
-                  <>
-                    <Loader2 size={14} className="inline animate-spin" />
-                    Running Analysis...
-                  </>
-                ) : (
-                  <>
-                    <AlertTriangle size={14} className="inline" />
-                    Run Threat Analysis
-                  </>
-                )}
-              </button>
-            </Panel>
-          )}
-          
-          {/* Keep the original panel but remove the threat analysis button */}
           <Panel position="top-right" className="flex gap-2">
             {viewMode === "AD" && (
               <>
