@@ -50,7 +50,7 @@ async def verify_token(authorization: str = Header(None)):
         # Verify the JWT using the secret from environment variables
         try:
             # jwt_secret = base64.b64decode(SUPABASE_SECRET_KEY)
-            payload = jwt.decode(token, SUPABASE_SECRET_KEY, algorithms=["HS256"], audience="authenticated",leeway=30)
+            payload = jwt.decode(token, SUPABASE_SECRET_KEY, algorithms=["HS256"], audience="authenticated")
             # log_info(f"Payload: {payload}")
         except ExpiredSignatureError:
             log_info("Token verification failed: Token expired")
