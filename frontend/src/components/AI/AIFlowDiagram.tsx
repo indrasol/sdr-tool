@@ -26,9 +26,8 @@ import { AIFlowDiagramProps } from "./types/diagramTypes";
 import { useDiagramNodes } from "./hooks/useDiagramNodes";
 import { edgeStyles } from "./utils/edgeStyles";
 import DiagramActions from "./DiagramActions";
-import FlowLegend from "./FlowLegend";
 import dagre from "dagre";
-//import "./AIFlowDiagram.css";
+
 
 // Layout algorithm function - uses dagre to calculate node positions
 export const getLayoutedElements = (
@@ -670,9 +669,7 @@ const AIFlowDiagram: React.FC<AIFlowDiagramProps> = ({
           />
           <Background gap={12} size={1} color="#f8f8f8" />
 
-          {/* Add the FlowLegend component with dynamic edges and nodes */}
-          <FlowLegend edges={edges} nodes={nodes} />
-
+          
           <Panel position="top-right" className="flex gap-2">
             {viewMode === "AD" && (
               <>
