@@ -104,6 +104,11 @@
 
 .react-flow__minimap {
   @apply glass-card !important;
+   
+}
+
+.react-flow__attribution {
+  display: none;
 }
 
 
