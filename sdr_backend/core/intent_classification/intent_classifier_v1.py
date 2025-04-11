@@ -78,6 +78,14 @@ class IntentClassifier:
             r"thank you",
         ]
         
+        self.dfd_threat_patterns = [
+            r"generate dfd with threat analysis",
+            r"create dfd and analyze threats",
+            r"build dfd and perform threat modeling",
+            r"dfd threat analysis",
+            r"data flow diagram with threats"
+        ]
+        
         # Load example queries and build vector index
         self.examples = self._load_examples()
         self._build_index()
@@ -357,12 +365,14 @@ class IntentClassifier:
         expert_score = self._match_patterns(query, self.expert_patterns)
         clarification_score = self._match_patterns(query, self.clarification_patterns)
         out_of_context_score = self._match_patterns(query, self.out_of_context_patterns)
+        dfd_threat_score = self._match_patterns(query, self.dfd_threat_patterns)
         
         scores = {
             ResponseType.ARCHITECTURE: architecture_score,
             ResponseType.EXPERT: expert_score,
             ResponseType.CLARIFICATION: clarification_score,
-            ResponseType.OUT_OF_CONTEXT: out_of_context_score
+            ResponseType.OUT_OF_CONTEXT: out_of_context_score,
+            ResponseType.DFD: dfd_threat_score
         }
         
         # Get highest scoring intent

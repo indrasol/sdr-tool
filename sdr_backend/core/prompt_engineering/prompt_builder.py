@@ -1,6 +1,7 @@
 from typing import Dict, Any, List, Optional
 from models.response_models import ResponseType
 import re
+from utils.logger import log_info
 
 class PromptBuilder:
     """
@@ -254,7 +255,7 @@ class PromptBuilder:
         return prompt
     
     # Add to your existing PromptBuilder class
-    async def build_dfd_prompt(
+    async def build_threat_prompt(
         self, 
         query: str, 
         conversation_history: List[Dict[str, Any]], 
@@ -273,6 +274,7 @@ class PromptBuilder:
         """
         # Format conversation history
         formatted_history = await self._format_conversation_history(conversation_history)
+        diagram_description = await self._format_diagram_state(diagram_state)
         
         prompt = f"""
         You are Guardian AI, an expert cybersecurity architecture assistant specializing in threat modeling.
@@ -288,9 +290,10 @@ class PromptBuilder:
         - Denial of Service: Denying or degrading service to users
         - Elevation of Privilege: Gaining capabilities without proper authorization
         
-        # Conversation History:
-        {formatted_history}
-        
+       
+        # Current Diagram State:
+        {diagram_description}
+
         # User Request:
         {query}
         
@@ -317,6 +320,161 @@ class PromptBuilder:
         
         return prompt
     
+    # # Add to your existing PromptBuilder class
+    # async def build_threat_prompt(
+    #     self, 
+    #     query: str, 
+    #     conversation_history: List[Dict[str, Any]], 
+    #     diagram_state: Optional[Dict[str, Any]]
+    # ) -> str:
+    #     """
+    #     Build a prompt for DFD and threat analysis.
+        
+    #     Args:
+    #         query: The user's query
+    #         conversation_history: List of previous exchanges
+    #         diagram_state: Current state of the diagram
+            
+    #     Returns:
+    #         A formatted prompt string
+    #     """
+    #     # Format conversation history
+    #     formatted_history = await self._format_conversation_history(conversation_history)
+        
+    #     prompt = f"""
+    #     You are Guardian AI, an expert cybersecurity architecture assistant specializing in threat modeling.
+    #     You are analyzing a Data Flow Diagram (DFD) that represents system architecture and data flows.
+        
+    #     # DFD Context:
+    #     The diagram shows components, boundaries, and data flows in the system.
+    #     Threats have been identified based on STRIDE threat modeling methodology:
+    #     - Spoofing: Impersonating something or someone else
+    #     - Tampering: Modifying data or code
+    #     - Repudiation: Claiming to not have performed an action
+    #     - Information Disclosure: Exposing information to unauthorized individuals
+    #     - Denial of Service: Denying or degrading service to users
+    #     - Elevation of Privilege: Gaining capabilities without proper authorization
+        
+    #     # Conversation History:
+    #     {formatted_history}
+        
+    #     # User Request:
+    #     {query}
+        
+    #     Think deeply about the security implications of the DFD and the user's question.
+    #     Consider potential threats, vulnerabilities, and security controls that should be in place.
+        
+    #     When providing your response, use this JSON structure:
+    #     ```json
+    #     {{
+    #         "message": "Your detailed explanation or answer to the user's question",
+    #         "confidence": 0.95,
+    #         "threats_to_explain": [
+    #             // IDs of specific threats to highlight and explain (if relevant)
+    #         ],
+    #         "recommendations": [
+    #             // Security recommendations based on the identified threats
+    #         ]
+    #     }}
+    #     ```
+        
+    #     Provide concrete, actionable security advice based on the DFD and identified threats.
+    #     Focus on practical mitigations rather than theoretical concerns.
+    #     """
+        
+    #     return prompt
+    async def build_dfd_prompt(self, 
+        query: str,diagram_state):
+     diagram_description = await self._format_diagram_state(diagram_state)
+    # Define the enhanced prompt
+     prompt = f"""
+    You are Guardian AI, an expert assistant specialized in secure software architecture and threat modeling.
+
+    Your task is to analyze the current system design and user request to produce a detailed and accurate **Data Flow Diagram (DFD)** in JSON format. This output must reflect secure design principles, clearly define all components, and visually organize elements on a virtual canvas using `x` and `y` coordinates.
+    ---
+    ## Guidance for DFD Generation:
+    1. **Think step-by-step**:
+        - Analyze the existing system (if any).
+        - Interpret the user’s request carefully.
+        - Identify key components and secure boundaries.
+        - Ensure clarity and completeness of the diagram.
+    2. **Use the following standard DFD components**:
+        - **External Entity**  
+          - *Shape*: Rectangle  
+          - *Type*: `external_entity`  
+          - *Description*: Represents users, systems, or organizations that interact with the system. These are sources or destinations of data but do not perform transformations.
+        - **Process**  
+          - *Shape*: Circle  
+          - *Type*: `process`  
+          - *Description*: Represents a function, operation, or task that transforms input data into output.
+        - **Data Store**  
+          - *Shape*: Cylinder  
+          - *Type*: `datastore`  
+          - *Description*: Represents storage components like databases, files, or any persistent storage system.
+        - **Trust Boundary**  
+          - *Shape*: Dashed Rectangle  
+          - *Type*: `trust_boundary`  
+          - *Description*: A logical or physical separation between entities or processes that enforce different levels of trust (e.g., public internet vs internal network).
+    3. **Positioning**:
+        - Assign each component a 2D position using approximate `x` and `y` coordinates (e.g., "x": 150, "y": 300) on a virtual canvas.
+        - This helps organize the diagram spatially for potential rendering or visualization.
+    ---
+    ##Input Definitions:
+    ### Current System Diagram State (if available):
+    ```plaintext
+    {diagram_description}
+    ```
+    ### User Request:
+    ```plaintext
+    {query}
+    ```
+    ---
+    ## Output Format (JSON Only):
+    You must return a **well-formed JSON** object using the following structure. Do **not include any text or explanation** outside this JSON block:
+
+    ```json
+    {{
+      "message": "Explain the changes or what the generated diagram represents.",
+      "confidence": 0.95,
+      "elements": [
+        {{
+          "id": "unique_element_id",
+          "name": "Descriptive Name",
+          "type": "external_entity | process | datastore",
+          "shape": "rectangle | circle | cylinder",
+          "position": {{ "x": 100, "y": 200 }}
+        }}
+      ],
+      "edges": [
+        {{
+          "id": "edge_id",
+          "source": "source_element_id",
+          "target": "target_element_id",
+          "data": "Description of the data being transferred"
+        }}
+      ],
+      "trust_boundaries": [
+        {{
+          "id": "boundary_id",
+          "name": "Descriptive Boundary Name",
+          "shape": "dashed_rectangle",
+          "elements": ["element_id_1", "element_id_2"],
+          "position": {{ "x": 500, "y": 1000 }}
+        }}
+      ]
+    }}
+    ```
+    ---
+     Final Instructions:
+    - Ensure all element and edge IDs are unique.
+    - Accurately map which components belong inside each trust boundary.
+    - Double-check for proper syntax and adherence to the JSON structure.
+    - Avoid adding redundant or out-of-scope information.
+
+    Only return the JSON output as per the structure.
+    """
+     return prompt
+    
     async def build_prompt_by_intent(
         self,
         intent: ResponseType,
@@ -342,6 +500,7 @@ class PromptBuilder:
         # Special handling for DFD view mode
         if view_mode == "DFD":
             return await self.build_dfd_prompt(query, conversation_history, diagram_state)
+            
 
         
         if intent == ResponseType.ARCHITECTURE:
@@ -381,7 +540,7 @@ class PromptBuilder:
             node_type = node.get("type", "unknown")
             node_label = node.get("data", {}).get("label", "Unlabeled")
             nodes_description += f"- {node_id}: {node_label} (Type: {node_type})\n"
-        
+        log_info(f"Nodes in prompt builder: {nodes_description}")
         edges_description = "Connections:\n"
         if edges:
             for edge in edges:
