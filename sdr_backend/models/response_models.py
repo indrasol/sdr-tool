@@ -9,6 +9,7 @@ class ResponseType(str, Enum):
     EXPERT = "ExpertResponse"
     CLARIFICATION = "ClarificationResponse"
     OUT_OF_CONTEXT = "OutOfContextResponse"
+    DFD = "DFDResponse"
 
 
 class BaseResponse(BaseModel):

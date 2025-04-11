@@ -57,7 +57,7 @@ async def get_threat_model_endpoint(
         # Check if dfd_data and threat_model_id exist
         dfd_data = project.get("dfd_data")
         threat_model_id_from_db = project.get("threat_model_id")
-
+        
         log_info(f"DFD Data : {dfd_data}")
         log_info(f"Threat Model Id : {threat_model_id_from_db}")
 
@@ -251,7 +251,8 @@ async def switch_to_dfd_endpoint(
         diagram_updated_at = project.get("diagram_updated_at")
         threat_model_id = project.get("threat_model_id")
         dfd_generated_at = None
-        
+        extract_final_response=await threat_modeling_service.extract_structured_dfd(dfd_data, threat_model_id)
+        log_info(f"Extract Final Response in switch dfd : {extract_final_response}")
         # Ensure dfd_data is a dictionary before using .get()
         if dfd_data and not isinstance(dfd_data, dict):
             log_info(f"Warning: dfd_data is not a dictionary: {type(dfd_data)}")
