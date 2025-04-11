@@ -150,6 +150,9 @@ const AIFlowDiagram: React.FC<AIFlowDiagramProps> = ({
   // Store the data flow diagram nodes and edges
   const dataFlowDiagramRef = useRef({ nodes: [], edges: [] });
 
+  // Add state for minimap visibility toggle
+  const [showMiniMap, setShowMiniMap] = useState(true);
+
   const previousNodesLengthRef = useRef(initialNodes?.length || 0);
   const previousEdgesLengthRef = useRef(initialEdges?.length || 0);
   const layoutTimeoutRef = useRef(null);
@@ -1053,6 +1056,21 @@ const AIFlowDiagram: React.FC<AIFlowDiagramProps> = ({
                 Threat Model View Active
               </div>
             )}
+          </Panel>
+          
+          {/* Add MiniMap toggle switch in bottom-right for AD view modes */}
+          <Panel position="bottom-right" className="mb-2 mr-2">
+            <div className="flex items-center gap-2 bg-white p-2 rounded shadow-sm">
+              <span className="text-xs">MiniMap</span>
+              <div 
+                className={`relative inline-flex h-4 w-9 items-center rounded-full transition-colors ease-in-out duration-200 cursor-pointer ${showMiniMap ? 'bg-securetrack-purple' : 'bg-gray-200'}`}
+                onClick={toggleMiniMap}
+              >
+                <span 
+                  className={`inline-block h-3 w-3 transform rounded-full bg-white shadow-md transition-transform duration-200 ease-in-out ${showMiniMap ? 'translate-x-5' : 'translate-x-1'}`}
+                />
+              </div>
+            </div>
           </Panel>
         </ReactFlow>
         
