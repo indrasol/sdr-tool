@@ -213,11 +213,11 @@ export const toolbarItems: ToolbarItem[] = [
   { icon: CloudCog, label: 'Edge Service', category: 'Gateway', color: 'white', bgColor: '#ED7615', provider: 'AWS', tags: ['edge', 'latency'] },
 
   // Security
-  { icon: ShieldCheck, label: 'Auth Service', category: 'Security', color: 'white', bgColor: '#9C27B0', provider: 'AWS', tags: ['auth', 'security'] },
-  { icon: KeyRound, label: 'IAM', category: 'Security', color: 'white', bgColor: '#9C27B0', provider: 'AWS', tags: ['identity', 'roles'] },
-  { icon: ShieldAlert, label: 'WAF', category: 'Security', color: 'white', bgColor: '#9C27B0', provider: 'AWS', tags: ['firewall', 'protection'] },
-  { icon: KeySquare, label: 'Secrets Manager', category: 'Security', color: 'white', bgColor: '#9C27B0', provider: 'AWS', tags: ['secrets', 'config'] },
-  { icon: LockKeyhole, label: 'Encryption Service', category: 'Security', color: 'white', bgColor: '#9C27B0', provider: 'AWS', tags: ['encryption', 'kms'] },
+  { icon: ShieldCheck, label: 'Auth Service', category: 'Security', color: 'white', bgColor: '#EA4335', provider: 'AWS', tags: ['auth', 'security'] },
+  { icon: KeyRound, label: 'IAM', category: 'Security', color: 'white', bgColor: '#EA4335', provider: 'AWS', tags: ['identity', 'roles'] },
+  { icon: ShieldAlert, label: 'WAF', category: 'Security', color: 'white', bgColor: '#EA4335', provider: 'AWS', tags: ['firewall', 'protection'] },
+  { icon: KeySquare, label: 'Secrets Manager', category: 'Security', color: 'white', bgColor: '#EA4335', provider: 'AWS', tags: ['secrets', 'config'] },
+  { icon: LockKeyhole, label: 'Encryption Service', category: 'Security', color: 'white', bgColor: '#EA4335', provider: 'AWS', tags: ['encryption', 'kms'] },
 
   // Application
   { icon: Server, label: 'Web Server', category: 'Application', color: 'white', bgColor: '#009688', provider: 'Azure', tags: ['backend', 'api'] },
@@ -265,13 +265,13 @@ export const toolbarItems: ToolbarItem[] = [
   { icon: BarChart3, label: 'CloudWatch', category: 'AWS', color: 'white', bgColor: '#FF9900', provider: 'AWS', tags: ['monitoring', 'logs'] },
 
   // GCP
-  { icon: CloudCog, label: 'Compute Engine', category: 'GCP', color: 'white', bgColor: '#EA4335', provider: 'GCP', tags: ['vm', 'compute'] },
-  { icon: HardDriveDownload, label: 'Cloud Storage', category: 'GCP', color: 'white', bgColor: '#EA4335', provider: 'GCP', tags: ['storage', 'buckets'] },
-  { icon: CloudLightning, label: 'Cloud Functions', category: 'GCP', color: 'white', bgColor: '#EA4335', provider: 'GCP', tags: ['functions', 'serverless'] },
-  { icon: Database, label: 'Cloud SQL', category: 'GCP', color: 'white', bgColor: '#EA4335', provider: 'GCP', tags: ['sql', 'database'] },
-  { icon: CloudCog, label: 'GKE', category: 'GCP', color: 'white', bgColor: '#EA4335', provider: 'GCP', tags: ['kubernetes', 'orchestration'] },
-  { icon: Database, label: 'BigQuery', category: 'GCP', color: 'white', bgColor: '#EA4335', provider: 'GCP', tags: ['analytics', 'gcp'] },
-  { icon: Terminal, label: 'Cloud Build', category: 'GCP', color: 'white', bgColor: '#EA4335', provider: 'GCP', tags: ['cicd', 'build'] },
+  { icon: CloudCog, label: 'Compute Engine', category: 'GCP', color: 'white', bgColor: '#9C27B0', provider: 'GCP', tags: ['vm', 'compute'] },
+  { icon: HardDriveDownload, label: 'Cloud Storage', category: 'GCP', color: 'white', bgColor: '#9C27B0', provider: 'GCP', tags: ['storage', 'buckets'] },
+  { icon: CloudLightning, label: 'Cloud Functions', category: 'GCP', color: 'white', bgColor: '#9C27B0', provider: 'GCP', tags: ['functions', 'serverless'] },
+  { icon: Database, label: 'Cloud SQL', category: 'GCP', color: 'white', bgColor: '#9C27B0', provider: 'GCP', tags: ['sql', 'database'] },
+  { icon: CloudCog, label: 'GKE', category: 'GCP', color: 'white', bgColor: '#9C27B0', provider: 'GCP', tags: ['kubernetes', 'orchestration'] },
+  { icon: Database, label: 'BigQuery', category: 'GCP', color: 'white', bgColor: '#9C27B0', provider: 'GCP', tags: ['analytics', 'gcp'] },
+  { icon: Terminal, label: 'Cloud Build', category: 'GCP', color: 'white', bgColor: '#9C27B0', provider: 'GCP', tags: ['cicd', 'build'] },
 
 
   // Azure
