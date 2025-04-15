@@ -1,7 +1,8 @@
 # main.py
 import time
 import uvicorn
-from fastapi import FastAPI
+from prometheus_client import generate_latest, CONTENT_TYPE_LATEST
+from fastapi import FastAPI, Request, Response, Depends
 from v1.api.routes.routes import router as api_router
 from fastapi.middleware.cors import CORSMiddleware
 import asyncio
@@ -33,7 +34,7 @@ from services.logging import setup_logging
 import sys
 # Prometheus instrumentation
 from prometheus_fastapi_instrumentator import Instrumentator
-from utils.prometheus_metrics import setup_custom_metrics_endpoint, APP_ACTIVE_SESSIONS
+from utils.prometheus_metrics import setup_custom_metrics_endpoint, APP_ACTIVE_SESSIONS, authenticate_metrics
 
 
 session_manager = SessionManager()
@@ -141,6 +142,14 @@ async def generic_exception_handler(request: Request, exc: Exception):
 
 # Include our API routes under the /api prefix
 app.include_router(api_router, prefix="/v1/routes")
+
+
+@app.get("/metrics", dependencies=[Depends(authenticate_metrics)])
+async def metrics():
+    return Response(
+        content=generate_latest(),
+        media_type=CONTENT_TYPE_LATEST
+    )
 
 # Root endpoint
 @app.get("/")
