@@ -10,8 +10,16 @@ import { Edge, Node } from '@xyflow/react';
 import { CustomNodeData } from '@/components/AI/types/diagramTypes';
 import ToolbarPanel from '@/components/AI/panels/ToolbarPanel';
 import { ChevronRight, ChevronLeft, Loader2, AlertCircle, AlertTriangle } from 'lucide-react';
-import { DesignRequest, DesignResponse, DFDGenerationStartedResponse, ResponseType } from '@/interfaces/aiassistedinterfaces';
-import { sendDesignRequest } from '@/services/designService';
+import { 
+  DesignRequest, 
+  DesignResponse, 
+  DFDGenerationStartedResponse, 
+  ResponseType,
+  DFDSwitchRequest,
+  FullThreatModelResponse, 
+  DFDData
+} from '@/interfaces/aiassistedinterfaces';
+import { sendDesignRequest, generateThreatModel } from '@/services/designService';
 import projectService from '@/services/projectService';
 import { useDiagramNodes } from '@/components/AI/hooks/useDiagramNodes';
 import { edgeStyles, determineEdgeType } from '@/components/AI/utils/edgeStyles';
@@ -354,313 +362,89 @@ const ModelWithAI = () => {
       setDfdGenerationStatus('generating');
       
       try {
-        // Prepare the request with current diagram state
-        const request = {
-          diagram_state: { nodes, edges },
+        // Clean up the diagram state to ensure only essential properties are included
+        // This helps ensure the hash comparison works correctly for caching
+        const cleanNodes = nodes.map(node => ({
+          id: node.id,
+          type: node.type,
+          position: node.position,
+          data: {
+            label: node.data?.label,
+            description: node.data?.description,
+            nodeType: node.data?.nodeType
+          }
+        }));
+        
+        const cleanEdges = edges.map(edge => ({
+          id: edge.id,
+          source: edge.source,
+          target: edge.target,
+          type: edge.type,
+          label: edge.label
+        }));
+        
+        // Prepare the request with cleaned diagram state using the DFDSwitchRequest interface
+        const request: DFDSwitchRequest = {
+          diagram_state: { 
+            nodes: cleanNodes, 
+            edges: cleanEdges 
+          },
           session_id: sessionId || undefined,
         };
 
-        // Call the API to trigger DFD generation or fetch existing DFD
-        const response = await fetchWithTimeout(
-          `${BASE_API_URL}/projects/${projectId}/switch-to-dfd`,
-          {
-            method: 'POST',
-            headers: getAuthHeaders(),
-            body: JSON.stringify(request)
-          },
-          30000 // 30 second timeout
-        );
-  
-        // Check for non-JSON responses (like HTML)
-        const contentType = response.headers.get('content-type');
-        if (!contentType || !contentType.includes('application/json')) {
-          console.error('Received non-JSON response:', contentType);
-          // Get response text for debugging
-          const responseText = await response.text();
-          console.error('Response text (first 500 chars):', responseText.substring(0, 500));
-          throw new Error('Invalid response format. Expected JSON.');
-        }
+        console.log('Sending clean diagram state for threat model generation', request);
+
+        // Use our service function to generate the threat model
+        const threatModelResponse = await generateThreatModel(projectId, request, toast);
+         
+        console.log('Threat Model Response:', threatModelResponse);
         
-        // Process all response data
-        const data = await response.json();
-        console.log('API Response:', data);
+        // Transform FullThreatModelResponse to DFDData format for visualization
+        const dfdData: DFDData = {
+          threat_model_id: threatModelResponse.threat_model_id || '',
+          nodes: threatModelResponse.dfd_model.elements,
+          edges: threatModelResponse.dfd_model.edges.map(edge => ({
+            id: edge.id,
+            source: edge.source,
+            target: edge.target,
+            label: edge.label || '',
+            properties: edge.properties || {}
+          })),
+          boundaries: threatModelResponse.dfd_model.boundaries,
+          threats: threatModelResponse.threats.threats.map(threat => ({
+            id: threat.id,
+            description: threat.description,
+            severity: threat.severity,
+            mitigation: threat.mitigation || 'No mitigation specified',
+            target_elements: threat.target_elements || [],
+            properties: threat.properties || {
+              threat_type: 'UNKNOWN',
+              impact: 'Unknown impact'
+            }
+          })),
+          generated_at: threatModelResponse.generated_at || new Date().toISOString()
+        };
+        
+        setDfdData(dfdData);
+        setDfdGenerationStatus('complete');
 
-        // Handle different response statuses
-        if (data.status === 'complete' && data.dfd_data) {
-          // DFD data already exists and is up-to-date
-          console.log('DFD data already exists:', data.dfd_data);
-          setDfdData(data.dfd_data);
-          setDfdGenerationStatus('complete');
-
-          // Show a toast to indicate we're using existing data
-          toast({
-            title: 'Using Existing Threat Model',
-            description: data.message || 'Using the existing threat model data.',
-            variant: 'default',
-          });
-        } 
-        else if (data.status === 'insufficient_diagram') {
-          // Diagram doesn't have enough components
-          setDfdGenerationStatus('failed');
-          toast({
-            title: 'Diagram Too Simple',
-            description: data.message || 'Your diagram needs more components to generate a threat model.',
-            variant: 'destructive',
-          });
-        }
-        else if (data.status === 'generating') {
-          // Generation has started - begin polling
-          console.log('DFD generation initiated:', data);
-          startPollingDfdStatus();
-
-          // Show toast indicating generation started
-          toast({
-            title: 'Generating Threat Model',
-            description: data.message || 'Building threat model from your architecture. This may take a minute.',
-          });
-        } 
-        else {
-          // Handle other statuses
-          throw new Error(`Unexpected status: ${data.status}`);
-        }
+        // Show a success toast
+        const threatCount = dfdData.threats.length;
+        toast({
+          title: 'Threat Model Generated',
+          description: `${threatCount} potential threats identified in your architecture.`,
+          variant: 'default',
+        });
       } catch (error) {
-        console.error('Error triggering DFD generation:', error);
+        console.error('Error generating threat model:', error);
         setDfdGenerationStatus('failed');
         
-        toast({
-          title: 'Error',
-          description: error.message || 'Failed to generate threat model. Please try again.',
-          variant: 'destructive',
-        });
+        // Toast is already handled in the service function
       }
     } else {
-      // Clear polling interval when switching back to AD mode
-      if (dfdPollingInterval) {
-        clearInterval(dfdPollingInterval);
-        setDfdPollingInterval(null);
-      }
+      // No polling to clear in the simplified implementation
     }
-  }, [viewMode, projectId, dfdPollingInterval, toast, nodes, edges, sessionId]);
-  
-  // Add function to poll DFD generation status
-  const startPollingDfdStatus = useCallback(() => {
-    // Clear existing interval if any
-    if (dfdPollingInterval) {
-      clearInterval(dfdPollingInterval);
-    }
-    
-    let retryCount = 0;
-    const maxRetries = 10; // About 10 minutes with 15-second intervals
-    
-    // Set polling interval
-    const intervalId = setInterval(async () => {
-      try {
-        // Stop polling if we've reached max retries
-        if (retryCount >= maxRetries) {
-          clearInterval(intervalId);
-          setDfdPollingInterval(null);
-          setDfdGenerationStatus('failed');
-          
-          toast({
-            title: 'DFD Generation Timeout',
-            description: 'The threat model generation is taking longer than expected. Please try again.',
-            variant: 'destructive',
-          });
-          return;
-        }
-        
-        retryCount++;
-        console.log(`Polling DFD status (attempt ${retryCount}/${maxRetries})...`);
-        
-        const statusResponse = await fetchWithTimeout(
-          `${BASE_API_URL}/projects/${projectId}/threatmodel/status`,
-          {
-            method: 'GET',
-            headers: getAuthHeaders(),
-          },
-          10000 // 10 second timeout
-        );
-        
-        // Check for valid JSON response
-        const contentType = statusResponse.headers.get('content-type');
-        if (!contentType || !contentType.includes('application/json')) {
-          const responseText = await statusResponse.text();
-          console.error('Status response text:', responseText.substring(0, 500));
-          throw new Error('Invalid status response format. Expected JSON.');
-        }
-        
-        const statusData = await statusResponse.json();
-        const status = statusData.status;
-        
-        console.log('DFD generation status:', statusData);
-        
-        // Update UI with progress information if available
-        if (status === 'in_progress' && statusData.progress) {
-          // Show progress information to the user
-          setDfdGenerationStatus('generating');
-          
-          // Add a message based on the step
-          const stepMessages = {
-            'initializing': 'Initializing threat model generation...',
-            'analyzing_architecture': 'Analyzing architecture components...',
-            'generating_threat_model': 'Building threat model from architecture...',
-            'analyzing_threats': 'Analyzing potential security threats...',
-            'finalizing_results': 'Finalizing threat model...'
-          };
-          
-          const progressMessage = stepMessages[statusData.step] || statusData.message || 'Generating threat model...';
-          
-          // Consider updating UI with progress information here
-          console.log(`Progress: ${statusData.progress}, Step: ${statusData.step}, Message: ${progressMessage}`);
-        }
-        
-        // Handle completion status
-        if (status === 'complete') {
-          // Fetch the completed DFD data
-          const dfdResponse = await fetchWithTimeout(
-            `${BASE_API_URL}/projects/${projectId}/threatmodel`,
-            {
-              method: 'GET',
-              headers: getAuthHeaders(),
-            },
-            10000 // 10 second timeout
-          );
-          
-          if (!dfdResponse.ok) {
-            throw new Error(`Failed to fetch DFD data: ${dfdResponse.status}`);
-          }
-          
-          const dfdContentType = dfdResponse.headers.get('content-type');
-          if (!dfdContentType || !dfdContentType.includes('application/json')) {
-            const responseText = await dfdResponse.text();
-            console.error('DFD response text:', responseText.substring(0, 500));
-            throw new Error('Invalid DFD response format. Expected JSON.');
-          }
-          
-          const dfdData = await dfdResponse.json();
-          setDfdData(dfdData);
-          setDfdGenerationStatus('complete');
-          
-          // Clear polling interval
-          clearInterval(intervalId);
-          setDfdPollingInterval(null);
-  
-          // Show success toast with threat count
-          const threatCount = dfdData.threats ? dfdData.threats.length : 0;
-          const perfStats = dfdData.performance || {};
-          let toastMessage = `${threatCount} potential threats identified.`;
-          
-          // Add performance stats if available
-          if (perfStats.total_time) {
-            toastMessage += ` Generated in ${Math.round(perfStats.total_time)} seconds.`;
-          }
-          
-          toast({
-            title: 'Threat Model Generated',
-            description: toastMessage,
-            variant: 'default'
-          });
-          
-          if (viewMode === 'AD') {
-            toast({
-              title: 'Threat Model Generated',
-              description: 'Data Flow Diagram is now available. Switch to DFD view to see it.',
-              action: (
-                <Button size="sm" variant="outline" onClick={() => setViewMode('DFD')}>
-                  View DFD
-                </Button>
-              )
-            });
-          }
-        } 
-        // Handle cancelled status
-        else if (status === 'cancelled') {
-          setDfdGenerationStatus('failed');
-          clearInterval(intervalId);
-          setDfdPollingInterval(null);
-          
-          // Automatically switch back to AD view when cancelled
-          if (viewMode === 'DFD') {
-            setViewMode('AD');
-            
-            // Force a state refresh after a short delay
-            setTimeout(() => {
-              setDfdData(null);
-            }, 300);
-          }
-          
-          toast({
-            title: 'Generation Cancelled',
-            description: statusData.message || 'The threat model generation was cancelled.',
-            variant: 'default',
-          });
-        }
-        else if (status === 'failed') {
-          setDfdGenerationStatus('failed');
-          clearInterval(intervalId);
-          setDfdPollingInterval(null);
-          
-          toast({
-            title: 'Error',
-            description: statusData.error || 'Failed to generate threat model',
-            variant: 'destructive',
-          });
-        }
-        // Add explicit check for "not_started" state that persists too long
-        else if (status === 'not_started' && retryCount > 3) {
-          // If we've polled multiple times and status is still not_started, try triggering again
-          try {
-            console.log("Status still 'not_started' after multiple polls, retrying generation...");
-            
-            const triggerResponse = await fetchWithTimeout(
-              `${BASE_API_URL}/projects/${projectId}/threatmodel`,
-              {
-                method: 'POST',
-                headers: getAuthHeaders(),
-                body: JSON.stringify({
-                  diagram_state: { nodes, edges }
-                })
-              },
-              10000 // 10 second timeout
-            );
-            
-            if (triggerResponse.ok) {
-              console.log("Successfully re-triggered DFD generation");
-              toast({
-                title: 'Retrying Generation',
-                description: 'Generation did not start properly. Retrying...',
-                variant: 'default',
-              });
-            }
-          } catch (triggerError) {
-            console.error("Error re-triggering generation:", triggerError);
-          }
-        }
-        // Continue polling for 'in_progress' status
-      } catch (error) {
-        console.error('Error polling DFD status:', error);
-        // Don't stop polling on errors unless we've had too many
-        if (retryCount >= 5) {
-          clearInterval(intervalId);
-          setDfdPollingInterval(null);
-          setDfdGenerationStatus('failed');
-          
-          toast({
-            title: 'Error',
-            description: 'Failed to check threat model generation status',
-            variant: 'destructive',
-          });
-        }
-      }
-    }, 15000); // Poll every 15 seconds
-    
-    setDfdPollingInterval(intervalId);
-    
-    // Return cleanup function
-    return () => {
-      clearInterval(intervalId);
-    };
-  }, [projectId, dfdPollingInterval, toast, nodes, edges, viewMode]);
+  }, [viewMode, projectId, toast, nodes, edges, sessionId]);
 
   // Helper functions for node editing
   const handleEditNode = (id, label) => {
@@ -747,7 +531,7 @@ const ModelWithAI = () => {
           const preparedNodes = prepareNodes(loadedNodes);
           const validEdges = loadedEdges.filter((edge) => {
             if (!edge.source || !edge.target) {
-              console.warn(`Skipping invalid edge without source or target:`, edge);
+              console.warn('Invalid edge found - missing source or target:', edge);
               return false;
             }
             const sourceExists = preparedNodes.some((node) => node.id === edge.source);
@@ -758,19 +542,24 @@ const ModelWithAI = () => {
             }
             return true;
           });
-          const processedEdges = processEdges(validEdges);
-
-          hasLoadedDiagramData.current = true;
+          const processedEdges = processEdges(validEdges, preparedNodes);
 
           setNodes(preparedNodes);
           setEdges(processedEdges);
 
-          // Apply layout after a short delay
-          setTimeout(() => {
-            applyLayout();
-          }, 500);
+          hasLoadedDiagramData.current = true;
+          setProjectLoaded(true);
+          
+          // Check if project has threat model data
+          if (projectData.dfd_data) {
+            console.log('Project has existing threat model data:', projectData.dfd_data);
+            setDfdData(projectData.dfd_data);
+            // Pre-cache the threat model for immediate viewing if user switches to DFD view
+            setDfdGenerationStatus('complete');
+          }
         }
 
+        // Handle conversation history
         if (projectData.conversation_history && Array.isArray(projectData.conversation_history)) {
           const formattedMessages = projectData.conversation_history
             .map((entry) => {
@@ -797,25 +586,26 @@ const ModelWithAI = () => {
           console.log("Formatted messages for display:", formattedMessages);
         }
 
-        setProjectLoaded(true);
+        // Show success message
         toast({
           title: 'Project Loaded',
-          description: `Project ${projectData.project_id} loaded successfully`,
-          variant: 'default',
+          description: `Successfully loaded project: ${projectData.project_id}`,
+          duration: 3000,
         });
       } catch (error) {
         console.error('Error loading project:', error);
         setError(`Failed to load project: ${error.message}`);
+
         toast({
-          title: 'Error',
-          description: error.message || 'Failed to load project',
+          title: 'Error Loading Project',
+          description: error.message || 'An unknown error occurred',
           variant: 'destructive',
         });
       } finally {
         setIsProjectLoading(false);
       }
     },
-    [setNodes, setEdges, prepareNodes, processEdges, applyLayout]
+    [toast, prepareNodes, handleEditNode, handleDeleteNode, processEdges]
   );
 
   const save = async () => {
@@ -941,9 +731,26 @@ const ModelWithAI = () => {
           timestamp: responseTimestamp
         }]);
         
-        // Set DFD status and start polling
+        // Set DFD status - no need to start polling as we now call directly
         setDfdGenerationStatus('generating');
-        startPollingDfdStatus();
+        
+        // Try to generate the threat model immediately using direct API
+        try {
+          // Prepare the request with current diagram state
+          const request: DFDSwitchRequest = {
+            diagram_state: { nodes, edges },
+            session_id: sessionId || undefined,
+          };
+
+          // Call the generate threat model API directly
+          const threatModelResponse = await generateThreatModel(projectId, request, toast);
+          
+          // Transform response to DFDData format and update state
+          processAndDisplayThreatModel(threatModelResponse);
+        } catch (error) {
+          console.error('Error generating threat model:', error);
+          setDfdGenerationStatus('failed');
+        }
       }
       else if (isDesignResponse(response)) {
         // This is a regular design response
@@ -994,7 +801,7 @@ const ModelWithAI = () => {
     }
   };
 
-  const handleResponseByType = (response) => {
+  const handleResponseByType = async (response) => {
     console.log("Processing response in handleResponseByType:", response);
 
     try {
@@ -1009,7 +816,24 @@ const ModelWithAI = () => {
         response.message.includes('generating the Data Flow Diagram')) {
         console.log('DFD generation triggered via chat');
         setDfdGenerationStatus('generating');
-        startPollingDfdStatus();
+        
+        // Try to generate the threat model immediately using direct API
+        try {
+          // Prepare the request with current diagram state
+          const request: DFDSwitchRequest = {
+            diagram_state: { nodes, edges },
+            session_id: sessionId || undefined,
+          };
+
+          // Call the generate threat model API directly
+          const threatModelResponse = await generateThreatModel(projectId, request, toast);
+          
+          // Transform response to DFDData format and update state
+          processAndDisplayThreatModel(threatModelResponse);
+        } catch (error) {
+          console.error('Error generating threat model:', error);
+          setDfdGenerationStatus('failed');
+        }
         return;
       }
 
@@ -1189,89 +1013,63 @@ const ModelWithAI = () => {
 
   // Create an enhanced DFD loading indicator
   const DFDLoadingIndicator = () => {
-    // Create a reference to current generation status
-    const [progressDetails, setProgressDetails] = useState({
-      progress: "0%",
-      step: "initializing",
-      message: "Preparing to generate threat model...",
-      elapsed: 0
-    });
-
+    // Use local state to simulate progress
+    const [simulatedProgress, setSimulatedProgress] = useState(0);
+    const [currentStep, setCurrentStep] = useState('initializing');
+    const [elapsedTime, setElapsedTime] = useState(0);
+    
     // State to track cancellation
     const [isCancelling, setIsCancelling] = useState(false);
 
-    // Poll for progress updates
+    // Simulate progress updates with a timer
     useEffect(() => {
-      // Function to fetch status
-      const fetchStatus = async () => {
-        try {
-          const response = await fetchWithTimeout(
-            `${BASE_API_URL}/projects/${projectId}/threatmodel/status`,
-            {
-              method: 'GET',
-              headers: getAuthHeaders(),
-            },
-            5000 // 5 second timeout for UI updates
-          );
-
-          if (response.ok) {
-            const statusData = await response.json();
-            
-            // If status is 'cancelled', update UI accordingly
-            if (statusData.status === 'cancelled') {
-              setDfdGenerationStatus('failed');
-              toast({
-                title: 'Generation Cancelled',
-                description: 'Threat model generation was cancelled',
-                variant: 'default',
-              });
-              
-              // Clear polling interval
-              if (dfdPollingInterval) {
-                clearInterval(dfdPollingInterval);
-                setDfdPollingInterval(null);
-              }
-              return;
-            }
-            
-            if (statusData.status === 'in_progress') {
-              // Update progress information
-              setProgressDetails({
-                progress: statusData.progress || "0%",
-                step: statusData.step || "initializing",
-                message: statusData.message || "Generating threat model...",
-                elapsed: statusData.elapsed_seconds || 0
-              });
-            }
-          }
-        } catch (error) {
-          console.error("Error fetching progress update:", error);
-        }
+      // Only run effect while in generating state
+      if (dfdGenerationStatus !== 'generating') return;
+      
+      // Track elapsed time
+      const timeInterval = setInterval(() => {
+        setElapsedTime(prev => prev + 1);
+      }, 1000);
+      
+      // Simulate progress steps
+      const progressSteps = [
+        { progress: 15, step: 'initializing', delay: 1500 },
+        { progress: 30, step: 'analyzing_architecture', delay: 3000 },
+        { progress: 60, step: 'generating_threat_model', delay: 4000 },
+        { progress: 80, step: 'analyzing_threats', delay: 3000 },
+        { progress: 95, step: 'finalizing_results', delay: 2000 }
+      ];
+      
+      // Create a sequence of timeouts to update progress
+      let totalDelay = 0;
+      const timeouts = progressSteps.map(step => {
+        totalDelay += step.delay;
+        return setTimeout(() => {
+          setSimulatedProgress(step.progress);
+          setCurrentStep(step.step);
+        }, totalDelay);
+      });
+      
+      // Clean up all timeouts and intervals on unmount or when status changes
+      return () => {
+        clearInterval(timeInterval);
+        timeouts.forEach(timeout => clearTimeout(timeout));
       };
-
-      // Fetch status immediately
-      fetchStatus();
-      
-      // Then set up interval to update every 3 seconds
-      const progressInterval = setInterval(fetchStatus, 3000);
-      
-      // Clean up on unmount
-      return () => clearInterval(progressInterval);
-    }, []);
+    }, [dfdGenerationStatus]);
 
     // Function to handle cancellation
     const handleCancelGeneration = async () => {
       setIsCancelling(true);
       
       try {
-          // Immediately switch back to AD view
-          setViewMode('AD');
-          handleSwitchView('AD');
-          toast({
-            title: 'Generation Cancelled',
-            description: 'Threat model generation has been cancelled. Switched back to Architecture Diagram.',
-            variant: 'default',
-          });
+        // Immediately switch back to AD view
+        setViewMode('AD');
+        setDfdGenerationStatus('idle'); // Reset generation status
+        toast({
+          title: 'Generation Cancelled',
+          description: 'Threat model generation has been cancelled. Switched back to Architecture Diagram.',
+          variant: 'default',
+        });
       } catch (error) {
         console.error("Error cancelling generation:", error);
         toast({
@@ -1300,7 +1098,7 @@ const ModelWithAI = () => {
         'analyzing_threats': 'Analyzing potential security threats...',
         'finalizing_results': 'Finalizing threat model...'
       };
-      return stepMessages[step] || progressDetails.message;
+      return stepMessages[step] || 'Generating threat model...';
     };
 
     return (
@@ -1312,17 +1110,17 @@ const ModelWithAI = () => {
         <div className="mt-6 w-64 bg-gray-200 rounded-full h-2.5">
           <div 
             className="bg-securetrack-purple h-2.5 rounded-full transition-all duration-500" 
-            style={{ width: progressDetails.progress }}
+            style={{ width: `${simulatedProgress}%` }}
           ></div>
         </div>
         
         <p className="text-sm text-gray-600 mt-2">
-          {getStepMessage(progressDetails.step)}
+          {getStepMessage(currentStep)}
         </p>
         
-        {progressDetails.elapsed > 0 && (
+        {elapsedTime > 0 && (
           <p className="text-xs text-gray-500 mt-2">
-            Time elapsed: {formatElapsedTime(progressDetails.elapsed)}
+            Time elapsed: {formatElapsedTime(elapsedTime)}
           </p>
         )}
         
@@ -1483,6 +1281,46 @@ const ModelWithAI = () => {
       return false;
     }
   }, []);
+
+  // Add this function before the return statement in ModelWithAI
+  const processAndDisplayThreatModel = useCallback((threatModelResponse: FullThreatModelResponse) => {
+    // Transform FullThreatModelResponse to DFDData format for visualization
+    const processedDfdData: DFDData = {
+      threat_model_id: threatModelResponse.threat_model_id || '',
+      nodes: threatModelResponse.dfd_model.elements,
+      edges: threatModelResponse.dfd_model.edges.map(edge => ({
+        id: edge.id,
+        source: edge.source,
+        target: edge.target,
+        label: edge.label || '',
+        properties: edge.properties || {}
+      })),
+      boundaries: threatModelResponse.dfd_model.boundaries,
+      threats: threatModelResponse.threats.threats.map(threat => ({
+        id: threat.id,
+        description: threat.description,
+        severity: threat.severity,
+        mitigation: threat.mitigation || 'No mitigation specified',
+        target_elements: threat.target_elements || [],
+        properties: threat.properties || {
+          threat_type: 'UNKNOWN',
+          impact: 'Unknown impact'
+        }
+      })),
+      generated_at: threatModelResponse.generated_at || new Date().toISOString()
+    };
+    
+    setDfdData(processedDfdData);
+    setDfdGenerationStatus('complete');
+
+    // Show a success toast
+    const threatCount = processedDfdData.threats.length;
+    toast({
+      title: 'Threat Model Generated',
+      description: `${threatCount} potential threats identified in your architecture.`,
+      variant: 'default',
+    });
+  }, [toast]);
 
   return (
     <Layout>

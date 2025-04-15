@@ -254,226 +254,228 @@ class PromptBuilder:
         
         return prompt
     
-    # Add to your existing PromptBuilder class
     async def build_threat_prompt(
         self, 
-        query: str, 
         conversation_history: List[Dict[str, Any]], 
-        diagram_state: Optional[Dict[str, Any]]
+        diagram_state: Optional[Dict[str, Any]],
+        data_flow_description: Optional[str] = None
     ) -> str:
         """
-        Build a prompt for DFD and threat analysis.
+        Build a prompt for realistic threat analysis using STRIDE methodology based on the current implementation.
         
         Args:
-            query: The user's query
             conversation_history: List of previous exchanges
-            diagram_state: Current state of the diagram
+            diagram_state: Current state of the diagram (used only for reference)
+            data_flow_description: Detailed data flow analysis from the analyze_diagram function
             
         Returns:
-            A formatted prompt string
+            A formatted prompt string for threat analysis
         """
         # Format conversation history
         formatted_history = await self._format_conversation_history(conversation_history)
-        diagram_description = await self._format_diagram_state(diagram_state)
+        
+        # Extract context from the latest conversation if available
+        context_from_conversation = ""
+        if conversation_history and len(conversation_history) > 0:
+            latest_exchange = conversation_history[-1]
+            if "query" in latest_exchange:
+                context_from_conversation = f"Recent context: {latest_exchange['query']}"
+        
+        # Check if data flow description is available
+        if not data_flow_description:
+            # If no data flow description is provided, generate a minimal diagram state description
+            # but note that this approach is not preferred and is only a fallback
+            diagram_description = await self._format_diagram_state(diagram_state)
+            data_flow_section = f"""
+            # Current Architecture Implementation:
+            {diagram_description}
+            
+            Note: No detailed data flow analysis is available. The threat analysis may be limited.
+            Analyze the above architecture carefully to understand the actual implementation before identifying threats.
+            """
+        else:
+            # Use the provided data flow description
+            data_flow_section = f"""
+            # Detailed Architecture and Data Flow Analysis:
+            {data_flow_description}
+            """
         
         prompt = f"""
         You are Guardian AI, an expert cybersecurity architecture assistant specializing in threat modeling.
-        You are analyzing a Data Flow Diagram (DFD) that represents system architecture and data flows.
+        Your task is to analyze a real architecture implementation and identify realistic threats based on the actual data flows and security controls present.
         
-        # DFD Context:
-        The diagram shows components, boundaries, and data flows in the system.
-        Threats have been identified based on STRIDE threat modeling methodology:
-        - Spoofing: Impersonating something or someone else
-        - Tampering: Modifying data or code
-        - Repudiation: Claiming to not have performed an action
-        - Information Disclosure: Exposing information to unauthorized individuals
-        - Denial of Service: Denying or degrading service to users
-        - Elevation of Privilege: Gaining capabilities without proper authorization
+        {data_flow_section}
         
-       
-        # Current Diagram State:
-        {diagram_description}
-
-        # User Request:
-        {query}
+        {context_from_conversation}
         
-        Think deeply about the security implications of the DFD and the user's question.
-        Consider potential threats, vulnerabilities, and security controls that should be in place.
+        ## Analysis Instructions:
         
-        When providing your response, use this JSON structure:
+        1. FIRST, thoroughly analyze the architecture and data flow description provided above:
+           - Identify all components and their purposes
+           - Map out the actual data flow paths and how they interact
+           - Note any existing security measures or controls already in place
+           - Understand the boundaries and trust zones present in the implementation
+           
+        2. SECOND, identify ONLY actual threats that apply to this specific implementation:
+           - Focus on realistic threats that apply to the current architecture, not hypothetical ones
+           - Consider the STRIDE threat model categories as a framework:
+              * Spoofing: Impersonating something or someone else
+              * Tampering: Modifying data or code without authorization
+              * Repudiation: Claiming to not have performed an action
+              * Information Disclosure: Exposing information to unauthorized individuals
+              * Denial of Service: Denying or degrading service to users
+              * Elevation of Privilege: Gaining capabilities without proper authorization
+           - Include threats ONLY if they are relevant to the actual components and data flows analyzed
+           - Do NOT generate threats for components that are properly secured or for which threats aren't applicable
+        
+        3. THIRD, for each identified realistic threat:
+           - Assess its severity (HIGH, MEDIUM, or LOW) based on:
+             * Impact: The potential damage if the threat is realized
+             * Likelihood: The probability of the threat being exploited given the current implementation
+           - Provide specific, actionable mitigation steps that address the vulnerability
+           - Target only the specific components that are actually vulnerable
+        
+        IMPORTANT: Based on the detailed architecture and data flow analysis above, your response MUST:
+        
+        1. ONLY identify threats that are actually present in the implementation described
+        2. Follow the JSON structure EXACTLY as shown below:
         ```json
         {{
-            "message": "Your detailed explanation or answer to the user's question",
+            "message": "Summary of identified threats based on the actual architecture implementation",
             "confidence": 0.95,
-            "threats_to_explain": [
-                // IDs of specific threats to highlight and explain (if relevant)
-            ],
-            "recommendations": [
-                // Security recommendations based on the identified threats
+            "severity_counts": {{
+                "HIGH": 0,
+                "MEDIUM": 0,
+                "LOW": 0
+            }},
+            "threats": [
+                {{
+                    "id": "THREAT-001",
+                    "description": "Detailed description of a specific, realistic threat that exists in the current implementation",
+                    "mitigation": "Specific, actionable mitigation steps that address this vulnerability",
+                    "severity": "HIGH|MEDIUM|LOW",
+                    "target_elements": ["element_id_1", "element_id_2"],
+                    "properties": {{
+                        "threat_type": "SPOOFING|TAMPERING|REPUDIATION|INFORMATION_DISCLOSURE|DENIAL_OF_SERVICE|ELEVATION_OF_PRIVILEGE",
+                        "attack_vector": "Description of how the attack would occur against the current implementation",
+                        "impact": "Description of the specific impact this would have on the system"
+                    }}
+                }}
             ]
         }}
         ```
         
-        Provide concrete, actionable security advice based on the DFD and identified threats.
-        Focus on practical mitigations rather than theoretical concerns.
+        IMPORTANT: Do NOT include generic threats or hypothetical vulnerabilities not relevant to the actual implementation. If a component is already properly secured or a particular threat category doesn't apply, do not force threats where none exist.
+        
+        If you find no significant threats in a particular category or for a particular component, that is a valid finding. Quality of threat identification is more important than quantity.
+        
+        Ensure each identified threat:
+        - Is specific to the actual implementation described
+        - Has a unique ID (THREAT-001, THREAT-002, etc.)
+        - Is appropriately categorized by one of the STRIDE threat types
+        - Has specific, actionable mitigation steps
+        - Targets only the specific vulnerable component(s) in the architecture
+        - Includes a clear description of the attack vector and potential impact
+        
+        Accurately count and categorize the total number of HIGH, MEDIUM, and LOW severity threats.
         """
         
         return prompt
     
-    # # Add to your existing PromptBuilder class
-    # async def build_threat_prompt(
-    #     self, 
-    #     query: str, 
-    #     conversation_history: List[Dict[str, Any]], 
-    #     diagram_state: Optional[Dict[str, Any]]
-    # ) -> str:
-    #     """
-    #     Build a prompt for DFD and threat analysis.
+    
+    
+    async def build_dfd_prompt(
+        self, 
+        conversation_history: List[Dict[str, Any]], 
+        diagram_state: Optional[Dict[str, Any]]
+    ) -> str:
+        """
+        Build a prompt for generating a Data Flow Diagram (DFD) from system context.
         
-    #     Args:
-    #         query: The user's query
-    #         conversation_history: List of previous exchanges
-    #         diagram_state: Current state of the diagram
+        Args:
+            conversation_history: List of previous exchanges
+            diagram_state: Current state of the architecture diagram
             
-    #     Returns:
-    #         A formatted prompt string
-    #     """
-    #     # Format conversation history
-    #     formatted_history = await self._format_conversation_history(conversation_history)
+        Returns:
+            A formatted prompt string for DFD generation
+        """
+        # Format the diagram state and conversation history
+        diagram_description = await self._format_diagram_state(diagram_state)
+        formatted_history = await self._format_conversation_history(conversation_history)
         
-    #     prompt = f"""
-    #     You are Guardian AI, an expert cybersecurity architecture assistant specializing in threat modeling.
-    #     You are analyzing a Data Flow Diagram (DFD) that represents system architecture and data flows.
+        # Extract context from the latest conversation if available
+        context_from_conversation = ""
+        if conversation_history and len(conversation_history) > 0:
+            latest_exchange = conversation_history[-1]
+            if "query" in latest_exchange:
+                context_from_conversation = f"Recent context: {latest_exchange['query']}"
         
-    #     # DFD Context:
-    #     The diagram shows components, boundaries, and data flows in the system.
-    #     Threats have been identified based on STRIDE threat modeling methodology:
-    #     - Spoofing: Impersonating something or someone else
-    #     - Tampering: Modifying data or code
-    #     - Repudiation: Claiming to not have performed an action
-    #     - Information Disclosure: Exposing information to unauthorized individuals
-    #     - Denial of Service: Denying or degrading service to users
-    #     - Elevation of Privilege: Gaining capabilities without proper authorization
-        
-    #     # Conversation History:
-    #     {formatted_history}
-        
-    #     # User Request:
-    #     {query}
-        
-    #     Think deeply about the security implications of the DFD and the user's question.
-    #     Consider potential threats, vulnerabilities, and security controls that should be in place.
-        
-    #     When providing your response, use this JSON structure:
-    #     ```json
-    #     {{
-    #         "message": "Your detailed explanation or answer to the user's question",
-    #         "confidence": 0.95,
-    #         "threats_to_explain": [
-    #             // IDs of specific threats to highlight and explain (if relevant)
-    #         ],
-    #         "recommendations": [
-    #             // Security recommendations based on the identified threats
-    #         ]
-    #     }}
-    #     ```
-        
-    #     Provide concrete, actionable security advice based on the DFD and identified threats.
-    #     Focus on practical mitigations rather than theoretical concerns.
-    #     """
-        
-    #     return prompt
-    async def build_dfd_prompt(self, 
-        query: str,diagram_state):
-     diagram_description = await self._format_diagram_state(diagram_state)
-    # Define the enhanced prompt
-     prompt = f"""
-    You are Guardian AI, an expert assistant specialized in secure software architecture and threat modeling.
+        # Define the enhanced prompt
+        prompt = f"""
+        You are Guardian AI, an expert assistant specialized in secure software architecture and threat modeling.
 
-    Your task is to analyze the current system design and user request to produce a detailed and accurate **Data Flow Diagram (DFD)** in JSON format. This output must reflect secure design principles, clearly define all components, and visually organize elements on a virtual canvas using `x` and `y` coordinates.
-    ---
-    ## Guidance for DFD Generation:
-    1. **Think step-by-step**:
-        - Analyze the existing system (if any).
-        - Interpret the user’s request carefully.
-        - Identify key components and secure boundaries.
-        - Ensure clarity and completeness of the diagram.
-    2. **Use the following standard DFD components**:
-        - **External Entity**  
-          - *Shape*: Rectangle  
-          - *Type*: `external_entity`  
-          - *Description*: Represents users, systems, or organizations that interact with the system. These are sources or destinations of data but do not perform transformations.
-        - **Process**  
-          - *Shape*: Circle  
-          - *Type*: `process`  
-          - *Description*: Represents a function, operation, or task that transforms input data into output.
-        - **Data Store**  
-          - *Shape*: Cylinder  
-          - *Type*: `datastore`  
-          - *Description*: Represents storage components like databases, files, or any persistent storage system.
-        - **Trust Boundary**  
-          - *Shape*: Dashed Rectangle  
-          - *Type*: `trust_boundary`  
-          - *Description*: A logical or physical separation between entities or processes that enforce different levels of trust (e.g., public internet vs internal network).
-    3. **Positioning**:
-        - Assign each component a 2D position using approximate `x` and `y` coordinates (e.g., "x": 150, "y": 300) on a virtual canvas.
-        - This helps organize the diagram spatially for potential rendering or visualization.
-    ---
-    ##Input Definitions:
-    ### Current System Diagram State (if available):
-    ```plaintext
-    {diagram_description}
-    ```
-    ### User Request:
-    ```plaintext
-    {query}
-    ```
-    ---
-    ## Output Format (JSON Only):
-    You must return a **well-formed JSON** object using the following structure. Do **not include any text or explanation** outside this JSON block:
+        Your task is to analyze the current system design to produce a detailed and accurate **Data Flow Diagram (DFD)** in JSON format.
+        
+        # Current Diagram State:
+        {diagram_description}
+        
+        {context_from_conversation}
+        
+        ## Core DFD Components:
+        - **External Entity**: Rectangle, type `external_entity` - Users/systems that interact with the system
+        - **Process**: Circle, type `process` - Functions that transform data
+        - **Data Store**: Cylinder, type `datastore` - Storage components like databases/files
+        - **Trust Boundary**: Dashed Rectangle, type `trust_boundary` - Separation between different trust levels
+        
+        ## Output Format (JSON Only):
+        Return a well-formed JSON using this structure that aligns with our DFDModelResponse:
 
-    ```json
-    {{
-      "message": "Explain the changes or what the generated diagram represents.",
-      "confidence": 0.95,
-      "elements": [
+        ```json
         {{
-          "id": "unique_element_id",
-          "name": "Descriptive Name",
-          "type": "external_entity | process | datastore",
-          "shape": "rectangle | circle | cylinder",
-          "position": {{ "x": 100, "y": 200 }}
+          "message": "Brief explanation of the diagram",
+          "confidence": 0.95,
+          "elements": [
+            {{
+              "id": "unique_element_id",
+              "type": "external_entity | process | datastore",
+              "label": "Descriptive Name",
+              "properties": {{ 
+                "shape": "rectangle | circle | cylinder",
+                "position": {{ "x": 100, "y": 200 }},
+                "description": "Brief description"
+              }}
+            }}
+          ],
+          "edges": [
+            {{
+              "id": "edge_id",
+              "source": "source_element_id",
+              "target": "target_element_id",
+              "label": "Data being transferred",
+              "properties": {{ 
+                "data_type": "Data type description"
+              }}
+            }}
+          ],
+          "boundaries": [
+            {{
+              "id": "boundary_id",
+              "label": "Boundary Name",
+              "element_ids": ["element_id_1", "element_id_2"],
+              "properties": {{ 
+                "shape": "dashed_rectangle",
+                "position": {{ "x": 500, "y": 1000 }}
+              }}
+            }}
+          ]
         }}
-      ],
-      "edges": [
-        {{
-          "id": "edge_id",
-          "source": "source_element_id",
-          "target": "target_element_id",
-          "data": "Description of the data being transferred"
-        }}
-      ],
-      "trust_boundaries": [
-        {{
-          "id": "boundary_id",
-          "name": "Descriptive Boundary Name",
-          "shape": "dashed_rectangle",
-          "elements": ["element_id_1", "element_id_2"],
-          "position": {{ "x": 500, "y": 1000 }}
-        }}
-      ]
-    }}
-    ```
-    ---
-     Final Instructions:
-    - Ensure all element and edge IDs are unique.
-    - Accurately map which components belong inside each trust boundary.
-    - Double-check for proper syntax and adherence to the JSON structure.
-    - Avoid adding redundant or out-of-scope information.
-
-    Only return the JSON output as per the structure.
-    """
-     return prompt
+        ```
+         
+        Use descriptive unique IDs for all elements, edges, and boundaries.
+        Position elements logically with good spacing between them.
+        Only output the JSON with no explanation before or after.
+        """
+        return prompt
     
     async def build_prompt_by_intent(
         self,
@@ -481,7 +483,8 @@ class PromptBuilder:
         query: str,
         conversation_history: List[Dict[str, Any]],
         diagram_state: Optional[Dict[str, Any]] = None,
-        view_mode: str = "AD"
+        view_mode: str = "AD",
+        data_flow_description: Optional[str] = None
     ) -> str:
         """
         Build a prompt based on the detected user intent.
@@ -492,6 +495,7 @@ class PromptBuilder:
             conversation_history: List of previous exchanges
             diagram_state: Current state of the architecture diagram
             view_mode: Current view mode (AD or DFD)
+            data_flow_description: Optional detailed data flow analysis 
             
         Returns:
             A formatted prompt string
@@ -499,10 +503,8 @@ class PromptBuilder:
 
         # Special handling for DFD view mode
         if view_mode == "DFD":
-            return await self.build_dfd_prompt(query, conversation_history, diagram_state)
+            return await self.build_dfd_prompt(conversation_history, diagram_state)
             
-
-        
         if intent == ResponseType.ARCHITECTURE:
             return await self.build_architecture_prompt(query, conversation_history, diagram_state)
         elif intent == ResponseType.EXPERT:

@@ -17,3 +17,4 @@ class DesignRequest(BaseModel):
 class SaveProjectRequest(BaseModel):
     session_id: str
     diagram_state: Optional[Dict[str, Any]] = None
+    project_code: Optional[str] = None
