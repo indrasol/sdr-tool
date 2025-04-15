@@ -110,7 +110,7 @@ setup_health_monitoring(app, session_manager)
 setup_custom_metrics_endpoint(app)
 
 # Prometheus instrumentation for default metrics
-Instrumentator().instrument(app).expose(app)
+Instrumentator().instrument(app)
 
 # Custom exception handler for HTTP exceptions
 @app.exception_handler(StarletteHTTPException)
@@ -145,11 +145,8 @@ app.include_router(api_router, prefix="/v1/routes")
 
 
 @app.get("/metrics", dependencies=[Depends(authenticate_metrics)])
-async def metrics():
-    return Response(
-        content=generate_latest(),
-        media_type=CONTENT_TYPE_LATEST
-    )
+async def default_metrics():
+    return Response(generate_latest(), media_type=CONTENT_TYPE_LATEST)
 
 # Root endpoint
 @app.get("/")
