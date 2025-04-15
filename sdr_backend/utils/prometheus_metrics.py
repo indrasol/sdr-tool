@@ -2,6 +2,9 @@ from prometheus_client import Counter, Histogram, Gauge, Summary
 from typing import Dict, Optional
 from fastapi import FastAPI, Request, Response
 from prometheus_client import generate_latest, CONTENT_TYPE_LATEST
+from fastapi import Depends, HTTPException, status
+from fastapi.security import HTTPBasic, HTTPBasicCredentials
+from config.settings import METRICS_PASSWORD, METRICS_USERNAME
 
 # LLM Metrics
 LLM_REQUEST_COUNTER = Counter(
@@ -133,11 +136,25 @@ def record_llm_rate_limit(model: str):
     """Record an LLM API rate limit error"""
     LLM_RATE_LIMITS.labels(model=model).inc()
 
+
+# Define the security object
+security = HTTPBasic()
+
+# Authentication function
+def authenticate_metrics(credentials: HTTPBasicCredentials = Depends(security)):
+    if credentials.username != METRICS_USERNAME or credentials.password != METRICS_PASSWORD:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid credentials",
+            headers={"WWW-Authenticate": "Basic"},
+        )
+    return True
+
 # Register application routes
 def setup_custom_metrics_endpoint(app: FastAPI):
     """Set up a custom metrics endpoint for Prometheus"""
     
-    @app.get("/custom_metrics")
+    @app.get("/custom_metrics", dependencies=[Depends(authenticate_metrics)])
     async def metrics():
         return Response(generate_latest(), media_type=CONTENT_TYPE_LATEST)
     
