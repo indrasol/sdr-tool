@@ -21,6 +21,8 @@ print(f"title: {title}, description: {description}, version: {version}")
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 # CLAUDE_API_KEY = os.getenv("CLAUDE_API_KEY")
 ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY")
+GROK_API_KEY = os.getenv("GROK_API_KEY")
+# CLAUDE_API_KEY = os.getenv("CLAUDE_API_KEY"
 
 
 # Langsmith Tracing

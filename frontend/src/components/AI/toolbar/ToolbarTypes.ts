@@ -4,8 +4,10 @@ import { CustomNodeData } from '../types/diagramTypes';
 export interface ToolbarItem {
   icon: React.ElementType;
   label: string;
-  category: 'General' | 'AWS' | 'Network' | 'Security' | 'Azure' | 'GCP' | 'DevOps' | 'Infrastructure' | 'IoT' | 'Containers' | 'Database' | 'Analytics' | 'Storage' | 'Compute' | 'Serverless' | 'Messaging' | 
-    // DFD-specific categories
+  category: 
+  // 'General' | 'AWS' | 'Network' | 'Security' | 'Azure' | 'GCP' | 'DevOps' | 'Infrastructure' | 'IoT' | 'Containers' | 'Database' | 'Analytics' | 'Storage' | 'Compute' | 'Serverless' | 'Messaging' | 
+  'Client' |  'Gateway'|'Security'|'Application'|'Database'|'Integration'|'DevOps'|'AWS'|'Azure'|'GCP'|
+  // DFD-specific categories
     'DFD Elements' | 'External Entities' | 'Processes' | 'Data Stores' | 'Security Controls' | 'Boundaries';
   color?: string;
   bgColor?: string;

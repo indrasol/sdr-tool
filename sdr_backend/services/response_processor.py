@@ -21,7 +21,7 @@ class ResponseProcessor:
     
     def process_response(
         self,
-        llm_response: str,
+        llm_response: Union[str, Dict[str, Any]],
         intent: ResponseType,
         session_id: str,
         classification_source: Optional[str] = None
@@ -30,7 +30,7 @@ class ResponseProcessor:
         Process and validate the LLM text response based on the intent.
         
         Args:
-            llm_response: The raw text response from the LLM
+            llm_response: The response from the LLM (string or dictionary)
             intent: The classified intent of the user's query
             session_id: The session identifier
             classification_source: Source of the intent classification (pattern, vector, llm)
@@ -38,8 +38,20 @@ class ResponseProcessor:
         Returns:
             A structured response object based on the intent
         """
-        # Extract JSON from the response
-        response_data = self._extract_json(llm_response)
+        # Check if the response is already a dictionary (from generate_response's new format)
+        if isinstance(llm_response, dict):
+            # If it's a dictionary with "content" key, extract content
+            if "content" in llm_response:
+                response_text = llm_response["content"]
+            else:
+                # If no content key, use the entire dictionary as response data
+                return self.process_response_from_json(llm_response, intent, session_id, classification_source)
+        else:
+            # Original string response handling
+            response_text = llm_response
+        
+        # Extract JSON from the response text
+        response_data = self._extract_json(response_text)
         
         return self._create_response_object(response_data, intent, session_id, classification_source)
     

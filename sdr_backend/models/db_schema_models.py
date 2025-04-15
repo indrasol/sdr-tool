@@ -47,8 +47,7 @@ class Project(Base):
     creator = Column(String, nullable=False)  
     assigned_to = Column(String, nullable=True)  
     threat_model_id = Column(String, nullable=True, index=True)
-    dfd_generation_status = Column(String, nullable=True, index=True)
-    dfd_data = Column(JSONB, default=None)
+    dfd_data = Column(ARRAY(JSONB), default=[])
     domain = Column(String, nullable=True)  
     template_type = Column(String, nullable=True)  
     imported_file = Column(String, nullable=True)  
@@ -83,7 +82,6 @@ class Project(Base):
             "diagram_state": self.diagram_state,
             "threat_model_id" : self.threat_model_id,
             "dfd_data" : self.dfd_model,
-            "dfd_generation_status" : self.dfd_generation_status,
             "diagram_updated_at" : self.diagram_updated_at
         }
 class Tenant(Base):

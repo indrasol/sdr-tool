@@ -371,69 +371,70 @@ async def load_project(
     Used when a user returns to continue working on a previously saved project.
 
     Args:
-        project_id: The project ID to load
+        project_code: The project code to load
         current_user: Authenticated user (via dependency)
-        session_manager: SessionManager instance (injected)
-        supabase_manager: SupabaseManager instance (injected)
 
     Returns:
-        JSONResponse: Session ID and project data
+        JSONResponse: Session ID and project data including any cached threat model
     """
+    user_id = current_user
+    log_info(f"Loading project {project_code} for user {user_id}")
+    
     try:
-        user_id = current_user
-        if not user_id:
-            return JSONResponse(
-                status_code=400,
-                content={"detail": "Invalid user authentication data"}
-            )
-
-        # Fetch project data from the database
-        project_data = await supabase_manager.get_project_data(
-            user_id=user_id,
-            project_code=project_code
-        )
-
-        if not project_data:
-            log_info(f"Project {project_code} not found for user {user_id}")
-            return JSONResponse(
-                status_code=404,
-                content={"detail": "Project not found"}
-            )
+        # Initialize services
+        supabase = get_supabase_client()
         
-        log_info(f"Load Project Data : {project_data}")
-
-        # Create a new session for this project
+        # 1. Fetch project data from Supabase
+        def fetch_project():
+            return supabase.from_("projects").select("*").eq("project_code", project_code).eq("user_id", user_id).execute()
+            
+        project_response = await safe_supabase_operation(
+            fetch_project,
+            f"Failed to fetch project {project_code}"
+        )
+            
+        if not project_response.data:
+            log_info(f"Project {project_code} not found for user {user_id}")
+            raise HTTPException(status_code=404, detail="Project not found or access denied")
+            
+        project_data = project_response.data[0]
+        
+        # 2. Create a new session for this project
         session_id = await session_manager.create_project_session(
             user_id=user_id,
             project_id=project_code
         )
 
-        # Get the conversation history and diagram state from project data
+        # 3. Get the conversation history and diagram state from project data
         conversation_history = project_data.get("conversation_history", [])
         diagram_state = project_data.get("diagram_state", {"nodes": [], "edges": []})
+        
+        # 4. Get threat model data if available
+        threat_model_id = project_data.get("threat_model_id")
+        dfd_data = project_data.get("dfd_data")
+        
+        log_info(f"Project loaded with diagram nodes: {len(diagram_state.get('nodes', []))}, " 
+                f"edges: {len(diagram_state.get('edges', []))}, "
+                f"conversations: {len(conversation_history)}, "
+                f"threat_model_id: {threat_model_id}")
 
-        log_info(f"Diagram state for load project  : {project_data['diagram_state']}")
-        log_info(f"Conversation history for load project  : {project_data['conversation_history']}")
-
-        # Update the diagram state in the session
+        # 5. Update the diagram state in the session
         await session_manager.update_diagram_state(
             session_id=session_id,
             diagram_state=diagram_state
         )
 
-        # Add conversation history entries to the session
+        # 6. Process conversation history entries 
         log_info(f"Processing {len(conversation_history)} conversation history entries")
         
         # First, determine the format of our conversation history
         uses_role_format = any("role" in entry for entry in conversation_history if isinstance(entry, dict))
         uses_query_format = any("query" in entry for entry in conversation_history if isinstance(entry, dict))
-        log_info(f"Conversation format - Role based: {uses_role_format}, Query based: {uses_query_format}")
         
         # Process role-based format (new format)
         if uses_role_format:
             # Get all user messages
             user_messages = [msg for msg in conversation_history if isinstance(msg, dict) and msg.get("role") == "user"]
-            log_info(f"Found {len(user_messages)} user messages")
             
             # Sort user messages by ID if possible
             if all("id" in msg for msg in user_messages):
@@ -479,12 +480,23 @@ async def load_project(
                         response=entry["response"]
                     )
         
-        # Get the final session data to verify the conversation was loaded correctly
+        # 7. Cache the threat model in the session if available
+        if dfd_data and threat_model_id:
+            try:
+                # Store the threat model in session cache
+                await session_manager.store_threat_model(
+                    session_id=session_id,
+                    threat_model=dfd_data,
+                    diagram_state=diagram_state
+                )
+                log_info(f"Cached threat model {threat_model_id} in session {session_id}")
+            except Exception as e:
+                log_info(f"Error caching threat model: {str(e)}")
+                
+        # 8. Get the final session data for response
         final_session_data = await session_manager.get_session(session_id)
-        final_conversation = final_session_data.get("conversation_history", [])
-        log_info(f"Final session has {len(final_conversation)} messages in conversation history")
-
-        log_info(f"Project {project_code} loaded successfully for user {user_id}")
+        
+        # 9. Return the loaded project data with session information
         return JSONResponse(
             status_code=200,
             content={
@@ -492,22 +504,17 @@ async def load_project(
                 "project_id": project_code,
                 "diagram_state": diagram_state,
                 "conversation_history": conversation_history,
+                "threat_model_id": threat_model_id,
+                "dfd_data": dfd_data,
                 "message": "Project loaded successfully"
             }
         )
 
-    except HTTPException as e:
-        log_info(f"HTTPException in load_project: {e.detail}")
-        return JSONResponse(
-            status_code=e.status_code,
-            content={"detail": e.detail}
-        )
+    except HTTPException as http_exc:
+        raise http_exc
     except Exception as e:
-        log_info(f"Unexpected error loading project: {str(e)}")
-        return JSONResponse(
-            status_code=500,
-            content={"detail": f"Failed to load project: {str(e)}"}
-        )
+        log_info(f"Error loading project {project_code}: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to load project: {str(e)}")
 
 @router.post("/save_project/{session_id}")
 async def save_project(
@@ -516,113 +523,97 @@ async def save_project(
     current_user: dict = Depends(verify_token)
 ):
     """
-    Save session data to the database when the user clicks the 'Save' button in the UI.
-    Allows sending the current diagram state to ensure it's up to date.
-
-    Args:
-        session_id: The session ID to save (path parameter)
-        request_data: Request body containing session_id and optional diagram_state
-        current_user: Authenticated user (via dependency)
-        session_manager: SessionManager instance (injected)
-        supabase_manager: SupabaseManager instance (injected)
-
-    Returns:
-        JSONResponse: Confirmation of save or error details
-    """
-    try:
-        # Get user ID from the authenticated user
-        user_id = current_user
-        if not user_id:
-            log_info(f"Invalid user authentication data")
-            return JSONResponse(
-                status_code=400,
-                content={"detail": "Invalid user authentication data"}
-            )
-
-        # Retrieve session data - this is already async in the SessionManager
-        try:
-            session_data = await session_manager.get_session(
-                session_id, 
-                expected_user_id=user_id  # Verify user ID right in the get_session call
-            )
-        except HTTPException as e:
-            log_info(f"Session error: {e.detail}")
-            return JSONResponse(
-                status_code=e.status_code,
-                content={"detail": e.detail}
-            )
-
-        # Get project ID from session
-        project_id = session_data.get("project_id")
-        log_info(f"Project id in save project : {project_id}")
-        if not project_id:
-            log_info(f"Project ID missing in session {session_id}")
-            return JSONResponse(
-                status_code=400,
-                content={"detail": "Project ID missing in session data"}
-            )
-        
-        # If diagram state is provided in the request, update it in the session
-        if request_data.diagram_state:
-            await session_manager.update_diagram_state(session_id, request_data.diagram_state)
-            log_info(f"Updated diagram state for session {session_id}")
+    Save the project state from the active session to the database.
+    This includes diagram state, conversation history, and generated threat model.
     
-
-        # Extend session TTL to keep it alive
-        await session_manager.extend_session_ttl(session_id)
-
-        # Use the diagram state from the request if provided, otherwise fall back to session data
-        session_data_for_reference = await session_manager.get_session(session_id)
-        diagram_state = request_data.diagram_state if request_data.diagram_state else session_data_for_reference.get("diagram_state", {"nodes": [], "edges": []})
-        conversation_history = session_data_for_reference.get("conversation_history", [])
-
-        log_info(f"Diagram state in save project : Nodes: {len(diagram_state.get('nodes', []))}, Edges: {len(diagram_state.get('edges', []))}")
-        log_info(f"Conversation History in save project : {len(conversation_history)} messages")
+    Args:
+        session_id: Active session identifier
+        request_data: Project save request data
+        current_user: Current authenticated user
         
-        # Sort conversation history by ID if present to maintain order
-        if conversation_history and all("id" in msg for msg in conversation_history if isinstance(msg, dict)):
-            conversation_history.sort(key=lambda x: x.get("id", 0) if isinstance(x, dict) and "id" in x else 0)
-            log_info(f"Sorted conversation history by ID")
+    Returns:
+        JSON response with save status
+    """
+    user_id = current_user
+    project_code = request_data.project_code
+    log_info(f"Saving project {project_code} from session {session_id}")
+    
+    try:
+        # Initialize services
+        session_mgr = SessionManager()
+        if not session_mgr.redis_pool:
+            await session_mgr.connect()
+            
+        # 1. Verify session exists and belongs to this user/project
+        session_data = await session_mgr.get_session(
+            session_id=session_id,
+            expected_project_id=project_code,
+            expected_user_id=user_id
+        )
         
-        # Save to database
-        await supabase_manager.update_project_data(
-            user_id=user_id,
-            project_code=project_id,
-            conversation_history=conversation_history,
-            diagram_state=diagram_state
+        if not session_data:
+            raise HTTPException(status_code=404, detail=f"Session {session_id} not found or access denied")
+            
+        # 2. Extract data to save
+        diagram_state = session_data.get("diagram_state", {})
+        conversation_history = session_data.get("conversation_history", [])
+        
+        # 3. Check if there's a threat model in the session
+        threat_model = None
+        threat_model_id = None
+        
+        try:
+            # Get threat model from session cache
+            cached_threat_model, _ = await session_mgr.get_threat_model(
+                session_id=session_id
+            )
+            
+            if cached_threat_model:
+                threat_model = cached_threat_model
+                threat_model_id = cached_threat_model.get("threat_model_id")
+                log_info(f"Found threat model {threat_model_id} in session to save")
+        except Exception as e:
+            log_info(f"Error retrieving threat model for saving: {str(e)}")
+            
+        # 4. Update the project in the database
+        supabase = get_supabase_client()
+        
+        # Prepare update data
+        update_data = {
+            "diagram_state": diagram_state,
+            "conversation_history": conversation_history,
+            "diagram_updated_at": datetime.now(timezone.utc).isoformat()
+        }
+        
+        # Add threat model data if available
+        if threat_model:
+            update_data["dfd_data"] = threat_model
+            
+            if threat_model_id:
+                update_data["threat_model_id"] = threat_model_id
+                
+        # Update the project
+        def update_project_data():
+            return supabase.from_("projects").update(update_data).eq("project_code", project_code).eq("user_id", user_id).execute()
+            
+        update_response = await safe_supabase_operation(
+            update_project_data,
+            f"Failed to update project {project_code}"
         )
-
-        log_info(f"Project {project_id} saved successfully for user {user_id}")
-        return JSONResponse(
-            status_code=200,
-            content={
-                "message": "Project saved successfully", 
-                "session_id": session_id,
-                "project_id": project_id,
-                "conversation_history": conversation_history
-            }
-        )
-
-    except HTTPException as e:
-        log_info(f"HTTPException in save_project: {e.detail}")
-        return JSONResponse(
-            status_code=e.status_code,
-            content={"detail": e.detail}
-        )
-    except ValueError as e:
-        # Handle specific database errors
-        log_info(f"ValueError in save_project: {str(e)}")
-        return JSONResponse(
-            status_code=400,
-            content={"detail": str(e)}
-        )
+        
+        log_info(f"Successfully saved project {project_code} from session {session_id}")
+        
+        return JSONResponse(content={
+            "status": "success",
+            "message": "Project saved successfully",
+            "project_code": project_code
+        })
+            
+    except HTTPException as http_exc:
+        raise http_exc
     except Exception as e:
-        # Handle unexpected errors
-        log_info(f"Unexpected error saving project: {str(e)}")
-        return JSONResponse(
-            status_code=500,
-            content={"detail": f"Failed to save project: {str(e)}"}
-        )
+        log_info(f"Error saving project {project_code} from session {session_id}: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to save project: {str(e)}")
 
 @router.get("/projects/{project_code}/history")
 async def get_project_history(
