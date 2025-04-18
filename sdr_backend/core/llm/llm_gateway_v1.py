@@ -216,14 +216,31 @@ class LLMService:
             A tuple containing (thinking_process, final_response, metadata)
             metadata includes usage statistics and other information
         """
+        # Initialize variables to avoid "referenced before assignment" errors
+        thinking = ""
+        final_response = ""
+        has_redacted_thinking = False
+        usage = {"input_tokens": 0, "output_tokens": 0}
+        
         # Ensure we have at least a minimum thinking budget
         if not thinking_budget or thinking_budget < 1024:
             log_info(f"Thinking budget {thinking_budget} is below minimum. Using 1,024 tokens.")
             thinking_budget = 1024
         
-        # Adjust max_tokens to include thinking budget if not specified
+        # Ensure max_tokens is significantly larger than thinking_budget
+        # Claude API requires max_tokens > thinking_budget
         if not max_tokens:
+            # Add a buffer to ensure max_tokens is larger than thinking_budget
             max_tokens = thinking_budget + MAX_TOKENS  # Add default MAX_TOKENS for final response
+        
+        # Always validate that max_tokens is greater than thinking_budget
+        if max_tokens <= thinking_budget:
+            # Ensure max_tokens is larger than thinking_budget by at least 1,000 tokens
+            buffer = 1000
+            max_tokens = thinking_budget + buffer
+            log_info(f"Adjusted max_tokens to {max_tokens} (thinking_budget {thinking_budget} + buffer {buffer})")
+        
+        log_info(f"Using thinking_budget: {thinking_budget}, max_tokens: {max_tokens}")
         
         # Determine if this is likely a long-running request
         estimated_tokens = len(prompt.split()) + thinking_budget + max_tokens
@@ -237,7 +254,7 @@ class LLMService:
         # Force streaming if explicitly requested
         if stream is True:
             is_long_request = True
-            
+        
         try:
             # Configure client options
             client_options = {}
@@ -251,11 +268,9 @@ class LLMService:
             # Use Anthropic's official extended thinking support
             if is_long_request:
                 # Handle streaming with thinking
-                thinking = ""
-                final_response = ""
                 metadata = {"has_redacted_thinking": False, "signatures": []}
                 
-                log_info(f"Creating stream with thinking budget: {thinking_budget}")
+                log_info(f"Creating stream with thinking budget: {thinking_budget}, max_tokens: {max_tokens}")
                 stream_obj = self.anthropic_client.messages.create(
                     model=self.model,
                     max_tokens=max_tokens,
@@ -473,6 +488,7 @@ class LLMService:
                     "output_tokens": thinking_tokens + response_tokens
                 }
                 
+                # Ensure has_redacted_thinking is defined - it should be initialized at the start of the function already
                 metadata = {
                     "usage": usage,
                     "has_redacted_thinking": has_redacted_thinking,
@@ -540,6 +556,31 @@ class LLMService:
             A dictionary parsed from the JSON response, with thinking and usage information if requested
         """
 
+        # Initialize variables that might be used before assignment
+        usage = {"input_tokens": 0, "output_tokens": 0}
+        response_text = ""
+        thinking = ""
+        final_response = ""
+        has_redacted_thinking = False
+        
+        # Ensure thinking budget is adequate if with_thinking is enabled
+        if with_thinking:
+            if not thinking_budget or thinking_budget < 1024:
+                log_info(f"Thinking budget {thinking_budget} is below minimum. Using 1,024 tokens.")
+                thinking_budget = 1024
+            
+            # Ensure max_tokens is larger than thinking_budget as required by Claude API
+            if not max_tokens:
+                max_tokens = thinking_budget + MAX_TOKENS  # Default tokens for response
+            
+            # Always validate that max_tokens is greater than thinking_budget
+            if max_tokens <= thinking_budget:
+                buffer = 1000
+                max_tokens = thinking_budget + buffer
+                log_info(f"Adjusted max_tokens to {max_tokens} (thinking_budget {thinking_budget} + buffer {buffer})")
+            
+            log_info(f"Using thinking_budget: {thinking_budget}, max_tokens: {max_tokens}")
+        
         # log_info(f"Recieved Prompt : {prompt}")
         # Determine if this is likely a long-running request
         estimated_tokens = len(prompt.split()) + (max_tokens or MAX_TOKENS)
@@ -720,6 +761,8 @@ class LLMService:
             # Add metadata about redacted thinking if present
             if metadata.get("has_redacted_thinking", False):
                 json_data["has_redacted_thinking"] = True
+            else:
+                json_data["has_redacted_thinking"] = False
             
             if "signatures" in metadata and metadata["signatures"]:
                 json_data["signature"] = metadata["signatures"][0]
@@ -727,6 +770,8 @@ class LLMService:
             # Add usage information from metadata
             if "usage" in metadata:
                 json_data["usage"] = metadata["usage"]
+            else:
+                json_data["usage"] = {"input_tokens": 0, "output_tokens": 0}
             
             # Add model information
             json_data["model_used"] = metadata.get("model_used", self.model)

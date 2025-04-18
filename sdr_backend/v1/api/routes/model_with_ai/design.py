@@ -65,10 +65,16 @@ async def design_endpoint(
     Returns a structured response based on the classified intent.
     """
     try:
-        user_id = current_user
+        user_id = current_user["id"]
         project_code = request.project_id
         session_id = request.session_id
         query_lower = request.query.lower()
+
+        # # Check role permissions
+        # def fetch_role():
+        #     return supabase.from_("roles").select("permissions").eq("user_id", current_user["id"]).eq("project_id", project["id"]).execute()
+        # role_response = await safe_supabase_operation(fetch_role, "Failed to fetch role")
+        # permissions = role_response.data[0]["permissions"] if role_response.data else {"view": True, "edit": False}
 
         # --- DFD Generation Trigger Check ---
         dfd_command_patterns = [
@@ -89,7 +95,7 @@ async def design_endpoint(
             try:
                 # Ensure we have a valid session
                 if not session_id:
-                    session_id = await session_manager.create_project_session(current_user, project_code)
+                    session_id = await session_manager.create_project_session(current_user["id"], project_code)
                     
                 # Get diagram state from session if not provided in request
                 session_data = await session_manager.get_session(session_id)
@@ -128,7 +134,7 @@ async def design_endpoint(
                         threat_model = await generate_threat_model_endpoint(
                             project_code=project_code,
                             request=switch_request,
-                            current_user=current_user
+                            current_user=current_user["id"]
                         )
                 
                 # Store the results in the session conversation history
@@ -176,14 +182,14 @@ async def design_endpoint(
             session_id = request.session_id
             if not session_id:
                 log_info(f"Creating new session for user: {current_user}, project: {request.project_id}")
-                session_id = await session_manager.create_project_session(current_user, request.project_id)
+                session_id = await session_manager.create_project_session(current_user["id"], request.project_id)
             
             # Ensure session exists and fetch data
             session_data = await session_manager.get_session(session_id)
             if not session_data:
                 # Session expired or invalid, create a new one
                 log_info(f"Session {session_id} not found or expired, creating new session")
-                session_id = await session_manager.create_project_session(current_user, request.project_id)
+                session_id = await session_manager.create_project_session(current_user["id"], request.project_id)
                 session_data = await session_manager.get_session(session_id)
             
             # Store the original diagram state for comparison later

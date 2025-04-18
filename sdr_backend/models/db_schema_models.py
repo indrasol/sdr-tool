@@ -29,6 +29,7 @@ class User(Base):
     username = Column(String, unique=True, index=True)
     email = Column(String, unique=True, index=True)
     projects = relationship("Project", back_populates="user")
+    roles = relationship("Role", back_populates="user")
     tenants = relationship("Tenant", secondary="user_tenant_association", back_populates="users")
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
@@ -38,6 +39,7 @@ class Project(Base):
     id = Column(Integer, primary_key=True, index=True)
     project_code = Column(String, unique=True, index=True, nullable=False)
     user_id = Column(String, ForeignKey("users.id"), nullable=False)
+    roles = relationship("Role", back_populates="project")
     name = Column(String, nullable=False)
     description = Column(String, nullable=True)
     status = Column(SQLAlchemyEnum(ProjectStatus), default=ProjectStatus.NOT_STARTED, nullable=False)
@@ -91,13 +93,21 @@ class Tenant(Base):
     users = relationship("User", secondary="user_tenant_association", back_populates="tenants")
     projects = relationship("Project", back_populates="tenant")
     created_at = Column(DateTime(timezone=True), server_default=func.now())
+    roles = relationship("Role", back_populates="tenant")
 
 class Role(Base):
     __tablename__ = "roles"
     id = Column(Integer, primary_key=True)
-    user_id = Column(String, ForeignKey("users.id"))
-    tenant_id = Column(Integer, ForeignKey("tenants.id"))
+    user_id = Column(String, ForeignKey("users.id"), nullable=False)
+    tenant_id = Column(Integer, ForeignKey("tenants.id"), nullable=False)
+    project_code = Column(String, ForeignKey("projects.project_code"), nullable=False)
     role_name = Column(String)  # e.g., "admin", "editor"
+    permissions = Column(JSONB, default={"view": True, "edit": False})  # JSONB for permissions
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+    user = relationship("User", back_populates="roles")
+    tenant = relationship("Tenant", back_populates="roles")
+    project = relationship("Project", back_populates="roles")
 
 class Session(Base):
     """SQLAlchemy model for sessions table.
