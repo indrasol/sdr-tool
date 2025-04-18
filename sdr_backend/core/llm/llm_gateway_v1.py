@@ -2,11 +2,13 @@ import anthropic
 import json
 import re
 from typing import Dict, Any, Optional, Tuple
-from config.settings import ANTHROPIC_API_KEY
+from config.settings import ANTHROPIC_API_KEY, OPENAI_API_KEY, GROK_API_KEY
 from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception_type
 import logging
 from utils.logger import log_info
 import asyncio
+from openai import OpenAI
+from utils.llm_metrics import track_llm_metrics
 
 # Constants
 MAX_TOKENS = 4096  # Default max tokens
@@ -29,11 +31,22 @@ class LLMService:
             model: The model identifier to use
         # """
         # self.client = anthropic.Client(api_key=ANTHROPIC_API_KEY)
-        self.client = anthropic.Anthropic(api_key=ANTHROPIC_API_KEY)
+        self.anthropic_client = anthropic.Anthropic(api_key=ANTHROPIC_API_KEY)
+        self.openai_api_key = OPENAI_API_KEY
+        self.grok_api_key = GROK_API_KEY
+        self.openai_client = OpenAI(api_key=OPENAI_API_KEY)
+        self.grok_client = OpenAI(api_key=GROK_API_KEY,base_url="https://api.x.ai/v1")
+
         self.model = "claude-3-7-sonnet-20250219"
         # Default thinking budget - minimum allowed is 1,024 tokens
         self.default_thinking_budget = 4096  # Starting with a modest budget
     
+    @retry(
+        stop=stop_after_attempt(3),
+        wait=wait_exponential(multiplier=1, min=2, max=10),
+        retry=retry_if_exception_type((anthropic.APIError, anthropic.APITimeoutError))
+    )
+    @track_llm_metrics(endpoint="generate_response")
     async def generate_response(
         self, 
         prompt: str, 
@@ -41,39 +54,57 @@ class LLMService:
         max_tokens: Optional[int] = None,
         stream: Optional[bool] = None,
         timeout: Optional[float] = None
-    ) -> str:
+    ) -> Dict[str, Any]:
         """
-        Generate a text response from the LLM without using extended thinking.
+        Generate a response to the given prompt using the Anthropic API.
         
         Args:
-            prompt: The prompt to send to the LLM
-            temperature: Optional temperature setting to override default
-            max_tokens: Optional token limit to override default
-            stream: Whether to use streaming for longer operations
+            prompt: The prompt to send to the model
+            temperature: The temperature to use for generation (0.0 to 1.0)
+            max_tokens: Maximum number of tokens to generate
+            stream: Whether to force streaming for this request
             timeout: Optional timeout in seconds
             
         Returns:
-            The generated text response
+            A dictionary containing the response text and usage information:
+            {
+                "content": "The response text",
+                "usage": {
+                    "input_tokens": 123,
+                    "output_tokens": 456
+                },
+                "model_used": "claude-3-7-sonnet-20250219",
+                "success": true
+            }
         """
-        # Estimate if this is likely to be a long-running request
-        # A rough heuristic: prompt length + max tokens > threshold
+        # Determine if this is likely a long-running request
         estimated_tokens = len(prompt.split()) + (max_tokens or MAX_TOKENS)
-        is_long_request = estimated_tokens > 8000  # A reasonable threshold
+        is_long_request = estimated_tokens > 8000
         
         # For long requests, automatically use streaming unless explicitly set
         if is_long_request and stream is None:
             stream = True
-            log_info(f"Automatically enabling streaming for potentially long request ({estimated_tokens} estimated tokens)")
-            
+            log_info(f"Automatically enabling streaming for potentially long response ({estimated_tokens} estimated tokens)")
+        
+        # Configure client options
+        client_options = {}
+        if timeout is not None:
+            client_options["timeout"] = timeout
+        
         try:
-            # Configure client options
-            client_options = {}
-            if timeout is not None:
-                client_options["timeout"] = timeout
-            
             if stream:
+                # Using streaming
                 full_response = ""
-                stream_obj = self.client.messages.create(
+                response_chunks = []
+                
+                # Initialize usage metrics
+                usage = {
+                    "input_tokens": 0,
+                    "output_tokens": 0
+                }
+                
+                # Create streaming request
+                stream_obj = self.anthropic_client.messages.create(
                     model=self.model,
                     max_tokens=max_tokens or MAX_TOKENS,
                     temperature=temperature or TEMPERATURE,
@@ -85,12 +116,40 @@ class LLMService:
                 )
                 
                 for chunk in stream_obj:
-                    if chunk.type == 'content_block_delta' and chunk.delta.type == 'text':
-                        full_response += chunk.delta.text
+                    if chunk.type == 'content_block_start' and hasattr(chunk.content_block, 'type') and chunk.content_block.type == 'text':
+                        continue
+                    elif chunk.type == 'content_block_delta' and chunk.delta.type == 'text':
+                        text_chunk = chunk.delta.text
+                        full_response += text_chunk
+                        response_chunks.append(text_chunk)
+                    
+                    # Capture usage if present in the chunk
+                    if hasattr(chunk, 'usage'):
+                        usage = {
+                            "input_tokens": getattr(chunk.usage, 'input_tokens', 0),
+                            "output_tokens": getattr(chunk.usage, 'output_tokens', 0)
+                        }
+                    
+                    # Allow asyncio to yield control occasionally
                     await asyncio.sleep(0)
-                return full_response
+                
+                # Make an estimate if usage wasn't provided
+                if not usage["input_tokens"] and not usage["output_tokens"]:
+                    estimated_tokens = len(prompt.split())
+                    usage = {
+                        "input_tokens": estimated_tokens,
+                        "output_tokens": len(full_response.split()) * 1.3
+                    }
+                
+                return {
+                    "content": full_response,
+                    "usage": usage,
+                    "model_used": self.model,
+                    "success": True
+                }
             else:
-                message = self.client.messages.create(
+                # Using non-streaming
+                message = self.anthropic_client.messages.create(
                     model=self.model,
                     max_tokens=max_tokens or MAX_TOKENS,
                     temperature=temperature or TEMPERATURE,
@@ -99,36 +158,32 @@ class LLMService:
                     ],
                     **client_options
                 )
-                return message.content[0].text
-            
-        except anthropic.APITimeoutError as e:
-            log_info(f"API timeout error: {str(e)}")
-            # If we weren't streaming, try with streaming as fallback
-            if not stream:
-                log_info("Retrying with streaming enabled due to timeout")
-                return await self.generate_response(
-                    prompt=prompt,
-                    temperature=temperature,
-                    max_tokens=max_tokens,
-                    stream=True,
-                    timeout=timeout
-                )
-            raise
-        except ValueError as e:
-            log_info(f"Value error: {str(e)}")
-            if "operations that may take longer than 10 minutes" in str(e):
-                log_info("Retrying with streaming enabled due to long operation warning")
-                return await self.generate_response(
-                    prompt=prompt,
-                    temperature=temperature,
-                    max_tokens=max_tokens,
-                    stream=True,
-                    timeout=timeout
-                )
-            raise
+                
+                content = message.content[0].text if message.content else ""
+                
+                # Extract usage information
+                usage = {
+                    "input_tokens": message.usage.input_tokens if hasattr(message, 'usage') and hasattr(message.usage, 'input_tokens') else 0,
+                    "output_tokens": message.usage.output_tokens if hasattr(message, 'usage') and hasattr(message.usage, 'output_tokens') else 0
+                }
+                
+                return {
+                    "content": content,
+                    "usage": usage,
+                    "model_used": self.model,
+                    "success": True
+                }
+        
         except Exception as e:
-            log_info(f"Unexpected error: {str(e)}")
-            raise
+            log_info(f"Unexpected error in generate_response: {str(e)}")
+            return {
+                "content": f"Error: Unexpected error occurred: {str(e)}",
+                "usage": {"input_tokens": 0, "output_tokens": 0},
+                "model_used": self.model,
+                "success": False,
+                "error": str(e),
+                "error_type": "Unexpected error"
+            }
     
     
     @retry(
@@ -136,6 +191,7 @@ class LLMService:
         wait=wait_exponential(multiplier=1, min=2, max=10),
         retry=retry_if_exception_type((anthropic.APIError, anthropic.APITimeoutError))
     )
+    @track_llm_metrics(endpoint="generate_with_thinking")
     async def generate_response_with_thinking(
         self, 
         prompt: str, 
@@ -151,37 +207,54 @@ class LLMService:
         Args:
             prompt: The prompt to send to the LLM
             thinking_budget: Optional token budget for thinking (min 1,024)
-            max_tokens: Optional max tokens limit
+            max_tokens: Optional max tokens limit for final response
             temperature: Optional temperature setting
-            stream: Whether to force streaming mode
+            stream: Whether to force streaming for this request
             timeout: Optional timeout in seconds
             
         Returns:
-            Tuple of (thinking_process, final_response, metadata)
+            A tuple containing (thinking_process, final_response, metadata)
+            metadata includes usage statistics and other information
         """
-        # Ensure thinking budget meets the minimum requirement
-        budget = max(thinking_budget or self.default_thinking_budget, 1024)
+        # Initialize variables to avoid "referenced before assignment" errors
+        thinking = ""
+        final_response = ""
+        has_redacted_thinking = False
+        usage = {"input_tokens": 0, "output_tokens": 0}
         
-        # Set max_tokens, ensuring it's greater than the thinking budget
-        tokens = max_tokens if max_tokens is not None else MAX_TOKENS
-        if tokens <= budget:
-            tokens = budget + 1000  # Ensure room for the actual response
+        # Ensure we have at least a minimum thinking budget
+        if not thinking_budget or thinking_budget < 1024:
+            log_info(f"Thinking budget {thinking_budget} is below minimum. Using 1,024 tokens.")
+            thinking_budget = 1024
         
-        log_info(f"Generating response with thinking. Budget: {budget}, Max tokens: {tokens}")
+        # Ensure max_tokens is significantly larger than thinking_budget
+        # Claude API requires max_tokens > thinking_budget
+        if not max_tokens:
+            # Add a buffer to ensure max_tokens is larger than thinking_budget
+            max_tokens = thinking_budget + MAX_TOKENS  # Add default MAX_TOKENS for final response
+        
+        # Always validate that max_tokens is greater than thinking_budget
+        if max_tokens <= thinking_budget:
+            # Ensure max_tokens is larger than thinking_budget by at least 1,000 tokens
+            buffer = 1000
+            max_tokens = thinking_budget + buffer
+            log_info(f"Adjusted max_tokens to {max_tokens} (thinking_budget {thinking_budget} + buffer {buffer})")
+        
+        log_info(f"Using thinking_budget: {thinking_budget}, max_tokens: {max_tokens}")
         
         # Determine if this is likely a long-running request
-        estimated_tokens = len(prompt.split()) + tokens
+        estimated_tokens = len(prompt.split()) + thinking_budget + max_tokens
         is_long_request = estimated_tokens > 8000
         
         # For long requests, automatically use streaming unless explicitly set
         if is_long_request and stream is None:
             stream = True
-            log_info(f"Automatically enabling streaming for potentially long thinking request ({estimated_tokens} estimated tokens)")
+            log_info(f"Automatically enabling streaming for thinking ({estimated_tokens} estimated tokens)")
         
         # Force streaming if explicitly requested
         if stream is True:
             is_long_request = True
-            
+        
         try:
             # Configure client options
             client_options = {}
@@ -195,16 +268,14 @@ class LLMService:
             # Use Anthropic's official extended thinking support
             if is_long_request:
                 # Handle streaming with thinking
-                thinking = ""
-                final_response = ""
                 metadata = {"has_redacted_thinking": False, "signatures": []}
                 
-                log_info(f"Creating stream with thinking budget: {budget}")
-                stream_obj = self.client.messages.create(
+                log_info(f"Creating stream with thinking budget: {thinking_budget}, max_tokens: {max_tokens}")
+                stream_obj = self.anthropic_client.messages.create(
                     model=self.model,
-                    max_tokens=tokens,
+                    max_tokens=max_tokens,
                     temperature=temperature,
-                    thinking={"type": "enabled", "budget_tokens": budget},
+                    thinking={"type": "enabled", "budget_tokens": thinking_budget},
                     messages=[
                         {"role": "user", "content": prompt}
                     ],
@@ -285,144 +356,180 @@ class LLMService:
                     final_response += current_content_block_text
                     log_info(f"Added remaining content block: {len(current_content_block_text)} chars")
                 
-                log_info(f"Thinking length: {len(thinking)}")
-                log_info(f"Final response length: {len(final_response)}")
+                # Capture usage information if available
+                if hasattr(chunk, 'usage'):
+                    if hasattr(chunk.usage, 'input_tokens'):
+                        usage["input_tokens"] = chunk.usage.input_tokens
+                    if hasattr(chunk.usage, 'output_tokens'):
+                        usage["output_tokens"] = chunk.usage.output_tokens
                 
-                # If we still have an empty response, try to extract from message object
-                if not final_response:
-                    log_info("WARNING: Final response is empty, will use fallback extraction")
-                    message = self.client.messages.create(
-                        model=self.model,
-                        max_tokens=tokens,
-                        temperature=temperature,
-                        messages=[
-                            {"role": "user", "content": prompt}
-                        ],
-                        **client_options
-                    )
-                    
-                    # Extract text from normal response
-                    if hasattr(message, 'content'):
-                        for content_item in message.content:
-                            if hasattr(content_item, 'type') and content_item.type == 'text':
-                                if hasattr(content_item, 'text'):
-                                    final_response = content_item.text
-                                    log_info(f"Used fallback response extraction: {len(final_response)} chars")
+                await asyncio.sleep(0)  # Yield control occasionally
+            
+            # If thinking is longer than 60 characters and ends with "...", mark as redacted
+            if len(thinking) > 60 and thinking.strip().endswith("..."):
+                has_redacted_thinking = True
+                log_info("Thinking appears to be truncated. Marking as redacted.")
+            
+            # Extract any tool signatures if present in the tools
+            # for tool_use in tool_uses:
+            #     signature_match = re.search(r'signature:\s*([a-zA-Z0-9+/=]+)', tool_use)
+            #     if signature_match:
+            #         signatures.append(signature_match.group(1))
+            
+            # If usage wasn't captured in streaming, make a rough estimate
+            if not usage["input_tokens"] and not usage["output_tokens"]:
+                # Make rough estimates of token counts
+                input_tokens = len(prompt.split())
+                thinking_tokens = len(thinking.split())
+                response_tokens = len(final_response.split())
                 
-                
-                log_info(f"Final Response : {final_response}")
-                return thinking, final_response, metadata
-            else:
-                # Non-streaming approach (unchanged)
-                message = self.client.messages.create(
-                    model=self.model,
-                    max_tokens=tokens,
-                    temperature=temperature,
-                    thinking={"type": "enabled", "budget_tokens": budget},
-                    messages=[
-                        {"role": "user", "content": prompt}
-                    ],
-                    **client_options
-                )
-                
-                # Extract thinking and response
-                thinking = ""
-                final_response = ""
-                metadata = {"has_redacted_thinking": False, "signatures": []}
-                
-                for content_block in message.content:
-                    if content_block.type == "thinking":
-                        thinking = content_block.thinking
-                        if hasattr(content_block, "signature"):
-                            metadata["signatures"].append(content_block.signature)
-                    elif content_block.type == "redacted_thinking":
-                        thinking += "[Redacted thinking block]"
-                        metadata["has_redacted_thinking"] = True
-                        if hasattr(content_block, "data"):
-                            metadata["redacted_data"] = content_block.data
-                    elif content_block.type == "text":
-                        final_response = content_block.text
-                
-                return thinking, final_response, metadata
+                usage = {
+                    "input_tokens": input_tokens,
+                    "output_tokens": thinking_tokens + response_tokens
+                }
+            
+            # Return the thinking process, final response, and metadata
+            metadata = {
+                "usage": {
+                    "input_tokens": usage.get("input_tokens", 0),
+                    "output_tokens": usage.get("output_tokens", 0)
+                },
+                "has_redacted_thinking": has_redacted_thinking,
+                "model_used": self.model,
+                # "signatures": signatures,
+                "success": True
+            }
+            
+            return thinking, final_response, metadata
             
         except anthropic.APITimeoutError as e:
-            log_info(f"API timeout error in generate_response_with_thinking: {str(e)}")
+            log_info(f"API timeout error in extended thinking: {str(e)}")
             # If we weren't streaming, try with streaming as fallback
-            if not is_long_request:
-                log_info("Retrying with streaming enabled due to timeout")
+            if not stream:
+                log_info("Retrying with streaming enabled for extended thinking")
                 return await self.generate_response_with_thinking(
                     prompt=prompt,
                     thinking_budget=thinking_budget,
                     max_tokens=max_tokens,
                     temperature=temperature,
-                    stream=True,
-                    timeout=timeout
-                )
-            raise
-        except ValueError as e:
-            log_info(f"Value error in generate_response_with_thinking: {str(e)}")
-            # Check for the specific error about long operations
-            if "operations that may take longer than 10 minutes" in str(e):
-                log_info("Retrying with streaming enabled due to potential long operation")
-                return await self.generate_response_with_thinking(
-                    prompt=prompt,
-                    thinking_budget=thinking_budget,
-                    max_tokens=max_tokens,
-                    temperature=temperature,
-                    stream=True,
-                    timeout=timeout
-                )
-            raise
-        except Exception as e:
-            log_info(f"Error generating response with thinking: {str(e)}")
-            # Fall back to emulating thinking with standard response
-            log_info("Falling back to standard response emulating thinking")
-            thinking_prompt = f"""
-            {prompt}
-            
-            Think through this problem step by step before giving your final answer. 
-            First, provide your detailed thinking in a section labeled <thinking>...</thinking>.
-            Then, provide your final response.
-            """
-            
-            # Try with streaming for the fallback if this was likely a long request
-            if is_long_request:
-                response_text = await self.generate_response(
-                    thinking_prompt,
-                    temperature=temperature,
-                    max_tokens=tokens,
                     stream=True,
                     timeout=timeout
                 )
             else:
-                message = self.client.messages.create(
-                    model=self.model,
-                    max_tokens=tokens,
-                    temperature=temperature,
-                    messages=[
-                        {"role": "user", "content": thinking_prompt}
-                    ],
-                    **client_options
-                )
-                response_text = message.content[0].text
-            
-            # Extract thinking and response
-            thinking_match = re.search(r'<thinking>(.*?)</thinking>', response_text, re.DOTALL)
-            thinking = thinking_match.group(1).strip() if thinking_match else ""
-            
-            # Get the final response (everything after </thinking> tag)
-            final_response = re.sub(r'.*?</thinking>', '', response_text, flags=re.DOTALL).strip()
-            if not final_response and not thinking:
-                final_response = response_text  # Fallback if no thinking tags present
+                # If already using streaming and still timing out, generate error response
+                error_message = f"API timeout error in extended thinking: {str(e)}"
                 
-            return thinking, final_response, {"has_redacted_thinking": False, "signatures": []}
-        
+                # Report what we collected so far if anything
+                if thinking:
+                    log_info(f"Returning partial thinking ({len(thinking.split())} words) due to timeout")
+                    
+                    # Make rough estimates of token counts
+                    input_tokens = len(prompt.split())
+                    thinking_tokens = len(thinking.split())
+                    response_tokens = 0  # No final response in timeout case
+                    
+                    usage = {
+                        "input_tokens": input_tokens,
+                        "output_tokens": thinking_tokens + response_tokens
+                    }
+                    
+                    metadata = {
+                        "usage": usage,
+                        "has_redacted_thinking": True,  # Mark as redacted due to timeout
+                        "error": str(e),
+                        "error_type": "API timeout",
+                        "model_used": self.model,
+                        "success": False
+                    }
+                    
+                    return thinking, error_message, metadata
+                else:
+                    # If no thinking collected, return minimal error response
+                    usage = {
+                        "input_tokens": len(prompt.split()),
+                        "output_tokens": 0
+                    }
+                    
+                    metadata = {
+                        "usage": usage,
+                        "has_redacted_thinking": False,
+                        "error": str(e),
+                        "error_type": "API timeout",
+                        "model_used": self.model,
+                        "success": False
+                    }
+                    
+                    return "", error_message, metadata
+                    
+        except ValueError as e:
+            log_info(f"Value error in extended thinking: {str(e)}")
+            if "operations that may take longer than 10 minutes" in str(e):
+                log_info("Retrying with streaming due to potential long operation")
+                # Retry with streaming explicitly enabled
+                return await self.generate_response_with_thinking(
+                    prompt=prompt,
+                    thinking_budget=thinking_budget,
+                    max_tokens=max_tokens,
+                    temperature=temperature,
+                    stream=True,
+                    timeout=timeout
+                )
+            else:
+                # For other value errors, return error
+                error_message = f"Value error in extended thinking: {str(e)}"
+                
+                # Make rough estimates of token counts
+                input_tokens = len(prompt.split())
+                thinking_tokens = len(thinking.split()) if thinking else 0
+                response_tokens = len(final_response.split()) if final_response else 0
+                
+                usage = {
+                    "input_tokens": input_tokens,
+                    "output_tokens": thinking_tokens + response_tokens
+                }
+                
+                # Ensure has_redacted_thinking is defined - it should be initialized at the start of the function already
+                metadata = {
+                    "usage": usage,
+                    "has_redacted_thinking": has_redacted_thinking,
+                    "error": str(e),
+                    "error_type": "Value error",
+                    "model_used": self.model,
+                    "success": False
+                }
+                
+                return thinking, error_message, metadata
+                
+        except Exception as e:
+            log_info(f"Unexpected error in extended thinking: {str(e)}")
+            error_message = f"Error in extended thinking: {str(e)}"
+            
+            # Return whatever thinking we have with error metadata
+            input_tokens = len(prompt.split())
+            thinking_tokens = len(thinking.split()) if thinking else 0
+            
+            usage = {
+                "input_tokens": input_tokens,
+                "output_tokens": thinking_tokens
+            }
+            
+            metadata = {
+                "usage": usage,
+                "has_redacted_thinking": has_redacted_thinking,
+                "error": str(e),
+                "error_type": "Unexpected error",
+                "model_used": self.model,
+                "success": False
+            }
+            
+            return thinking, error_message, metadata
     
     @retry(
         stop=stop_after_attempt(3),
         wait=wait_exponential(multiplier=1, min=2, max=10),
         retry=retry_if_exception_type((anthropic.APIError, anthropic.APITimeoutError))
     )
+    @track_llm_metrics(endpoint="structured_response")
     async def generate_structured_response(
         self, 
         prompt: str, 
@@ -446,10 +553,35 @@ class LLMService:
             timeout: Optional timeout in seconds
             
         Returns:
-            A dictionary parsed from the JSON response, with thinking if requested
+            A dictionary parsed from the JSON response, with thinking and usage information if requested
         """
 
-        log_info(f"Recieved Prompt : {prompt}")
+        # Initialize variables that might be used before assignment
+        usage = {"input_tokens": 0, "output_tokens": 0}
+        response_text = ""
+        thinking = ""
+        final_response = ""
+        has_redacted_thinking = False
+        
+        # Ensure thinking budget is adequate if with_thinking is enabled
+        if with_thinking:
+            if not thinking_budget or thinking_budget < 1024:
+                log_info(f"Thinking budget {thinking_budget} is below minimum. Using 1,024 tokens.")
+                thinking_budget = 1024
+            
+            # Ensure max_tokens is larger than thinking_budget as required by Claude API
+            if not max_tokens:
+                max_tokens = thinking_budget + MAX_TOKENS  # Default tokens for response
+            
+            # Always validate that max_tokens is greater than thinking_budget
+            if max_tokens <= thinking_budget:
+                buffer = 1000
+                max_tokens = thinking_budget + buffer
+                log_info(f"Adjusted max_tokens to {max_tokens} (thinking_budget {thinking_budget} + buffer {buffer})")
+            
+            log_info(f"Using thinking_budget: {thinking_budget}, max_tokens: {max_tokens}")
+        
+        # log_info(f"Recieved Prompt : {prompt}")
         # Determine if this is likely a long-running request
         estimated_tokens = len(prompt.split()) + (max_tokens or MAX_TOKENS)
         is_long_request = estimated_tokens > 8000
@@ -491,7 +623,11 @@ class LLMService:
                 if is_long_request:
                     # Handle streaming for long requests
                     response_text = ""
-                    stream_obj = self.client.messages.create(
+                    usage = {
+                        "input_tokens": 0,
+                        "output_tokens": 0
+                    }
+                    stream_obj = self.anthropic_client.messages.create(
                         model=self.model,
                         max_tokens=max_tokens or MAX_TOKENS,
                         temperature=temperature or TEMPERATURE,
@@ -505,10 +641,16 @@ class LLMService:
                     for chunk in stream_obj:
                         if chunk.type == 'content_block_delta' and chunk.delta.type == 'text':
                             response_text += chunk.delta.text
+                        # Capture usage if present
+                        if hasattr(chunk, 'usage'):
+                            if hasattr(chunk.usage, 'input_tokens'):
+                                usage["input_tokens"] = chunk.usage.input_tokens
+                            if hasattr(chunk.usage, 'output_tokens'):
+                                usage["output_tokens"] = chunk.usage.output_tokens
                         await asyncio.sleep(0)
                 else:
                     # Non-streaming for shorter requests
-                    message = self.client.messages.create(
+                    message = self.anthropic_client.messages.create(
                         model=self.model,
                         max_tokens=max_tokens or MAX_TOKENS,
                         temperature=temperature or TEMPERATURE,
@@ -519,8 +661,22 @@ class LLMService:
                     )
                     response_text = message.content[0].text
                     
+                    # Capture usage information
+                    usage = {
+                        "input_tokens": message.usage.input_tokens if hasattr(message, 'usage') and hasattr(message.usage, 'input_tokens') else 0,
+                        "output_tokens": message.usage.output_tokens if hasattr(message, 'usage') and hasattr(message.usage, 'output_tokens') else 0
+                    }
+                    
                 # Extract JSON from the response
-                return self._extract_json(response_text)
+                extracted_json = self._extract_json(response_text)
+                log_info(f"Extracted Json : {extracted_json}")
+                
+                # Add usage information
+                extracted_json["usage"] = usage
+                extracted_json["model_used"] = self.model
+                extracted_json["success"] = True
+                
+                return extracted_json
                 
             except anthropic.APITimeoutError as e:
                 log_info(f"API timeout error in generate_structured_response: {str(e)}")
@@ -536,7 +692,12 @@ class LLMService:
                         stream=True,
                         timeout=timeout
                     )
-                raise
+                return {
+                    "message": f"Error: API timeout error occurred: {str(e)}",
+                    "error": str(e),
+                    "error_type": "API timeout",
+                    "success": False
+                }
             except ValueError as e:
                 log_info(f"Value error in generate_structured_response: {str(e)}")
                 if "operations that may take longer than 10 minutes" in str(e):
@@ -551,10 +712,20 @@ class LLMService:
                         stream=True,
                         timeout=timeout
                     )
-                raise
+                return {
+                    "message": f"Error: Value error occurred: {str(e)}",
+                    "error": str(e),
+                    "error_type": "Value error",
+                    "success": False
+                }
             except Exception as e:
                 log_info(f"Unexpected error in generate_structured_response: {str(e)}")
-                raise
+                return {
+                    "message": f"Error: Unexpected error occurred: {str(e)}",
+                    "error": str(e),
+                    "error_type": "Unexpected error",
+                    "success": False
+                }
         else:
             # Use extended thinking for structured response
             thinking, final_response, metadata = await self.generate_response_with_thinking(
@@ -590,9 +761,21 @@ class LLMService:
             # Add metadata about redacted thinking if present
             if metadata.get("has_redacted_thinking", False):
                 json_data["has_redacted_thinking"] = True
+            else:
+                json_data["has_redacted_thinking"] = False
             
             if "signatures" in metadata and metadata["signatures"]:
                 json_data["signature"] = metadata["signatures"][0]
+            
+            # Add usage information from metadata
+            if "usage" in metadata:
+                json_data["usage"] = metadata["usage"]
+            else:
+                json_data["usage"] = {"input_tokens": 0, "output_tokens": 0}
+            
+            # Add model information
+            json_data["model_used"] = metadata.get("model_used", self.model)
+            json_data["success"] = True
             
             return json_data
     
@@ -600,7 +783,8 @@ class LLMService:
         """
         Extract JSON from LLM response text.
         
-        Handles various formats that the LLM might return JSON in.
+        Handles various formats that the LLM might return JSON in,
+        including nested JSON inside message fields and truncated JSON.
         """
         # Try to find JSON within code blocks
         json_match = re.search(r'```(?:json)?\s*(.*?)\s*```', response_text, re.DOTALL)
@@ -617,14 +801,143 @@ class LLMService:
                 return {"message": response_text, "confidence": 0.5}
         
         try:
-            return json.loads(json_str)
-        except json.JSONDecodeError:
+            # Try to parse as is first
+            json_data = json.loads(json_str)
+            
+            # Handle the case where JSON contains nested JSON in a message field
+            if isinstance(json_data, dict) and "message" in json_data and isinstance(json_data["message"], str):
+                log_info(f"Found message field with text length: {len(json_data['message'])}")
+                
+                # Check for code blocks in message
+                nested_json_match = re.search(r'```(?:json)?\s*(.*?)\s*```', json_data["message"], re.DOTALL)
+                if nested_json_match:
+                    try:
+                        nested_json_str = nested_json_match.group(1)
+                        nested_json = json.loads(nested_json_str)
+                        
+                        # If nested JSON has a "threats" field, merge it with the original
+                        if "threats" in nested_json and isinstance(nested_json["threats"], list):
+                            log_info(f"Found nested JSON with {len(nested_json['threats'])} threats in message field")
+                            json_data["threats"] = nested_json["threats"]
+                            
+                            # Also copy severity counts if available
+                            if "severity_counts" in nested_json and isinstance(nested_json["severity_counts"], dict):
+                                json_data["severity_counts"] = nested_json["severity_counts"]
+                    except json.JSONDecodeError as nested_e:
+                        # The nested JSON might be truncated - try to extract threats array
+                        log_info(f"Error parsing nested JSON in message, attempting to extract threats array: {str(nested_e)}")
+                        threats_match = re.search(r'"threats"\s*:\s*\[(.*?)(?:\]\s*}|$)', nested_json_match.group(1), re.DOTALL)
+                        if threats_match:
+                            try:
+                                # Extract threats array with proper JSON wrapping
+                                threats_str = '{"threats":[' + threats_match.group(1) + ']}'
+                                # Fix potential truncation by adding closing brackets if needed
+                                if not threats_str.endswith("]}"):
+                                    last_complete_threat = threats_str.rfind("},")
+                                    if last_complete_threat > 0:
+                                        threats_str = threats_str[:last_complete_threat+1] + "]}"
+                                
+                                threats_data = json.loads(threats_str)
+                                if "threats" in threats_data and len(threats_data["threats"]) > 0:
+                                    log_info(f"Successfully extracted {len(threats_data['threats'])} threats from truncated JSON")
+                                    json_data["threats"] = threats_data["threats"]
+                            except Exception as e:
+                                log_info(f"Failed to extract threats array from truncated JSON: {str(e)}")
+                    except Exception as e:
+                        log_info(f"Error processing nested JSON in message: {str(e)}")
+                else:
+                    # Try to extract threats array directly from the message text
+                    threats_match = re.search(r'"threats"\s*:\s*\[(.*?)(?:\]\s*}|$)', json_data["message"], re.DOTALL)
+                    if threats_match:
+                        try:
+                            threats_str = '{"threats":[' + threats_match.group(1) + ']}'
+                            # Fix potential truncation by adding closing brackets if needed
+                            if not threats_str.endswith("]}"):
+                                last_complete_threat = threats_str.rfind("},")
+                                if last_complete_threat > 0:
+                                    threats_str = threats_str[:last_complete_threat+1] + "]}"
+                            
+                            threats_data = json.loads(threats_str)
+                            if "threats" in threats_data and len(threats_data["threats"]) > 0:
+                                log_info(f"Extracted {len(threats_data['threats'])} threats directly from message text")
+                                json_data["threats"] = threats_data["threats"]
+                        except Exception as e:
+                            log_info(f"Failed to extract threats directly from message text: {str(e)}")
+                    
+                    # Also extract severity counts if available
+                    severity_match = re.search(r'"severity_counts"\s*:\s*(\{[^}]+\})', json_data["message"], re.DOTALL)
+                    if severity_match:
+                        try:
+                            severity_str = severity_match.group(1)
+                            severity_data = json.loads(severity_str)
+                            json_data["severity_counts"] = severity_data
+                            log_info(f"Extracted severity counts from message text")
+                        except Exception as e:
+                            log_info(f"Failed to extract severity counts from message text: {str(e)}")
+            
+            return json_data
+        except json.JSONDecodeError as e:
+            log_info(f"Initial JSON decode error: {str(e)}, attempting recovery...")
+            
             # Try to fix common JSON issues
             fixed_json_str = self._fix_json_string(json_str)
+            
+            # Try to extract the threats array directly if the JSON is truncated
+            threats_match = re.search(r'"threats"\s*:\s*\[(.*?)(?:\]\s*}|$)', json_str, re.DOTALL)
+            severity_match = re.search(r'"severity_counts"\s*:\s*(\{[^}]+\})', json_str, re.DOTALL)
+            message_match = re.search(r'"message"\s*:\s*"([^"]+)"', json_str, re.DOTALL)
+            
+            if threats_match or severity_match:
+                recovered_data = {"message": "", "confidence": 0.5}
+                
+                # Extract message if available
+                if message_match:
+                    try:
+                        recovered_data["message"] = message_match.group(1)
+                    except Exception as msg_e:
+                        log_info(f"Failed to extract message: {str(msg_e)}")
+                
+                # Extract threats array
+                if threats_match:
+                    try:
+                        threats_str = '{"threats":[' + threats_match.group(1) + ']}'
+                        # Fix potential truncation
+                        if not threats_str.endswith("]}"):
+                            last_complete_threat = threats_str.rfind("},")
+                            if last_complete_threat > 0:
+                                threats_str = threats_str[:last_complete_threat+1] + "]}"
+                        
+                        threats_data = json.loads(threats_str)
+                        if "threats" in threats_data and len(threats_data["threats"]) > 0:
+                            log_info(f"Recovered {len(threats_data['threats'])} threats from truncated JSON")
+                            recovered_data["threats"] = threats_data["threats"]
+                    except Exception as t_e:
+                        log_info(f"Failed to recover threats array: {str(t_e)}")
+                
+                # Extract severity counts
+                if severity_match:
+                    try:
+                        severity_str = '{' + severity_match.group(1) + '}'
+                        severity_str = severity_str.replace('{', '{"severity_counts":{')
+                        severity_str = severity_str.replace('}', '}}')
+                        severity_data = json.loads(severity_str)
+                        if "severity_counts" in severity_data:
+                            log_info(f"Recovered severity counts from truncated JSON")
+                            recovered_data["severity_counts"] = severity_data["severity_counts"]
+                    except Exception as s_e:
+                        log_info(f"Failed to recover severity counts: {str(s_e)}")
+                
+                # If we recovered any threats, return the recovered data
+                if "threats" in recovered_data:
+                    log_info(f"Returning recovered data with {len(recovered_data.get('threats', []))} threats")
+                    return recovered_data
+            
+            # Standard fix attempt if recovery failed
             try:
                 return json.loads(fixed_json_str)
             except json.JSONDecodeError:
                 # Fallback for parsing failures
+                log_info(f"JSON decode error after fixes: {str(e)}. Response: {response_text[:200]}...")
                 return {"message": response_text, "confidence": 0.5}
     
     def _fix_json_string(self, json_str: str) -> str:
@@ -699,3 +1012,124 @@ class LLMService:
             
             log_info(f"Determined thinking budget: {budget} tokens for {task_complexity} complexity")
             return budget
+
+
+    @retry(stop=stop_after_attempt(3), wait=wait_exponential(multiplier=1, min=2, max=10), retry=retry_if_exception_type(Exception))
+    @track_llm_metrics(endpoint="analyze_diagram")
+    async def analyze_diagram(self, diagram_content: dict, llm : str = "openai") -> Dict[str, Any]:
+        """
+        Analyze diagram content (nodes and edges) to create a full narrative
+        
+        Args:
+            diagram_content: Dictionary containing nodes and edges
+            llm: Which LLM to use (openai or grok)
+            
+        Returns:
+            Dictionary with data flow description and metadata
+        """
+        # Enhanced system prompt with specific instructions for detailed analysis
+        system_prompt = (
+            "You are a specialized architecture analysis assistant that excels at interpreting "
+            "network diagrams and translating them into clear, comprehensive text descriptions. "
+            "Your expertise is in identifying data flows, system components, and their interactions.\n\n"
+            "When analyzing a diagram, follow these steps:\n"
+            "1. Identify all nodes (components) and their types/categories\n"
+            "2. Track all connections between nodes (edges) and their directionality\n"
+            "3. Determine the logical flow of data through the system\n"
+            "4. Explain the role and purpose of each component\n"
+            "5. Highlight any security boundaries or important patterns\n"
+            "6. Describe the complete end-to-end data flow journey\n\n"
+            "Your output should be clear, technical, and thorough."
+        )
+
+        # Create a structured reasoning prompt
+        user_prompt = (
+            "Here is an architecture diagram in JSON format that contains 'nodes' and 'edges':\n"
+            f"```json\n{json.dumps(diagram_content, indent=2)}\n```\n\n"
+            "Please analyze this diagram and provide a comprehensive description of the data flow.\n\n"
+            "First, analyze the nodes to understand each component:\n"
+            "- What are all the components in the system?\n"
+            "- What is each component's role and purpose?\n"
+            "- What category or type is each component?\n\n"
+            "Next, analyze the edges to understand connections:\n"
+            "- How are components connected to each other?\n"
+            "- What is the direction of data flow?\n"
+            "- Are there any special edges (animated, colored differently)?\n\n"
+            "Then, trace the complete data flow paths through the system:\n"
+            "- Where does data originate?\n"
+            "- What processing occurs at each step?\n"
+            "- Where does data ultimately end up?\n\n"
+            "Finally, provide a complete narrative that describes the entire architecture and data flow."
+        )
+
+
+        # GPT-3.5-Turbo is cost-efficient for this task
+        if llm == "openai":
+            client = self.openai_client
+            model = "gpt-4.1-mini"
+        elif llm == "grok":
+            client = self.grok_client
+            model = "grok-3-mini-beta"
+        
+        try:
+            # Check rate limits if applicable
+            if hasattr(self, 'rate_counter') and hasattr(self, 'rate_limit') and self.rate_counter >= self.rate_limit:
+                log_info("Rate limit exceeded")
+                return {
+                    "data_flow_description": "Rate limit exceeded. Please try again later.",
+                    "error": "Rate limit exceeded",
+                    "success": False
+                }
+
+            # Use the standard chat completions API
+            completion = await asyncio.to_thread(
+                client.chat.completions.create,
+                model=model,
+                messages=[
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": user_prompt}
+                ],
+                temperature=0.1,  # Lower temperature for more focused, consistent output
+                max_tokens=2500    # Increased token limit for more detailed responses
+            )
+
+            # Increment rate counter if it exists
+            if hasattr(self, 'rate_counter'):
+                self.rate_counter += 1
+            
+            # Extract content from response
+            content = completion.choices[0].message.content
+            
+            # Get usage statistics
+            usage = {
+                "prompt_tokens": completion.usage.prompt_tokens,
+                "completion_tokens": completion.usage.completion_tokens,
+                "total_tokens": completion.usage.total_tokens
+            }
+            
+            log_info(f"Diagram analysis completed successfully. Used {usage['total_tokens']} tokens.")
+            
+            return {
+                "data_flow_description": content,
+                "usage": usage,
+                "model_used": model,
+                "success": True
+            }
+            
+        except Exception as e:
+            error_message = str(e)
+            log_info(f"Error in analyze_diagram: {error_message}")
+            
+            # Handle specific error types
+            if "rate_limit" in error_message.lower():
+                error_type = "Rate limit exceeded"
+            elif "context_length" in error_message.lower():
+                error_type = "Input diagram too large"
+            else:
+                error_type = "Processing error"
+            
+            return {
+                "data_flow_description": f"Error analyzing diagram: {str(e)}",
+                "error": str(e),
+                "success": False
+            }

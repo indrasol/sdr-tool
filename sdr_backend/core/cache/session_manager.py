@@ -1,8 +1,9 @@
 import aioredis
+import hashlib
 import json
 import uuid
 from datetime import datetime, timezone
-from typing import Dict, Optional, Any, List, AsyncContextManager, AsyncIterator
+from typing import Dict, Optional, Any, List, AsyncContextManager, AsyncIterator, Tuple
 from contextlib import asynccontextmanager
 from fastapi import HTTPException
 from utils.logger import log_info
@@ -911,3 +912,217 @@ class SessionManager:
         
         # Return most recent entries first
         return list(reversed(history[-limit:]))
+
+    async def store_threat_model(self, session_id: str, threat_model: Dict[str, Any], diagram_state: Dict[str, Any]) -> bool:
+        """
+        Store a generated threat model in the session cache.
+        
+        Args:
+            session_id: The session identifier
+            threat_model: The threat model data to store
+            diagram_state: The diagram state used to generate the threat model
+            
+        Returns:
+            bool: Whether the operation succeeded
+        """
+        try:
+            if not self.redis_pool:
+                await self.connect()
+                if not self.redis_pool:
+                    log_info(f"Cannot store threat model: Redis pool not available")
+                    return False
+            
+            # Check if session exists
+            session_exists = await self.redis_pool.exists(f"session:{session_id}")
+            if not session_exists:
+                log_info(f"Cannot store threat model: Session {session_id} not found")
+                return False
+            
+            # Store threat model with 30 minute TTL
+            threat_model_key = f"threat_model:{session_id}"
+            threat_model_json = json.dumps(threat_model)
+            await self.redis_pool.setex(
+                threat_model_key,
+                3600,  # 30 minutes TTL
+                threat_model_json
+            )
+            
+            # Store diagram hash for future comparisons
+            if diagram_state:
+                log_info(f"Storing diagram hash for session {session_id}")
+                log_info(f"Diagram state has {len(diagram_state.get('nodes', []))} nodes and {len(diagram_state.get('edges', []))} edges")
+                
+                # Sanitize the diagram state to ensure consistent hashing
+                clean_diagram_state = self._sanitize_diagram_state(diagram_state)
+                
+                # Serialize the diagram state consistently for hashing
+                serialized_diagram = json.dumps(clean_diagram_state, sort_keys=True)
+                diagram_hash = hashlib.md5(serialized_diagram.encode()).hexdigest()
+                diagram_hash_key = f"diagram_hash:{session_id}"
+                
+                log_info(f"Generated diagram hash: {diagram_hash}")
+                
+                await self.redis_pool.setex(
+                    diagram_hash_key,
+                    3600,  # 30 minutes TTL
+                    diagram_hash
+                )
+            else:
+                log_info(f"No diagram state provided to store hash for session {session_id}")
+            
+            # Extend session TTL
+            await self.extend_session_ttl(session_id)
+            
+            log_info(f"Stored threat model in session {session_id}")
+            return True
+            
+        except Exception as e:
+            log_info(f"Error storing threat model in session: {str(e)}")
+            return False
+            
+    def _sanitize_diagram_state(self, diagram_state: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Sanitize diagram state to ensure consistent hashing.
+        Removes UI-specific and transient properties.
+        
+        Args:
+            diagram_state: The original diagram state
+            
+        Returns:
+            A cleaned diagram state with only essential properties
+        """
+        if not diagram_state:
+            return {}
+            
+        # Clean nodes - keep only essential properties
+        clean_nodes = []
+        for node in diagram_state.get("nodes", []):
+            if not node or not isinstance(node, dict):
+                continue
+                
+            clean_node = {
+                "id": node.get("id"),
+                "type": node.get("type"),
+                "position": node.get("position", {})
+            }
+            
+            # Extract essential data properties
+            node_data = node.get("data", {})
+            if node_data and isinstance(node_data, dict):
+                clean_node["data"] = {
+                    "label": node_data.get("label"),
+                    "description": node_data.get("description"),
+                    "nodeType": node_data.get("nodeType")
+                }
+            
+            clean_nodes.append(clean_node)
+            
+        # Clean edges - keep only essential properties
+        clean_edges = []
+        for edge in diagram_state.get("edges", []):
+            if not edge or not isinstance(edge, dict):
+                continue
+                
+            clean_edge = {
+                "id": edge.get("id"),
+                "source": edge.get("source"),
+                "target": edge.get("target"),
+                "type": edge.get("type")
+            }
+            
+            # Only include label if it exists
+            if "label" in edge:
+                clean_edge["label"] = edge.get("label")
+                
+            clean_edges.append(clean_edge)
+            
+        return {
+            "nodes": clean_nodes,
+            "edges": clean_edges
+        }
+            
+    async def get_threat_model(self, session_id: str, diagram_state: Optional[Dict[str, Any]] = None) -> Tuple[Optional[Dict[str, Any]], bool]:
+        """
+        Retrieve a stored threat model from the session cache.
+        Also checks if the diagram has changed since the threat model was generated.
+        
+        Args:
+            session_id: The session identifier
+            diagram_state: Current diagram state to compare with stored hash (optional)
+            
+        Returns:
+            Tuple[Optional[Dict[str, Any]], bool]: The threat model and whether diagram has changed
+                - First element is the threat model or None if not found
+                - Second element is True if diagram has changed, False otherwise
+        """
+        try:
+            if not self.redis_pool:
+                await self.connect()
+                if not self.redis_pool:
+                    log_info(f"Cannot retrieve threat model: Redis pool not available")
+                    return None, True
+            
+            # Check if session exists
+            session_exists = await self.redis_pool.exists(f"session:{session_id}")
+            if not session_exists:
+                log_info(f"Cannot retrieve threat model: Session {session_id} not found")
+                return None, True
+            
+            # Get threat model from cache
+            threat_model_key = f"threat_model:{session_id}"
+            cached_model = await self.redis_pool.get(threat_model_key)
+            
+            if not cached_model:
+                log_info(f"No threat model found in session {session_id}")
+                return None, True
+            
+            # Parse the cached model
+            threat_model = json.loads(cached_model)
+            
+            # Check if diagram has changed, if diagram_state is provided
+            diagram_changed = True
+            
+            if diagram_state:
+                # Get stored diagram hash
+                diagram_hash_key = f"diagram_hash:{session_id}"
+                stored_hash = await self.redis_pool.get(diagram_hash_key)
+                
+                log_info(f"Comparing diagram hashes for session {session_id}")
+                log_info(f"Diagram state provided: {bool(diagram_state)} with {len(diagram_state.get('nodes', []))} nodes and {len(diagram_state.get('edges', []))} edges")
+                
+                if stored_hash:
+                    # Sanitize the current diagram state
+                    clean_diagram_state = self._sanitize_diagram_state(diagram_state)
+                    
+                    # Generate hash of current diagram
+                    current_hash = hashlib.md5(json.dumps(clean_diagram_state, sort_keys=True).encode()).hexdigest()
+                    
+                    # Handle the stored hash correctly based on its type
+                    stored_hash_str = stored_hash
+                    if hasattr(stored_hash, 'decode'):
+                        stored_hash_str = stored_hash.decode('utf-8')
+                    
+                    log_info(f"Stored hash: {stored_hash_str}")
+                    log_info(f"Current hash: {current_hash}")
+                    log_info(f"Hashes match: {stored_hash_str == current_hash}")
+                    
+                    # If hashes match, diagram hasn't changed
+                    if stored_hash_str == current_hash:
+                        log_info(f"Diagram has not changed...")
+                        diagram_changed = False
+                        log_info(f"Diagram unchanged for session {session_id}")
+                    else:
+                        log_info(f"Diagram has changed for session {session_id}")
+                else:
+                    log_info(f"No stored hash found for session {session_id}")
+            else:
+                log_info(f"No diagram state provided for comparison in session {session_id}")
+            
+            # Extend session TTL
+            await self.extend_session_ttl(session_id)
+            
+            return threat_model, diagram_changed
+            
+        except Exception as e:
+            log_info(f"Error retrieving threat model from session: {str(e)}")
+            return None, True

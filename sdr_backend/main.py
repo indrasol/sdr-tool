@@ -1,7 +1,8 @@
 # main.py
 import time
 import uvicorn
-from fastapi import FastAPI
+from prometheus_client import generate_latest, CONTENT_TYPE_LATEST
+from fastapi import FastAPI, Request, Response, Depends
 from v1.api.routes.routes import router as api_router
 from fastapi.middleware.cors import CORSMiddleware
 import asyncio
@@ -31,6 +32,9 @@ from v1.api.health.health_monitor import health_monitor
 from v1.api.routes.health import setup_health_monitoring
 from services.logging import setup_logging
 import sys
+# Prometheus instrumentation
+from prometheus_fastapi_instrumentator import Instrumentator
+from utils.prometheus_metrics import setup_custom_metrics_endpoint, APP_ACTIVE_SESSIONS, authenticate_metrics
 
 
 session_manager = SessionManager()
@@ -62,6 +66,9 @@ async def lifespan(app: FastAPI):
     health_monitor.capture_routes_info(app)
     log_info("Health monitoring initialized.")
 
+    # Initialize active sessions gauge
+    APP_ACTIVE_SESSIONS.set(0)
+    
     yield
     await session_manager.disconnect()  # Disconnect from Redis
     log_info("disconnected redis session manager...")
@@ -74,11 +81,6 @@ app = FastAPI(
     version="1.0.0",
     lifespan=lifespan
 )
-
-
-# app.mount("/reports", StaticFiles(directory=REPORTS_DIR), name="reports")
-# Mount the "outputs" directory as a static files directory
-# app.mount("/outputs", StaticFiles(directory="outputs"), name="outputs")
 
 # Allow frontend origins
 origins = [
@@ -104,84 +106,11 @@ app.add_middleware(
 # Set up health monitoring middleware (needs to be after CORS middleware)
 setup_health_monitoring(app, session_manager)
 
-# Add request ID middleware
-# @app.middleware("http")
-# async def request_middleware(request: Request, call_next):
-#     """
-#     Middleware to add request ID and timing information.
-#     """
-#     # Generate unique request ID
-#     request_id = str(uuid.uuid4())
-#     request.state.request_id = request_id
-    
-#     # Track request timing
-#     start_time = time.time()
-    
-#     # Process request
-#     try:
-#         response = await call_next(request)
-        
-#         # Add request ID and processing time headers
-#         process_time = time.time() - start_time
-#         response.headers["X-Request-ID"] = request_id
-#         response.headers["X-Process-Time"] = str(process_time)
-        
-#         # Log request details
-#         logger.info(
-#             f"Request processed",
-#             extra={
-#                 "props": {
-#                     "request_id": request_id,
-#                     "method": request.method,
-#                     "path": request.url.path,
-#                     "status_code": response.status_code,
-#                     "process_time": process_time
-#                 }
-#             }
-#         )
-        
-#         return response
-#     except Exception as e:
-#         # Log error details
-#         logger.error(
-#             f"Request failed: {str(e)}",
-#             exc_info=True,
-#             extra={
-#                 "props": {
-#                     "request_id": request_id,
-#                     "method": request.method,
-#                     "path": request.url.path
-#                 }
-#             }
-#         )
-        
-#         # Re-raise to be handled by exception handlers
-#         raise
+# Set up custom metrics endpoint
+setup_custom_metrics_endpoint(app)
 
-
-# # Exception handlers
-# @app.exception_handler(RequestValidationError)
-# async def validation_exception_handler(request: Request, exc: RequestValidationError):
-#     """
-#     Handle validation errors in request data.
-#     """
-#     logger.warning(
-#         "Validation error",
-#         extra={
-#             "props": {
-#                 "request_id": getattr(request.state, "request_id", "unknown"),
-#                 "errors": exc.errors()
-#             }
-#         }
-#     )
-    
-#     return JSONResponse(
-#         status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-#         content={
-#             "detail": exc.errors(),
-#             "request_id": getattr(request.state, "request_id", "unknown")
-#         }
-#     )
+# Prometheus instrumentation for default metrics
+Instrumentator().instrument(app)
 
 # Custom exception handler for HTTP exceptions
 @app.exception_handler(StarletteHTTPException)
@@ -213,6 +142,11 @@ async def generic_exception_handler(request: Request, exc: Exception):
 
 # Include our API routes under the /api prefix
 app.include_router(api_router, prefix="/v1/routes")
+
+
+@app.get("/metrics", dependencies=[Depends(authenticate_metrics)])
+async def default_metrics():
+    return Response(generate_latest(), media_type=CONTENT_TYPE_LATEST)
 
 # Root endpoint
 @app.get("/")

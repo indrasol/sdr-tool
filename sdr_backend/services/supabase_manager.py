@@ -51,7 +51,6 @@ class SupabaseManager:
         # pytm_model_code: Optional[str] = None,
         dfd_data: Dict[str, Any] = None,
         threat_model_id: Optional[str] = None,
-        dfd_generation_status: str = None
     ):
         """
         Update project data for a given user and project.
@@ -60,8 +59,7 @@ class SupabaseManager:
             user_id: The ID of the authenticated user.
             project_code: The unique code of the project (e.g., "P123").
             conversation_history: Updated conversation history (optional).
-            diagram_state: Updated diagram state (optional).
-            dfd_generation_status: Status of DFD generation 
+            diagram_state: Updated diagram state (optional)
 
         Raises:
             ValueError: If the project does not exist or user does not have access.
@@ -88,13 +86,6 @@ class SupabaseManager:
             update_data["dfd_data"] = dfd_data
         if threat_model_id is not None:
             update_data["threat_model_id"] = threat_model_id
-        if dfd_generation_status is not None:
-            # Convert dictionary to JSON string before storing
-            if isinstance(dfd_generation_status, dict):
-                import json
-                update_data["dfd_generation_status"] = json.dumps(dfd_generation_status)
-            else:
-                update_data["dfd_generation_status"] = dfd_generation_status
         
         def update_project():
             return self.supabase.from_("projects").update(update_data).eq("project_code", project_code).eq("user_id", user_id).execute()

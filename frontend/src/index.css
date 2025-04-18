@@ -145,17 +145,72 @@
   50% {
     opacity: 0.5;
   }
+}
 
-    /* New styles for the report page */
-  .font-playfair {
-    font-family: 'Playfair Display', serif;
-  }
+/* Rotation animation for the Earth globe */
+.rotate-animation {
+  animation: rotate 40s linear infinite;
+}
 
-  .font-inter {
-    font-family: 'Inter', sans-serif;
+@keyframes rotate {
+  0% {
+    transform: rotate(0deg);
   }
+  100% {
+    transform: rotate(360deg);
+  }
+}
 
-  .report-card {
-    @apply border-l-4 border-securetrack-purple bg-gray-50 p-4 rounded shadow-sm my-3;
+/* Pulsing animation for threat badges */
+.threat-badge-pulse {
+  animation: threat-pulse 2s ease-in-out infinite;
+}
+
+@keyframes threat-pulse {
+  0%, 100% {
+    opacity: 1;
   }
+  50% {
+    opacity: 0.6;
+    text-shadow: 0 0 5px rgba(239, 68, 68, 0.5);
+  }
+}
+
+/* Animation for threat cards */
+.threat-card-hover-effect {
+  transition: all 0.2s ease-in-out;
+}
+
+.threat-card-hover-effect:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+/* Panel transition */
+.threat-panel-transition {
+  transition: all 0.3s ease-in-out;
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateX(-20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+/* New styles for the report page */
+.font-playfair {
+  font-family: 'Playfair Display', serif;
+}
+
+.font-inter {
+  font-family: 'Inter', sans-serif;
+}
+
+.report-card {
+  @apply border-l-4 border-securetrack-purple bg-gray-50 p-4 rounded shadow-sm my-3;
 }
