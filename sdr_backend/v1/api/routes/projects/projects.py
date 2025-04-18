@@ -42,7 +42,7 @@ async def create_project(
 
     supabase = get_supabase_client()
     # Check Tenant user access
-    check_tenant_access = lambda: supabase.from_("user_tenant_association").select("tenant_id").eq("user_id", current_user).execute()
+    check_tenant_access = lambda: supabase.from_("user_tenant_association").select("tenant_id").eq("user_id", current_user["id"]).execute()
     tenant_response = await safe_supabase_operation(check_tenant_access, "Failed to verify tenant access")
     user_tenant_ids = [item["tenant_id"] for item in tenant_response.data]
 
@@ -50,7 +50,7 @@ async def create_project(
         raise HTTPException(status_code=403, detail="Not authorized for this tenant")
     
     # Get user info
-    user_info = lambda: supabase.from_("users").select("*").eq("id", current_user).execute()
+    user_info = lambda: supabase.from_("users").select("*").eq("id", current_user["id"]).execute()
     user_response = await safe_supabase_operation(user_info, "Failed supabase operation to fetch user info")
     user_name = user_response.data[0]["username"]
     log_info(f"user : {user_name}")
@@ -67,7 +67,7 @@ async def create_project(
     try:
         log_info(f"Creating project for user: {current_user}, tenant: {project.tenant_id}")
         project_id = await supabase_manager.create_project(
-            user_id=current_user, 
+            user_id=current_user["id"], 
             name=project.name,
             tenant_id=project.tenant_id,
             description=project.description,
@@ -118,9 +118,10 @@ async def get_projects(
     Retrieve projects for the authenticated user with optional filters.
     """
     try:
+        supabase = get_supabase_client()
         log_info("entered projects try block")
         projects = await supabase_manager.get_user_projects(
-            user_id=current_user,
+            user_id=current_user["id"],
             tenant_id=tenant_id,
             status=status,
             priority=priority,
@@ -130,6 +131,20 @@ async def get_projects(
             offset=offset
         )
         log_info("projects : {projects}")
+        # Fetch user roles for the tenant
+        # def fetch_roles():
+        #     return supabase.from_("roles").select("*").eq("user_id", current_user["id"]).eq("tenant_id", tenant_id).execute()
+        # roles_response = await safe_supabase_operation(fetch_roles, "Failed to fetch roles")
+        # user_roles = {role["project_code"]: role["permissions"] for role in roles_response.data}
+
+        # Annotate projects with access permissions
+        # annotated_projects = []
+        # for project in projects:
+        #     role_perms = user_roles.get(project["id"], {"view": True, "edit": False})  # Default: view only
+        #     project["can_view"] = role_perms.get("view", True)
+        #     project["can_edit"] = role_perms.get("edit", False) or project["creator"] == current_user["username"]
+        #     annotated_projects.append(project)
+        
         return {"projects": projects}
     except Exception as e:
         log_info(f"Error retrieving projects: {str(e)}")
@@ -146,12 +161,20 @@ async def get_project(
         supabase = get_supabase_client()
         
         def fetch_project():
-            return supabase.from_("projects").select("*").eq("project_code", project_code).eq("user_id", current_user).execute()
+            return supabase.from_("projects").select("*").eq("project_code", project_code).eq("user_id", current_user["id"]).execute()
             
         project_response = await safe_supabase_operation(
             fetch_project,
             f"Failed to fetch project {project_code}"
         )
+
+         # Check role permissions
+        # def fetch_role():
+        #     return supabase.from_("roles").select("permissions").eq("user_id", current_user["id"]).eq("project_code", project_code).execute()
+        # role_response = await safe_supabase_operation(fetch_role, "Failed to fetch role")
+        # permissions = role_response.data[0]["permissions"] if role_response.data else {"view": True, "edit": False}
+        # if not permissions.get("view", False) and project_response["creator"] != current_user["username"]:
+        #     raise HTTPException(status_code=403, detail="Insufficient permissions to view")
 
         project_response = project_response.data[0]
         # Get the string values from the database
@@ -215,7 +238,7 @@ async def update_project(
         
         # First check if the project exists and belongs to the user
         def check_project():
-            return supabase.from_("projects").select("id").eq("project_code", project_code).eq("user_id", current_user).execute()
+            return supabase.from_("projects").select("*").eq("project_code", project_code).eq("user_id", current_user["id"]).execute()
             
         project_check = await safe_supabase_operation(
             check_project,
@@ -224,6 +247,14 @@ async def update_project(
         
         if not project_check.data:
             raise HTTPException(status_code=404, detail=f"Project {project_code} not found or not authorized")
+        
+        # Check ownership or edit permission
+        if project_check["creator"] != current_user["username"]:
+            def fetch_role():
+                return supabase.from_("roles").select("permissions").eq("user_id", current_user["id"]).eq("project_code", project_code).execute()
+            role_response = await safe_supabase_operation(fetch_role, "Failed to fetch role")
+            if not role_response.data or not role_response.data[0]["permissions"].get("edit", False):
+                raise HTTPException(status_code=403, detail="Insufficient permissions to edit")
         
         # Get only the fields that were explicitly set in the request
         update_data = project_update.model_dump(exclude_unset=True, exclude={"project_code"})
@@ -269,7 +300,7 @@ async def update_project(
             return {"message": f"No fields to update for project {project_code}"}
         
         def update_project():
-            return supabase.from_("projects").update(update_data).eq("project_code", project_code).eq("user_id", current_user).execute()
+            return supabase.from_("projects").update(update_data).eq("project_code", project_code).eq("user_id", current_user["id"]).execute()
             
         await safe_supabase_operation(
             update_project,
@@ -280,7 +311,7 @@ async def update_project(
 
         # Fetch the updated project
         def get_updated_project():
-            return supabase.from_("projects").select("*").eq("project_code", project_code).eq("user_id", current_user).execute()
+            return supabase.from_("projects").select("*").eq("project_code", project_code).eq("user_id", current_user["id"]).execute()
             
         updated_project_result = await safe_supabase_operation(
             get_updated_project,
@@ -334,7 +365,7 @@ async def delete_project(
         
         # First check if the project exists and belongs to the user
         def check_project():
-            return supabase.from_("projects").select("id").eq("project_code", project_code).eq("user_id", current_user).execute()
+            return supabase.from_("projects").select("id").eq("project_code", project_code).eq("user_id", current_user["id"]).execute()
             
         project_check = await safe_supabase_operation(
             check_project,
@@ -344,8 +375,16 @@ async def delete_project(
         if not project_check.data:
             raise HTTPException(status_code=404, detail=f"Project {project_code} not found or not authorized")
         
+         # Check ownership or edit permission
+        # if project_check["creator"] != current_user["username"]:
+        #     def fetch_role():
+        #         return supabase.from_("roles").select("permissions").eq("user_id", current_user["id"]).eq("project_code", project_code).execute()
+        #     role_response = await safe_supabase_operation(fetch_role, "Failed to fetch role")
+        #     if not role_response.data or not role_response.data[0]["permissions"].get("edit", False):
+        #         raise HTTPException(status_code=403, detail="Insufficient permissions to edit")
+        
         def delete_project():
-            return supabase.from_("projects").delete().eq("project_code", project_code).eq("user_id", current_user).execute()
+            return supabase.from_("projects").delete().eq("project_code", project_code).eq("user_id", current_user["id"]).execute()
             
         await safe_supabase_operation(
             delete_project,
@@ -377,7 +416,7 @@ async def load_project(
     Returns:
         JSONResponse: Session ID and project data including any cached threat model
     """
-    user_id = current_user
+    user_id = current_user["id"]
     log_info(f"Loading project {project_code} for user {user_id}")
     
     try:
@@ -534,7 +573,7 @@ async def save_project(
     Returns:
         JSON response with save status
     """
-    user_id = current_user
+    user_id = current_user["id"]
     project_code = request_data.project_code
     log_info(f"Saving project {project_code} from session {session_id}")
     
@@ -634,7 +673,7 @@ async def get_project_history(
         List of user messages with metadata including whether they changed the system
     """
     try:
-        user_id = current_user
+        user_id = current_user["id"]
         if not user_id:
             raise HTTPException(status_code=401, detail="User not authenticated")
         
@@ -740,7 +779,7 @@ async def revert_to_message(
         Dictionary with success message and updated diagram state
     """
     try:
-        user_id = current_user
+        user_id = current_user["id"]
         if not user_id:
             raise HTTPException(status_code=401, detail="User not authenticated")
         
@@ -850,3 +889,33 @@ async def revert_to_message(
     except Exception as e:
         log_info(f"Error reverting to message state: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Failed to revert to message state: {str(e)}")
+    
+
+@router.post("/projects/{project_code}/assign-role")
+async def assign_role(
+    project_code: str,
+    role_data: dict = Body(...),  # { "user_id": str, "role_name": str, "permissions": {"view": bool, "edit": bool} }
+    current_user: dict = Depends(verify_token)
+):
+    supabase = get_supabase_client()
+    
+    # Fetch project to verify ownership
+    project = await supabase_manager.get_project_data(user_id=current_user["id"], project_code=project_code)
+    if not project or project["creator"] != current_user["username"]:
+        raise HTTPException(status_code=403, detail="Only the project owner can assign roles")
+
+    # Verify user is in the same tenant
+    tenant_id = project["tenant_id"]
+    check_tenant_access = lambda: supabase.from_("user_tenant_association").select("tenant_id").eq("user_id", role_data["user_id"]).execute()
+    tenant_response = await safe_supabase_operation(check_tenant_access, "Failed to verify tenant access")
+    if tenant_id not in [item["tenant_id"] for item in tenant_response.data]:
+        raise HTTPException(status_code=403, detail="User not part of the same tenant")
+
+    # Assign role
+    role_data["tenant_id"] = tenant_id
+    role_data["project_code"] = project["project_code"]
+    def insert_role():
+        return supabase.from_("roles").insert(role_data).execute()
+    await safe_supabase_operation(insert_role, "Failed to assign role")
+    
+    return {"message": f"Role assigned to user {role_data['user_id']} for project {project_code}"}

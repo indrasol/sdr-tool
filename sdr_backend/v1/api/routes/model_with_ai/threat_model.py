@@ -46,7 +46,7 @@ async def generate_threat_model_endpoint(
     Returns:
         FullThreatModelResponse: Complete threat model with DFD and threats
     """
-    user_id = current_user
+    user_id = current_user["id"]
     session_id = request.session_id
     diagram_state = request.diagram_state
     
