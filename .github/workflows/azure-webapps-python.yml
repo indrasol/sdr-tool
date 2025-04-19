@@ -22,6 +22,7 @@ name: Build and deploy Python app to Azure Web App
 env:
   AZURE_WEBAPP_NAME: seuretrack  # set this to the name of your Azure Web App
   PYTHON_VERSION: '3.8'              # set this to the Python version to use
+  ACTIONS_STEP_DEBUG: true
 
 on:
   push:
@@ -39,10 +40,11 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Set up Python version
-        uses: actions/setup-python@v3.0.0
+        uses: actions/setup-python@v5
         with:
           python-version: ${{ env.PYTHON_VERSION }}
           cache: 'pip'
+          cache-dependency-path: 'sdr_backend/requirements.txt'
 
       - name: Create and start virtual environment
         run: |
