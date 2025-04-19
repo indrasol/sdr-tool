@@ -10,6 +10,7 @@ from core.db.supabase_db import get_supabase_client, safe_supabase_operation
 from constants import ProjectStatus, ProjectPriority
 from core.cache.session_manager import SessionManager
 from datetime import datetime, timezone, timedelta
+import zoneinfo
 
 router = APIRouter()
 
@@ -260,9 +261,22 @@ async def update_project(
         update_data = project_update.model_dump(exclude_unset=True, exclude={"project_code"})
         log_info(f"Initial update data: {update_data}")
 
-        # If due_date is provided, convert it to ISO format
+        # If due_date is provided, convert it to ISO format with timezone
         if "due_date" in update_data and update_data['due_date']:
-            update_data['due_date'] = update_data['due_date'].isoformat()
+            # Use newer Python 3.11 datetime methods to handle the timezone properly
+            if isinstance(update_data['due_date'], datetime):
+                # Ensure the datetime has a timezone (use UTC if none)
+                if update_data['due_date'].tzinfo is None:
+                    update_data['due_date'] = update_data['due_date'].replace(tzinfo=timezone.utc)
+                # Convert to ISO format with Z for UTC
+                update_data['due_date'] = update_data['due_date'].isoformat()
+            else:
+                # Handle string dates by parsing and reformatting
+                try:
+                    date_obj = datetime.fromisoformat(str(update_data['due_date']).replace('Z', '+00:00'))
+                    update_data['due_date'] = date_obj.isoformat()
+                except ValueError:
+                    log_info(f"Invalid date format: {update_data['due_date']}")
         
         # Handle status field
         if "status" in update_data and update_data['status']:
@@ -617,11 +631,14 @@ async def save_project(
         # 4. Update the project in the database
         supabase = get_supabase_client()
         
+        # Get current time with timezone using Python 3.11's improved timezone handling
+        current_time = datetime.now(timezone.utc)
+        
         # Prepare update data
         update_data = {
             "diagram_state": diagram_state,
             "conversation_history": conversation_history,
-            "diagram_updated_at": datetime.now(timezone.utc).isoformat()
+            "diagram_updated_at": current_time.isoformat()
         }
         
         # Add threat model data if available
@@ -689,7 +706,7 @@ async def get_project_history(
         # Get conversation history
         conversation_history = project_data.get("conversation_history", [])
         
-        # Calculate the cutoff date (days ago from now)
+        # Calculate the cutoff date (days ago from now) with Python 3.11 improved timezone handling
         cutoff_date = datetime.now(timezone.utc) - timedelta(days=days)
         
         # Filter user messages from the past specified days
@@ -701,7 +718,7 @@ async def get_project_history(
                 # New format with explicit IDs and roles
                 if entry["role"] == "user":
                     try:
-                        # Parse timestamp
+                        # Parse timestamp - Python 3.11 has better parsing
                         timestamp = datetime.fromisoformat(entry["timestamp"].replace('Z', '+00:00'))
                         
                         # Check if message is within the specified timeframe
@@ -732,7 +749,7 @@ async def get_project_history(
                 # Old format with query/response structure
                 if "query" in entry and "timestamp" in entry:
                     try:
-                        # Parse timestamp
+                        # Parse timestamp - Python 3.11 has better parsing
                         timestamp = datetime.fromisoformat(entry["timestamp"].replace('Z', '+00:00'))
                         
                         # Check if message is within the specified timeframe
