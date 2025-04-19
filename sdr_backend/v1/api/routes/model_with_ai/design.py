@@ -20,11 +20,17 @@ import anthropic
 import re
 import uuid
 import json
+import sys
 from services.threat_modeling_service import ThreatModelingService
 from services.supabase_manager import SupabaseManager
 from models.threat_models import FullThreatModelResponse
 from models.dfd_models import DFDSwitchRequest
 import httpx
+
+# In Python 3.11+, ExceptionGroup is built-in
+if sys.version_info < (3, 11):
+    from exceptiongroup import ExceptionGroup
+# We can use the built-in ExceptionGroup in Python 3.11+
 
 
 
@@ -64,6 +70,7 @@ async def design_endpoint(
     
     Returns a structured response based on the classified intent.
     """
+    llm_exceptions = []
     try:
         user_id = current_user["id"]
         project_code = request.project_id
@@ -379,6 +386,9 @@ async def design_endpoint(
                     )
                     
             except ValueError as e:
+                # Track exceptions for potential ExceptionGroup
+                llm_exceptions.append(e)
+                
                 # Handle specific error about long operations
                 if "operations that may take longer than 10 minutes" in str(e):
                     log_info("Received 'operations that may take longer than 10 minutes' error. Retrying with explicit streaming.")
@@ -454,6 +464,9 @@ async def design_endpoint(
                     # For other ValueError exceptions, rethrow
                     raise
             except anthropic.APITimeoutError as e:
+                # Track exceptions for potential ExceptionGroup
+                llm_exceptions.append(e)
+                
                 log_info(f"API timeout error: {str(e)}. Retrying with extended timeout and streaming.")
                 
                 # Retry with extended timeout and explicit streaming
@@ -652,7 +665,17 @@ async def design_endpoint(
             # Return a custom JSONResponse
             return JSONResponse(content=response_dict)
     
+    except HTTPException as http_exc:
+        # Let FastAPI handle HTTP exceptions normally
+        raise http_exc
     except Exception as e:
+        # Check if we have accumulated exceptions that should be grouped
+        if llm_exceptions:
+            # Create an exception group if we have multiple exceptions from LLM calls
+            if len(llm_exceptions) > 1:
+                raise ExceptionGroup("Multiple LLM errors occurred", llm_exceptions) from e
+            # Just raise the single exception normally
+            
         log_info(f"Error processing design query: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Error processing design query: {str(e)}")
 

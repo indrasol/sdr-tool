@@ -34,8 +34,17 @@ class LLMService:
         self.anthropic_client = anthropic.Anthropic(api_key=ANTHROPIC_API_KEY)
         self.openai_api_key = OPENAI_API_KEY
         self.grok_api_key = GROK_API_KEY
-        self.openai_client = OpenAI(api_key=OPENAI_API_KEY)
-        self.grok_client = OpenAI(api_key=GROK_API_KEY,base_url="https://api.x.ai/v1")
+        
+        # Initialize OpenAI clients - we're using openai==1.10.0 and httpx<0.25.0 which are compatible
+        try:
+            self.openai_client = OpenAI(api_key=OPENAI_API_KEY)
+            self.grok_client = OpenAI(api_key=GROK_API_KEY, base_url="https://api.x.ai/v1")
+        except TypeError as e:
+            # Log the error and try initializing without unsupported parameters
+            log_info(f"Error initializing OpenAI clients: {str(e)}")
+            from openai import Client
+            self.openai_client = Client(api_key=OPENAI_API_KEY)
+            self.grok_client = Client(api_key=GROK_API_KEY, base_url="https://api.x.ai/v1")
 
         self.model = "claude-3-7-sonnet-20250219"
         # Default thinking budget - minimum allowed is 1,024 tokens

@@ -4,6 +4,7 @@ from fastapi import HTTPException
 from utils.logger import log_info
 from functools import lru_cache
 import asyncio
+import httpx
 from concurrent.futures import ThreadPoolExecutor
 
 
@@ -13,7 +14,9 @@ thread_pool = ThreadPoolExecutor()
 # Initialize Supabase client
 @lru_cache
 def get_supabase_client():
-    return create_client(SUPABASE_PROJECT_URL, SUPABASE_API_KEY)
+    # http_client = httpx.Client()
+    supbase: Client = create_client(SUPABASE_PROJECT_URL, SUPABASE_API_KEY)
+    return supbase
 
 # Helper to run Supabase operations asynchronously
 async def run_supabase_async(func):
