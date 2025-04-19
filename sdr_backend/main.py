@@ -49,30 +49,25 @@ async def lifespan(app: FastAPI):
     # Startup: Connect to database and Redis
     log_info("Connecting redis session manager...")
     
-    await session_manager.connect()  # Connect to Redis
-    log_info("Connected to session manager...")
+    try:
+        await session_manager.connect()  # Connect to Redis
+        log_info("Connected to session manager...")
 
-    # Apply database migrations with Alembic
-    # logger.info("Loading Alembic configuration...")
-    # alembic_cfg = Config("alembic.ini")  # Load config from alembic.ini
-    # alembic_cfg.set_main_option("sqlalchemy.url", SUPABASE_URL)  # Set the database URL
-    # logger.info("Applying all pending migrations...")
-    # command.upgrade(alembic_cfg, "head")  # Apply migrations to the latest version
-    # logger.info("Database migrations applied successfully.")
+        # Initialize health monitoring after app is fully set up
+        log_info("Setting up health monitoring...")
+        # Capture initial route information after all routes are registered
+        health_monitor.capture_routes_info(app)
+        log_info("Health monitoring initialized.")
 
-    # Initialize health monitoring after app is fully set up
-    log_info("Setting up health monitoring...")
-    # Capture initial route information after all routes are registered
-    health_monitor.capture_routes_info(app)
-    log_info("Health monitoring initialized.")
-
-    # Initialize active sessions gauge
-    APP_ACTIVE_SESSIONS.set(0)
-    
-    yield
-    await session_manager.disconnect()  # Disconnect from Redis
-    log_info("disconnected redis session manager...")
-    log_info("Shutting down")
+        # Initialize active sessions gauge
+        APP_ACTIVE_SESSIONS.set(0)
+        
+        yield
+    finally:
+        # Cleanup resources in finally block to ensure they run even on errors
+        await session_manager.disconnect()  # Disconnect from Redis
+        log_info("disconnected redis session manager...")
+        log_info("Shutting down")
 
 
 app = FastAPI(

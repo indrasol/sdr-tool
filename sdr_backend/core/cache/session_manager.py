@@ -1,4 +1,4 @@
-import aioredis
+import redis.asyncio as redis
 import hashlib
 import json
 import uuid
@@ -9,13 +9,14 @@ from fastapi import HTTPException
 from utils.logger import log_info
 from config.settings import REDIS_DB, REDIS_HOST, REDIS_PASSWORD, REDIS_PORT, SESSION_EXPIRY
 from core.db.supabase_db import get_supabase_client, safe_supabase_operation
+import asyncio
 
 
 class SessionManager:
     def __init__(self, redis_host: str = REDIS_HOST, redis_port: int = REDIS_PORT, redis_db: int = REDIS_DB, redis_password = REDIS_PASSWORD):
         """Initialize the session manager with Redis connection settings."""
         log_info(f"Redis host : {REDIS_HOST}")
-        self.redis_url = f"redis://:{redis_password}@{redis_host}:{redis_port}"
+        self.redis_url = f"redis://:{redis_password}@{redis_host}:{redis_port}/{redis_db}"
         self.redis_pool = None  # Initialized in connect()
         log_info(f"Redis url : {redis_host}")
         log_info(f"Redis url : {redis_port}")
@@ -26,7 +27,7 @@ class SessionManager:
         if not self.redis_pool:
             try:
                 log_info(f"Redis URL : {self.redis_url}")
-                self.redis_pool = await aioredis.from_url(self.redis_url, decode_responses=True)
+                self.redis_pool = redis.from_url(self.redis_url, decode_responses=True)
                 log_info(f"Connected to Redis at {self.redis_url}")
             except Exception as e:
                 raise RuntimeError(f"Failed to connect to Redis: {str(e)}")
@@ -250,14 +251,15 @@ class SessionManager:
 
     async def add_to_conversation(self, session_id: str, query: str, response: Dict[str, Any], diagram_state: Optional[Dict[str, Any]] = None, changed: bool = False) -> bool:
         """
-        Add a query-response pair to the conversation history.
+        Add a conversation entry (query and response) to the session's conversation history.
+        Optionally updates the diagram state if provided.
         
         Args:
             session_id: The unique session identifier
             query: The user's query
-            response: The system's response data
-            diagram_state: Current diagram state after applying changes (optional)
-            changed: Flag indicating if the diagram was modified (optional)
+            response: The system's response
+            diagram_state: Optional new diagram state to save
+            changed: Whether the diagram was changed by this interaction
             
         Returns:
             bool: True if successful, False otherwise
@@ -266,6 +268,7 @@ class SessionManager:
             await self.connect()
             
         try:
+            # Get current session data
             session_data = await self.get_session(session_id)
             
             # Add to conversation history
