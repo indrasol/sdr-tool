@@ -22,7 +22,7 @@ reportlab==4.0.8
 openai==1.75.0
 anthropic==0.49.0
 torch==2.0.1
-faiss-cpu>=1.8.0
+faiss-cpu==1.10.0
 scikit-learn==1.2.2
 accelerate==0.26.1
 
