@@ -4,17 +4,22 @@
 
 name: Build and deploy Python app to Azure Web App - securetrack
 
+env:
+  AZURE_WEBAPP_NAME: securetrack  # set this to the name of your Azure Web App
+  PYTHON_VERSION: '3.11'              # set this to the Python version to use
+  ACTIONS_STEP_DEBUG: true
+
 on:
   push:
-    branches:
-      - development
+    branches: ["development"]
   workflow_dispatch:
+
+permissions:
+      contents: read  #This is required for actions/checkout
 
 jobs:
   build:
     runs-on: ubuntu-latest
-    permissions:
-      contents: read #This is required for actions/checkout
 
     steps:
       - uses: actions/checkout@v4
@@ -22,7 +27,9 @@ jobs:
       - name: Set up Python version
         uses: actions/setup-python@v5
         with:
-          python-version: '3.11'
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: 'pip'
+          cache-dependency-path: 'sdr_backend/requirements.txt'
 
       - name: Create and start virtual environment
         run: |
@@ -35,15 +42,15 @@ jobs:
       # Optional: Add step to run tests here (PyTest, Django test suites, etc.)
 
       - name: Zip artifact for deployment
-        run: zip -r release.zip sdr_backend
+        run: zip release.zip ./sdr_backend -r
 
       - name: Upload artifact for deployment jobs
         uses: actions/upload-artifact@v4
         with:
           name: python-app
-          path: release.zip 
-            # release.zip
-            # !venv/
+          path: |
+            release.zip
+            !venv/
 
   deploy:
     runs-on: ubuntu-latest
@@ -68,15 +75,15 @@ jobs:
       - name: Login to Azure
         uses: azure/login@v2
         with:
-          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_46220ED42D2D43439B241470442C87A2 }}
-          tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_202DACBBEE78421B9F8F36C54DBDFF19 }}
-          subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_221EE8800298455C8CCD26F78286436F }}
+          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_8BFE100C15FF4C798584EA5F7C37FCCB }}
+          tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_351A5508B8164377ACFF3D6F33E92071 }}
+          subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_91A5E83D0D6F4D53A30B83679F6A4427 }}
 
       - name: 'Deploy to Azure Web App'
         uses: azure/webapps-deploy@v3
         id: deploy-to-webapp
         with:
-          app-name: 'securetrack'
+          app-name: ${{ env.AZURE_WEBAPP_NAME }}
           slot-name: 'Production'
           package: './sdr_backend'
           

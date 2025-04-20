@@ -22,9 +22,11 @@ reportlab==4.0.8
 openai==1.75.0
 anthropic==0.49.0
 torch==2.0.1
+--find-links https://download.pytorch.org/whl/torch_stable.html
 faiss-cpu==1.7.4
 scikit-learn==1.2.2
 accelerate==0.26.1
+numpy>=1.19.0,<2.0.0
 
 # Database
 sqlalchemy>=2.0.7
