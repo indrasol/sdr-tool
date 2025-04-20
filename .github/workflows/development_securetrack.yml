@@ -5,7 +5,7 @@
 name: Build and deploy Python app to Azure Web App - securetrack
 
 env:
-  AZURE_WEBAPP_NAME: seuretrack  # set this to the name of your Azure Web App
+  AZURE_WEBAPP_NAME: securetrack  # set this to the name of your Azure Web App
   PYTHON_VERSION: '3.11'              # set this to the Python version to use
   ACTIONS_STEP_DEBUG: true
 
