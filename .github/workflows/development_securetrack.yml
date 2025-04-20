@@ -19,18 +19,18 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Set up Python version
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.11.12'
+      # - name: Set up Python version
+      #   uses: actions/setup-python@v5
+      #   with:
+      #     python-version: '3.11.12'
 
-      - name: Create and start virtual environment
-        run: |
-          python -m venv venv
-          source venv/bin/activate
+      # - name: Create and start virtual environment
+      #   run: |
+      #     python -m venv venv
+      #     source venv/bin/activate
       
-      - name: Install dependencies
-        run: pip install -r sdr_backend/requirements.txt
+      # - name: Install dependencies
+      #   run: pip install -r sdr_backend/requirements.txt
         
       # Optional: Add step to run tests here (PyTest, Django test suites, etc.)
 
