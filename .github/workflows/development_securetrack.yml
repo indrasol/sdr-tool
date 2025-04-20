@@ -22,7 +22,7 @@ jobs:
       - name: Set up Python version
         uses: actions/setup-python@v5
         with:
-          python-version: '3.11'
+          python-version: '3.11.12'
 
       - name: Create and start virtual environment
         run: |
@@ -63,6 +63,10 @@ jobs:
 
       - name: Unzip artifact for deployment
         run: unzip release.zip
+
+      - name: Debug Deployment
+        run: |
+          ls -la ./sdr_backend
 
       
       - name: Login to Azure
