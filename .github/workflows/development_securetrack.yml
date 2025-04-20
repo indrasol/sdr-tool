@@ -85,4 +85,5 @@ jobs:
         with:
           app-name: ${{ env.AZURE_WEBAPP_NAME }}
           slot-name: 'Production'
+          package: './sdr_backend'
           
