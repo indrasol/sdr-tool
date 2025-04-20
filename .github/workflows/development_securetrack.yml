@@ -83,4 +83,5 @@ jobs:
           app-name: 'securetrack'
           slot-name: 'Production'
           package: './sdr_backend'
+          startup-command: 'uvicorn sdr_backend.main:app --host 0.0.0.0 --port 8000'
           
