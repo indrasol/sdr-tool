@@ -86,4 +86,5 @@ jobs:
           app-name: ${{ env.AZURE_WEBAPP_NAME }}
           slot-name: 'Production'
           package: './sdr_backend'
+          startup-command: '/home/site/wwwroot/startup.sh'
           
