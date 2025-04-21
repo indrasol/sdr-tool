@@ -13,7 +13,7 @@ steps:
       - 'deploy'
       - 'securetrack-service'
       - '--image'
-      - 'us-central1-docker.pkg.dev/$PROJECT_ID/securetrack-repo/securetrack-servicee'
+      - 'us-central1-docker.pkg.dev/$PROJECT_ID/securetrack-repo/securetrack-service'
       - '--platform'
       - 'managed'
       - '--region'
