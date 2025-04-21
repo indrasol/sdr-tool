@@ -22,7 +22,7 @@ steps:
       - '--service-account=cloudbuild@securetrack-457423.iam.gserviceaccount.com'
 
 images:
-  - 'gcr.io/$PROJECT_ID/securetrack-service'
+  - 'us-central1-docker.pkg.dev/$PROJECT_ID/securetrack-repo/securetrack-service'
 
 options:
   logging: CLOUD_LOGGING_ONLY
