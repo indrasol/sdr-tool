@@ -19,7 +19,7 @@ import traceback
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from fastapi import Request
-from core.intent_classification.intent_dataset import train_intent_classifier
+# from core.intent_classification.intent_dataset import train_intent_classifier
 from contextlib import asynccontextmanager
 from utils.logger import log_info
 from core.cache.session_manager import SessionManager
