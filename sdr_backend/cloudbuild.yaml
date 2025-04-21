@@ -1,10 +1,10 @@
 steps:
   - name: 'gcr.io/cloud-builders/docker'
-    args: ['build', '-t', 'gcr.io/$PROJECT_ID/securetrack-service', '.']
+    args: ['build', '-t', 'us-central1-docker.pkg.dev/$PROJECT_ID/securetrack-repo/securetrack-service', '.']
     dir: 'sdr_backend'
 
   - name: 'gcr.io/cloud-builders/docker'
-    args: ['push', 'gcr.io/$PROJECT_ID/securetrack-service']
+    args: ['push', 'us-central1-docker.pkg.dev/$PROJECT_ID/securetrack-repo/securetrack-service']
 
   - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
     entrypoint: 'gcloud'
@@ -13,7 +13,7 @@ steps:
       - 'deploy'
       - 'securetrack-service'
       - '--image'
-      - 'gcr.io/$PROJECT_ID/securetrack-service'
+      - 'us-central1-docker.pkg.dev/$PROJECT_ID/securetrack-repo/securetrack-servicee'
       - '--platform'
       - 'managed'
       - '--region'
