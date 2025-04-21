@@ -38,7 +38,7 @@ redis==5.0.1
 aioredis==2.0.1
 databases==0.9.0
 alembic==1.13.1
-supabase>=1.0.0  # Python client for Supabase
+supabase==2.15.0  # Python client for Supabase
 python-jose==3.3.0  # Often needed with Supabase for JWT handling
 postgrest>=0.10.6  # Dependency for Supabase
 
