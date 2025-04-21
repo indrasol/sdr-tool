@@ -18,7 +18,7 @@ steps:
       - '--region'
       - 'us-central1' # region
       - '--allow-unauthenticated'
-      - '--service-account=416249990421@cloudbuild.gserviceaccount.com'
+      - '--service-account=cloudbuild@securetrack-457423.iam.gserviceaccount.com'
 
 images:
   - 'gcr.io/$PROJECT_ID/securetrack-service'
