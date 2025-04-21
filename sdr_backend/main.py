@@ -19,7 +19,7 @@ import traceback
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from fastapi import Request
-from core.intent_classification.intent_dataset import train_intent_classifier
+# from core.intent_classification.intent_dataset import train_intent_classifier
 from contextlib import asynccontextmanager
 from utils.logger import log_info
 from core.cache.session_manager import SessionManager
@@ -35,6 +35,7 @@ import sys
 # Prometheus instrumentation
 from prometheus_fastapi_instrumentator import Instrumentator
 from utils.prometheus_metrics import setup_custom_metrics_endpoint, APP_ACTIVE_SESSIONS, authenticate_metrics
+import os
 
 
 session_manager = SessionManager()
@@ -158,4 +159,5 @@ async def root():
     }
 
 if __name__ == "__main__":
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    port = int(os.environ.get("PORT", 8000))
+    uvicorn.run(app, host="0.0.0.0", port=port)

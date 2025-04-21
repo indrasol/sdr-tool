@@ -1,0 +1,29 @@
+steps:
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['build', '-t', 'us-central1-docker.pkg.dev/$PROJECT_ID/securetrack-repo/securetrack-service', '.']
+    dir: 'sdr_backend'
+
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['push', 'us-central1-docker.pkg.dev/$PROJECT_ID/securetrack-repo/securetrack-service']
+
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    entrypoint: 'gcloud'
+    args:
+      - 'run'
+      - 'deploy'
+      - 'securetrack-service'
+      - '--image'
+      - 'us-central1-docker.pkg.dev/$PROJECT_ID/securetrack-repo/securetrack-service'
+      - '--platform'
+      - 'managed'
+      - '--region'
+      - 'us-central1' # region
+      - '--allow-unauthenticated'
+      - '--service-account=cloudbuild@securetrack-457423.iam.gserviceaccount.com'
+
+images:
+  - 'us-central1-docker.pkg.dev/$PROJECT_ID/securetrack-repo/securetrack-service'
+
+options:
+  logging: CLOUD_LOGGING_ONLY
+
