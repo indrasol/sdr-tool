@@ -1,11 +1,24 @@
 steps:
+  # Step 1: Pull the latest image to use as cache (ignores errors if image doesn't exist yet)
   - name: 'gcr.io/cloud-builders/docker'
-    args: ['build', '-t', 'us-central1-docker.pkg.dev/$PROJECT_ID/securetrack-repo/securetrack-service', '.']
+    entrypoint: 'bash'
+    args: ['-c', 'docker pull us-central1-docker.pkg.dev/$PROJECT_ID/securetrack-repo/securetrack-service:latest || exit 0']
+    
+  # Step 2: Build using the pulled image as cache
+  - name: 'gcr.io/cloud-builders/docker'
+    args: [
+      'build', 
+      '-t', 'us-central1-docker.pkg.dev/$PROJECT_ID/securetrack-repo/securetrack-service:latest', 
+      '--cache-from', 'us-central1-docker.pkg.dev/$PROJECT_ID/securetrack-repo/securetrack-service:latest',
+      '.'
+    ]
     dir: 'sdr_backend'
 
+  # Step 3: Push the newly built image
   - name: 'gcr.io/cloud-builders/docker'
-    args: ['push', 'us-central1-docker.pkg.dev/$PROJECT_ID/securetrack-repo/securetrack-service']
+    args: ['push', 'us-central1-docker.pkg.dev/$PROJECT_ID/securetrack-repo/securetrack-service:latest']
 
+  # Step 4: Deploy to Cloud Run
   - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
     entrypoint: 'gcloud'
     args:
@@ -13,19 +26,18 @@ steps:
       - 'deploy'
       - 'securetrack-service'
       - '--image'
-      - 'us-central1-docker.pkg.dev/$PROJECT_ID/securetrack-repo/securetrack-service'
+      - 'us-central1-docker.pkg.dev/$PROJECT_ID/securetrack-repo/securetrack-service:latest'
       - '--platform'
       - 'managed'
       - '--region'
-      - 'us-central1' # region
+      - 'us-central1'
       - '--allow-unauthenticated'
       - '--service-account=cloudbuild@securetrack-457423.iam.gserviceaccount.com'
-      - '--set-secrets=OPENAI_API_KEY=OPENAI_API_KEY:latest,ANTHROPIC_API_KEY=ANTHROPIC_API_KEY:latest,SUPABASE_URL=SUPABASE_URL:latest,SUPABASE_SERVICE_KEY=SUPABASE_SERVICE_KEY:latest,SUPABASE_API_KEY=SUPABASE_API_KEY:latest,SUPABASE_SECRET_KEY=SUPABASE_SECRET_KEY:latest,REDIS_HOST=REDIS_HOST:latest,REDIS_PORT=REDIS_PORT:latest,REDIS_PASSWORD=REDIS_PASSWORD:latest,REDIS_DB=REDIS_DB:latest,SESSION_EXPIRY=SESSION_EXPIRY:latest'
+      - '--set-secrets=OPENAI_API_KEY=OPENAI_API_KEY:latest,ANTHROPIC_API_KEY=ANTHROPIC_API_KEY:latest,SUPABASE_URL=SUPABASE_URL:latest,SUPABASE_SERVICE_KEY=SUPABASE_SERVICE_KEY:latest,SUPABASE_API_KEY=SUPABASE_API_KEY:latest,SUPABASE_SECRET_KEY=SUPABASE_SECRET_KEY:latest,SUPABASE_DB_URL=SUPABASE_DB_URL:latest,REDIS_HOST=REDIS_HOST:latest,REDIS_PORT=REDIS_PORT:latest,REDIS_PASSWORD=REDIS_PASSWORD:latest,REDIS_DB=REDIS_DB:latest,SESSION_EXPIRY=SESSION_EXPIRY:latest'
 
 images:
-  - 'us-central1-docker.pkg.dev/$PROJECT_ID/securetrack-repo/securetrack-service'
+  - 'us-central1-docker.pkg.dev/$PROJECT_ID/securetrack-repo/securetrack-service:latest'
 
 options:
   logging: CLOUD_LOGGING_ONLY
-  machineType: 'E2_HIGHCPU_8'
-
+  machineType: E2_HIGHCPU_8
