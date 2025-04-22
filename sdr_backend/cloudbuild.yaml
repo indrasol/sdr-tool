@@ -20,6 +20,7 @@ steps:
       - 'us-central1' # region
       - '--allow-unauthenticated'
       - '--service-account=cloudbuild@securetrack-457423.iam.gserviceaccount.com'
+      - '--set-secrets=OPENAI_API_KEY=OPENAI_API_KEY:latest,ANTHROPIC_API_KEY=ANTHROPIC_API_KEY:latest,SUPABASE_URL=SUPABASE_URL:latest,SUPABASE_SERVICE_KEY=SUPABASE_SERVICE_KEY:latest,SUPABASE_API_KEY=SUPABASE_API_KEY:latest,SUPABASE_SECRET_KEY=SUPABASE_SECRET_KEY:latest,REDIS_HOST=REDIS_HOST:latest,REDIS_PORT=REDIS_PORT:latest,REDIS_PASSWORD=REDIS_PASSWORD:latest,REDIS_DB=REDIS_DB:latest,SESSION_EXPIRY=SESSION_EXPIRY:latest'
 
 images:
   - 'us-central1-docker.pkg.dev/$PROJECT_ID/securetrack-repo/securetrack-service'
