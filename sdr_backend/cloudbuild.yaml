@@ -40,4 +40,5 @@ images:
 
 options:
   logging: CLOUD_LOGGING_ONLY
-  machineType: E2_HIGHCPU_8
+  pool:
+    name: 'projects/securetrack-457423/locations/us-central1/workerPools/securetrack-pool'
