@@ -9,8 +9,8 @@ export const getAuthHeaders = () => {
     };
   };
 
-export const BASE_API_URL = import.meta.env.VITE_BASE_API_URL
-// export const BASE_API_URL = import.meta.env.VITE_DEV_BASE_API_URL
+// export const BASE_API_URL = import.meta.env.VITE_BASE_API_URL
+export const BASE_API_URL = import.meta.env.VITE_DEV_BASE_API_URL
 
 // default timeout for requests (60 seconds)
 export const DEFAULT_TIMEOUT = 60000

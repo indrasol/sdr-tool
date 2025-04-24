@@ -52,7 +52,7 @@ supabase_manager = SupabaseManager()
 async def design_endpoint(
     request: DesignRequest,
     background_tasks: BackgroundTasks,
-    show_thinking: bool = Query(True, description="Whether to include thinking in the response"),
+    show_thinking: bool = Query(False, description="Parameter maintained for backwards compatibility"),
     current_user: dict = Depends(verify_token)
 ) -> JSONResponse:
     """
@@ -183,7 +183,7 @@ async def design_endpoint(
         
         else:   
             # Continue with normal processing flow for all cases including DFD queries
-            log_info(f"Processing design query for user: {current_user}, project: {request.project_id}")
+            log_info(f"Processing design query for user: {current_user}, request : {request.query} , project: {request.project_id}")
             
             # Get or create session
             session_id = request.session_id
@@ -191,6 +191,8 @@ async def design_endpoint(
                 log_info(f"Creating new session for user: {current_user}, project: {request.project_id}")
                 session_id = await session_manager.create_project_session(current_user["id"], request.project_id)
             
+            log_info(f"Session Id from Request : {request.session_id}")
+            log_info(f"Session Id new : {session_id}")
             # Ensure session exists and fetch data
             session_data = await session_manager.get_session(session_id)
             if not session_data:
@@ -236,108 +238,52 @@ async def design_endpoint(
             log_info(f"Classified intent: {intent} with confidence: {confidence}")
             
             # Build prompt based on intent
-            base_prompt = await prompt_builder.build_prompt_by_intent(
+            prompt = await prompt_builder.build_prompt_by_intent(
                 intent, 
                 request.query, 
                 conversation_history, 
                 diagram_state
             )
 
-            log_info(f"Base Prompt : {base_prompt}")
+            log_info(f"Prompt : {prompt}")
             
             # Apply any learned improvements if in retry mode or based on similar queries
-            improved_prompt = base_prompt
-            if hasattr(response_learning, 'apply_prompt_improvements') and response_learning:
-                try:
-                    improved_prompt = await response_learning.apply_prompt_improvements(
-                        request.query, intent, base_prompt
-                    )
-                    if improved_prompt != base_prompt:
-                        log_info("Applied prompt improvements based on feedback history")
-                except Exception as e:
-                    log_info(f"Error applying prompt improvements: {e}")
-                    improved_prompt = base_prompt
-            
-            log_info(f"Improved Prompt : {improved_prompt}")
-            
-            # Determine if thinking should be used based on task complexity
-            task_complexity = _determine_task_complexity(intent, request.query, diagram_state)
-            use_thinking = task_complexity != "low"  # Use thinking for all but the simplest tasks
-
-            # Always use thinking in retry mode
-            if getattr(request, 'retry_mode', False):
-                use_thinking = True
-                # Increase complexity for retries to allocate more thinking budget
-                if task_complexity == "low":
-                    task_complexity = "medium"
-                elif task_complexity == "medium":
-                    task_complexity = "high"
-            
-            # Determine appropriate thinking budget based on task complexity
-            thinking_budget = await llm_service.determine_thinking_budget(task_complexity, diagram_state)
-            log_info(f"Task complexity: {task_complexity}, Using thinking: {use_thinking}, Budget: {thinking_budget}")
-            
-            # Calculate estimated response time based on complexity
-            estimated_tokens = len(improved_prompt.split()) + 4096  # 4096 as a base response size
-            
-            # For complex tasks, streaming is recommended to avoid timeouts
-            use_streaming = task_complexity in ["high", "very_high"] or estimated_tokens > 8000
-            log_info(f"Using streaming: {use_streaming} (based on complexity and token estimation)")
-            
-            # Generate response using LLM with the appropriate approach
-            log_info(f"Generating LLM response for intent: {intent}")
-
-            # Initialize thinking variables
-            thinking_content = ""
-            has_redacted_thinking = False
-            thinking_signature = None
+            # improved_prompt = base_prompt
+            # if hasattr(response_learning, 'apply_prompt_improvements') and response_learning:
+            #     try:
+            #         improved_prompt = await response_learning.apply_prompt_improvements(
+            #             request.query, intent, base_prompt
+            #         )
+            #         if improved_prompt != base_prompt:
+            #             log_info("Applied prompt improvements based on feedback history")
+            #     except Exception as e:
+            #         log_info(f"Error applying prompt improvements: {e}")
+            #         improved_prompt = base_prompt
 
             # Generate unique ID for the response (for feedback reference)
             response_id = str(uuid.uuid4())
 
             # timeout handling
-            timeout = None
-            if task_complexity == "very_high":
-                # For very complex tasks, use a longer timeout
-                timeout = 600  # 10 minutes
-            elif task_complexity == "high":
-                timeout = 300  # 5 minutes
+            timeout =  300  # 5 minutes
             
             # For architecture responses and expert responses, we need structured data
             try:
                 if intent in [ResponseType.ARCHITECTURE, ResponseType.EXPERT]:
-                    # Use structured response with thinking for complex cases
-                    log_info(f"Generating LLM Structured Response...")
-                    llm_response_data = await llm_service.generate_structured_response(
-                        improved_prompt, 
-                        with_thinking=use_thinking,
-                        thinking_budget=thinking_budget,
-                        temperature=0.2 if getattr(request, 'retry_mode', False) else None,
-                        stream=use_streaming,  # Always set streaming parameter explicitly
+                    # Use structured response
+                    log_info(f"Generating Architecture / Expert  Response...")
+                    llm_response = await llm_service.generate_llm_response(
+                        prompt=prompt,
+                        model_provider="anthropic",
+                        model_name="claude-3.7-sonnet",
+                        temperature=0.7,
                         timeout=timeout
                     )
-                    log_info(f"LLM Response Data : {llm_response_data}")
-                    
-                    # Extract thinking from response if present
-                    if use_thinking and "thinking" in llm_response_data:
-                        thinking_content = llm_response_data.pop("thinking", "")
-                        has_redacted_thinking = llm_response_data.pop("has_redacted_thinking", False)
-                        thinking_signature = llm_response_data.pop("signature", None) if "signature" in llm_response_data else None
-                        
-                        # Store thinking in session
-                        background_tasks.add_task(
-                            session_manager.add_to_thinking_history,
-                            session_id,
-                            request.query,
-                            thinking_content,
-                            has_redacted_thinking,
-                            thinking_signature
-                        )
+                    log_info(f"LLM Response Data : {llm_response}")
                     
                     # Process the structured response with response processor
-                    log_info(f"Processing LLM Structured Response...")
-                    processed_response = response_processor.process_response_from_json(
-                        llm_response_data,
+                    log_info(f"Processing Architecture / Expert Response...")
+                    processed_response = await response_processor.process_response_from_json(
+                        llm_response,
                         intent,
                         session_id,
                         classification_source
@@ -345,40 +291,17 @@ async def design_endpoint(
                     log_info(f"Processed Response : {processed_response}")
                 else:
                     # For clarification and out-of-context responses
-                    if use_thinking:
-                        thinking, llm_response, metadata = await llm_service.generate_response_with_thinking(
-                            improved_prompt,
-                            thinking_budget=thinking_budget,
-                            stream=use_streaming,  # Always set streaming parameter explicitly
-                            timeout=timeout
-                        )
-                        
-                        # Log thinking for debugging
-                        log_info(f"LLM thinking preview: {thinking[:100]}...")  # First 100 chars
-                        thinking_content = thinking
-                        has_redacted_thinking = metadata.get("has_redacted_thinking", False)
-                        thinking_signature = metadata.get("signatures", [None])[0] if metadata.get("signatures") else None
-                        
-                        # Store thinking in session
-                        background_tasks.add_task(
-                            session_manager.add_to_thinking_history,
-                            session_id,
-                            request.query,
-                            thinking_content,
-                            has_redacted_thinking,
-                            thinking_signature
-                        )
-                    else:
-                        # For simpler responses without thinking
-                        llm_response = await llm_service.generate_response(
-                            improved_prompt, 
-                            temperature=0.2 if getattr(request, 'retry_mode', False) else None,
-                            stream=use_streaming,  # Always set streaming parameter explicitly
-                            timeout=timeout
-                        )
+                    llm_response = await llm_service.generate_anthropic_response(
+                        prompt=prompt,
+                        model_provider="anthropic",
+                        model_name="claude-3.7-sonnet",
+                        temperature=0.5,
+                        stream=False,
+                        timeout=timeout
+                    )
                     
                     # Process and validate response
-                    processed_response = response_processor.process_response(
+                    processed_response = await response_processor.process_response(
                         llm_response, 
                         intent,
                         session_id,
@@ -389,157 +312,9 @@ async def design_endpoint(
                 # Track exceptions for potential ExceptionGroup
                 llm_exceptions.append(e)
                 
-                # Handle specific error about long operations
-                if "operations that may take longer than 10 minutes" in str(e):
-                    log_info("Received 'operations that may take longer than 10 minutes' error. Retrying with explicit streaming.")
-                    
-                    # Retry with explicit streaming enabled
-                    if intent in [ResponseType.ARCHITECTURE, ResponseType.EXPERT]:
-                        log_info(f"Generating LLM Structured Response in Retry due to longer operations...")
-                        llm_response_data = await llm_service.generate_structured_response(
-                            improved_prompt, 
-                            with_thinking=use_thinking,
-                            thinking_budget=thinking_budget,
-                            temperature=0.2 if getattr(request, 'retry_mode', False) else None,
-                            stream=True,  # Force streaming
-                            timeout=timeout
-                        )
-                        
-                        if use_thinking and "thinking" in llm_response_data:
-                            thinking_content = llm_response_data.pop("thinking", "")
-                            has_redacted_thinking = llm_response_data.pop("has_redacted_thinking", False)
-                            thinking_signature = llm_response_data.pop("signature", None) if "signature" in llm_response_data else None
-                            
-                            background_tasks.add_task(
-                                session_manager.add_to_thinking_history,
-                                session_id,
-                                request.query,
-                                thinking_content,
-                                has_redacted_thinking,
-                                thinking_signature
-                            )
-                        
-                        processed_response = response_processor.process_response_from_json(
-                            llm_response_data,
-                            intent,
-                            session_id,
-                            classification_source
-                        )
-                    else:
-                        if use_thinking:
-                            thinking, llm_response, metadata = await llm_service.generate_response_with_thinking(
-                                improved_prompt,
-                                thinking_budget=thinking_budget,
-                                stream=True,  # Force streaming
-                                timeout=timeout
-                            )
-                            
-                            thinking_content = thinking
-                            has_redacted_thinking = metadata.get("has_redacted_thinking", False)
-                            thinking_signature = metadata.get("signatures", [None])[0] if metadata.get("signatures") else None
-                            
-                            background_tasks.add_task(
-                                session_manager.add_to_thinking_history,
-                                session_id,
-                                request.query,
-                                thinking_content,
-                                has_redacted_thinking,
-                                thinking_signature
-                            )
-                        else:
-                            llm_response = await llm_service.generate_response(
-                                improved_prompt, 
-                                temperature=0.2 if getattr(request, 'retry_mode', False) else None,
-                                stream=True,  # Force streaming
-                                timeout=timeout
-                            )
-                        
-                        processed_response = response_processor.process_response(
-                            llm_response, 
-                            intent,
-                            session_id,
-                            classification_source
-                        )
-                else:
-                    # For other ValueError exceptions, rethrow
-                    raise
             except anthropic.APITimeoutError as e:
                 # Track exceptions for potential ExceptionGroup
                 llm_exceptions.append(e)
-                
-                log_info(f"API timeout error: {str(e)}. Retrying with extended timeout and streaming.")
-                
-                # Retry with extended timeout and explicit streaming
-                if intent in [ResponseType.ARCHITECTURE, ResponseType.EXPERT]:
-                    llm_response_data = await llm_service.generate_structured_response(
-                        improved_prompt, 
-                        with_thinking=use_thinking,
-                        thinking_budget=thinking_budget,
-                        temperature=0.2 if getattr(request, 'retry_mode', False) else None,
-                        stream=True,  # Force streaming
-                        timeout=max(timeout or 0, 600)  # Ensure at least 10 minutes timeout
-                    )
-                    
-                    if use_thinking and "thinking" in llm_response_data:
-                        thinking_content = llm_response_data.pop("thinking", "")
-                        has_redacted_thinking = llm_response_data.pop("has_redacted_thinking", False)
-                        thinking_signature = llm_response_data.pop("signature", None) if "signature" in llm_response_data else None
-                        
-                        background_tasks.add_task(
-                            session_manager.add_to_thinking_history,
-                            session_id,
-                            request.query,
-                            thinking_content,
-                            has_redacted_thinking,
-                            thinking_signature
-                        )
-                    
-                    processed_response = response_processor.process_response_from_json(
-                        llm_response_data,
-                        intent,
-                        session_id,
-                        classification_source
-                    )
-                else:
-                    if use_thinking:
-                        thinking, llm_response, metadata = await llm_service.generate_response_with_thinking(
-                            improved_prompt,
-                            thinking_budget=thinking_budget,
-                            stream=True,  # Force streaming
-                            timeout=max(timeout or 0, 600)  # Ensure at least 10 minutes timeout
-                        )
-                        
-                        thinking_content = thinking
-                        has_redacted_thinking = metadata.get("has_redacted_thinking", False)
-                        thinking_signature = metadata.get("signatures", [None])[0] if metadata.get("signatures") else None
-                        
-                        background_tasks.add_task(
-                            session_manager.add_to_thinking_history,
-                            session_id,
-                            request.query,
-                            thinking_content,
-                            has_redacted_thinking,
-                            thinking_signature
-                        )
-                    else:
-                        llm_response = await llm_service.generate_response(
-                            improved_prompt, 
-                            temperature=0.2 if getattr(request, 'retry_mode', False) else None,
-                            stream=True,  # Force streaming
-                            timeout=max(timeout or 0, 600)  # Ensure at least 10 minutes timeout
-                        )
-                    
-                    processed_response = response_processor.process_response(
-                        llm_response, 
-                        intent,
-                        session_id,
-                        classification_source
-                    )
-            
-            # Add thinking to the processed response if requested
-            if show_thinking and thinking_content:
-                processed_response.thinking = thinking_content
-                processed_response.has_redacted_thinking = has_redacted_thinking
             
             # Store classification metadata for learning
             classification_metadata = {
@@ -565,12 +340,10 @@ async def design_endpoint(
             response_data = {
                 "response_type": processed_response.response_type,
                 "message": processed_response.message,
-                "has_thinking": bool(thinking_content),
                 "classification_source": processed_response.classification_source,
                 "confidence": processed_response.confidence,
                 "response_id": response_id,  # Add unique ID for feedback reference
                 "is_retry": getattr(request, 'retry_mode', False)
-
             }
             
             log_info(f"Response Data : {response_data}")
@@ -617,7 +390,7 @@ async def design_endpoint(
             # Create response object and include response_id
             response = DesignResponse(
                 response=processed_response,
-                show_thinking=show_thinking,
+                show_thinking=False,  # We're no longer sending thinking
                 response_id=response_id  # Include response_id in the response
             )
             log_info(f"Final Processed Response : {processed_response}")
@@ -681,7 +454,7 @@ async def design_endpoint(
 
 def _determine_task_complexity(intent: ResponseType, query: str, diagram_state: Dict[str, Any]) -> str:
     """
-    Determine the complexity of the task to guide thinking budget allocation.
+    Determine the complexity of the task to guide timeout and streaming settings.
     
     Args:
         intent: The classified intent
@@ -758,67 +531,3 @@ def _determine_task_complexity(intent: ResponseType, query: str, diagram_state: 
                 complexity = "very_high"
     
     return complexity
-
-
-@router.get("/thinking/{session_id}", response_model=List[Dict[str, Any]])
-async def get_thinking_history(
-    session_id: str,
-    limit: int = Query(5, ge=1, le=20, description="Maximum number of thinking entries to return"),
-    session_manager: SessionManager = Depends()
-):
-    """
-    Get the thinking history for a specific session.
-    
-    Args:
-        session_id: The unique session identifier
-        limit: Maximum number of thinking entries to return
-        
-    Returns:
-        List of thinking entries with associated metadata
-    """
-    try:
-        return await session_manager.get_thinking_history(session_id, limit)
-    except Exception as e:
-        log_info(f"Error retrieving thinking history: {str(e)}")
-        raise HTTPException(status_code=500, detail=f"Error retrieving thinking history: {str(e)}")
-
-async def _store_thinking_in_session(
-    session_manager: SessionManager,
-    session_id: str,
-    query: str,
-    thinking: str,
-    has_redacted_thinking: bool = False
-) -> None:
-    """
-    Store thinking process in session for debugging purposes.
-    
-    Args:
-        session_manager: Session manager service
-        session_id: The session ID
-        query: The user's query
-        thinking: The thinking process from the LLM
-        has_redacted_thinking: Whether any part of thinking was redacted
-    """
-    try:
-        # Get existing thinking_history array or create new one
-        session_data = await session_manager.get_session(session_id)
-        
-        thinking_history = session_data.get("thinking_history", [])
-        thinking_history.append({
-            "timestamp": datetime.now().isoformat(),
-            "query": query,
-            "thinking": thinking,
-            "has_redacted_thinking": has_redacted_thinking
-        })
-        
-        # Limit to last 10 thinking entries to prevent bloat
-        if len(thinking_history) > 10:
-            thinking_history = thinking_history[-10:]
-            
-        # Update session with new thinking_history
-        await session_manager.update_session(
-            session_id,
-            thinking_history=thinking_history
-        )
-    except Exception as e:
-        log_info(f"Failed to store thinking in session: {str(e)}")

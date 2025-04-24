@@ -1,5 +1,5 @@
 // src/services/designService.ts
-import { DesignRequest, DesignResponse, ResponseType, ArchitectureResponse, DFDData, ExpertResponse, ClarificationResponse, OutOfContextResponse, DFDGenerationStartedResponse, DFDSwitchRequest, FullThreatModelResponse } from '@/interfaces/aiassistedinterfaces';
+import { DesignRequest, DesignResponse, ResponseType, ArchitectureResponse, DFDData, ExpertResponse, ClarificationResponse, OutOfContextResponse, DFDGenerationStartedResponse, DFDSwitchRequest, FullThreatModelResponse, ThreatsResponse } from '@/interfaces/aiassistedinterfaces';
 import tokenService from '@/services/tokenService';
 import { getAuthHeaders, BASE_API_URL, fetchWithTimeout, DEFAULT_TIMEOUT } from './apiService'
 
@@ -261,4 +261,59 @@ export const generateThreatModel = async (
         }
         throw error;
     }
+};
+
+// Function to run threat analysis
+export const runThreatAnalysis = async (
+  projectCode: string,
+  request: DFDSwitchRequest,
+  toast?: any
+): Promise<ThreatsResponse> => {
+  try {
+    console.log(`Running threat analysis for project ${projectCode}`, request);
+    
+    const response = await fetchWithTimeout(
+      `${BASE_API_URL}/projects/${projectCode}/threat_analysis`,
+      {
+        method: 'POST',
+        headers: getAuthHeaders(),
+        body: JSON.stringify(request)
+      },
+      120000 // 2 minute timeout for threat analysis
+    );
+
+    console.log('Threat Analysis Response:', response);
+    
+    if (!response.ok) {
+      let errorDetail = `Failed to run threat analysis: ${response.statusText}`;
+      try {
+        const errorData = await response.json();
+        errorDetail = errorData.detail || JSON.stringify(errorData);
+      } catch (e) { /* Ignore JSON parsing error */ }
+      
+      if (toast) {
+        toast({ 
+          title: "Error", 
+          description: errorDetail, 
+          variant: "destructive" 
+        });
+      }
+      throw new Error(errorDetail);
+    }
+    
+    const threatAnalysisResponse = await response.json();
+    console.log('Threat analysis result:', threatAnalysisResponse);
+    
+    return threatAnalysisResponse as ThreatsResponse;
+  } catch (error) {
+    console.error('Error running threat analysis:', error);
+    if (toast) {
+      toast({ 
+        title: "Error Running Threat Analysis", 
+        description: error.message || "Could not complete threat analysis",
+        variant: "destructive" 
+      });
+    }
+    throw error;
+  }
 };
