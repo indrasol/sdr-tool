@@ -16,7 +16,7 @@ class SessionManager:
     def __init__(self, redis_host: str = REDIS_HOST, redis_port: int = REDIS_PORT, redis_db: int = REDIS_DB, redis_password = REDIS_PASSWORD):
         """Initialize the session manager with Redis connection settings."""
         log_info(f"Redis host : {REDIS_HOST}")
-        self.redis_url = f"redis://:{redis_password}@{redis_host}:{redis_port}/{redis_db}"
+        self.redis_url = f"redis://:{redis_password}@{redis_host}:{redis_port}"
         self.redis_pool = None  # Initialized in connect()
         log_info(f"Redis url : {redis_host}")
         log_info(f"Redis url : {redis_port}")
@@ -66,9 +66,6 @@ class SessionManager:
             "last_updated": timestamp,
             "conversation_history": [],
             "diagram_state": {},
-            "thinking_history": [],           # extended thinking support
-            "thinking_signatures": {},        # Store thinking signatures for multi-turn conversations
-            "redacted_thinking_count": 0,      # Track occurrences of redacted thinking
             "classification_metadata": [],    # Store classification data for analysis
             "feedback_history": []            # Track feedback for continuous learning
         }
@@ -157,9 +154,6 @@ class SessionManager:
                         "last_updated": datetime.now(timezone.utc).isoformat(),
                         "conversation_history": [],  # Empty as we'll reload this from DB
                         "diagram_state": {},  # Empty as we'll reload this from DB
-                        "thinking_history": [],
-                        "thinking_signatures": {},
-                        "redacted_thinking_count": 0,
                         "classification_metadata": [],
                         "feedback_history": []
                     }
@@ -200,14 +194,6 @@ class SessionManager:
                 if field not in session_data:
                     log_info(f"Session {session_id} is missing required field: {field}")
                     raise HTTPException(status_code=400, detail=f"Invalid session format: missing {field}")
-            
-            # Add thinking fields if they don't exist (for backward compatibility)
-            if "thinking_history" not in session_data:
-                session_data["thinking_history"] = []
-            if "thinking_signatures" not in session_data:
-                session_data["thinking_signatures"] = {}
-            if "redacted_thinking_count" not in session_data:
-                session_data["redacted_thinking_count"] = 0
             
             # Verify project ID if specified
             if expected_project_id and session_data["project_id"] != expected_project_id:
@@ -348,108 +334,28 @@ class SessionManager:
         signature: Optional[str] = None
     ) -> bool:
         """
-        Add a thinking entry to the thinking history.
-        
-        Args:
-            session_id: The unique session identifier
-            query: The user's query that triggered this thinking
-            thinking: The thinking content
-            has_redacted_thinking: Whether any part of thinking was redacted
-            signature: Optional thinking signature for multi-turn conversations
-            
-        Returns:
-            bool: True if successful, False otherwise
+        Legacy method kept for backward compatibility.
+        No longer stores thinking as the feature has been removed.
         """
-        if not self.redis_pool:
-            await self.connect()
-            
-        try:
-            session_data = await self.get_session(session_id)
-            
-            # Ensure thinking_history exists
-            if "thinking_history" not in session_data:
-                session_data["thinking_history"] = []
-                
-            # Add entry to thinking history
-            thinking_entry = {
-                "timestamp": datetime.now(timezone.utc).isoformat(),
-                "query": query,
-                "thinking": thinking,
-                "has_redacted_thinking": has_redacted_thinking
-            }
-            
-            session_data["thinking_history"].append(thinking_entry)
-            
-            # Update redacted thinking counter if needed
-            if has_redacted_thinking:
-                session_data["redacted_thinking_count"] = session_data.get("redacted_thinking_count", 0) + 1
-            
-            # Store signature if provided
-            if signature:
-                # Store by query timestamp for retrieval 
-                session_data["thinking_signatures"][thinking_entry["timestamp"]] = signature
-            
-            # Limit thinking history to most recent 10 entries to prevent bloat
-            if len(session_data["thinking_history"]) > 10:
-                # Get timestamps to remove
-                removed_timestamps = [entry["timestamp"] for entry in session_data["thinking_history"][:-10]]
-                # Remove associated signatures
-                for timestamp in removed_timestamps:
-                    if timestamp in session_data["thinking_signatures"]:
-                        del session_data["thinking_signatures"][timestamp]
-                # Keep only the most recent 10 entries
-                session_data["thinking_history"] = session_data["thinking_history"][-10:]
-            
-            # Update last_updated
-            session_data["last_updated"] = datetime.now(timezone.utc).isoformat()
-            
-            # Update in Redis
-            await self.redis_pool.setex(
-                f"session:{session_id}",
-                SESSION_EXPIRY,
-                json.dumps(session_data)
-            )
-            
-            return True
-        except Exception as e:
-            log_info(f"Error adding to thinking history: {str(e)}")
-            return False
-    
+        # This method is maintained for backward compatibility but does nothing
+        log_info(f"add_to_thinking_history called but thinking feature is disabled")
+        return True
+
     async def get_thinking_history(self, session_id: str, limit: int = 5) -> List[Dict[str, Any]]:
         """
-        Get the thinking history for a session.
-        
-        Args:
-            session_id: The unique session identifier
-            limit: Maximum number of thinking entries to return
-            
-        Returns:
-            List of thinking entries, most recent first
-            
-        Raises:
-            HTTPException: If session is not found
+        Legacy method kept for backward compatibility.
+        Returns empty list as thinking feature has been removed.
         """
-        session_data = await self.get_session(session_id)
-        history = session_data.get("thinking_history", [])
-        
-        # Return most recent entries first
-        return list(reversed(history[-limit:]))
-    
+        # This method is maintained for backward compatibility but returns empty list
+        return []
+
     async def get_thinking_signatures(self, session_id: str) -> Dict[str, str]:
         """
-        Get the thinking signatures for a session.
-        
-        Args:
-            session_id: The unique session identifier
-            
-        Returns:
-            Dict mapping timestamps to signatures
-            
-        Raises:
-            HTTPException: If session is not found
+        Legacy method kept for backward compatibility.
+        Returns empty dict as thinking feature has been removed.
         """
-        session_data = await self.get_session(session_id)
-        return session_data.get("thinking_signatures", {})
+        # This method is maintained for backward compatibility but returns empty dict
+        return {}
     
     async def update_diagram_state(self, session_id: str, diagram_state: Dict[str, Any]) -> bool:
         """
@@ -499,8 +405,7 @@ class SessionManager:
         session_id: str, 
         user_query: Optional[str] = None,
         system_response: Optional[Dict[str, Any]] = None,
-        diagram_state: Optional[Dict[str, Any]] = None,
-        thinking_data: Optional[Dict[str, Any]] = None
+        diagram_state: Optional[Dict[str, Any]] = None
     ) -> None:
         """
         Update session data with new conversation entry, diagram state, and/or thinking data.
@@ -510,7 +415,6 @@ class SessionManager:
             user_query: User's query message
             system_response: System's response to the query
             diagram_state: New diagram state to save
-            thinking_data: Thinking data including content, signature, etc.
             
         Raises:
             HTTPException: If session update fails
@@ -539,44 +443,6 @@ class SessionManager:
                 session_data["conversation_history"].append(conversation_entry)
                 if len(session_data["conversation_history"]) > 50:
                     session_data["conversation_history"] = session_data["conversation_history"][-50:]
-
-            # Add thinking data if provided
-            if thinking_data and isinstance(thinking_data, dict):
-                # Initialize thinking_history if it doesn't exist
-                if "thinking_history" not in session_data:
-                    session_data["thinking_history"] = []
-                
-                thinking_entry = {
-                    "timestamp": current_time,
-                    "query": user_query or "",
-                    "thinking": thinking_data.get("thinking", ""),
-                    "has_redacted_thinking": thinking_data.get("has_redacted_thinking", False)
-                }
-                
-                session_data["thinking_history"].append(thinking_entry)
-                
-                # Update redacted thinking counter if needed
-                if thinking_data.get("has_redacted_thinking", False):
-                    session_data["redacted_thinking_count"] = session_data.get("redacted_thinking_count", 0) + 1
-                
-                # Store signature if provided
-                if "signature" in thinking_data:
-                    # Ensure thinking_signatures exists
-                    if "thinking_signatures" not in session_data:
-                        session_data["thinking_signatures"] = {}
-                    
-                    session_data["thinking_signatures"][current_time] = thinking_data["signature"]
-                
-                # Limit thinking history to most recent 10 entries to prevent bloat
-                if len(session_data["thinking_history"]) > 10:
-                    # Get timestamps to remove
-                    removed_timestamps = [entry["timestamp"] for entry in session_data["thinking_history"][:-10]]
-                    # Remove associated signatures
-                    for timestamp in removed_timestamps:
-                        if "thinking_signatures" in session_data and timestamp in session_data["thinking_signatures"]:
-                            del session_data["thinking_signatures"][timestamp]
-                    # Keep only the most recent 10 entries
-                    session_data["thinking_history"] = session_data["thinking_history"][-10:]
 
             # Update diagram state if provided
             if diagram_state is not None:

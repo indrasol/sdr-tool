@@ -1273,14 +1273,14 @@ const ModelWithAI = () => {
     const currentDiagramState = { nodes: nodesRef.current, edges: edgesRef.current };
     
     try {
-      const result = await projectService.saveProject(sessionIdRef.current, currentDiagramState);
+      const result = await projectService.saveProject(sessionIdRef.current, currentDiagramState, projectId);
       console.log(`Project save result: ${result ? 'success' : 'failed'}`);
       return result;
     } catch (err) {
       console.error("Error saving project:", err);
       return false;
     }
-  }, []);
+  }, [projectId]);
 
   // Add this function before the return statement in ModelWithAI
   const processAndDisplayThreatModel = useCallback((threatModelResponse: FullThreatModelResponse) => {

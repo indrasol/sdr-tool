@@ -6,3 +6,85 @@
   .react-flow__edges {
     pointer-events: all !important;
   }
+
+/* Add animation for the threat panel */
+@keyframes slideIn {
+  from {
+    transform: translateX(-10px);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+.threat-panel-transition {
+  animation: slideIn 0.3s ease-out;
+}
+
+/* Add hover effect for threat cards */
+.threat-card-hover-effect:hover {
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  transform: translateY(-1px);
+  transition: all 0.2s;
+}
+
+/* Add pulsing effect for high threats */
+@keyframes pulse {
+  0% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.6;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+.threat-badge-pulse {
+  animation: pulse 1.5s infinite;
+}
+
+/* Styles for threat badges */
+.threat-badge {
+  position: absolute;
+  right: -4px;
+  top: -4px;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  font-size: 10px;
+  font-weight: bold;
+  color: white;
+}
+
+.threat-badge-high {
+  background-color: #ef4444;
+  box-shadow: 0 0 0 2px white;
+}
+
+.threat-badge-medium {
+  background-color: #f59e0b;
+  box-shadow: 0 0 0 2px white;
+}
+
+.threat-badge-low {
+  background-color: #3b82f6;
+  box-shadow: 0 0 0 2px white;
+}
+
+/* Threat indicator positioning */
+.threat-indicator {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  display: flex;
+  flex-direction: row;
+  gap: 2px;
+  cursor: pointer;
+}

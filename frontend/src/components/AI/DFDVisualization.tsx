@@ -57,37 +57,102 @@ interface ProcessNodeProps {
   selected: boolean;
 }
 
-// Custom node components with modern design
+// Custom node components with standard DFD notation
 const ProcessNode: React.FC<ProcessNodeProps> = ({ data, selected }) => {
-  const threatCount = data.threats?.length || 0;
-  const hasCriticalThreats = data.threats?.some(t => (t.severity || '').toLowerCase() === 'high') || false;
+  const [showThreatPopup, setShowThreatPopup] = useState(false);
+  
+  // Get threat count by severity
+  const highCount = data.threats?.filter(t => t.severity === 'HIGH').length || 0;
+  const mediumCount = data.threats?.filter(t => t.severity === 'MEDIUM').length || 0;
+  const lowCount = data.threats?.filter(t => t.severity === 'LOW').length || 0;
+  
+  const hasThreat = highCount > 0 || mediumCount > 0 || lowCount > 0;
+  
+  // Create tooltip content
+  const threatToolTip = hasThreat ? 
+    `${highCount > 0 ? `${highCount} High Risk` : ''}${highCount > 0 && (mediumCount > 0 || lowCount > 0) ? ', ' : ''}${mediumCount > 0 ? `${mediumCount} Medium Risk` : ''}${mediumCount > 0 && lowCount > 0 ? ', ' : ''}${lowCount > 0 ? `${lowCount} Low Risk` : ''}` 
+    : '';
+  
+  // Handle threat badge click
+  const handleThreatClick = (e) => {
+    e.stopPropagation();
+    setShowThreatPopup(!showThreatPopup);
+  };
   
   return (
     <div className={`flex flex-col items-center justify-center relative group`}>
-      {/* Main circle */}
+      {/* Circle with label inside */}
       <div 
-        className={`w-16 h-16 rounded-full flex items-center justify-center 
-          ${hasCriticalThreats 
-            ? 'bg-gradient-to-br from-blue-500 to-blue-600 border-blue-300' 
-            : 'bg-gradient-to-br from-blue-400 to-blue-500 border-blue-200'} 
-          ${selected ? 'ring-2 ring-blue-300 ring-offset-2 ring-offset-white border-white' : 'border border-opacity-30'} 
-          shadow-md transition-all duration-200 group-hover:shadow-lg group-hover:scale-105`}
+        className={`w-24 h-24 rounded-full flex items-center justify-center 
+          bg-white border-2 border-black
+          ${hasThreat ? 'border-opacity-100' : 'border-opacity-80'}
+          ${selected ? 'ring-2 ring-black' : ''}
+          ${highCount > 0 ? 'border-red-500' : ''}`}
+        style={{ 
+          background: 'white !important', 
+          backgroundImage: 'none !important',
+          backgroundColor: 'white !important'
+        }}
       >
-        <Server className="h-7 w-7 text-white" />
+        <div className="text-xs font-semibold text-center max-w-[80px] break-words">
+          {data.label}
+        </div>
       </div>
       
-      {/* Label below */}
-      <div className="mt-2 px-2 py-1 bg-white/90 rounded-md text-xs font-medium max-w-[120px] text-center text-gray-700 break-words shadow-sm border border-gray-100">
-        {data.label}
-      </div>
+      {/* Threat indicators */}
+      {hasThreat && (
+        <div className="threat-indicator" title={threatToolTip} onClick={handleThreatClick}>
+          {highCount > 0 && (
+            <div className="threat-badge threat-badge-high" title={`${highCount} High Risk Threat${highCount > 1 ? 's' : ''}`}>
+              {highCount}
+            </div>
+          )}
+          {mediumCount > 0 && (
+            <div className="threat-badge threat-badge-medium" title={`${mediumCount} Medium Risk Threat${mediumCount > 1 ? 's' : ''}`}>
+              {mediumCount}
+            </div>
+          )}
+          {lowCount > 0 && (
+            <div className="threat-badge threat-badge-low" title={`${lowCount} Low Risk Threat${lowCount > 1 ? 's' : ''}`}>
+              {lowCount}
+            </div>
+          )}
+        </div>
+      )}
       
-      {/* Threat indicator with tooltip */}
-      {threatCount > 0 && (
-        <div className={`absolute -top-1 -right-1 w-5 h-5 rounded-full flex items-center justify-center text-white text-xs font-bold border border-white shadow-sm
-          ${hasCriticalThreats ? 'bg-gradient-to-r from-red-500 to-red-600 pulse-animation' : 'bg-gradient-to-r from-amber-500 to-amber-600'}`}
-          title={`${threatCount} security ${threatCount === 1 ? 'issue' : 'issues'}`}
-        >
-          {threatCount}
+      {/* Threat popup menu when indicator is clicked */}
+      {showThreatPopup && hasThreat && (
+        <div className="absolute top-[-120px] right-[-10px] z-50 bg-white rounded-md shadow-lg border border-gray-200 p-2 w-60 text-xs">
+          <div className="font-bold mb-1.5 text-gray-800">Security Threats</div>
+          {highCount > 0 && (
+            <div className="flex items-center mb-1.5 text-red-600">
+              <AlertTriangle className="w-3 h-3 mr-1.5" />
+              <span className="font-medium">{highCount} High Risk Threat{highCount > 1 ? 's' : ''}</span>
+            </div>
+          )}
+          {mediumCount > 0 && (
+            <div className="flex items-center mb-1.5 text-amber-600">
+              <AlertCircle className="w-3 h-3 mr-1.5" />
+              <span className="font-medium">{mediumCount} Medium Risk Threat{mediumCount > 1 ? 's' : ''}</span>
+            </div>
+          )}
+          {lowCount > 0 && (
+            <div className="flex items-center mb-1.5 text-blue-600">
+              <Info className="w-3 h-3 mr-1.5" />
+              <span className="font-medium">{lowCount} Low Risk Threat{lowCount > 1 ? 's' : ''}</span>
+            </div>
+          )}
+          <div className="mt-2 w-full text-center">
+            <button 
+              className="bg-gray-100 hover:bg-gray-200 text-gray-700 text-[10px] px-2 py-1 rounded-sm transition-colors"
+              onClick={(e) => {
+                e.stopPropagation();
+                setShowThreatPopup(false);
+              }}
+            >
+              Close
+            </button>
+          </div>
         </div>
       )}
       
@@ -96,48 +161,113 @@ const ProcessNode: React.FC<ProcessNodeProps> = ({ data, selected }) => {
         id="processInput"
         type="target"
         position={Position.Left}
-        className="!w-2 !h-2 !border-2 !border-blue-500 !bg-white"
+        className="!w-2 !h-2 !border-2 !border-black !bg-white"
       />
       <Handle
         id="processOutput"
         type="source"
         position={Position.Right}
-        className="!w-2 !h-2 !border-2 !border-blue-500 !bg-white"
+        className="!w-2 !h-2 !border-2 !border-black !bg-white"
       />
     </div>
   );
 };
 
 const EntityNode: React.FC<ProcessNodeProps> = ({ data, selected }) => {
-  const threatCount = data.threats?.length || 0;
-  const hasCriticalThreats = data.threats?.some(t => (t.severity || '').toLowerCase() === 'high') || false;
+  const [showThreatPopup, setShowThreatPopup] = useState(false);
+  
+  // Get threat count by severity
+  const highCount = data.threats?.filter(t => t.severity === 'HIGH').length || 0;
+  const mediumCount = data.threats?.filter(t => t.severity === 'MEDIUM').length || 0;
+  const lowCount = data.threats?.filter(t => t.severity === 'LOW').length || 0;
+  
+  const hasThreat = highCount > 0 || mediumCount > 0 || lowCount > 0;
+  
+  // Create tooltip content
+  const threatToolTip = hasThreat ? 
+    `${highCount > 0 ? `${highCount} High Risk` : ''}${highCount > 0 && (mediumCount > 0 || lowCount > 0) ? ', ' : ''}${mediumCount > 0 ? `${mediumCount} Medium Risk` : ''}${mediumCount > 0 && lowCount > 0 ? ', ' : ''}${lowCount > 0 ? `${lowCount} Low Risk` : ''}` 
+    : '';
+  
+  // Handle threat badge click
+  const handleThreatClick = (e) => {
+    e.stopPropagation();
+    setShowThreatPopup(!showThreatPopup);
+  };
   
   return (
     <div className={`flex flex-col items-center justify-center relative group`}>
-      {/* Main circle */}
+      {/* Rectangle with label inside */}
       <div 
-        className={`w-16 h-16 rounded-full flex items-center justify-center 
-          ${hasCriticalThreats 
-            ? 'bg-gradient-to-br from-indigo-500 to-indigo-600 border-indigo-300' 
-            : 'bg-gradient-to-br from-indigo-400 to-indigo-500 border-indigo-200'} 
-          ${selected ? 'ring-2 ring-indigo-300 ring-offset-2 ring-offset-white border-white' : 'border border-opacity-30'} 
-          shadow-md transition-all duration-200 group-hover:shadow-lg group-hover:scale-105`}
+        className={`w-24 h-16 flex items-center justify-center 
+          bg-white border-2 border-black
+          ${hasThreat ? 'border-opacity-100' : 'border-opacity-80'}
+          ${selected ? 'ring-2 ring-black' : ''}
+          ${highCount > 0 ? 'border-red-500' : ''}`}
+        style={{ 
+          background: 'white !important', 
+          backgroundImage: 'none !important',
+          backgroundColor: 'white !important'
+        }}
       >
-        <User className="h-7 w-7 text-white" />
+        <div className="text-xs font-semibold text-center max-w-[80px] break-words">
+          {data.label}
+        </div>
       </div>
       
-      {/* Label below */}
-      <div className="mt-2 px-2 py-1 bg-white/90 rounded-md text-xs font-medium max-w-[120px] text-center text-gray-700 break-words shadow-sm border border-gray-100">
-        {data.label}
-      </div>
+      {/* Threat indicators */}
+      {hasThreat && (
+        <div className="threat-indicator" title={threatToolTip} onClick={handleThreatClick}>
+          {highCount > 0 && (
+            <div className="threat-badge threat-badge-high" title={`${highCount} High Risk Threat${highCount > 1 ? 's' : ''}`}>
+              {highCount}
+            </div>
+          )}
+          {mediumCount > 0 && (
+            <div className="threat-badge threat-badge-medium" title={`${mediumCount} Medium Risk Threat${mediumCount > 1 ? 's' : ''}`}>
+              {mediumCount}
+            </div>
+          )}
+          {lowCount > 0 && (
+            <div className="threat-badge threat-badge-low" title={`${lowCount} Low Risk Threat${lowCount > 1 ? 's' : ''}`}>
+              {lowCount}
+            </div>
+          )}
+        </div>
+      )}
       
-      {/* Threat indicator with tooltip */}
-      {threatCount > 0 && (
-        <div className={`absolute -top-1 -right-1 w-5 h-5 rounded-full flex items-center justify-center text-white text-xs font-bold border border-white shadow-sm
-          ${hasCriticalThreats ? 'bg-gradient-to-r from-red-500 to-red-600 pulse-animation' : 'bg-gradient-to-r from-amber-500 to-amber-600'}`}
-          title={`${threatCount} security ${threatCount === 1 ? 'issue' : 'issues'}`}
-        >
-          {threatCount}
+      {/* Threat popup menu when indicator is clicked */}
+      {showThreatPopup && hasThreat && (
+        <div className="absolute top-[-120px] right-[-10px] z-50 bg-white rounded-md shadow-lg border border-gray-200 p-2 w-60 text-xs">
+          <div className="font-bold mb-1.5 text-gray-800">Security Threats</div>
+          {highCount > 0 && (
+            <div className="flex items-center mb-1.5 text-red-600">
+              <AlertTriangle className="w-3 h-3 mr-1.5" />
+              <span className="font-medium">{highCount} High Risk Threat{highCount > 1 ? 's' : ''}</span>
+            </div>
+          )}
+          {mediumCount > 0 && (
+            <div className="flex items-center mb-1.5 text-amber-600">
+              <AlertCircle className="w-3 h-3 mr-1.5" />
+              <span className="font-medium">{mediumCount} Medium Risk Threat{mediumCount > 1 ? 's' : ''}</span>
+            </div>
+          )}
+          {lowCount > 0 && (
+            <div className="flex items-center mb-1.5 text-blue-600">
+              <Info className="w-3 h-3 mr-1.5" />
+              <span className="font-medium">{lowCount} Low Risk Threat{lowCount > 1 ? 's' : ''}</span>
+            </div>
+          )}
+          <div className="mt-2 w-full text-center">
+            <button 
+              className="bg-gray-100 hover:bg-gray-200 text-gray-700 text-[10px] px-2 py-1 rounded-sm transition-colors"
+              onClick={(e) => {
+                e.stopPropagation();
+                setShowThreatPopup(false);
+              }}
+            >
+              Close
+            </button>
+          </div>
         </div>
       )}
       
@@ -146,48 +276,118 @@ const EntityNode: React.FC<ProcessNodeProps> = ({ data, selected }) => {
         id="entityInput"
         type="target"
         position={Position.Left}
-        className="!w-2 !h-2 !border-2 !border-indigo-500 !bg-white"
+        className="!w-2 !h-2 !border-2 !border-black !bg-white"
       />
       <Handle
         id="entityOutput"
         type="source"
         position={Position.Right}
-        className="!w-2 !h-2 !border-2 !border-indigo-500 !bg-white"
+        className="!w-2 !h-2 !border-2 !border-black !bg-white"
       />
     </div>
   );
 };
 
 const DataStoreNode: React.FC<ProcessNodeProps> = ({ data, selected }) => {
-  const threatCount = data.threats?.length || 0;
-  const hasCriticalThreats = data.threats?.some(t => (t.severity || '').toLowerCase() === 'high') || false;
+  const [showThreatPopup, setShowThreatPopup] = useState(false);
+  
+  // Get threat count by severity
+  const highCount = data.threats?.filter(t => t.severity === 'HIGH').length || 0;
+  const mediumCount = data.threats?.filter(t => t.severity === 'MEDIUM').length || 0;
+  const lowCount = data.threats?.filter(t => t.severity === 'LOW').length || 0;
+  
+  const hasThreat = highCount > 0 || mediumCount > 0 || lowCount > 0;
+  
+  // Create tooltip content
+  const threatToolTip = hasThreat ? 
+    `${highCount > 0 ? `${highCount} High Risk` : ''}${highCount > 0 && (mediumCount > 0 || lowCount > 0) ? ', ' : ''}${mediumCount > 0 ? `${mediumCount} Medium Risk` : ''}${mediumCount > 0 && lowCount > 0 ? ', ' : ''}${lowCount > 0 ? `${lowCount} Low Risk` : ''}` 
+    : '';
+  
+  // Handle threat badge click
+  const handleThreatClick = (e) => {
+    e.stopPropagation();
+    setShowThreatPopup(!showThreatPopup);
+  };
   
   return (
     <div className={`flex flex-col items-center justify-center relative group`}>
-      {/* Main circle */}
+      {/* Data store with only top and bottom borders */}
       <div 
-        className={`w-16 h-16 rounded-full flex items-center justify-center 
-          ${hasCriticalThreats 
-            ? 'bg-gradient-to-br from-cyan-500 to-cyan-600 border-cyan-300' 
-            : 'bg-gradient-to-br from-cyan-400 to-cyan-500 border-cyan-200'} 
-          ${selected ? 'ring-2 ring-cyan-300 ring-offset-2 ring-offset-white border-white' : 'border border-opacity-30'} 
-          shadow-md transition-all duration-200 group-hover:shadow-lg group-hover:scale-105`}
+        className={`w-24 h-16 flex items-center justify-center 
+          bg-white
+          ${selected ? 'ring-2 ring-black' : ''}
+          ${highCount > 0 ? 'ring-1 ring-red-500' : ''}`}
+        style={{ 
+          position: 'relative',
+          background: 'white !important', 
+          backgroundImage: 'none !important',
+          backgroundColor: 'white !important'
+        }}
       >
-        <Database className="h-7 w-7 text-white" />
+        {/* Only top and bottom borders */}
+        <div className={`absolute top-0 left-0 right-0 h-[2px] ${highCount > 0 ? 'bg-red-500' : 'bg-black'}`}></div>
+        <div className={`absolute bottom-0 left-0 right-0 h-[2px] ${highCount > 0 ? 'bg-red-500' : 'bg-black'}`}></div>
+        
+        {/* Label in the middle */}
+        <div className="text-xs font-semibold text-center max-w-[80px] break-words">
+          {data.label}
+        </div>
       </div>
       
-      {/* Label below */}
-      <div className="mt-2 px-2 py-1 bg-white/90 rounded-md text-xs font-medium max-w-[120px] text-center text-gray-700 break-words shadow-sm border border-gray-100">
-        {data.label}
-      </div>
+      {/* Threat indicators */}
+      {hasThreat && (
+        <div className="threat-indicator" title={threatToolTip} onClick={handleThreatClick}>
+          {highCount > 0 && (
+            <div className="threat-badge threat-badge-high" title={`${highCount} High Risk Threat${highCount > 1 ? 's' : ''}`}>
+              {highCount}
+            </div>
+          )}
+          {mediumCount > 0 && (
+            <div className="threat-badge threat-badge-medium" title={`${mediumCount} Medium Risk Threat${mediumCount > 1 ? 's' : ''}`}>
+              {mediumCount}
+            </div>
+          )}
+          {lowCount > 0 && (
+            <div className="threat-badge threat-badge-low" title={`${lowCount} Low Risk Threat${lowCount > 1 ? 's' : ''}`}>
+              {lowCount}
+            </div>
+          )}
+        </div>
+      )}
       
-      {/* Threat indicator with tooltip */}
-      {threatCount > 0 && (
-        <div className={`absolute -top-1 -right-1 w-5 h-5 rounded-full flex items-center justify-center text-white text-xs font-bold border border-white shadow-sm
-          ${hasCriticalThreats ? 'bg-gradient-to-r from-red-500 to-red-600 pulse-animation' : 'bg-gradient-to-r from-amber-500 to-amber-600'}`}
-          title={`${threatCount} security ${threatCount === 1 ? 'issue' : 'issues'}`}
-        >
-          {threatCount}
+      {/* Threat popup menu when indicator is clicked */}
+      {showThreatPopup && hasThreat && (
+        <div className="absolute top-[-120px] right-[-10px] z-50 bg-white rounded-md shadow-lg border border-gray-200 p-2 w-60 text-xs">
+          <div className="font-bold mb-1.5 text-gray-800">Security Threats</div>
+          {highCount > 0 && (
+            <div className="flex items-center mb-1.5 text-red-600">
+              <AlertTriangle className="w-3 h-3 mr-1.5" />
+              <span className="font-medium">{highCount} High Risk Threat{highCount > 1 ? 's' : ''}</span>
+            </div>
+          )}
+          {mediumCount > 0 && (
+            <div className="flex items-center mb-1.5 text-amber-600">
+              <AlertCircle className="w-3 h-3 mr-1.5" />
+              <span className="font-medium">{mediumCount} Medium Risk Threat{mediumCount > 1 ? 's' : ''}</span>
+            </div>
+          )}
+          {lowCount > 0 && (
+            <div className="flex items-center mb-1.5 text-blue-600">
+              <Info className="w-3 h-3 mr-1.5" />
+              <span className="font-medium">{lowCount} Low Risk Threat{lowCount > 1 ? 's' : ''}</span>
+            </div>
+          )}
+          <div className="mt-2 w-full text-center">
+            <button 
+              className="bg-gray-100 hover:bg-gray-200 text-gray-700 text-[10px] px-2 py-1 rounded-sm transition-colors"
+              onClick={(e) => {
+                e.stopPropagation();
+                setShowThreatPopup(false);
+              }}
+            >
+              Close
+            </button>
+          </div>
         </div>
       )}
       
@@ -196,64 +396,63 @@ const DataStoreNode: React.FC<ProcessNodeProps> = ({ data, selected }) => {
         id="datastoreInput"
         type="target"
         position={Position.Left}
-        className="!w-2 !h-2 !border-2 !border-cyan-500 !bg-white"
+        className="!w-2 !h-2 !border-2 !border-black !bg-white"
       />
       <Handle
         id="datastoreOutput"
         type="source"
         position={Position.Right}
-        className="!w-2 !h-2 !border-2 !border-cyan-500 !bg-white"
+        className="!w-2 !h-2 !border-2 !border-black !bg-white"
       />
     </div>
   );
 };
 
 const ExternalNode: React.FC<ProcessNodeProps> = ({ data, selected }) => {
-  const threatCount = data.threats?.length || 0;
-  const hasCriticalThreats = data.threats?.some(t => (t.severity || '').toLowerCase() === 'high') || false;
-  const isInternet = (data.nodeType || '').toLowerCase() === 'internet' || (data.label || '').toLowerCase().includes('internet');
-  const isCDN = (data.nodeType || '').toLowerCase() === 'cdn' || (data.label || '').toLowerCase().includes('cdn');
+  // Get threat count by severity
+  const highCount = data.threats?.filter(t => t.severity === 'HIGH').length || 0;
+  const mediumCount = data.threats?.filter(t => t.severity === 'MEDIUM').length || 0;
+  const lowCount = data.threats?.filter(t => t.severity === 'LOW').length || 0;
+  
+  const hasThreat = highCount > 0 || mediumCount > 0 || lowCount > 0;
   
   return (
     <div className={`flex flex-col items-center justify-center relative group`}>
-      {/* Main circle */}
+      {/* Rectangle with label inside */}
       <div 
-        className={`w-16 h-16 rounded-full flex items-center justify-center relative
-          ${isInternet || isCDN 
-            ? 'bg-transparent' 
-            : hasCriticalThreats 
-              ? 'bg-gradient-to-br from-purple-500 to-purple-600 border-purple-300'
-              : 'bg-gradient-to-br from-purple-400 to-purple-500 border-purple-200'} 
-          ${selected && !isInternet && !isCDN ? 'ring-2 ring-purple-300 ring-offset-2 ring-offset-white border-white' : (isInternet || isCDN) ? '' : 'border border-opacity-30'} 
-          shadow-md transition-all duration-200 group-hover:shadow-lg group-hover:scale-105
-          ${isInternet || isCDN ? 'z-10' : ''}`}
+        className={`w-24 h-16 flex items-center justify-center 
+          bg-white border-2 border-black
+          ${selected ? 'ring-2 ring-black' : ''}`}
+        style={{ 
+          background: 'white !important', 
+          backgroundImage: 'none !important',
+          backgroundColor: 'white !important'
+        }}
       >
-        {isInternet ? (
-          <div className="rotate-animation w-16 h-16">
-            <EarthGlobeSVG />
-          </div>
-        ) : isCDN ? (
-          <div className="w-16 h-16">
-            <CDNIconSVG />
-          </div>
-        ) : (
-          <Globe className="h-7 w-7 text-white" />
-        )}
+        <div className="text-xs font-semibold text-center max-w-[80px] break-words">
+          {data.label}
+        </div>
         
-        {/* Threat indicator with tooltip - moved inside the circle container */}
-        {threatCount > 0 && (
-          <div className={`absolute -top-2 -right-2 w-5 h-5 rounded-full flex items-center justify-center text-white text-xs font-bold border border-white shadow-sm z-20
-            ${hasCriticalThreats ? 'bg-gradient-to-r from-red-500 to-red-600 pulse-animation' : 'bg-gradient-to-r from-amber-500 to-amber-600'}`}
-            title={`${threatCount} security ${threatCount === 1 ? 'issue' : 'issues'}`}
-          >
-            {threatCount}
+        {/* Threat indicators */}
+        {hasThreat && (
+          <div className="threat-indicator">
+            {highCount > 0 && (
+              <div className="threat-badge threat-badge-high">
+                {highCount}
+              </div>
+            )}
+            {mediumCount > 0 && (
+              <div className="threat-badge threat-badge-medium">
+                {mediumCount}
+              </div>
+            )}
+            {lowCount > 0 && (
+              <div className="threat-badge threat-badge-low">
+                {lowCount}
+              </div>
+            )}
           </div>
         )}
-      </div>
-      
-      {/* Label below */}
-      <div className="mt-2 px-2 py-1 bg-white/90 rounded-md text-xs font-medium max-w-[120px] text-center text-gray-700 break-words shadow-sm border border-gray-100">
-        {data.label}
       </div>
       
       {/* Connection handles */}
@@ -261,165 +460,174 @@ const ExternalNode: React.FC<ProcessNodeProps> = ({ data, selected }) => {
         id="externalInput"
         type="target"
         position={Position.Left}
-        className={`!w-2 !h-2 !border-2 ${isInternet ? '!border-teal-500 !bg-white/80' : isCDN ? '!border-purple-500 !bg-white/80' : '!border-purple-500 !bg-white'}`}
+        className="!w-2 !h-2 !border-2 !border-black !bg-white"
       />
       <Handle
-        id="externalOutput" 
+        id="externalOutput"
         type="source"
         position={Position.Right}
-        className={`!w-2 !h-2 !border-2 ${isInternet ? '!border-teal-500 !bg-white/80' : isCDN ? '!border-purple-500 !bg-white/80' : '!border-purple-500 !bg-white'}`}
+        className="!w-2 !h-2 !border-2 !border-black !bg-white"
       />
     </div>
   );
 };
 
 const CloudServiceNode: React.FC<ProcessNodeProps> = ({ data, selected }) => {
-  const threatCount = data.threats?.length || 0;
-  const hasCriticalThreats = data.threats?.some(t => (t.severity || '').toLowerCase() === 'high') || false;
+  // Get threat count by severity
+  const highCount = data.threats?.filter(t => t.severity === 'HIGH').length || 0;
+  const mediumCount = data.threats?.filter(t => t.severity === 'MEDIUM').length || 0;
+  const lowCount = data.threats?.filter(t => t.severity === 'LOW').length || 0;
+  
+  const hasThreat = highCount > 0 || mediumCount > 0 || lowCount > 0;
   
   return (
     <div className={`flex flex-col items-center justify-center relative group`}>
-      {/* Main circle */}
+      {/* Render as process node (circle) */}
       <div 
-        className={`w-16 h-16 rounded-full flex items-center justify-center 
-          ${hasCriticalThreats 
-            ? 'bg-gradient-to-br from-gray-500 to-gray-600 border-gray-400' 
-            : 'bg-gradient-to-br from-gray-400 to-gray-500 border-gray-300'} 
-          ${selected ? 'ring-2 ring-gray-400 ring-offset-2 ring-offset-white border-white' : 'border border-opacity-30'} 
-          shadow-md transition-all duration-200 group-hover:shadow-lg group-hover:scale-105`}
+        className={`w-24 h-24 rounded-full flex items-center justify-center 
+          bg-white border-2 border-black
+          ${selected ? 'ring-2 ring-black' : ''}`}
+        style={{ 
+          background: 'white !important', 
+          backgroundImage: 'none !important',
+          backgroundColor: 'white !important'
+        }}
       >
-        <Cloud className="h-7 w-7 text-white" />
-      </div>
-      
-      {/* Label below */}
-      <div className="mt-2 px-2 py-1 bg-white/90 rounded-md text-xs font-medium max-w-[120px] text-center text-gray-700 break-words shadow-sm border border-gray-100">
-        {data.label}
-      </div>
-      
-      {/* Threat indicator with tooltip */}
-      {threatCount > 0 && (
-        <div className={`absolute -top-1 -right-1 w-5 h-5 rounded-full flex items-center justify-center text-white text-xs font-bold border border-white shadow-sm
-          ${hasCriticalThreats ? 'bg-gradient-to-r from-red-500 to-red-600 pulse-animation' : 'bg-gradient-to-r from-amber-500 to-amber-600'}`}
-          title={`${threatCount} security ${threatCount === 1 ? 'issue' : 'issues'}`}
-        >
-          {threatCount}
+        <div className="text-xs font-semibold text-center max-w-[80px] break-words">
+          {data.label}
         </div>
-      )}
+        
+        {/* Threat indicators */}
+        {hasThreat && (
+          <div className="threat-indicator">
+            {highCount > 0 && (
+              <div className="threat-badge threat-badge-high">
+                {highCount}
+              </div>
+            )}
+            {mediumCount > 0 && (
+              <div className="threat-badge threat-badge-medium">
+                {mediumCount}
+              </div>
+            )}
+            {lowCount > 0 && (
+              <div className="threat-badge threat-badge-low">
+                {lowCount}
+              </div>
+            )}
+          </div>
+        )}
+      </div>
       
       {/* Connection handles */}
       <Handle
         id="cloudInput"
         type="target"
         position={Position.Left}
-        className="!w-2 !h-2 !border-2 !border-gray-500 !bg-white"
+        className="!w-2 !h-2 !border-2 !border-black !bg-white"
       />
       <Handle
         id="cloudOutput" 
         type="source"
         position={Position.Right}
-        className="!w-2 !h-2 !border-2 !border-gray-500 !bg-white"
+        className="!w-2 !h-2 !border-2 !border-black !bg-white"
       />
     </div>
   );
 };
 
 const SecretNode: React.FC<ProcessNodeProps> = ({ data, selected }) => {
-  const threatCount = data.threats?.length || 0;
-  const hasCriticalThreats = data.threats?.some(t => (t.severity || '').toLowerCase() === 'high') || false;
+  // Get threat count by severity
+  const highCount = data.threats?.filter(t => t.severity === 'HIGH').length || 0;
+  const mediumCount = data.threats?.filter(t => t.severity === 'MEDIUM').length || 0;
+  const lowCount = data.threats?.filter(t => t.severity === 'LOW').length || 0;
+  
+  const hasThreat = highCount > 0 || mediumCount > 0 || lowCount > 0;
   
   return (
     <div className={`flex flex-col items-center justify-center relative group`}>
-      {/* Main circle */}
+      {/* Data store with only top and bottom borders */}
       <div 
-        className={`w-16 h-16 rounded-full flex items-center justify-center 
-          ${hasCriticalThreats 
-            ? 'bg-gradient-to-br from-amber-500 to-amber-600 border-amber-300' 
-            : 'bg-gradient-to-br from-amber-400 to-amber-500 border-amber-200'} 
-          ${selected ? 'ring-2 ring-amber-300 ring-offset-2 ring-offset-white border-white' : 'border border-opacity-30'} 
-          shadow-md transition-all duration-200 group-hover:shadow-lg group-hover:scale-105`}
+        className={`w-24 h-16 flex items-center justify-center 
+          bg-white
+          ${selected ? 'ring-2 ring-black' : ''}`}
+        style={{ 
+          position: 'relative',
+          background: 'white !important', 
+          backgroundImage: 'none !important',
+          backgroundColor: 'white !important'
+        }}
       >
-        <Key className="h-7 w-7 text-white" />
-      </div>
-      
-      {/* Label below */}
-      <div className="mt-2 px-2 py-1 bg-white/90 rounded-md text-xs font-medium max-w-[120px] text-center text-gray-700 break-words shadow-sm border border-gray-100">
-        {data.label}
-      </div>
-      
-      {/* Threat indicator with tooltip */}
-      {threatCount > 0 && (
-        <div className={`absolute -top-1 -right-1 w-5 h-5 rounded-full flex items-center justify-center text-white text-xs font-bold border border-white shadow-sm
-          ${hasCriticalThreats ? 'bg-gradient-to-r from-red-500 to-red-600 pulse-animation' : 'bg-gradient-to-r from-amber-500 to-amber-600'}`}
-          title={`${threatCount} security ${threatCount === 1 ? 'issue' : 'issues'}`}
-        >
-          {threatCount}
+        {/* Only top and bottom borders */}
+        <div className="absolute top-0 left-0 right-0 h-[2px] bg-black"></div>
+        <div className="absolute bottom-0 left-0 right-0 h-[2px] bg-black"></div>
+        
+        {/* Label in the middle */}
+        <div className="text-xs font-semibold text-center max-w-[80px] break-words">
+          {data.label}
         </div>
-      )}
+        
+        {/* Threat indicators */}
+        {hasThreat && (
+          <div className="threat-indicator">
+            {highCount > 0 && (
+              <div className="threat-badge threat-badge-high">
+                {highCount}
+              </div>
+            )}
+            {mediumCount > 0 && (
+              <div className="threat-badge threat-badge-medium">
+                {mediumCount}
+              </div>
+            )}
+            {lowCount > 0 && (
+              <div className="threat-badge threat-badge-low">
+                {lowCount}
+              </div>
+            )}
+          </div>
+        )}
+      </div>
       
       {/* Connection handles */}
       <Handle
         id="secretInput"
         type="target"
         position={Position.Left}
-        className="!w-2 !h-2 !border-2 !border-amber-500 !bg-white"
+        className="!w-2 !h-2 !border-2 !border-black !bg-white"
       />
       <Handle
         id="secretOutput" 
         type="source"
         position={Position.Right}
-        className="!w-2 !h-2 !border-2 !border-amber-500 !bg-white"
+        className="!w-2 !h-2 !border-2 !border-black !bg-white"
       />
     </div>
   );
 };
 
-// Modern boundary node with colored zones
+// Boundary node with straight red dotted lines
 const BoundaryNode: React.FC<ProcessNodeProps> = ({ data, selected }) => {
-  // Determine boundary color based on label
-  const getBoundaryStyles = () => {
-    const label = (data.label || '').toLowerCase();
-    
-    if (label.includes('external')) {
-      return {
-        borderColor: 'border-red-400',
-        bgColor: 'bg-red-50/30',
-        textColor: 'text-red-700',
-        borderHoverColor: 'hover:border-red-500',
-        bgHoverColor: 'hover:bg-red-50/40'
-      };
-    } else if (label.includes('data')) {
-      return {
-        borderColor: 'border-green-400',
-        bgColor: 'bg-green-50/30',
-        textColor: 'text-green-700',
-        borderHoverColor: 'hover:border-green-500',
-        bgHoverColor: 'hover:bg-green-50/40'
-      };
-    } else if (label.includes('application') || label.includes('app')) {
-      return {
-        borderColor: 'border-blue-400',
-        bgColor: 'bg-blue-50/30',
-        textColor: 'text-blue-700',
-        borderHoverColor: 'hover:border-blue-500',
-        bgHoverColor: 'hover:bg-blue-50/40'
-      };
-    } else {
-      // Default styling
-      return {
-        borderColor: selected ? 'border-blue-400' : 'border-gray-300',
-        bgColor: 'bg-gray-50/30',
-        textColor: 'text-gray-600',
-        borderHoverColor: 'hover:border-gray-400',
-        bgHoverColor: 'hover:bg-gray-50/40'
-      };
-    }
+  const getBoundaryStyles = (): React.CSSProperties => {
+    return {
+      width: '100%',
+      height: '100%',
+      borderRadius: '0',
+      border: '2px dotted red',
+      backgroundColor: 'transparent',
+      display: 'flex',
+      flexDirection: 'column' as const,
+      alignItems: 'center',
+      justifyContent: 'flex-start',
+      position: 'relative',
+      boxSizing: 'border-box' as const,
+      padding: '10px'
+    };
   };
-  
-  const styles = getBoundaryStyles();
-  
+
   return (
-    <div className={`relative w-full h-full ${styles.borderColor} border-2 border-dashed rounded-lg ${styles.bgColor} backdrop-blur-sm transition-all duration-200 ${styles.borderHoverColor} ${styles.bgHoverColor}`}>
-      <div className={`absolute -top-3 left-5 bg-white px-3 py-1 text-xs font-semibold ${styles.textColor} uppercase tracking-wider shadow-sm rounded-md border border-gray-200 z-20`}>
+    <div style={getBoundaryStyles()}>
+      <div className="absolute top-0 left-10 transform -translate-y-1/2 bg-white px-2 py-0.5 text-xs font-semibold text-black border border-black">
         {data.label}
       </div>
     </div>
@@ -439,10 +647,25 @@ const ThreatPanel: React.FC<{
   selectedThreat: ThreatItem | null,
   selectedNode: Node | null
 }> = ({ threats, onThreatSelect, selectedThreat, selectedNode }) => {
-  const [isOpen, setIsOpen] = useState(true);
-  const [filter, setFilter] = useState<'ALL' | 'HIGH' | 'MEDIUM' | 'LOW' | 'NODE'>('ALL');
-  const [searchTerm, setSearchTerm] = useState('');
+  const [searchTerm, setSearchTerm] = useState("");
+  const [severityFilter, setSeverityFilter] = useState<string | null>('ALL'); // Set default to 'ALL'
   const [isMinimized, setIsMinimized] = useState(false);
+  
+  // Check if a threat targets a specific node
+  const threatTargetsNode = (threat, nodeId) => {
+    if (!threat || !nodeId) return false;
+    
+    if (threat.target_elements && Array.isArray(threat.target_elements) && threat.target_elements.length > 0) {
+      return threat.target_elements.includes(nodeId);
+    }
+    
+    // Fallback: Check if threat description mentions the node ID
+    if (threat.description && typeof threat.description === 'string') {
+      return threat.description.toLowerCase().includes(nodeId.toLowerCase());
+    }
+    
+    return false;
+  };
   
   if (!threats || threats.length === 0) return null;
   
@@ -459,23 +682,15 @@ const ThreatPanel: React.FC<{
   const mediumThreats = sortedThreats.filter(t => (t.severity || 'MEDIUM').toUpperCase() === 'MEDIUM');
   const lowThreats = sortedThreats.filter(t => (t.severity || 'MEDIUM').toUpperCase() === 'LOW');
   
-  // Helper function to check if a threat targets a node
-  const threatTargetsNode = (threat: ThreatItem, nodeId: string): boolean => {
-    if (threat.target_elements && Array.isArray(threat.target_elements)) {
-      return threat.target_elements.includes(nodeId);
-    }
-    return false;
-  };
-  
   // Filter threats based on current filter and search term
   const filteredThreats = sortedThreats.filter(threat => {
     // Apply severity filter
-    if (filter !== 'ALL' && filter !== 'NODE' && (threat.severity || 'MEDIUM').toUpperCase() !== filter) {
+    if (severityFilter !== null && severityFilter !== 'ALL' && (threat.severity || 'MEDIUM').toUpperCase() !== severityFilter) {
       return false;
     }
     
     // Apply node filter if selected
-    if (filter === 'NODE') {
+    if (severityFilter === 'NODE') {
       if (!selectedNode || !threatTargetsNode(threat, selectedNode.id)) {
         return false;
       }
@@ -522,6 +737,12 @@ const ThreatPanel: React.FC<{
     );
   }
   
+  // Add a handler to select a threat and trigger zooming
+  const handleThreatCardSelect = (threat: ThreatItem) => {
+    // Call the parent handler which will handle zooming
+    onThreatSelect(selectedThreat?.id === threat.id ? null : threat);
+  };
+  
   return (
     <div className="absolute top-2 left-2 z-10 bg-white rounded-lg shadow-md overflow-hidden w-80 border border-gray-100 transition-all duration-300 hover:shadow-xl threat-panel-transition" style={{animation: 'slideIn 0.3s forwards'}}>
       <div 
@@ -529,11 +750,11 @@ const ThreatPanel: React.FC<{
       >
         <div 
           className="text-xs font-bold flex items-center cursor-pointer"
-          onClick={() => setIsOpen(!isOpen)}
+          onClick={() => setIsMinimized(true)}
         >
           <AlertTriangle className="w-3.5 h-3.5 mr-1.5 text-red-600" />
           Security Issues ({threats.length})
-          {isOpen ? 
+          {isMinimized ? 
             <ChevronUp className="w-4 h-4 ml-1 text-gray-400" /> : 
             <ChevronDown className="w-4 h-4 ml-1 text-gray-400" />
           }
@@ -549,148 +770,131 @@ const ThreatPanel: React.FC<{
         </div>
       </div>
       
-      {isOpen && (
-        <>
-          {/* Search and filter controls */}
-          <div className="p-2 border-b border-gray-100 bg-gray-50">
-            <div className="flex items-center mb-2">
-              <div className="relative flex-1">
-                <input
-                  type="text"
-                  placeholder="Search threats..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full text-xs py-1.5 pl-6 pr-2 border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
-                />
-                <div className="absolute left-2 top-1/2 transform -translate-y-1/2 text-gray-400">
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                  </svg>
-                </div>
-                {searchTerm && (
-                  <button 
-                    className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                    onClick={() => setSearchTerm('')}
-                  >
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                    </svg>
-                  </button>
-                )}
-              </div>
+      {/* Search and filter controls */}
+      <div className="p-2 border-b border-gray-100 bg-gray-50">
+        <div className="flex items-center mb-2">
+          <div className="relative flex-1">
+            <input
+              type="text"
+              placeholder="Search threats..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full text-xs py-1.5 pl-6 pr-2 border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+            />
+            <div className="absolute left-2 top-1/2 transform -translate-y-1/2 text-gray-400">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
             </div>
-            
-            <div className="flex -mx-0.5 mb-1">
+            {searchTerm && (
               <button 
-                className={`text-[10px] flex-1 mx-0.5 py-1 rounded-md transition-colors ${filter === 'ALL' ? 'bg-gray-200 text-gray-800 font-medium' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
-                onClick={() => setFilter('ALL')}
+                className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                onClick={() => setSearchTerm('')}
               >
-                All
-              </button>
-              <button 
-                className={`text-[10px] flex-1 mx-0.5 py-1 rounded-md transition-colors ${filter === 'HIGH' ? 'bg-red-100 text-red-800 font-medium' : 'bg-gray-100 text-gray-600 hover:bg-red-50'}`}
-                onClick={() => setFilter('HIGH')}
-              >
-                <span className="flex items-center justify-center">
-                  <span className="w-1.5 h-1.5 bg-red-500 rounded-full mr-1"></span>
-                  High ({highThreats.length})
-                </span>
-              </button>
-              <button 
-                className={`text-[10px] flex-1 mx-0.5 py-1 rounded-md transition-colors ${filter === 'MEDIUM' ? 'bg-amber-100 text-amber-800 font-medium' : 'bg-gray-100 text-gray-600 hover:bg-amber-50'}`}
-                onClick={() => setFilter('MEDIUM')}
-              >
-                <span className="flex items-center justify-center">
-                  <span className="w-1.5 h-1.5 bg-amber-500 rounded-full mr-1"></span>
-                  Medium ({mediumThreats.length})
-                </span>
-              </button>
-              <button 
-                className={`text-[10px] flex-1 mx-0.5 py-1 rounded-md transition-colors ${filter === 'LOW' ? 'bg-blue-100 text-blue-800 font-medium' : 'bg-gray-100 text-gray-600 hover:bg-blue-50'}`}
-                onClick={() => setFilter('LOW')}
-              >
-                <span className="flex items-center justify-center">
-                  <span className="w-1.5 h-1.5 bg-blue-500 rounded-full mr-1"></span>
-                  Low ({lowThreats.length})
-                </span>
-              </button>
-            </div>
-            
-            {/* Node filter - only shown when a node is selected */}
-            {selectedNode && (
-              <button 
-                className={`text-[10px] w-full py-1 rounded-md transition-colors mt-1 flex items-center justify-center ${filter === 'NODE' ? 'bg-indigo-100 text-indigo-800 font-medium' : 'bg-gray-100 text-gray-600 hover:bg-indigo-50'}`}
-                onClick={() => setFilter(filter === 'NODE' ? 'ALL' : 'NODE')}
-              >
-                <div className="p-0.5 rounded-full bg-indigo-100 mr-1">
-                  <div className={`w-2 h-2 rounded-full ${filter === 'NODE' ? 'bg-indigo-500' : 'bg-gray-400'}`}></div>
-                </div>
-                {filter === 'NODE' ? (
-                  <span>Show All Threats</span>
-                ) : (
-                  <span>
-                    Filter by Selected Node: 
-                    <span className="font-medium ml-1">
-                      {selectedNodeThreatsCount} Threat{selectedNodeThreatsCount !== 1 ? 's' : ''}
-                    </span>
-                  </span>
-                )}
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
               </button>
             )}
           </div>
-          
-          {/* Threat list content - max height to avoid overlapping with chat toggle */}
-          <div className="p-3 max-h-80 overflow-y-auto overflow-x-hidden">
-            {filteredThreats.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-6 text-gray-500">
-                <AlertCircle className="h-8 w-8 mb-2 text-gray-300" />
-                <p className="text-xs">No threats match your criteria</p>
-                {searchTerm && (
-                  <button 
-                    className="mt-2 text-[10px] text-blue-600 hover:text-blue-800"
-                    onClick={() => setSearchTerm('')}
-                  >
-                    Clear search
-                  </button>
-                )}
-                {filter !== 'ALL' && (
-                  <button 
-                    className="mt-1 text-[10px] text-blue-600 hover:text-blue-800"
-                    onClick={() => setFilter('ALL')}
-                  >
-                    Show all severities
-                  </button>
-                )}
-              </div>
+        </div>
+        
+        <div className="flex -mx-0.5 mb-1">
+          <button 
+            className={`text-[10px] flex-1 mx-0.5 py-1 rounded-md transition-colors ${severityFilter === 'ALL' ? 'bg-gray-200 text-gray-800 font-medium' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
+            onClick={() => setSeverityFilter('ALL')}
+          >
+            All
+          </button>
+          <button 
+            className={`text-[10px] flex-1 mx-0.5 py-1 rounded-md transition-colors ${severityFilter === 'HIGH' ? 'bg-red-100 text-red-800 font-medium' : 'bg-gray-100 text-gray-600 hover:bg-red-50'}`}
+            onClick={() => setSeverityFilter('HIGH')}
+          >
+            <span className="flex items-center justify-center">
+              <span className="w-1.5 h-1.5 bg-red-500 rounded-full mr-1"></span>
+              High ({highThreats.length})
+            </span>
+          </button>
+          <button 
+            className={`text-[10px] flex-1 mx-0.5 py-1 rounded-md transition-colors ${severityFilter === 'MEDIUM' ? 'bg-amber-100 text-amber-800 font-medium' : 'bg-gray-100 text-gray-600 hover:bg-amber-50'}`}
+            onClick={() => setSeverityFilter('MEDIUM')}
+          >
+            <span className="flex items-center justify-center">
+              <span className="w-1.5 h-1.5 bg-amber-500 rounded-full mr-1"></span>
+              Medium ({mediumThreats.length})
+            </span>
+          </button>
+          <button 
+            className={`text-[10px] flex-1 mx-0.5 py-1 rounded-md transition-colors ${severityFilter === 'LOW' ? 'bg-blue-100 text-blue-800 font-medium' : 'bg-gray-100 text-gray-600 hover:bg-blue-50'}`}
+            onClick={() => setSeverityFilter('LOW')}
+          >
+            <span className="flex items-center justify-center">
+              <span className="w-1.5 h-1.5 bg-blue-500 rounded-full mr-1"></span>
+              Low ({lowThreats.length})
+            </span>
+          </button>
+        </div>
+        
+        {/* Node filter - only shown when a node is selected */}
+        {selectedNode && (
+          <button 
+            className={`text-[10px] w-full py-1 rounded-md transition-colors mt-1 flex items-center justify-center ${severityFilter === 'NODE' ? 'bg-indigo-100 text-indigo-800 font-medium' : 'bg-gray-100 text-gray-600 hover:bg-indigo-50'}`}
+            onClick={() => setSeverityFilter(severityFilter === 'NODE' ? 'ALL' : 'NODE')}
+          >
+            <div className="p-0.5 rounded-full bg-indigo-100 mr-1">
+              <div className={`w-2 h-2 rounded-full ${severityFilter === 'NODE' ? 'bg-indigo-500' : 'bg-gray-400'}`}></div>
+            </div>
+            {severityFilter === 'NODE' ? (
+              <span>Show All Threats</span>
             ) : (
-              <div className="space-y-3">
-                {filteredThreats.map(threat => (
-                  <ThreatCard 
-                    key={threat.id} 
-                    threat={threat} 
-                    severity={threat.severity || 'MEDIUM'}
-                    isSelected={selectedThreat?.id === threat.id}
-                    onSelect={() => {
-                      if (selectedThreat && selectedThreat.id === threat.id) {
-                        onThreatSelect(null);
-                      } else {
-                        onThreatSelect(threat);
-                      }
-                    }}
-                  />
-                ))}
-                
-                {/* Show count of displayed threats vs total */}
-                {filteredThreats.length < threats.length && (
-                  <div className="text-[10px] text-gray-500 text-center pt-1 border-t border-gray-100">
-                    Showing {filteredThreats.length} of {threats.length} threats
-                  </div>
-                )}
-              </div>
+              <span>
+                Filter by Selected Node: 
+                <span className="font-medium ml-1">
+                  {selectedNodeThreatsCount} Threat{selectedNodeThreatsCount !== 1 ? 's' : ''}
+                </span>
+              </span>
+            )}
+          </button>
+        )}
+      </div>
+      
+      {/* Threat list content - max height to avoid overlapping with chat toggle */}
+      <div className="p-3 max-h-80 overflow-y-auto overflow-x-hidden">
+        {filteredThreats.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-6 text-gray-500">
+            <AlertCircle className="h-8 w-8 mb-2 text-gray-300" />
+            <p className="text-xs">No threats match your criteria</p>
+            {searchTerm && (
+              <button 
+                className="mt-2 text-[10px] text-blue-600 hover:text-blue-800"
+                onClick={() => setSearchTerm('')}
+              >
+                Clear search
+              </button>
+            )}
+            {severityFilter !== 'ALL' && (
+              <button 
+                className="mt-1 text-[10px] text-blue-600 hover:text-blue-800"
+                onClick={() => setSeverityFilter('ALL')}
+              >
+                Show all severities
+              </button>
             )}
           </div>
-        </>
-      )}
+        ) : (
+          <div className="space-y-2">
+            {filteredThreats.map(threat => (
+              <ThreatCard 
+                key={threat.id} 
+                threat={threat} 
+                severity={threat.severity || 'MEDIUM'} 
+                isSelected={selectedThreat?.id === threat.id}
+                onSelect={() => handleThreatCardSelect(threat)}
+              />
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   );
 };
@@ -769,7 +973,7 @@ const ThreatCard: React.FC<{
   
   return (
     <div 
-      className={`text-xs rounded-md border shadow-sm ${getSeverityStyle(severity)} hover:shadow transition-all duration-200 cursor-pointer overflow-hidden threat-card-hover-effect ${isSelected ? 'ring-2 ring-blue-500 ring-offset-2' : ''}`}
+      className={`relative overflow-hidden rounded-md border ${isSelected ? getSeverityStyle(severity) : 'border-gray-200 bg-white'} shadow-sm hover:shadow transition duration-200 cursor-pointer threat-card-hover-effect`}
       onClick={onSelect}
     >
       <div className="px-2.5 py-2 flex items-start">
@@ -854,11 +1058,19 @@ const NodeDetailPanel: React.FC<{
 
   if (!selectedNode) return null;
   
-  // Helper function to check if a threat targets a node
-  const threatTargetsNode = (threat: ThreatItem, nodeId: string): boolean => {
-    if (threat.target_elements && Array.isArray(threat.target_elements)) {
+  // Helper function to check if a threat targets a specific node
+  const threatTargetsNode = (threat, nodeId) => {
+    if (!threat || !nodeId) return false;
+    
+    if (threat.target_elements && Array.isArray(threat.target_elements) && threat.target_elements.length > 0) {
       return threat.target_elements.includes(nodeId);
     }
+    
+    // Fallback: Check if threat description mentions the node ID
+    if (threat.description && typeof threat.description === 'string') {
+      return threat.description.toLowerCase().includes(nodeId.toLowerCase());
+    }
+    
     return false;
   };
   
@@ -1048,45 +1260,34 @@ function getNodeIcon(nodeType: string, size = 4) {
 
 // Helper function to get the zone color for a node based on boundary
 const getZoneColorForNode = (node, nodes, zones) => {
-  if (!node || !zones) return { color: 'rgba(209, 213, 219, 0.05)', zone: 'other' };
+  if (!node || !zones) return { color: 'transparent', zone: 'other' };
   
   // Check if zones is an array we can iterate through
   if (Array.isArray(zones)) {
     // Find what zone the node belongs to based on the boundary elements
     for (const zone of zones) {
       if (zone.element_ids && zone.element_ids.includes(node.id)) {
-        if (zone.label.toLowerCase().includes('external')) {
-          return { color: 'rgba(239, 68, 68, 0.1)', zone: 'external' };
-        } else if (zone.label.toLowerCase().includes('data')) {
-          return { color: 'rgba(16, 185, 129, 0.1)', zone: 'data' };
-        } else if (zone.label.toLowerCase().includes('application')) {
-          return { color: 'rgba(59, 130, 246, 0.1)', zone: 'application' };
-        }
+        // Return plain white background with no transparency for all zone types
+        return { color: 'transparent', zone: zone.label.toLowerCase() };
       }
     }
   } else if (typeof zones === 'object') {
     // Handle case where zones is an object with zone properties
-    // Check if node is in any specific zone based on zones object properties
+    // Return transparent backgrounds for all zones
     if (zones.external && isNodeInZone(node, zones.external)) {
-      return { color: 'rgba(239, 68, 68, 0.1)', zone: 'external' };
+      return { color: 'transparent', zone: 'external' };
     } else if (zones.data && isNodeInZone(node, zones.data)) {
-      return { color: 'rgba(16, 185, 129, 0.1)', zone: 'data' };
+      return { color: 'transparent', zone: 'data' };
     } else if (zones.application && isNodeInZone(node, zones.application)) {
-      return { color: 'rgba(59, 130, 246, 0.1)', zone: 'application' };
+      return { color: 'transparent', zone: 'application' };
     }
   }
   
-  // If not found in any zone, determine by node type
-  if (node.type === 'externalNode') {
-    return { color: 'rgba(124, 58, 237, 0.1)', zone: 'external' };
-  } else if (node.type === 'datastoreNode') {
-    return { color: 'rgba(16, 185, 129, 0.1)', zone: 'data' };
-  } else {
-    return {
-      color: 'rgba(209, 213, 219, 0.05)', // gray default
-      zone: 'other'
-    };
-  }
+  // If not found in any zone, return transparent for all node types
+  return {
+    color: 'transparent',
+    zone: 'other'
+  };
 };
 
 // Helper function to check if a node is within a zone area
@@ -1112,7 +1313,7 @@ const DFDVisualization: React.FC<DFDVisualizationProps> = ({ dfdData, reactFlowI
   // Track toolbar open/closed state
   const [isToolbarOpen, setIsToolbarOpen] = useState(false);
   const toolbarOpenRef = useRef(isToolbarOpen);
-
+  
   // Add a style tag to globally hide all edge labels and fix handle styles
   React.useEffect(() => {
     const styleTag = document.createElement('style');
@@ -1129,10 +1330,11 @@ const DFDVisualization: React.FC<DFDVisualizationProps> = ({ dfdData, reactFlowI
       }
       
       .react-flow__handle {
-        width: 8px !important;
-        height: 8px !important;
+        width: 6px !important;
+        height: 6px !important;
         border-radius: 50% !important;
         background-color: white !important;
+        border: 2px solid black !important;
       }
       
       .react-flow__node {
@@ -1141,16 +1343,95 @@ const DFDVisualization: React.FC<DFDVisualizationProps> = ({ dfdData, reactFlowI
         box-shadow: none !important;
       }
       
+      .react-flow__pane {
+        background-color: white !important;
+        background-image: none !important;
+      }
+      
+      .react-flow__node > div {
+        background: white !important;
+        background-image: none !important;
+        background-color: white !important;
+      }
+      
+      .react-flow__edge path {
+        stroke: black !important;
+        stroke-width: 1.5px !important;
+      }
+      
+      .react-flow__edge-path {
+        stroke: black !important;
+        stroke-width: 1.5px !important;
+      }
+      
+      .react-flow__edge-text {
+        fill: black !important;
+        font-weight: 600 !important;
+      }
+      
+      .react-flow__edge-textbg {
+        fill: white !important;
+      }
+      
+      /* Threat indicator badges */
+      .threat-indicator {
+        position: absolute;
+        top: -8px;
+        right: -8px;
+        display: flex;
+        align-items: center;
+        z-index: 30;
+        filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.25));
+      }
+      
+      .threat-badge {
+        width: 18px;
+        height: 18px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 10px;
+        font-weight: bold;
+        color: white;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        margin-left: -5px;
+        border: 1px solid rgba(255, 255, 255, 0.8);
+        transition: transform 0.2s, box-shadow 0.2s;
+        cursor: pointer;
+      }
+      
+      .threat-badge:hover {
+        transform: scale(1.2);
+        box-shadow: 0 3px 6px rgba(0, 0, 0, 0.4);
+      }
+      
+      .threat-badge-high {
+        background-color: #ef4444;
+        z-index: 30;
+        animation: pulse 2s infinite;
+      }
+      
+      .threat-badge-medium {
+        background-color: #f97316;
+        z-index: 20;
+      }
+      
+      .threat-badge-low {
+        background-color: #3b82f6;
+        z-index: 10;
+      }
+      
       /* Pulsing animation for critical threats */
       @keyframes pulse {
         0% {
-          box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7);
+          box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.7);
         }
         70% {
-          box-shadow: 0 0 0 6px rgba(239, 68, 68, 0);
+          box-shadow: 0 0 0 8px rgba(220, 38, 38, 0);
         }
         100% {
-          box-shadow: 0 0 0 0 rgba(239, 68, 68, 0);
+          box-shadow: 0 0 0 0 rgba(220, 38, 38, 0);
         }
       }
       
@@ -1218,32 +1499,244 @@ const DFDVisualization: React.FC<DFDVisualizationProps> = ({ dfdData, reactFlowI
   }
 
   // Extract data from dfdData
-  const { nodes: dfdNodes = [], edges: dfdEdges = [], boundaries = [], threats = [] } = dfdData;
+  let { nodes: dfdNodes = [], edges: dfdEdges = [], boundaries = [], threats = [] } = dfdData;
+  
+  // Add sample threats for testing if no threats are present
+  if (threats.length === 0 && dfdNodes.length > 0) {
+    const criticalNodes = [
+      'primary_db', 
+      'auth_server', 
+      'web_portal_servers', 
+      'transaction_processor',
+      'secure_data_vault'
+    ];
+    
+    const sampleThreats = [
+      {
+        id: "THREAT-1",
+        description: "SQL Injection vulnerability in database access",
+        mitigation: "Use parameterized queries and input validation",
+        severity: "HIGH",
+        target_elements: ["primary_db", "db_firewall"],
+        properties: {
+          threat_type: "Injection",
+          attack_vector: "Web application",
+          impact: "Data theft and corruption"
+        }
+      },
+      {
+        id: "THREAT-2",
+        description: "Insufficient authentication controls on admin interface",
+        mitigation: "Implement MFA and rate limiting",
+        severity: "HIGH",
+        target_elements: ["admin_jump_server", "auth_server"],
+        properties: {
+          threat_type: "Broken Authentication",
+          attack_vector: "Admin portal",
+          impact: "Unauthorized access to administration"
+        }
+      },
+      {
+        id: "THREAT-3",
+        description: "Unencrypted data in transit between application and database",
+        mitigation: "Implement TLS for all internal communications",
+        severity: "MEDIUM",
+        target_elements: ["app_firewall", "transaction_processor", "db_firewall"],
+        properties: {
+          threat_type: "Sensitive Data Exposure",
+          attack_vector: "Network sniffing",
+          impact: "Data theft"
+        }
+      }
+    ];
+    
+    // Filter sample threats to include only those targeting nodes that exist in the diagram
+    const matchingThreats = sampleThreats.filter(threat => 
+      threat.target_elements?.some(targetId => 
+        dfdNodes.some(node => node.id === targetId)
+      )
+    );
+    
+    if (matchingThreats.length > 0) {
+      threats = matchingThreats;
+    } else {
+      // If no threats match existing nodes, create some based on the nodes we have
+      // Find nodes that might be critical based on id patterns
+      const potentialTargets = dfdNodes
+        .filter(node => 
+          criticalNodes.some(criticalPattern => 
+            node.id.toLowerCase().includes(criticalPattern.toLowerCase())
+          )
+        )
+        .map(node => node.id);
+      
+      // If we found potential targets, create threats for them
+      if (potentialTargets.length > 0) {
+        threats = [
+          {
+            id: "THREAT-AUTO-1",
+            description: `Security vulnerability in ${potentialTargets[0]}`,
+            mitigation: "Implement security controls and regular security testing",
+            severity: "HIGH",
+            target_elements: [potentialTargets[0]],
+            properties: {
+              threat_type: "Vulnerability",
+              attack_vector: "Application layer",
+              impact: "System compromise"
+            }
+          }
+        ];
+        
+        // Add a second threat if we have more targets
+        if (potentialTargets.length > 1) {
+          threats.push({
+            id: "THREAT-AUTO-2",
+            description: `Insecure data handling in ${potentialTargets[1]}`,
+            mitigation: "Implement data encryption and access controls",
+            severity: "MEDIUM",
+            target_elements: [potentialTargets[1]],
+            properties: {
+              threat_type: "Data Exposure",
+              attack_vector: "Application layer",
+              impact: "Data theft"
+            }
+          });
+        }
+      }
+    }
+  }
 
   // Generate nodes with modern styling
   const initialNodes = useMemo(() => {
     const result = [];
     
-    // First add boundaries for z-index ordering
-    boundaries.forEach((boundary: any, index) => {
-      const boundaryId = boundary.id || `boundary_${index}`;
+    // First, create a map of boundaries and their dimensions
+    const boundaryMap = {};
+    const boundaryPositions = {};
+    const elementToBoundaryMap = {};
+    
+    // Get width based on boundary label to ensure proper spacing
+    const getBoundaryWidth = (label) => {
+      // Assign appropriate width based on boundary type
+      if (label.toLowerCase().includes('dmz')) {
+        return 600;
+      } else if (label.toLowerCase().includes('data')) {
+        return 500;
+      } else if (label.toLowerCase().includes('internal')) {
+        return 550;
+      } else if (label.toLowerCase().includes('monitoring') || label.toLowerCase().includes('logging')) {
+        return 400;
+      } else if (label.toLowerCase().includes('admin')) {
+        return 300;
+      } else if (label.toLowerCase().includes('external')) {
+        return 350;
+      }
+      return 500; // Default width
+    };
+    
+    // Get height based on number of elements in boundary
+    const getBoundaryHeight = (elementCount) => {
+      const baseHeight = 150;
+      const heightPerElement = 60;
+      return Math.max(baseHeight, elementCount * heightPerElement);
+    };
+    
+    // Map elements to their respective boundaries
+    boundaries.forEach((boundary) => {
+      boundaryMap[boundary.id] = boundary;
+      
+      // Map each element to its boundary for easy lookup
+      if (boundary.element_ids) {
+        boundary.element_ids.forEach(elementId => {
+          elementToBoundaryMap[elementId] = boundary.id;
+        });
+      }
+    });
+    
+    // Calculate boundary positions
+    let xOffset = 50;
+    const yBase = 50;
+    
+    // First place external, DMZ, internal, and data boundaries from left to right
+    const mainBoundaryOrder = ['external', 'dmz', 'internal', 'data'];
+    mainBoundaryOrder.forEach(boundaryType => {
+      const matchingBoundaries = boundaries.filter(b => 
+        b.label.toLowerCase().includes(boundaryType));
+      
+      matchingBoundaries.forEach(boundary => {
+        const width = getBoundaryWidth(boundary.label);
+        const height = getBoundaryHeight(boundary.element_ids?.length || 0);
+        
+        // Use position from backend if available, otherwise calculate
+        const defaultPosition = { x: xOffset, y: yBase };
+        const position = boundary.properties?.position ? 
+          { 
+            x: (boundary.properties.position as any).x || defaultPosition.x, 
+            y: (boundary.properties.position as any).y || defaultPosition.y 
+          } : 
+          defaultPosition;
+        
+        boundaryPositions[boundary.id] = {
+          x: position.x,
+          y: position.y,
+          width,
+          height
+        };
+        
+        xOffset += width + 50; // Add gap between boundaries
+      });
+    });
+    
+    // Then place other boundaries (monitoring, admin) below
+    const otherBoundaries = boundaries.filter(b => 
+      !mainBoundaryOrder.some(type => b.label.toLowerCase().includes(type)));
+    
+    xOffset = 50;
+    const yOffset = yBase + 500; // Place below the main boundaries
+    
+    otherBoundaries.forEach(boundary => {
+      const width = getBoundaryWidth(boundary.label);
+      const height = getBoundaryHeight(boundary.element_ids?.length || 0);
+      
+      // Use position from backend if available, otherwise calculate
+      const defaultPosition = { x: xOffset, y: yOffset };
+      const position = boundary.properties?.position ? 
+        { 
+          x: (boundary.properties.position as any).x || defaultPosition.x, 
+          y: (boundary.properties.position as any).y || defaultPosition.y 
+        } : 
+        defaultPosition;
+      
+      boundaryPositions[boundary.id] = {
+        x: position.x,
+        y: position.y,
+        width,
+        height
+      };
+      
+      xOffset += width + 50; // Add gap between boundaries
+    });
+    
+    // Add boundary nodes
+    boundaries.forEach((boundary, index) => {
+      const boundaryId = boundary.id;
       const elementIds = boundary.element_ids || [];
       const label = boundary.label || `Boundary ${index + 1}`;
       
       if (elementIds.length === 0) return;
       
-      const position = boundary.properties?.position || {
-        x: 100 + index * 200,
-        y: 100 + index * 100
-      };
+      const position = boundaryPositions[boundaryId];
       
       result.push({
         id: `boundary-${boundaryId}`,
         type: 'boundaryNode',
-        position: position,
+        position: { 
+          x: position.x, 
+          y: position.y 
+        },
         style: { 
-          width: 600, 
-          height: 400,
+          width: position.width, 
+          height: position.height,
           zIndex: -1
         },
         data: {
@@ -1254,7 +1747,7 @@ const DFDVisualization: React.FC<DFDVisualizationProps> = ({ dfdData, reactFlowI
     });
     
     // Helper function to determine node type based on string matching
-    const determineNodeType = (nodeId: string, nodeType: string) => {
+    const determineNodeType = (nodeId, nodeType) => {
       const lowerNodeId = nodeId.toLowerCase();
       const lowerNodeType = nodeType.toLowerCase();
       
@@ -1297,25 +1790,99 @@ const DFDVisualization: React.FC<DFDVisualizationProps> = ({ dfdData, reactFlowI
       return 'processNode';
     };
     
-    // Add other nodes with appropriate types
-    dfdNodes.forEach((node, index) => {
-      // Determine the best node type based on ID and type
+    // Helper function to check if a threat targets a node
+    const threatTargetsNode = (threat, nodeId) => {
+      if (!threat || !nodeId) return false;
+      
+      if (threat.target_elements && Array.isArray(threat.target_elements) && threat.target_elements.length > 0) {
+        return threat.target_elements.includes(nodeId);
+      }
+      
+      // Fallback: Check if threat description mentions the node ID
+      if (threat.description && typeof threat.description === 'string') {
+        return threat.description.toLowerCase().includes(nodeId.toLowerCase());
+      }
+      
+      return false;
+    };
+    
+    // Create a map to organize nodes by their boundary
+    const boundaryToNodesMap = {};
+    
+    // First, group nodes by their boundary
+    dfdNodes.forEach((node) => {
+      const boundaryId = elementToBoundaryMap[node.id];
+      if (!boundaryToNodesMap[boundaryId]) {
+        boundaryToNodesMap[boundaryId] = [];
+      }
+      boundaryToNodesMap[boundaryId].push(node);
+    });
+    
+    // Now add nodes, arranged by their boundary
+    Object.keys(boundaryToNodesMap).forEach((boundaryId) => {
+      const nodesInBoundary = boundaryToNodesMap[boundaryId];
+      const boundaryPosition = boundaryPositions[boundaryId];
+      
+      if (!boundaryPosition) return;
+      
+      // Calculate layout within the boundary
+      const nodeSpacingX = boundaryPosition.width / (nodesInBoundary.length + 1);
+      const nodeSpacingY = boundaryPosition.height / Math.ceil(nodesInBoundary.length / 2);
+      
+      nodesInBoundary.forEach((node, nodeIndex) => {
+        // Determine node type
+        const type = determineNodeType(node.id, node.type || '');
+        
+        // Find threats targeting this node
+        const nodeThreats = threats.filter(t => threatTargetsNode(t, node.id));
+        
+        // Calculate position within boundary
+        let xPos, yPos;
+        
+        // If fewer than 5 nodes, place them in a single row
+        if (nodesInBoundary.length < 5) {
+          xPos = boundaryPosition.x + nodeSpacingX * (nodeIndex + 1);
+          yPos = boundaryPosition.y + boundaryPosition.height / 2;
+        } else {
+          // Arrange in 2 rows for more nodes
+          const row = Math.floor(nodeIndex / Math.ceil(nodesInBoundary.length / 2));
+          const col = nodeIndex % Math.ceil(nodesInBoundary.length / 2);
+          
+          xPos = boundaryPosition.x + (col + 1) * (boundaryPosition.width / (Math.ceil(nodesInBoundary.length / 2) + 1));
+          yPos = boundaryPosition.y + (row + 1) * (boundaryPosition.height / 3);
+        }
+        
+        // Add the node to the result
+        result.push({
+          id: node.id,
+          type,
+          sourcePosition: Position.Right,
+          targetPosition: Position.Left,
+          position: { x: xPos, y: yPos },
+          data: {
+            label: node.label,
+            description: node.properties?.description || '',
+            nodeType: node.type,
+            threats: nodeThreats,
+            threatCount: nodeThreats.length
+          }
+        });
+      });
+    });
+    
+    // Process any nodes not assigned to a boundary
+    const unassignedNodes = dfdNodes.filter(node => !elementToBoundaryMap[node.id]);
+    
+    unassignedNodes.forEach((node, index) => {
+      // Determine node type
       const type = determineNodeType(node.id, node.type || '');
       
-      // Helper function to check if a threat targets a node
-      const threatTargetsNode = (threat: ThreatItem, nodeId: string): boolean => {
-        if (threat.target_elements && threat.target_elements.length > 0) {
-          return threat.target_elements.includes(nodeId);
-        }
-        return false;
-      };
-      
-      // Filter threats targeting this node
+      // Find threats targeting this node
       const nodeThreats = threats.filter(t => threatTargetsNode(t, node.id));
       
-      // Place nodes in a grid layout initially
-      const xPos = 200 + (index % 3) * 250;
-      const yPos = 200 + Math.floor(index / 3) * 150;
+      // Place unassigned nodes at the bottom
+      const xPos = 100 + (index % 5) * 200;
+      const yPos = yOffset + 300;
       
       result.push({
         id: node.id,
@@ -1576,29 +2143,29 @@ const DFDVisualization: React.FC<DFDVisualizationProps> = ({ dfdData, reactFlowI
         !applicationBoundaries.includes(n) && 
         !dataBoundaries.includes(n));
       
-      // Layout dimensions - use wider layout for better separation
-      const width = 1600;
-      const height = 900;
+      // Layout dimensions - use much wider layout for better separation
+      const width = 2400;
+      const height = 1200;
       
       // Define margins to match the ReactFlow container
       const leftMargin = 180; // Match the marginLeft value in the ReactFlow component
       
-      // Add extra padding to leave space for the security issues panel - increased padding
+      // Add extra padding to leave space for the security issues panel
       const securityPanelWidth = 400; // Width for security issues panel
       // Start zones after the toolbar margin
-      const toolbarWidth = toolbarOpenRef.current ? 72 + 150 : 12 + 150; // Add extra padding whether toolbar is open or not
+      const toolbarWidth = toolbarOpenRef.current ? 72 + 180 : 12 + 180; // Add extra padding whether toolbar is open or not
       const startingXPos = leftMargin + toolbarWidth; // Position zones starting after the left margin and toolbar
       
-      // Zone dimensions and positioning - adjusted to avoid overlap with security panel and toolbar
+      // Zone dimensions and positioning - much wider and taller zones to prevent overlap
       const zones = {
-        external: { x: startingXPos, y: 100, width: 350, height: height - 200 },
-        application: { x: startingXPos + 400, y: 100, width: 600, height: height - 200 },
-        data: { x: startingXPos + 1050, y: 100, width: 350, height: height - 200 }
+        external: { x: startingXPos, y: 100, width: 450, height: height - 200 },
+        application: { x: startingXPos + 600, y: 100, width: 800, height: height - 200 },
+        data: { x: startingXPos + 1550, y: 100, width: 450, height: height - 200 }
       };
       
-      // Improved spacing for clarity
-      const nodeSpacingX = 120;
-      const nodeSpacingY = 140;
+      // Much larger spacing for clarity
+      const nodeSpacingX = 180;
+      const nodeSpacingY = 200;
       
       // Position boundaries first
       externalBoundaries.forEach((boundary, i) => {
@@ -1655,10 +2222,10 @@ const DFDVisualization: React.FC<DFDVisualizationProps> = ({ dfdData, reactFlowI
         if (boundaryIndex !== -1) {
           newNodes[boundaryIndex] = {
             ...newNodes[boundaryIndex],
-            position: { x: 100 + (i * 450), y: height - 250 },
+            position: { x: 100 + (i * 550), y: height - 250 },
             style: {
               ...newNodes[boundaryIndex].style,
-              width: 400,
+              width: 500,
               height: 200,
               zIndex: -10
             }
@@ -1669,18 +2236,17 @@ const DFDVisualization: React.FC<DFDVisualizationProps> = ({ dfdData, reactFlowI
       // Now position nodes within their appropriate zones
       
       // External zone nodes (external entities)
-      const externalZoneX = zones.external.x + 100;
-      const externalZoneY = zones.external.y + 80;
+      const externalZoneX = zones.external.x + 120;
+      const externalZoneY = zones.external.y + 100;
       externalNodes.forEach((node, i) => {
         const index = newNodes.findIndex(n => n.id === node.id);
         if (index !== -1) {
-          const row = Math.floor(i / 2);
-          const col = i % 2;
+          // Only 1 node per row for better spacing
           newNodes[index] = {
             ...newNodes[index],
             position: { 
-              x: externalZoneX + (col * nodeSpacingX), 
-              y: externalZoneY + (row * nodeSpacingY)
+              x: externalZoneX, 
+              y: externalZoneY + (i * nodeSpacingY)
             }
           };
         }
@@ -1691,24 +2257,23 @@ const DFDVisualization: React.FC<DFDVisualizationProps> = ({ dfdData, reactFlowI
         const index = newNodes.findIndex(n => n.id === node.id);
         if (index !== -1) {
           const effectiveIndex = i + externalNodes.length;
-          const row = Math.floor(effectiveIndex / 2);
-          const col = effectiveIndex % 2;
+          // Only 1 node per row for better spacing
           newNodes[index] = {
             ...newNodes[index],
             position: { 
-              x: externalZoneX + (col * nodeSpacingX), 
-              y: externalZoneY + (row * nodeSpacingY)
+              x: externalZoneX, 
+              y: externalZoneY + (effectiveIndex * nodeSpacingY)
             }
           };
         }
       });
       
       // Application zone nodes (process nodes, cloud services)
-      const appZoneX = zones.application.x + 80;
-      const appZoneY = zones.application.y + 80;
+      const appZoneX = zones.application.x + 120;
+      const appZoneY = zones.application.y + 100;
       
-      // Arrange process nodes in a grid within application zone
-      const maxProcessNodesPerRow = 4;
+      // Arrange process nodes in a grid within application zone - reduced nodes per row
+      const maxProcessNodesPerRow = 3;
       processNodes.forEach((node, i) => {
         const index = newNodes.findIndex(n => n.id === node.id);
         if (index !== -1) {
@@ -1724,8 +2289,8 @@ const DFDVisualization: React.FC<DFDVisualizationProps> = ({ dfdData, reactFlowI
         }
       });
       
-      // Place cloud nodes below process nodes in application zone
-      const cloudNodesY = appZoneY + (Math.ceil(processNodes.length / maxProcessNodesPerRow) * nodeSpacingY) + 50;
+      // Place cloud nodes below process nodes in application zone - with extra spacing
+      const cloudNodesY = appZoneY + (Math.ceil(processNodes.length / maxProcessNodesPerRow) * nodeSpacingY) + 100;
       cloudNodes.forEach((node, i) => {
         const index = newNodes.findIndex(n => n.id === node.id);
         if (index !== -1) {
@@ -1740,8 +2305,8 @@ const DFDVisualization: React.FC<DFDVisualizationProps> = ({ dfdData, reactFlowI
         }
       });
       
-      // Place secret nodes below cloud nodes in application zone
-      const secretNodesY = cloudNodesY + (cloudNodes.length > 0 ? nodeSpacingY : 0) + 30;
+      // Place secret nodes below cloud nodes in application zone - with extra spacing
+      const secretNodesY = cloudNodesY + (cloudNodes.length > 0 ? nodeSpacingY : 0) + 50;
       secretNodes.forEach((node, i) => {
         const index = newNodes.findIndex(n => n.id === node.id);
         if (index !== -1) {
@@ -1756,81 +2321,21 @@ const DFDVisualization: React.FC<DFDVisualizationProps> = ({ dfdData, reactFlowI
         }
       });
       
-      // Data zone nodes (datastores)
-      const dataZoneX = zones.data.x + 100;
-      const dataZoneY = zones.data.y + 80;
+      // Data zone nodes (data stores)
+      const dataZoneX = zones.data.x + 120;
+      const dataZoneY = zones.data.y + 100;
+      
+      // Position data store nodes in data zone - vertically for better spacing
       datastoreNodes.forEach((node, i) => {
         const index = newNodes.findIndex(n => n.id === node.id);
         if (index !== -1) {
-          // Arrange in a vertical column
           newNodes[index] = {
             ...newNodes[index],
             position: { 
-              x: dataZoneX + (i % 2 * nodeSpacingX), 
-              y: dataZoneY + (Math.floor(i / 2) * nodeSpacingY)
+              x: dataZoneX, 
+              y: dataZoneY + (i * nodeSpacingY)
             }
           };
-        }
-      });
-      
-      // Process specific boundaries (those that contain specific elements)
-      boundaryNodes.forEach((boundary) => {
-        const elementIds = boundary.data?.elements || [];
-        // Skip if this is a zone boundary or has no elements
-        if ((boundary.data?.label || '').toLowerCase().includes('zone') || 
-            (boundary.data?.label || '').toLowerCase().includes('external') ||
-            (boundary.data?.label || '').toLowerCase().includes('application') ||
-            (boundary.data?.label || '').toLowerCase().includes('app zone') ||
-            (boundary.data?.label || '').toLowerCase().includes('data') ||
-            elementIds.length === 0) {
-          return;
-        }
-        
-        // Find all nodes within this boundary
-        let minX = Infinity;
-        let minY = Infinity;
-        let maxX = -Infinity;
-        let maxY = -Infinity;
-        let nodesInBoundary = 0;
-        
-        newNodes.forEach(node => {
-          if (elementIds.includes(node.id) && node.type !== 'boundaryNode') {
-            nodesInBoundary++;
-            
-            // Add padding around node for calculating boundary
-            const nodeWidth = 120;
-            const nodeHeight = 120;
-            
-            minX = Math.min(minX, node.position.x - 50);
-            minY = Math.min(minY, node.position.y - 50);
-            maxX = Math.max(maxX, node.position.x + nodeWidth);
-            maxY = Math.max(maxY, node.position.y + nodeHeight);
-          }
-        });
-        
-        // Only update if we found nodes
-        if (nodesInBoundary > 0) {
-          // Add extra margin for better visibility
-          const padding = 40;
-          const width = maxX - minX + (padding * 2);
-          const height = maxY - minY + (padding * 2);
-          
-          const boundaryIndex = newNodes.findIndex(n => n.id === boundary.id);
-          if (boundaryIndex !== -1) {
-            newNodes[boundaryIndex] = {
-              ...newNodes[boundaryIndex],
-              position: { 
-                x: minX - padding, 
-                y: minY - padding
-              },
-              style: {
-                ...newNodes[boundaryIndex].style,
-                width,
-                height,
-                zIndex: -5 // Higher than zone boundaries but still behind nodes
-              }
-            };
-          }
         }
       });
       
@@ -1943,10 +2448,72 @@ const DFDVisualization: React.FC<DFDVisualizationProps> = ({ dfdData, reactFlowI
   // Make sure we handle types correctly when selecting threats
   const handleThreatSelect = (threat: ThreatItem | null) => {
     setSelectedThreat(threat);
+    
+    // Find and zoom to affected nodes
+    if (threat?.target_elements && threat.target_elements.length > 0) {
+      // Find nodes that are targeted by this threat
+      const targetNodeIds = threat.target_elements;
+      
+      // Clean up node IDs by removing any prefixes like 'node-' or 'boundary-'
+      const cleanedTargetIds = targetNodeIds.map(id => id.replace(/^(node-|boundary-)/, ''));
+      
+      // Find the affected nodes in the current nodes array
+      const affectedNodes = nodes.filter(node => {
+        // Clean up the node ID as well for comparison
+        const cleanedNodeId = node.id.replace(/^(node-|boundary-)/, '');
+        return cleanedTargetIds.includes(cleanedNodeId);
+      });
+      
+      if (affectedNodes.length > 0 && actualReactFlowInstance.current) {
+        // Notify the user through toast
+        toast({
+          title: "Zooming to affected node(s)",
+          description: `Showing ${affectedNodes.length} node(s) affected by this threat`,
+          variant: "default",
+          duration: 3000,
+        });
+        
+        // Fit view to focus on the affected nodes
+        setTimeout(() => {
+          actualReactFlowInstance.current.fitView({
+            nodes: affectedNodes,
+            padding: 0.5,
+            duration: 800
+          });
+        }, 100);
+        
+        // Highlight the affected nodes
+        const updatedNodes = nodes.map(node => {
+          const cleanedNodeId = node.id.replace(/^(node-|boundary-)/, '');
+          const isAffected = cleanedTargetIds.includes(cleanedNodeId);
+          
+          if (isAffected) {
+            // Add or update a style property to highlight the node
+            return {
+              ...node,
+              style: {
+                ...node.style,
+                boxShadow: '0 0 0 4px rgba(220, 38, 38, 0.4)'
+              }
+            };
+          } else {
+            // Reset any previously applied highlight
+            const { boxShadow, ...restStyle } = node.style || {};
+            return {
+              ...node,
+              style: restStyle
+            };
+          }
+        });
+        
+        // Update the nodes with highlighting
+        setNodes(updatedNodes);
+      }
+    }
   };
 
   return (
-    <div className="h-full w-full relative bg-gradient-to-br from-slate-50 to-slate-100 overflow-hidden">
+    <div className="h-full w-full relative bg-white overflow-hidden">
       {/* Stats panel removed */}
       
       {/* Add Button panel outside ReactFlow */}
@@ -2005,78 +2572,44 @@ const DFDVisualization: React.FC<DFDVisualizationProps> = ({ dfdData, reactFlowI
             maxZoom={1.5}
             proOptions={{ hideAttribution: true }}
             defaultEdgeOptions={{
-              type: 'smoothstep',
-              style: { strokeWidth: 2 },
-              markerEnd: { type: MarkerType.ArrowClosed },
-              labelStyle: { display: 'none', fontSize: 0 },
-              labelBgStyle: { display: 'none' }
+              type: 'default',
+              style: { 
+                strokeWidth: 1.5,
+                stroke: '#000000' 
+              },
+              markerEnd: { 
+                type: MarkerType.Arrow,
+                color: '#000000', 
+                width: 15, 
+                height: 15 
+              },
+              labelStyle: { fill: '#000000', fontWeight: 600 },
+              labelBgStyle: { fill: '#ffffff', fillOpacity: 0.8 }
             }}
             connectionLineComponent={null}
             edgesFocusable={false}
             nodesFocusable={false}
             nodesConnectable={false}
-            className="bg-gradient-to-br from-slate-50 to-slate-100 overflow-x-hidden"
-            style={{ marginLeft: '180px', overflowX: 'hidden' }} // Consistent left margin
+            className="bg-white overflow-x-hidden"
+            style={{ overflowX: 'hidden' }} // Removed fixed marginLeft to prevent diagram being cut off
           >
             <MiniMap 
-              nodeStrokeColor={(n) => {
-                if (n.type === 'boundaryNode') {
-                  const label = ((n.data as any)?.label || '').toLowerCase();
-                  if (label.includes('external')) return '#f87171'; // red-400
-                  if (label.includes('data')) return '#4ade80'; // green-400
-                  if (label.includes('application') || label.includes('app')) return '#60a5fa'; // blue-400
-                  return '#94a3b8';
-                }
-                if (n.type === 'processNode') return '#3b82f6'; 
-                if (n.type === 'dataStoreNode') return '#06b6d4';
-                if (n.type === 'externalNode') {
-                  const isInternet = ((n.data as any)?.nodeType || '').toLowerCase() === 'internet' || 
-                                     ((n.data as any)?.label || '').toLowerCase().includes('internet');
-                  const isCDN = ((n.data as any)?.nodeType || '').toLowerCase() === 'cdn' || 
-                                ((n.data as any)?.label || '').toLowerCase().includes('cdn');
-                  if (isInternet) return '#0d9488';
-                  if (isCDN) return '#7c3aed';
-                  return '#8b5cf6';
-                }
-                if (n.type === 'cloudServiceNode') return '#6b7280';
-                if (n.type === 'secretNode') return '#f59e0b';
-                return '#6b7280';
-              }}
+              nodeStrokeColor={() => '#000000'}
               nodeColor={(n) => {
-                if (n.type === 'boundaryNode') {
-                  const label = ((n.data as any)?.label || '').toLowerCase();
-                  if (label.includes('external')) return '#fee2e2'; // red-100
-                  if (label.includes('data')) return '#dcfce7'; // green-100
-                  if (label.includes('application') || label.includes('app')) return '#dbeafe'; // blue-100
-                  return '#f3f4f6';
-                }
-                if (n.type === 'processNode') return '#3b82f6';
-                if (n.type === 'entityNode') return '#818cf8';
-                if (n.type === 'dataStoreNode') return '#06b6d4';
-                if (n.type === 'externalNode') {
-                  const isInternet = ((n.data as any)?.nodeType || '').toLowerCase() === 'internet' || 
-                                     ((n.data as any)?.label || '').toLowerCase().includes('internet');
-                  const isCDN = ((n.data as any)?.nodeType || '').toLowerCase() === 'cdn' || 
-                                ((n.data as any)?.label || '').toLowerCase().includes('cdn');
-                  if (isInternet) return '#0d9488';
-                  if (isCDN) return '#7c3aed';
-                  return '#8b5cf6';
-                }
-                if (n.type === 'cloudServiceNode') return '#6b7280';
-                if (n.type === 'secretNode') return '#f59e0b';
-                return '#f3f4f6';
+                if (n.type === 'boundaryNode') return 'transparent';
+                return '#ffffff';
               }}
               style={{ 
                 width: 150, 
                 height: 100,
-                backgroundColor: '#f9fafb',
-                border: '1px solid #e5e7eb',
-                borderRadius: '8px'
+                backgroundColor: '#ffffff',
+                border: '1px solid #000000',
+                borderRadius: '2px'
               }}
               className="shadow-sm"
-              maskColor="rgba(240, 240, 250, 0.5)"
+              maskColor="rgba(0, 0, 0, 0.1)"
             />
-            <Background color="#e2e8f0" gap={20} size={1} />
+            <Background color="#fff" gap={20} size={0} />
             
             {/* Data Flows legend removed */}
           </ReactFlow>

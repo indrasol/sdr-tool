@@ -1,3 +1,4 @@
+import json
 from typing import Dict, Any, List, Optional
 from models.response_models import ResponseType
 import re
@@ -274,19 +275,12 @@ class PromptBuilder:
         # Format conversation history
         formatted_history = await self._format_conversation_history(conversation_history)
         
-        # Extract context from the latest conversation if available
-        context_from_conversation = ""
-        if conversation_history and len(conversation_history) > 0:
-            latest_exchange = conversation_history[-1]
-            if "query" in latest_exchange:
-                context_from_conversation = f"Recent context: {latest_exchange['query']}"
-        
         # Check if data flow description is available
         if not data_flow_description:
             # If no data flow description is provided, generate a minimal diagram state description
             # but note that this approach is not preferred and is only a fallback
             diagram_description = await self._format_diagram_state(diagram_state)
-            data_flow_section = f"""
+            data_flow_desc = f"""
             # Current Architecture Implementation:
             {diagram_description}
             
@@ -295,18 +289,21 @@ class PromptBuilder:
             """
         else:
             # Use the provided data flow description
-            data_flow_section = f"""
+            data_flow_desc = f"""
             # Detailed Architecture and Data Flow Analysis:
             {data_flow_description}
             """
         
         prompt = f"""
         You are Guardian AI, an expert cybersecurity architecture assistant specializing in threat modeling.
-        Your task is to analyze a real architecture implementation and identify realistic threats based on the actual data flows and security controls present.
+        Your task is to Analyze the provided architecture and data flow description ONLY. 
+        You must identify threats exclusively within the scope of the described components and flows. 
+        Do not assume any implicit behavior, inferred logic, or unstated components. 
+        If a threat is not clearly supported by the described system behavior, do not include it.
         
-        {data_flow_section}
+        {data_flow_desc}
         
-        {context_from_conversation}
+        {formatted_history}
         
         ## Analysis Instructions:
         
@@ -315,6 +312,7 @@ class PromptBuilder:
            - Map out the actual data flow paths and how they interact
            - Note any existing security measures or controls already in place
            - Understand the boundaries and trust zones present in the implementation
+           - Identify components assumed secure or out of scope to prevent false positives
            
         2. SECOND, identify ONLY actual threats that apply to this specific implementation:
            - Focus on realistic threats that apply to the current architecture, not hypothetical ones
@@ -327,6 +325,7 @@ class PromptBuilder:
               * Elevation of Privilege: Gaining capabilities without proper authorization
            - Include threats ONLY if they are relevant to the actual components and data flows analyzed
            - Do NOT generate threats for components that are properly secured or for which threats aren't applicable
+           - Avoid duplication by merging similar threats across components when applicable
         
         3. THIRD, for each identified realistic threat:
            - Assess its severity (HIGH, MEDIUM, or LOW) based on:
@@ -334,6 +333,13 @@ class PromptBuilder:
              * Likelihood: The probability of the threat being exploited given the current implementation
            - Provide specific, actionable mitigation steps that address the vulnerability
            - Target only the specific components that are actually vulnerable
+           - (Optional) If applicable, include external references like CWE or CVSS score to help prioritize mitigation
+        
+        4. FOURTH, ensure the following structured reasoning process is followed before output:
+           - List any assumptions made about the system
++          - Mention any gaps in information that might affect completeness of threat identification
++          - Clarify if any STRIDE categories were intentionally skipped due to lack of relevance
+
         
         IMPORTANT: Based on the detailed architecture and data flow analysis above, your response MUST:
         
@@ -356,6 +362,7 @@ class PromptBuilder:
                     "severity": "HIGH|MEDIUM|LOW",
                     "target_elements": ["element_id_1", "element_id_2"],
                     "properties": {{
+                        "confidence" : 0.95,
                         "threat_type": "SPOOFING|TAMPERING|REPUDIATION|INFORMATION_DISCLOSURE|DENIAL_OF_SERVICE|ELEVATION_OF_PRIVILEGE",
                         "attack_vector": "Description of how the attack would occur against the current implementation",
                         "impact": "Description of the specific impact this would have on the system"
@@ -385,96 +392,128 @@ class PromptBuilder:
     
     
     async def build_dfd_prompt(
-        self, 
-        conversation_history: List[Dict[str, Any]], 
-        diagram_state: Optional[Dict[str, Any]]
+        self,
+        conversation_history: List[Dict[str, Any]],
+        data_flow_description: str
     ) -> str:
         """
-        Build a prompt for generating a Data Flow Diagram (DFD) from system context.
+        Build a prompt for creating a Threat Model Data Flow Diagram (DFD).
         
         Args:
             conversation_history: List of previous exchanges
-            diagram_state: Current state of the architecture diagram
+            data_flow_description: Detailed data flow description of the current system design
             
         Returns:
             A formatted prompt string for DFD generation
         """
-        # Format the diagram state and conversation history
-        diagram_description = await self._format_diagram_state(diagram_state)
-        formatted_history = await self._format_conversation_history(conversation_history)
+        # Format conversation history
+        formatted_conversation_history = await self._format_conversation_history(conversation_history)
         
-        # Extract context from the latest conversation if available
-        context_from_conversation = ""
-        if conversation_history and len(conversation_history) > 0:
-            latest_exchange = conversation_history[-1]
-            if "query" in latest_exchange:
-                context_from_conversation = f"Recent context: {latest_exchange['query']}"
-        
-        # Define the enhanced prompt
         prompt = f"""
-        You are Guardian AI, an expert assistant specialized in secure software architecture and threat modeling.
+            You are Guardian AI, an expert in cybersecurity threat modeling and secure software design. Your goal is to map a system’s data flow into a structured Threat Model Data Flow Diagram (DFD).
 
-        Your task is to analyze the current system design to produce a detailed and accurate **Data Flow Diagram (DFD)** in JSON format.
-        
-        # Current Diagram State:
-        {diagram_description}
-        
-        {context_from_conversation}
-        
-        ## Core DFD Components:
-        - **External Entity**: Rectangle, type `external_entity` - Users/systems that interact with the system
-        - **Process**: Circle, type `process` - Functions that transform data
-        - **Data Store**: Cylinder, type `datastore` - Storage components like databases/files
-        - **Trust Boundary**: Dashed Rectangle, type `trust_boundary` - Separation between different trust levels
-        
-        ## Output Format (JSON Only):
-        Return a well-formed JSON using this structure that aligns with our DFDModelResponse:
+            You will receive:
+            1. A natural language **data_flow_description** derived from a system design.
+            2. A **formatted_conversation_history** for added context.
+            3. (Optionally) Node metadata, trust zones, or labels from architecture diagrams.
 
-        ```json
-        {{
-          "message": "Brief explanation of the diagram",
-          "confidence": 0.95,
-          "elements": [
+            ---
+            inputs : 
+            {data_flow_description}
+        
+            {formatted_conversation_history}
+
+            ##  Mapping Heuristics (use these rules as guidelines):
+            - If a component interacts with a user, external service, or untrusted source → `external_entity`
+            - If a component performs any logic or data transformation → `process`
+            - If a component stores data persistently → `datastore`
+            - If two components reside in different trust zones or cross security boundaries → define a `trust_boundary`
+            - If a node has elevated access (admin rights, DB write access), annotate with `"privilege": "elevated"` or `"admin"`
+
+            ---
+
+            ## ⚙️ Output Format: Return ONLY JSON
+
+            ```json
             {{
-              "id": "unique_element_id",
-              "type": "external_entity | process | datastore",
-              "label": "Descriptive Name",
-              "properties": {{ 
-                "shape": "rectangle | circle | cylinder",
-                "position": {{ "x": 100, "y": 200 }},
-                "description": "Brief description"
-              }}
+            "message": "Brief explanation of how the DFD was derived",
+            "confidence": 0.94,
+            "elements": [
+                {{
+                "id": "external_user_1",
+                "type": "external_entity",
+                "label": "Customer",
+                "properties": {{
+                    "shape": "rectangle",
+                    "position": {{ "x": 100, "y": 100 }},
+                    "description": "Customer using the web portal",
+                    "trust_zone": "external",
+                    "privilege": "standard"
+                }}
+                }},
+                {{
+                "id": "auth_service",
+                "type": "process",
+                "label": "Authentication Service",
+                "properties": {{
+                    "shape": "circle",
+                    "position": {{ "x": 300, "y": 100 }},
+                    "description": "Validates user credentials and issues tokens",
+                    "trust_zone": "internal",
+                    "privilege": "elevated"
+                }}
+                }},
+                {{
+                "id": "user_db",
+                "type": "datastore",
+                "label": "User Database",
+                "properties": {{
+                    "shape": "cylinder",
+                    "position": {{ "x": 500, "y": 200 }},
+                    "description": "Stores user data and credentials",
+                    "trust_zone": "secure_segment",
+                    "privilege": "admin"
+                }}
+                }}
+            ],
+            "edges": [
+                {{
+                "id": "login_request",
+                "source": "external_user_1",
+                "target": "auth_service",
+                "label": "Login Credentials",
+                "properties": {{
+                    "data_type": "PII"
+                    }}
+                }},
+                {{
+                "id": "token_issue",
+                "source": "auth_service",
+                "target": "external_user_1",
+                "label": "JWT Token",
+                "properties": {{
+                    "data_type": "Auth token"
+                }}
+                }}
+            ],
+            "boundaries": [
+                {{
+                "id": "boundary_internal",
+                "label": "Internal Network Zone",
+                "element_ids": ["auth_service", "user_db"],
+                "properties": {{
+                    "shape": "dashed_rectangle",
+                    "position": {{ "x": 250, "y": 50 }}
+                }}
+                }}
+            ]
             }}
-          ],
-          "edges": [
-            {{
-              "id": "edge_id",
-              "source": "source_element_id",
-              "target": "target_element_id",
-              "label": "Data being transferred",
-              "properties": {{ 
-                "data_type": "Data type description"
-              }}
-            }}
-          ],
-          "boundaries": [
-            {{
-              "id": "boundary_id",
-              "label": "Boundary Name",
-              "element_ids": ["element_id_1", "element_id_2"],
-              "properties": {{ 
-                "shape": "dashed_rectangle",
-                "position": {{ "x": 500, "y": 1000 }}
-              }}
-            }}
-          ]
-        }}
-        ```
-         
-        Use descriptive unique IDs for all elements, edges, and boundaries.
-        Position elements logically with good spacing between them.
-        Only output the JSON with no explanation before or after.
-        """
+            ```
+
+            Use descriptive unique IDs for all elements, edges, and boundaries.
+            Position elements logically with good spacing between them.
+            Only output the JSON with no explanation before or after.
+            """
         return prompt
     
     async def build_prompt_by_intent(
@@ -516,6 +555,43 @@ class PromptBuilder:
         else:
             # Default to clarification if intent is unclear
             return await self.build_clarification_prompt(query, conversation_history, diagram_state)
+    
+    async def build_analyze_diagram_prompt(self, diagram_content: dict) -> tuple:
+        system_prompt = (
+            "You are a specialized architecture analysis assistant that excels at interpreting "
+            "network diagrams and translating them into clear, comprehensive text descriptions. "
+            "Your expertise is in identifying data flows, system components, and their interactions.\n\n"
+            "When analyzing a diagram, follow these steps:\n"
+            "1. Identify all nodes (components) and their types/categories\n"
+            "2. Track all connections between nodes (edges) and their directionality\n"
+            "3. Determine the logical flow of data through the system\n"
+            "4. Explain the role and purpose of each component\n"
+            "5. Highlight any security boundaries or important patterns\n"
+            "6. Describe the complete end-to-end data flow journey\n\n"
+            "Your output should be clear, technical, and thorough."
+        )
+
+        # Create a structured reasoning prompt
+        user_prompt = (
+            "Here is an architecture diagram in JSON format that contains 'nodes' and 'edges':\n"
+            f"```json\n{json.dumps(diagram_content, indent=2)}\n```\n\n"
+            "Please analyze this diagram and provide a comprehensive description of the data flow.\n\n"
+            "First, analyze the nodes to understand each component:\n"
+            "- What are all the components in the system?\n"
+            "- What is each component's role and purpose?\n"
+            "- What category or type is each component?\n\n"
+            "Next, analyze the edges to understand connections:\n"
+            "- How are components connected to each other?\n"
+            "- What is the direction of data flow?\n"
+            "- Are there any special edges (animated, colored differently)?\n\n"
+            "Then, trace the complete data flow paths through the system:\n"
+            "- Where does data originate?\n"
+            "- What processing occurs at each step?\n"
+            "- Where does data ultimately end up?\n\n"
+            "Finally, provide a complete narrative that describes the entire architecture and data flow."
+        )
+        return (system_prompt, user_prompt)
+        
     
     async def _format_diagram_state(self, diagram_state: Optional[Dict[str, Any]]) -> str:
         """
@@ -571,7 +647,7 @@ class PromptBuilder:
         
         formatted = "Previous messages:\n"
         # Limit history to last 5 exchanges to keep prompt size manageable
-        for exchange in conversation_history[-5:]:
+        for exchange in conversation_history[-7:]:
             query = exchange.get("query", "")
             response = exchange.get("response", {}).get("message", "")
             formatted += f"User: {query}\nAI: {response}\n\n"
