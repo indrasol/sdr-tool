@@ -99,6 +99,7 @@ export interface DFDBoundary {
     id: string;
     label: string;
     element_ids: string[];
+    properties?: Record<string, unknown>;
 }
 
 export interface ThreatItem {
