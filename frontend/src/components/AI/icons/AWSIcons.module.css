@@ -1,0 +1,142 @@
+/* AWS Icons styling */
+.awsIconContainer {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  height: 100%;
+  transition: all 0.2s ease;
+  position: relative;
+}
+
+/* Add a subtle gradient background for AWS icons */
+.awsIcon {
+  position: relative;
+  z-index: 2;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.awsIcon svg {
+  width: 46px;
+  height: 46px;
+  filter: drop-shadow(0 1px 1px rgba(0,0,0,0.05));
+}
+
+/* Hover effects */
+.awsIconContainer:hover .awsIcon svg {
+  transform: scale(1.1);
+  transition: transform 0.2s ease;
+}
+
+/* AWS section styling */
+.awsSection {
+  background: linear-gradient(to right, rgba(255, 153, 0, 0.03), rgba(255, 153, 0, 0.07));
+  border-radius: 8px;
+  padding: 12px 8px;
+  margin-bottom: 16px;
+  border: 1px solid rgba(255, 153, 0, 0.1);
+}
+
+/* Section header with toggle button */
+.awsSectionHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.awsSectionTitle {
+  color: #FF9900;
+  font-weight: 600;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  margin: 0;
+}
+
+.awsSectionTitle::before {
+  content: '';
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  margin-right: 6px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' width='14px' height='14px' fill='%23FF9900'%3E%3Cpath d='M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z'%3E%3C/path%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: center;
+}
+
+/* Toggle button styling */
+.toggleButton {
+  background: transparent;
+  border: none;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: #FF9900;
+  border-radius: 4px;
+  padding: 0;
+  transition: background-color 0.2s;
+}
+
+.toggleButton:hover {
+  background-color: rgba(255, 153, 0, 0.1);
+}
+
+.toggleButton:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(255, 153, 0, 0.2);
+}
+
+/* Tooltip styles - appears outside the toolbar */
+.tooltip {
+  position: fixed;
+  padding: 16px 20px;
+  background-color: white;
+  color: #333;
+  font-size: 12px;
+  border-radius: 8px;
+  box-shadow: 0 3px 15px rgba(0, 0, 0, 0.1);
+  width: 280px;
+  max-width: 350px;
+  z-index: 9999;
+  white-space: normal;
+  border: 1px solid rgba(255, 153, 0, 0.2);
+  line-height: 1.6;
+  text-align: left;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  hyphens: auto;
+}
+
+/* Tooltip arrow component */
+.tooltipArrow {
+  position: absolute;
+  width: 0;
+  height: 0;
+  border-style: solid;
+  border-width: 8px;
+  /* Default is arrow pointing right (for tooltips on the left) */
+  border-color: transparent white transparent transparent;
+}
+
+/* When the arrow is on the left side (pointing left, for tooltips on the right) */
+.tooltipArrow[style*="left: 100%"] {
+  border-color: transparent transparent transparent white;
+}
+
+/* Tooltip title */
+.tooltipTitle {
+  font-weight: 600;
+  margin-bottom: 8px;
+  color: #FF9900;
+  font-size: 14px;
+  border-bottom: 1px solid rgba(255, 153, 0, 0.1);
+  padding-bottom: 6px;
+} 

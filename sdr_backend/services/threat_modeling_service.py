@@ -63,7 +63,7 @@ class ThreatModelingService:
             prompt_builder = PromptBuilder()
             
             # CHANGE: Use the DirectDFDMapper to map diagram to DFD without relying on LLM
-            log_info(f"Generating DFD model using DirectDFDMapper")
+            log_info(f"Generating DFD model using LLM")
             
             # First, analyze the diagram using the analyze_diagram function
             data_flow_description = await llm_service.analyze_diagram(
@@ -84,7 +84,7 @@ class ThreatModelingService:
             dfd_model_response = await llm_service.generate_llm_response(
                 prompt=dfd_prompt,
                 model_provider="openai",
-                model_name="gpt-4.1",
+                model_name="gpt-4.1-mini",
                 temperature=0.1,
                 timeout=60
             )

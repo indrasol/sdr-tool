@@ -1,7 +1,6 @@
-
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Bot } from 'lucide-react';
-import { useTypingEffect } from '@/hooks/useTypingEffect';
+import { useMultiTextTypingEffect } from '@/hooks/useMultiTextTypingEffect';
 
 interface PlaceholderTextProps {
   hasMessages: boolean;
@@ -9,13 +8,23 @@ interface PlaceholderTextProps {
   hasInteracted: boolean;
 }
 
-// Placeholders
+// Extended set of placeholders for more engaging experience
 const placeholders = [
   "Describe your security infrastructure requirements...",
-  "Add a firewall between the internet and internal network...",
-  "I need a secure database with encryption...",
-  "Create a DMZ for the web servers...",
-  "Implement zero-trust architecture..."
+  "Add a firewall between the internet and internal network",
+  "I need a secure database with encryption",
+  "Create a DMZ for my web servers",
+  "Implement zero-trust architecture",
+  "How can I secure AWS S3 buckets?",
+  "Show me secure cloud architecture for a banking app",
+  "Design a microservices architecture with API gateway",
+  "What's the best approach for container security?",
+  "Design a secure VPN architecture for remote workers",
+  "Help me set up network segmentation",
+  "How should I implement defense in depth?",
+  "Secure my API endpoints",
+  "Show me a GDPR-compliant architecture",
+  "Create a threat model for my application"
 ];
 
 // Custom placeholder with Guardian AI icon
@@ -42,16 +51,25 @@ const PlaceholderText: React.FC<PlaceholderTextProps> = ({
     return <span>Type your message...</span>;
   }
   
-  // For initial state, show typing effect with random placeholders
-  const { displayText } = useTypingEffect({
+  // For initial state, show continuous typing effect with multiple placeholders
+  const { displayText, isTyping, isDeleting, currentTextIndex } = useMultiTextTypingEffect({
     texts: placeholders,
-    typingSpeed: 50,
-    pauseAtEnd: 3000,
-    pauseAtStart: 500,
-    blinkCursor: false
+    typingSpeed: 80, 
+    pauseAtEnd: 2000,
+    pauseAtStart: 800,
+    deleteSpeed: 50,
+    blinkCursor: true,
+    useBotCursor: true // Use the Guardian AI bot as cursor
   });
   
-  return <span dangerouslySetInnerHTML={{ __html: displayText }} />;
+  // Debug log in development mode
+  useEffect(() => {
+    if (process.env.NODE_ENV === 'development') {
+      console.log(`PlaceholderText: typing=${isTyping}, deleting=${isDeleting}, messageIndex=${currentTextIndex}`);
+    }
+  }, [isTyping, isDeleting, currentTextIndex]);
+  
+  return <span className="typing-placeholder" dangerouslySetInnerHTML={{ __html: displayText }} />;
 };
 
 // This function returns a string for simple placeholder use cases
