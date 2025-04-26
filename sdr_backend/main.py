@@ -36,10 +36,19 @@ import sys
 from prometheus_fastapi_instrumentator import Instrumentator
 from utils.prometheus_metrics import setup_custom_metrics_endpoint, APP_ACTIVE_SESSIONS, authenticate_metrics
 import os
-
+# Hugging Face Transformer Model download
+from core.intent_classification.intent_classifier_v1 import download_transformer_models
 
 session_manager = SessionManager()
 # logger = setup_logging()
+
+# Models to download with fallbacks
+MODELS = [
+    {
+        "primary": "all-MiniLM-L6-v2",
+        "fallbacks": ["paraphrase-MiniLM-L6-v2", "distilbert-base-nli-stsb-mean-tokens"]
+    }
+]
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -60,6 +69,10 @@ async def lifespan(app: FastAPI):
         health_monitor.capture_routes_info(app)
         log_info("Health monitoring initialized.")
 
+        # Set cache directory
+        log_info("Downloading transformer models...")
+        download_transformer_models(max_retries=5)
+        log_info("Transformer models downloaded.")
         # Initialize active sessions gauge
         APP_ACTIVE_SESSIONS.set(0)
         
