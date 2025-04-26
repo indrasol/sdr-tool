@@ -1,10 +1,19 @@
 steps:
-  # Step 1: Pull the latest image to use as cache (ignores errors if image doesn't exist yet)
+  # Step 1: Retrieve the Hugging Face token from Secret Manager
+  - name: 'gcr.io/cloud-builders/gcloud'
+    entrypoint: 'bash'
+    args:
+      - '-c'
+      - |
+        export TRANSFORMER_MODEL_TOKEN=$(gcloud secrets versions access latest --secret=TRANSFORMER_MODEL_TOKEN)
+        echo "TRANSFORMER_MODEL_TOKEN=$$TRANSFORMER_MODEL_TOKEN" >> build.env
+
+  # Step 2: Pull the latest image to use as cache (ignores errors if image doesn't exist yet)
   - name: 'gcr.io/cloud-builders/docker'
     entrypoint: 'bash'
     args: ['-c', 'docker pull us-central1-docker.pkg.dev/$PROJECT_ID/securetrack-repo/securetrack-service:latest || exit 0']
     
-  # Step 2: Build using the pulled image as cache
+  # Step 3: Build using the pulled image as cache
   - name: 'gcr.io/cloud-builders/docker'
     args: [
       'build', 
@@ -14,11 +23,11 @@ steps:
     ]
     dir: 'sdr_backend'
 
-  # Step 3: Push the newly built image
+  # Step 4: Push the newly built image
   - name: 'gcr.io/cloud-builders/docker'
     args: ['push', 'us-central1-docker.pkg.dev/$PROJECT_ID/securetrack-repo/securetrack-service:latest']
 
-  # Step 4: Deploy to Cloud Run
+  # Step 5: Deploy to Cloud Run
   - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
     entrypoint: 'gcloud'
     args:
