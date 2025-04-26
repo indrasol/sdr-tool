@@ -1,0 +1,58 @@
+/* Styles for the resizable toolbar panel */
+.resizablePanel {
+  height: 100%;
+  background-color: white;
+  border-left: 1px solid #e5e7eb;
+  transition: width 0.2s ease;
+  flex-direction: column;
+  overflow: hidden;
+  position: relative;
+}
+
+.resizing {
+  transition: none;
+  user-select: none;
+}
+
+.resizeHandle {
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  width: 4px;
+  cursor: ew-resize;
+  background-color: transparent;
+  z-index: 10;
+}
+
+.resizeHandle:hover,
+.resizeHandle:active {
+  background-color: #3b82f6;
+  opacity: 0.3;
+}
+
+.resizeHandle:active {
+  opacity: 0.5;
+}
+
+.collapsedPanel {
+  width: 48px;
+}
+
+/* Add a visual indicator when hovering over the resize handle */
+.resizeHandleVisual {
+  position: absolute;
+  top: 50%;
+  left: 2px;
+  transform: translateY(-50%);
+  width: 2px;
+  height: 30px;
+  background-color: #3b82f6;
+  border-radius: 1px;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.resizeHandle:hover .resizeHandleVisual {
+  opacity: 0.7;
+} 

@@ -1,0 +1,868 @@
+{
+  "gcp": [
+    {
+      "name": "gcp_virtual_private_cloud",
+      "description": "GCP Virtual Private Cloud service."
+    },
+    {
+      "name": "gcp_artifact_registry",
+      "description": "GCP Artifact Registry service."
+    },
+    {
+      "name": "gcp_transfer",
+      "description": "GCP Transfer service."
+    },
+    {
+      "name": "gcp_filestore",
+      "description": "GCP Filestore service."
+    },
+    {
+      "name": "gcp_automl_video_intelligence",
+      "description": "GCP Automl Video Intelligence service."
+    },
+    {
+      "name": "gcp_vertexai",
+      "description": "GCP Vertexai service."
+    },
+    {
+      "name": "gcp_os_inventory_management",
+      "description": "GCP Os Inventory Management service."
+    },
+    {
+      "name": "gcp_cloud_tpu",
+      "description": "GCP Cloud Tpu service."
+    },
+    {
+      "name": "gcp_datastream",
+      "description": "GCP Datastream service."
+    },
+    {
+      "name": "gcp_cloud_for_marketing",
+      "description": "GCP Cloud For Marketing service."
+    },
+    {
+      "name": "gcp_cloud_optimization_ai",
+      "description": "GCP Cloud Optimization Ai service."
+    },
+    {
+      "name": "gcp_binary_authorization",
+      "description": "GCP Binary Authorization service."
+    },
+    {
+      "name": "gcp_connectors",
+      "description": "GCP Connectors service."
+    },
+    {
+      "name": "gcp_partner_portal",
+      "description": "GCP Partner Portal service."
+    },
+    {
+      "name": "gcp_configuration_management",
+      "description": "GCP Configuration Management service."
+    },
+    {
+      "name": "gcp_os_configuration_management",
+      "description": "GCP Os Configuration Management service."
+    },
+    {
+      "name": "gcp_cloud_security_scanner",
+      "description": "GCP Cloud Security Scanner service."
+    },
+    {
+      "name": "gcp_financial_services_marketplace",
+      "description": "GCP Financial Services Marketplace service."
+    },
+    {
+      "name": "gcp_debugger",
+      "description": "GCP Debugger service."
+    },
+    {
+      "name": "gcp_compute_engine",
+      "description": "A virtual machine service for running scalable compute workloads."
+    },
+    {
+      "name": "gcp_private_service_connect",
+      "description": "GCP Private Service Connect service."
+    },
+    {
+      "name": "gcp_cloud_test_lab",
+      "description": "GCP Cloud Test Lab service."
+    },
+    {
+      "name": "gcp_automl_natural_language",
+      "description": "GCP Automl Natural Language service."
+    },
+    {
+      "name": "gcp_my_cloud",
+      "description": "GCP My Cloud service."
+    },
+    {
+      "name": "gcp_bare_metal_solutions",
+      "description": "GCP Bare Metal Solutions service."
+    },
+    {
+      "name": "gcp_key_access_justifications",
+      "description": "GCP Key Access Justifications service."
+    },
+    {
+      "name": "gcp_anthos",
+      "description": "GCP Anthos service."
+    },
+    {
+      "name": "gcp_app_engine",
+      "description": "A platform for building scalable web applications and APIs."
+    },
+    {
+      "name": "gcp_developer_portal",
+      "description": "GCP Developer Portal service."
+    },
+    {
+      "name": "gcp_risk_manager",
+      "description": "GCP Risk Manager service."
+    },
+    {
+      "name": "gcp_transfer_appliance",
+      "description": "GCP Transfer Appliance service."
+    },
+    {
+      "name": "gcp_home",
+      "description": "GCP Home service."
+    },
+    {
+      "name": "gcp_cloud_external_ip_addresses",
+      "description": "GCP Cloud External Ip Addresses service."
+    },
+    {
+      "name": "gcp_advanced_solutions_lab",
+      "description": "GCP Advanced Solutions Lab service."
+    },
+    {
+      "name": "gcp_gke_on_prem",
+      "description": "GCP Gke On Prem service."
+    },
+    {
+      "name": "gcp_advanced_agent_modeling",
+      "description": "GCP Advanced Agent Modeling service."
+    },
+    {
+      "name": "gcp_dialogflow_cx",
+      "description": "GCP Dialogflow Cx service."
+    },
+    {
+      "name": "gcp_data_studio",
+      "description": "GCP Data Studio service."
+    },
+    {
+      "name": "gcp_cloud_deployment_manager",
+      "description": "GCP Cloud Deployment Manager service."
+    },
+    {
+      "name": "gcp_game_servers",
+      "description": "GCP Game Servers service."
+    },
+    {
+      "name": "gcp_policy_analyzer",
+      "description": "GCP Policy Analyzer service."
+    },
+    {
+      "name": "gcp_cloud_healthcare_marketplace",
+      "description": "GCP Cloud Healthcare Marketplace service."
+    },
+    {
+      "name": "gcp_stream_suite",
+      "description": "GCP Stream Suite service."
+    },
+    {
+      "name": "gcp_cloud_ops",
+      "description": "GCP Cloud Ops service."
+    },
+    {
+      "name": "gcp_dataproc_metastore",
+      "description": "GCP Dataproc Metastore service."
+    },
+    {
+      "name": "gcp_google_kubernetes_engine",
+      "description": "GCP Google Kubernetes Engine service."
+    },
+    {
+      "name": "gcp_cloud_vision_api",
+      "description": "GCP Cloud Vision Api service."
+    },
+    {
+      "name": "gcp_datastore",
+      "description": "GCP Datastore service."
+    },
+    {
+      "name": "gcp_cloud_build",
+      "description": "A continuous integration and delivery platform for building and deploying applications."
+    },
+    {
+      "name": "gcp_iot_core",
+      "description": "GCP Iot Core service."
+    },
+    {
+      "name": "gcp_healthcare_nlp_api",
+      "description": "GCP Healthcare Nlp Api service."
+    },
+    {
+      "name": "gcp_firestore",
+      "description": "A NoSQL document database for mobile, web, and server applications."
+    },
+    {
+      "name": "gcp_cloud_cdn",
+      "description": "A content delivery network for fast, reliable delivery of web content."
+    },
+    {
+      "name": "gcp_cloud_shell",
+      "description": "GCP Cloud Shell service."
+    },
+    {
+      "name": "gcp_visual_inspection",
+      "description": "GCP Visual Inspection service."
+    },
+    {
+      "name": "gcp_cloud_optimization_ai___fleet_routing_api",
+      "description": "GCP Cloud Optimization Ai   Fleet Routing Api service."
+    },
+    {
+      "name": "gcp_stackdriver",
+      "description": "GCP Stackdriver service."
+    },
+    {
+      "name": "gcp_certificate_authority_service",
+      "description": "GCP Certificate Authority Service service."
+    },
+    {
+      "name": "gcp_permissions",
+      "description": "GCP Permissions service."
+    },
+    {
+      "name": "gcp_real_world_insights",
+      "description": "GCP Real World Insights service."
+    },
+    {
+      "name": "gcp_dataproc",
+      "description": "A managed service for running Apache Spark and Hadoop workloads."
+    },
+    {
+      "name": "gcp_cloud_ids",
+      "description": "GCP Cloud Ids service."
+    },
+    {
+      "name": "gcp_error_reporting",
+      "description": "GCP Error Reporting service."
+    },
+    {
+      "name": "gcp_cloud_monitoring",
+      "description": "A service for monitoring, logging, and diagnosing application performance."
+    },
+    {
+      "name": "gcp_local_ssd",
+      "description": "GCP Local Ssd service."
+    },
+    {
+      "name": "gcp_certificate_manager",
+      "description": "GCP Certificate Manager service."
+    },
+    {
+      "name": "gcp_ai_platform",
+      "description": "A suite of tools for building, deploying, and scaling machine learning models."
+    },
+    {
+      "name": "gcp_data_transfer",
+      "description": "GCP Data Transfer service."
+    },
+    {
+      "name": "gcp_dataprep",
+      "description": "GCP Dataprep service."
+    },
+    {
+      "name": "gcp_data_layers",
+      "description": "GCP Data Layers service."
+    },
+    {
+      "name": "gcp_network_intelligence_center",
+      "description": "GCP Network Intelligence Center service."
+    },
+    {
+      "name": "gcp_cloud_domains",
+      "description": "GCP Cloud Domains service."
+    },
+    {
+      "name": "gcp_memorystore",
+      "description": "GCP Memorystore service."
+    },
+    {
+      "name": "gcp_api_monetization",
+      "description": "GCP Api Monetization service."
+    },
+    {
+      "name": "gcp_release_notes",
+      "description": "GCP Release Notes service."
+    },
+    {
+      "name": "gcp_web_security_scanner",
+      "description": "GCP Web Security Scanner service."
+    },
+    {
+      "name": "gcp_anthos_service_mesh",
+      "description": "GCP Anthos Service Mesh service."
+    },
+    {
+      "name": "gcp_network_tiers",
+      "description": "GCP Network Tiers service."
+    },
+    {
+      "name": "gcp_container_optimized_os",
+      "description": "GCP Container Optimized Os service."
+    },
+    {
+      "name": "gcp_traffic_director",
+      "description": "GCP Traffic Director service."
+    },
+    {
+      "name": "gcp_cloud_tasks",
+      "description": "A task queue service for managing asynchronous task execution."
+    },
+    {
+      "name": "gcp_performance_dashboard",
+      "description": "GCP Performance Dashboard service."
+    },
+    {
+      "name": "gcp_cloud_run_for_anthos",
+      "description": "GCP Cloud Run For Anthos service."
+    },
+    {
+      "name": "gcp_automl_translation",
+      "description": "GCP Automl Translation service."
+    },
+    {
+      "name": "gcp_launcher",
+      "description": "GCP Launcher service."
+    },
+    {
+      "name": "gcp_administration",
+      "description": "GCP Administration service."
+    },
+    {
+      "name": "gcp_retail_api",
+      "description": "GCP Retail Api service."
+    },
+    {
+      "name": "gcp_cloud_routes",
+      "description": "GCP Cloud Routes service."
+    },
+    {
+      "name": "gcp_workflows",
+      "description": "GCP Workflows service."
+    },
+    {
+      "name": "gcp_automl_tables",
+      "description": "GCP Automl Tables service."
+    },
+    {
+      "name": "gcp_cloud_armor",
+      "description": "A DDoS protection and web application firewall service."
+    },
+    {
+      "name": "gcp_managed_service_for_microsoft_active_directory",
+      "description": "GCP Managed Service For Microsoft Active Directory service."
+    },
+    {
+      "name": "gcp_quotas",
+      "description": "GCP Quotas service."
+    },
+    {
+      "name": "gcp_cloud_hsm",
+      "description": "GCP Cloud Hsm service."
+    },
+    {
+      "name": "gcp_data_labeling",
+      "description": "GCP Data Labeling service."
+    },
+    {
+      "name": "gcp_phishing_protection",
+      "description": "GCP Phishing Protection service."
+    },
+    {
+      "name": "gcp_catalog",
+      "description": "GCP Catalog service."
+    },
+    {
+      "name": "gcp_identity_platform",
+      "description": "GCP Identity Platform service."
+    },
+    {
+      "name": "gcp_cloud_router",
+      "description": "GCP Cloud Router service."
+    },
+    {
+      "name": "gcp_cloud_healthcare_api",
+      "description": "GCP Cloud Healthcare Api service."
+    },
+    {
+      "name": "gcp_cloud_scheduler",
+      "description": "A managed cron job service for automating tasks."
+    },
+    {
+      "name": "gcp_google_maps_platform",
+      "description": "GCP Google Maps Platform service."
+    },
+    {
+      "name": "gcp_support",
+      "description": "GCP Support service."
+    },
+    {
+      "name": "gcp_network_topology",
+      "description": "GCP Network Topology service."
+    },
+    {
+      "name": "gcp_eventarc",
+      "description": "GCP Eventarc service."
+    },
+    {
+      "name": "gcp_fleet_engine",
+      "description": "GCP Fleet Engine service."
+    },
+    {
+      "name": "gcp_cloud_translation_api",
+      "description": "GCP Cloud Translation Api service."
+    },
+    {
+      "name": "gcp_security_command_center",
+      "description": "GCP Security Command Center service."
+    },
+    {
+      "name": "gcp_tensorflow_enterprise",
+      "description": "GCP Tensorflow Enterprise service."
+    },
+    {
+      "name": "gcp_cloud_api_gateway",
+      "description": "GCP Cloud Api Gateway service."
+    },
+    {
+      "name": "gcp_dataflow",
+      "description": "A fully managed service for stream and batch data processing."
+    },
+    {
+      "name": "gcp_analytics_hub",
+      "description": "GCP Analytics Hub service."
+    },
+    {
+      "name": "gcp_agent_assist",
+      "description": "GCP Agent Assist service."
+    },
+    {
+      "name": "gcp_premium_network_tier",
+      "description": "GCP Premium Network Tier service."
+    },
+    {
+      "name": "gcp_anthos_config_management",
+      "description": "GCP Anthos Config Management service."
+    },
+    {
+      "name": "gcp_cloud_run",
+      "description": "A managed service for running containerized applications."
+    },
+    {
+      "name": "gcp_batch",
+      "description": "GCP Batch service."
+    },
+    {
+      "name": "gcp_cloud_composer",
+      "description": "GCP Cloud Composer service."
+    },
+    {
+      "name": "gcp_dialogflow_insights",
+      "description": "GCP Dialogflow Insights service."
+    },
+    {
+      "name": "gcp_data_qna",
+      "description": "GCP Data Qna service."
+    },
+    {
+      "name": "gcp_cloud_endpoints",
+      "description": "GCP Cloud Endpoints service."
+    },
+    {
+      "name": "gcp_google_cloud_marketplace",
+      "description": "GCP Google Cloud Marketplace service."
+    },
+    {
+      "name": "gcp_cloud_network",
+      "description": "GCP Cloud Network service."
+    },
+    {
+      "name": "gcp_gce_systems_management",
+      "description": "GCP Gce Systems Management service."
+    },
+    {
+      "name": "gcp_cloud_apis",
+      "description": "GCP Cloud Apis service."
+    },
+    {
+      "name": "gcp_cloud_deploy",
+      "description": "GCP Cloud Deploy service."
+    },
+    {
+      "name": "gcp_profiler",
+      "description": "GCP Profiler service."
+    },
+    {
+      "name": "gcp_tools_for_powershell",
+      "description": "GCP Tools For Powershell service."
+    },
+    {
+      "name": "gcp_persistent_disk",
+      "description": "GCP Persistent Disk service."
+    },
+    {
+      "name": "gcp_api_analytics",
+      "description": "GCP Api Analytics service."
+    },
+    {
+      "name": "gcp_text_to_speech",
+      "description": "GCP Text To Speech service."
+    },
+    {
+      "name": "gcp_pubsub",
+      "description": "A messaging service for real-time event streaming and data integration."
+    },
+    {
+      "name": "gcp_cloud_interconnect",
+      "description": "GCP Cloud Interconnect service."
+    },
+    {
+      "name": "gcp_identity_and_access_management",
+      "description": "GCP Identity And Access Management service."
+    },
+    {
+      "name": "gcp_speech_to_text",
+      "description": "GCP Speech To Text service."
+    },
+    {
+      "name": "gcp_billing",
+      "description": "GCP Billing service."
+    },
+    {
+      "name": "gcp_recommendations_ai",
+      "description": "GCP Recommendations Ai service."
+    },
+    {
+      "name": "gcp_producer_portal",
+      "description": "GCP Producer Portal service."
+    },
+    {
+      "name": "gcp_vmware_engine",
+      "description": "GCP Vmware Engine service."
+    },
+    {
+      "name": "gcp_cloud_load_balancing",
+      "description": "A managed load balancing service for distributing traffic across instances."
+    },
+    {
+      "name": "gcp_security",
+      "description": "GCP Security service."
+    },
+    {
+      "name": "gcp_security_health_advisor",
+      "description": "GCP Security Health Advisor service."
+    },
+    {
+      "name": "gcp_cloud_firewall_rules",
+      "description": "GCP Cloud Firewall Rules service."
+    },
+    {
+      "name": "gcp_workload_identity_pool",
+      "description": "GCP Workload Identity Pool service."
+    },
+    {
+      "name": "gcp_cloud_sql",
+      "description": "A fully managed relational database service for MySQL, PostgreSQL, and SQL Server."
+    },
+    {
+      "name": "gcp_identity_aware_proxy",
+      "description": "GCP Identity Aware Proxy service."
+    },
+    {
+      "name": "gcp_datapol",
+      "description": "GCP Datapol service."
+    },
+    {
+      "name": "gcp_datashare",
+      "description": "GCP Datashare service."
+    },
+    {
+      "name": "gcp_cloud_data_fusion",
+      "description": "GCP Cloud Data Fusion service."
+    },
+    {
+      "name": "gcp_api",
+      "description": "GCP Api service."
+    },
+    {
+      "name": "gcp_network_security",
+      "description": "GCP Network Security service."
+    },
+    {
+      "name": "gcp_cloud_media_edge",
+      "description": "GCP Cloud Media Edge service."
+    },
+    {
+      "name": "gcp_container_registry",
+      "description": "GCP Container Registry service."
+    },
+    {
+      "name": "gcp_user_preferences",
+      "description": "GCP User Preferences service."
+    },
+    {
+      "name": "gcp_cloud_logging",
+      "description": "A centralized logging service for collecting and analyzing log data."
+    },
+    {
+      "name": "gcp_asset_inventory",
+      "description": "GCP Asset Inventory service."
+    },
+    {
+      "name": "gcp_database_migration_service",
+      "description": "GCP Database Migration Service service."
+    },
+    {
+      "name": "gcp_service_discovery",
+      "description": "GCP Service Discovery service."
+    },
+    {
+      "name": "gcp_migrate_for_compute_engine",
+      "description": "GCP Migrate For Compute Engine service."
+    },
+    {
+      "name": "gcp_cloud_spanner",
+      "description": "GCP Cloud Spanner service."
+    },
+    {
+      "name": "gcp_beyondcorp",
+      "description": "GCP Beyondcorp service."
+    },
+    {
+      "name": "gcp_cloud_code",
+      "description": "GCP Cloud Code service."
+    },
+    {
+      "name": "gcp_cloud_nat",
+      "description": "GCP Cloud Nat service."
+    },
+    {
+      "name": "gcp_ai_platform_unified",
+      "description": "GCP Ai Platform Unified service."
+    },
+    {
+      "name": "gcp_cloud_asset_inventory",
+      "description": "GCP Cloud Asset Inventory service."
+    },
+    {
+      "name": "gcp_cloud_natural_language_api",
+      "description": "GCP Cloud Natural Language Api service."
+    },
+    {
+      "name": "gcp_kuberun",
+      "description": "GCP Kuberun service."
+    },
+    {
+      "name": "gcp_cloud_functions",
+      "description": "A serverless compute service for running event-driven code."
+    },
+    {
+      "name": "gcp_runtime_config",
+      "description": "GCP Runtime Config service."
+    },
+    {
+      "name": "gcp_cloud_gpu",
+      "description": "GCP Cloud Gpu service."
+    },
+    {
+      "name": "gcp_assured_workloads",
+      "description": "GCP Assured Workloads service."
+    },
+    {
+      "name": "gcp_quantum_engine",
+      "description": "GCP Quantum Engine service."
+    },
+    {
+      "name": "gcp_genomics",
+      "description": "GCP Genomics service."
+    },
+    {
+      "name": "gcp_bigquery",
+      "description": "A fully managed, serverless data warehouse for large-scale data analytics."
+    },
+    {
+      "name": "gcp_key_management_service",
+      "description": "GCP Key Management Service service."
+    },
+    {
+      "name": "gcp_cloud_dns",
+      "description": "GCP Cloud Dns service."
+    },
+    {
+      "name": "gcp_web_risk",
+      "description": "GCP Web Risk service."
+    },
+    {
+      "name": "gcp_apigee_api_platform",
+      "description": "GCP Apigee Api Platform service."
+    },
+    {
+      "name": "gcp_early_access_center",
+      "description": "GCP Early Access Center service."
+    },
+    {
+      "name": "gcp_security_key_enforcement",
+      "description": "GCP Security Key Enforcement service."
+    },
+    {
+      "name": "gcp_secret_manager",
+      "description": "A service for securely storing and managing sensitive information like API keys and passwords."
+    },
+    {
+      "name": "gcp_connectivity_test",
+      "description": "GCP Connectivity Test service."
+    },
+    {
+      "name": "gcp_onboarding",
+      "description": "GCP Onboarding service."
+    },
+    {
+      "name": "gcp_document_ai",
+      "description": "GCP Document Ai service."
+    },
+    {
+      "name": "gcp_cloud_jobs_api",
+      "description": "GCP Cloud Jobs Api service."
+    },
+    {
+      "name": "gcp_cloud_ekm",
+      "description": "GCP Cloud Ekm service."
+    },
+    {
+      "name": "gcp_data_catalog",
+      "description": "GCP Data Catalog service."
+    },
+    {
+      "name": "gcp_dataplex",
+      "description": "GCP Dataplex service."
+    },
+    {
+      "name": "gcp_cloud_vpn",
+      "description": "GCP Cloud Vpn service."
+    },
+    {
+      "name": "gcp_migrate_for_anthos",
+      "description": "GCP Migrate For Anthos service."
+    },
+    {
+      "name": "gcp_automl",
+      "description": "GCP Automl service."
+    },
+    {
+      "name": "gcp_dialogflow",
+      "description": "GCP Dialogflow service."
+    },
+    {
+      "name": "gcp_cloud_generic",
+      "description": "GCP Cloud Generic service."
+    },
+    {
+      "name": "gcp_media_translation_api",
+      "description": "GCP Media Translation Api service."
+    },
+    {
+      "name": "gcp_cloud_inference_api",
+      "description": "GCP Cloud Inference Api service."
+    },
+    {
+      "name": "gcp_iot_edge",
+      "description": "GCP Iot Edge service."
+    },
+    {
+      "name": "gcp_video_intelligence_api",
+      "description": "GCP Video Intelligence Api service."
+    },
+    {
+      "name": "gcp_network_connectivity_center",
+      "description": "GCP Network Connectivity Center service."
+    },
+    {
+      "name": "gcp_cloud_audit_logs",
+      "description": "GCP Cloud Audit Logs service."
+    },
+    {
+      "name": "gcp_datalab",
+      "description": "GCP Datalab service."
+    },
+    {
+      "name": "gcp_data_loss_prevention_api",
+      "description": "GCP Data Loss Prevention Api service."
+    },
+    {
+      "name": "gcp_ai_hub",
+      "description": "GCP Ai Hub service."
+    },
+    {
+      "name": "gcp_standard_network_tier",
+      "description": "GCP Standard Network Tier service."
+    },
+    {
+      "name": "gcp_access_context_manager",
+      "description": "GCP Access Context Manager service."
+    },
+    {
+      "name": "gcp_automl_vision",
+      "description": "GCP Automl Vision service."
+    },
+    {
+      "name": "gcp_project",
+      "description": "GCP Project service."
+    },
+    {
+      "name": "gcp_cloud_storage",
+      "description": "A scalable, durable object storage service for unstructured data."
+    },
+    {
+      "name": "gcp_partner_interconnect",
+      "description": "GCP Partner Interconnect service."
+    },
+    {
+      "name": "gcp_os_patch_management",
+      "description": "GCP Os Patch Management service."
+    },
+    {
+      "name": "gcp_looker",
+      "description": "GCP Looker service."
+    },
+    {
+      "name": "gcp_apigee_sense",
+      "description": "GCP Apigee Sense service."
+    },
+    {
+      "name": "gcp_trace",
+      "description": "GCP Trace service."
+    },
+    {
+      "name": "gcp_free_trial",
+      "description": "GCP Free Trial service."
+    },
+    {
+      "name": "gcp_private_connectivity",
+      "description": "GCP Private Connectivity service."
+    },
+    {
+      "name": "gcp_contact_center_ai",
+      "description": "GCP Contact Center Ai service."
+    },
+    {
+      "name": "gcp_bigtable",
+      "description": "GCP Bigtable service."
+    }
+  ]
+}

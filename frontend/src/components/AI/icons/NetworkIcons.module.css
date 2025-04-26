@@ -1,0 +1,142 @@
+/* Network Icons styling */
+.networkIconContainer {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  height: 100%;
+  transition: all 0.2s ease;
+  position: relative;
+}
+
+/* Icon styling similar to application icons */
+.networkIcon {
+  position: relative;
+  z-index: 2;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.networkIcon svg {
+  width: 46px;
+  height: 46px;
+  filter: drop-shadow(0 1px 1px rgba(0,0,0,0.05));
+}
+
+/* Hover effects */
+.networkIconContainer:hover .networkIcon svg {
+  transform: scale(1.1);
+  transition: transform 0.2s ease;
+}
+
+/* Network section styling */
+.networkSection {
+  background: linear-gradient(to right, rgba(220, 53, 69, 0.03), rgba(220, 53, 69, 0.07));
+  border-radius: 8px;
+  padding: 12px 8px;
+  margin-bottom: 16px;
+  border: 1px solid rgba(220, 53, 69, 0.1);
+}
+
+/* Section header with toggle button */
+.networkSectionHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.networkSectionTitle {
+  color: #DC3545;
+  font-weight: 600;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  margin: 0;
+}
+
+.networkSectionTitle::before {
+  content: '';
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  margin-right: 6px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' width='14px' height='14px' fill='%23DC3545'%3E%3Cpath d='M17 16l-4-4V8.82C14.16 8.4 15 7.3 15 6c0-1.66-1.34-3-3-3S9 4.34 9 6c0 1.3.84 2.4 2 2.82V12l-4 4H3v5h5v-3.05l4-4.2 4 4.2V21h5v-5h-4z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: center;
+}
+
+/* Toggle button styling */
+.toggleButton {
+  background: transparent;
+  border: none;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: #DC3545;
+  border-radius: 4px;
+  padding: 0;
+  transition: background-color 0.2s;
+}
+
+.toggleButton:hover {
+  background-color: rgba(220, 53, 69, 0.1);
+}
+
+.toggleButton:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(220, 53, 69, 0.2);
+}
+
+/* Tooltip styles - appears outside the toolbar */
+.tooltip {
+  position: fixed;
+  padding: 16px 20px;
+  background-color: white;
+  color: #333;
+  font-size: 12px;
+  border-radius: 8px;
+  box-shadow: 0 3px 15px rgba(0, 0, 0, 0.1);
+  width: 280px;
+  max-width: 350px;
+  z-index: 9999;
+  white-space: normal;
+  border: 1px solid rgba(220, 53, 69, 0.2);
+  line-height: 1.6;
+  text-align: left;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  hyphens: auto;
+}
+
+/* Tooltip arrow component */
+.tooltipArrow {
+  position: absolute;
+  width: 0;
+  height: 0;
+  border-style: solid;
+  border-width: 8px;
+  /* Default is arrow pointing right (for tooltips on the left) */
+  border-color: transparent white transparent transparent;
+}
+
+/* When the arrow is on the left side (pointing left, for tooltips on the right) */
+.tooltipArrow[style*="left: 100%"] {
+  border-color: transparent transparent transparent white;
+}
+
+/* Tooltip title */
+.tooltipTitle {
+  font-weight: 600;
+  margin-bottom: 8px;
+  color: #DC3545;
+  font-size: 14px;
+  border-bottom: 1px solid rgba(220, 53, 69, 0.1);
+  padding-bottom: 6px;
+} 

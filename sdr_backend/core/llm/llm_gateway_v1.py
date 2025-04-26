@@ -989,7 +989,7 @@ class LLMService:
         prompt: str, 
         system_prompt: Optional[str] = None,
         model_provider: str = "anthropic",
-        model_name: str = "claude-3-7-sonnet-20250219",
+        model_name: str = "claude-3.7-sonnet",
         temperature: Optional[float] = None,
         max_tokens: Optional[int] = None,
         stream: Optional[bool] = None,

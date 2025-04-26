@@ -1,0 +1,74 @@
+{
+  "application": [
+    {
+      "name": "application_message_queue",
+      "description": "Application Ication Message Queue service.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/application-icons/message_queue.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhcHBsaWNhdGlvbi1pY29ucy9tZXNzYWdlX3F1ZXVlLnN2ZyIsImlhdCI6MTc0NTU0NDk3NSwiZXhwIjozNTIyNjI1OTQ5fQ.ccK76jZrBHBYh8-L-Sh_Uai-q6itYG60Y4JqpcqDXkI"
+    },
+    {
+      "name": "application_monitoring",
+      "description": "Application Ication Monitoring service.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/application-icons/monitoring.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhcHBsaWNhdGlvbi1pY29ucy9tb25pdG9yaW5nLnN2ZyIsImlhdCI6MTc0NTU0NDk3NSwiZXhwIjozNTIyNjI1OTUwfQ.vO3u9EDoG4xSXn7-qyxxZ-lo0oTZnRq2-NZ6Q3Z2eSY"
+    },
+    {
+      "name": "application_microservice",
+      "description": "Application Ication Microservice service.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/application-icons/microservice.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhcHBsaWNhdGlvbi1pY29ucy9taWNyb3NlcnZpY2Uuc3ZnIiwiaWF0IjoxNzQ1NTQ0OTc2LCJleHAiOjM1MjI2MjU5NTF9.sDZ2MYj5tbc5Sp80UrXvJBoftqSeEfZZPmxYe171OOs"
+    },
+    {
+      "name": "application_database",
+      "description": "Application Ication Database service.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/application-icons/database.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhcHBsaWNhdGlvbi1pY29ucy9kYXRhYmFzZS5zdmciLCJpYXQiOjE3NDU1NDQ5NzYsImV4cCI6MzUyMjYyNTk1Mn0.6iHPqkp2hUWdcxUJgZUv6zw1Mq8VkNIFeQOJUqZkhvI"
+    },
+    {
+      "name": "application_cache",
+      "description": "Application Ication Cache service.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/application-icons/cache.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhcHBsaWNhdGlvbi1pY29ucy9jYWNoZS5zdmciLCJpYXQiOjE3NDU1NDQ5NzcsImV4cCI6MzUyMjYyNTk1M30.E2BcPsRfdZHaao0LejPGT1xxUZi66ZiGbO8HC-YSzf0"
+    },
+    {
+      "name": "application_firewall",
+      "description": "Application Ication Firewall service.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/application-icons/firewall.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhcHBsaWNhdGlvbi1pY29ucy9maXJld2FsbC5zdmciLCJpYXQiOjE3NDU1NDQ5NzcsImV4cCI6MzUyMjYyNTk1NH0.9RgyS7OE9vUERscWBB_qVj0DbBSMJciT38nSRPDfNm8"
+    },
+    {
+      "name": "application_api_gateway",
+      "description": "Application Ication Api Gateway service.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/application-icons/api_gateway.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhcHBsaWNhdGlvbi1pY29ucy9hcGlfZ2F0ZXdheS5zdmciLCJpYXQiOjE3NDU1NDQ5NzcsImV4cCI6MzUyMjYyNTk1NH0.vyOledGMDoFMfpzu7aKGUtJkWuczqvNCj4oWpuwmkBE"
+    },
+    {
+      "name": "application_authentication",
+      "description": "Application Ication Authentication service.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/application-icons/authentication.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhcHBsaWNhdGlvbi1pY29ucy9hdXRoZW50aWNhdGlvbi5zdmciLCJpYXQiOjE3NDU1NDQ5NzgsImV4cCI6MzUyMjYyNTk1Nn0.2nKn2vXCzL0qKP8TbSJwSB58oBD-g7savDL8ewbTGFA"
+    },
+    {
+      "name": "application_server",
+      "description": "Application Ication Server service.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/application-icons/server.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhcHBsaWNhdGlvbi1pY29ucy9zZXJ2ZXIuc3ZnIiwiaWF0IjoxNzQ1NTQ0OTc4LCJleHAiOjM1MjI2MjU5NTZ9.WNmRuyBczhH_mUqVkGMg295OeifvEopW46GxH-czT9I"
+    },
+    {
+      "name": "application_container",
+      "description": "Application Ication Container service.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/application-icons/container.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhcHBsaWNhdGlvbi1pY29ucy9jb250YWluZXIuc3ZnIiwiaWF0IjoxNzQ1NTQ0OTc5LCJleHAiOjM1MjI2MjU5NTh9.KghmhVD0zaZ9qieWQKdOtR145xVZ9QWjuykfRimxd_8"
+    },
+    {
+      "name": "application_logging",
+      "description": "Application Ication Logging service.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/application-icons/logging.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhcHBsaWNhdGlvbi1pY29ucy9sb2dnaW5nLnN2ZyIsImlhdCI6MTc0NTU0NDk3OSwiZXhwIjozNTIyNjI1OTU4fQ.7_ZJlwE0CqMI0SZuEb4KB4USIwFQ9NhuwEiDdUhp2Sc"
+    },
+    {
+      "name": "application_faas",
+      "description": "Application Ication Faas service.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/application-icons/faas.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhcHBsaWNhdGlvbi1pY29ucy9mYWFzLnN2ZyIsImlhdCI6MTc0NTU0NDk4MCwiZXhwIjozNTIyNjI1OTU5fQ.FUSAeP4xW71EB5hLLfwOKS0fqvtCR-5vG0YGB4LRU-c"
+    },
+    {
+      "name": "application_proxy",
+      "description": "Application Ication Proxy service.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/application-icons/proxy.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhcHBsaWNhdGlvbi1pY29ucy9wcm94eS5zdmciLCJpYXQiOjE3NDU1NDQ5ODAsImV4cCI6MzUyMjYyNTk2MH0.zfsw2VPEx8U-VyplB9t7h3i4ByoENO4UNrWvBsiC18o"
+    },
+    {
+      "name": "application_load_balancer",
+      "description": "Application Ication Load Balancer service.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/application-icons/load_balancer.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhcHBsaWNhdGlvbi1pY29ucy9sb2FkX2JhbGFuY2VyLnN2ZyIsImlhdCI6MTc0NTU0NDk4MCwiZXhwIjozNTIyNjI1OTYwfQ.gqysuJk6PrMInVKn6oMDa8wOCjSSORCRqM0NhKuvg84"
+    }
+  ]
+}

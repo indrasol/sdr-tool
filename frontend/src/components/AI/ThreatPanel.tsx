@@ -10,7 +10,8 @@ import {
   ChevronRight,
   ShieldCheck,
   Target,
-  X
+  X,
+  Activity
 } from 'lucide-react';
 import { ThreatItem } from '@/interfaces/aiassistedinterfaces';
 import { Node } from '@xyflow/react';
@@ -108,12 +109,26 @@ const ThreatCard: React.FC<{
     }
   };
   
+  // Get header gradient style based on severity
+  const getHeaderGradientStyle = (sev: string) => {
+    switch(sev.toUpperCase()) {
+      case 'HIGH':
+        return 'bg-gradient-to-r from-red-50 to-red-100 border-b border-red-200';
+      case 'MEDIUM':
+        return 'bg-gradient-to-r from-amber-50 to-amber-100 border-b border-amber-200';
+      case 'LOW':
+        return 'bg-gradient-to-r from-blue-50 to-blue-100 border-b border-blue-200';
+      default:
+        return 'bg-gradient-to-r from-gray-50 to-gray-100 border-b border-gray-200';
+    }
+  };
+  
   return (
     <div 
       className={`relative overflow-hidden rounded-md border ${isSelected ? getSeverityStyle(severity) : 'border-gray-200 bg-white hover:border-gray-300'} transition-all transform hover:-translate-y-0.5 duration-150 cursor-pointer shadow-sm hover:shadow`}
       onClick={onSelect}
     >
-      <div className="px-2 py-1 flex items-start">
+      <div className={`px-2 py-1 flex items-start ${getHeaderGradientStyle(severity)}`}>
         {/* Severity icon */}
         {getSeverityIconStyle(severity)}
         
@@ -124,11 +139,12 @@ const ThreatCard: React.FC<{
           </div>
           
           <div className="group relative">
-            <p className="font-medium line-clamp-2 text-gray-900 text-xs mb-0.5 font-sans">
+            <p className="font-medium line-clamp-2 text-gray-900 text-xs mb-0.5 font-sans relative">
               {threat.description}
             </p>
-            <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 absolute z-20 w-72 bg-gray-900 text-white text-[10px] rounded shadow-lg p-2 pointer-events-none -left-1 transform -translate-y-2">
+            <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 absolute z-50 w-72 bg-white text-gray-800 text-[11px] rounded-md shadow-xl p-3 pointer-events-none left-1/2 transform -translate-x-1/2 -translate-y-full border border-gray-300 leading-relaxed top-0 mt-[-5px]">
               {threat.description}
+              <div className="absolute bottom-[-6px] left-1/2 transform -translate-x-1/2 w-3 h-3 rotate-45 bg-white border-r border-b border-gray-300"></div>
             </div>
           </div>
           
@@ -144,55 +160,53 @@ const ThreatCard: React.FC<{
       </div>
       
       {/* Details section - always visible but more compact */}
-      <div className="px-2 py-1 border-t border-gray-100 text-[9px] bg-gray-50 grid grid-cols-1 gap-1">
+      <div className="px-2 py-1 border-t border-gray-100 bg-white">
         {/* Attack Vector */}
-        <div className="rounded overflow-hidden border border-gray-200">
-          <div className="bg-blue-50 px-1.5 py-0.5 font-bold text-blue-800 border-b border-blue-100 flex items-center text-[9px]" style={{ fontFamily: 'Geneva, sans-serif' }}>
-            <AlertTriangle className="w-2.5 h-2.5 mr-1 text-blue-500" />
-            Attack Vector
+        <div className="mt-1">
+          <div className="flex items-center mb-1 bg-blue-50/70 rounded px-1.5 py-0.5">
+            <AlertTriangle className="h-3 w-3 text-blue-600 mr-1" />
+            <span className="text-[10px] font-semibold text-blue-700">Attack Vector:</span>
           </div>
-          <div className="px-1.5 py-0.5 bg-white text-gray-700 text-[10px] font-semibold font-sans">
+          <p className="text-[10px] text-gray-600 bg-blue-50 p-1.5 rounded border border-blue-100" style={{ fontFamily: 'Geneva, sans-serif', fontWeight: 'bold' }}>
             {attackVector}
-          </div>
+          </p>
         </div>
         
         {/* Impact */}
-        <div className="rounded overflow-hidden border border-gray-200">
-          <div className="bg-red-50 px-1.5 py-0.5 font-bold text-red-800 border-b border-red-100 flex items-center text-[9px]" style={{ fontFamily: 'Geneva, sans-serif' }}>
-            <AlertCircle className="w-2.5 h-2.5 mr-1 text-red-500" />
-            Impact
+        <div className="mt-2">
+          <div className="flex items-center mb-1 bg-red-50/70 rounded px-1.5 py-0.5">
+            <Activity className="h-3 w-3 text-red-600 mr-1" />
+            <span className="text-[10px] font-semibold text-red-700">Impact:</span>
           </div>
-          <div className="px-1.5 py-0.5 bg-white text-gray-700 text-[10px] font-semibold font-sans">
+          <p className="text-[10px] text-gray-600 bg-red-50 p-1.5 rounded border border-red-100" style={{ fontFamily: 'Geneva, sans-serif', fontWeight: 'bold' }}>
             {impact}
-          </div>
+          </p>
         </div>
         
         {/* Mitigation */}
-        <div className="rounded overflow-hidden border border-gray-200">
-          <div className="bg-green-50 px-1.5 py-0.5 font-bold text-green-800 border-b border-green-100 flex items-center text-[9px]" style={{ fontFamily: 'Geneva, sans-serif' }}>
-            <ShieldCheck className="w-2.5 h-2.5 mr-1 text-green-500" />
-            Mitigation
+        <div className="mt-2">
+          <div className="flex items-center mb-1 bg-green-50/70 rounded px-1.5 py-0.5">
+            <Shield className="h-3 w-3 text-green-600 mr-1" />
+            <span className="text-[10px] font-semibold text-green-700">Mitigation:</span>
           </div>
-          <div className="px-1.5 py-0.5 bg-white text-gray-700 text-[10px] font-semibold font-sans">
+          <p className="text-[10px] text-gray-600 bg-green-50 p-1.5 rounded border border-green-100" style={{ fontFamily: 'Geneva, sans-serif', fontWeight: 'bold' }}>
             {mitigationText}
-          </div>
+          </p>
         </div>
         
         {/* Target Elements - Only show if there are actually targets */}
         {targetElements.length > 0 && (
-          <div className="rounded overflow-hidden border border-gray-200">
-            <div className="bg-indigo-50 px-1.5 py-0.5 font-bold text-indigo-800 border-b border-indigo-100 flex items-center text-[9px]" style={{ fontFamily: 'Geneva, sans-serif' }}>
-              <Target className="w-2.5 h-2.5 mr-1 text-indigo-500" />
-              Affected Components ({targetElements.length})
+          <div className="mt-2">
+            <div className="flex items-center mb-1 bg-blue-50/70 rounded px-1.5 py-0.5">
+              <Target className="h-3 w-3 text-blue-600 mr-1" />
+              <span className="text-[10px] font-semibold text-blue-700">Targets:</span>
             </div>
-            <div className="px-1.5 py-0.5 bg-white text-gray-700">
-              <div className="flex flex-wrap gap-0.5">
-                {targetElements.map((element, idx) => (
-                  <span key={idx} className="inline-flex items-center text-[9px] bg-gray-100 rounded px-1 py-0.5 text-gray-700 font-semibold font-sans">
-                    <span className="truncate max-w-[120px]">{element}</span>
-                  </span>
-                ))}
-              </div>
+            <div className="flex flex-wrap gap-1">
+              {targetElements.map((element, idx) => (
+                <span key={idx} className="text-[9px] bg-blue-50 text-blue-700 px-1.5 py-0.5 rounded border border-blue-100" style={{ fontFamily: 'Geneva, sans-serif', fontWeight: 'bold' }}>
+                  {element}
+                </span>
+              ))}
             </div>
           </div>
         )}
@@ -305,7 +319,7 @@ const ThreatPanel: React.FC<ThreatPanelProps> = ({
           </div>
           <div className="flex items-center">
             <button
-              className="p-1 bg-red-100 hover:bg-red-200 text-red-700 rounded-md text-[9px] mr-1 transition-colors font-medium flex items-center gap-1"
+              className="p-1 bg-gradient-to-r from-red-100 to-red-200 rounded-md text-[9px] mr-1 transition-all hover:from-red-200 hover:to-red-300 text-red-700 font-medium flex items-center gap-1 shadow-sm border border-red-200"
               onClick={(e) => {
                 e.stopPropagation();
                 if (onRunThreatAnalysis) onRunThreatAnalysis();
@@ -348,7 +362,7 @@ const ThreatPanel: React.FC<ThreatPanelProps> = ({
         </div>
         <div className="flex items-center gap-1">
           <button
-            className="p-1 bg-red-100 hover:bg-red-200 text-red-700 rounded-md text-[9px] transition-colors font-medium flex items-center gap-1"
+            className="p-1 bg-gradient-to-r from-red-100 to-red-200 rounded-md text-[9px] transition-all hover:from-red-200 hover:to-red-300 text-red-700 font-medium flex items-center gap-1 shadow-sm border border-red-200"
             onClick={(e) => {
               e.stopPropagation();
               if (onRunThreatAnalysis) onRunThreatAnalysis();

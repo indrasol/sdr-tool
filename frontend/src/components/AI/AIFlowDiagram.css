@@ -19,6 +19,49 @@
   }
 }
 
+/* Minimap toggle button styles */
+.minimap-toggle-button {
+  border-radius: 50%;
+  background: white;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+  border: 1px solid rgba(124, 101, 246, 0.3);
+  transition: all 0.2s ease;
+  cursor: pointer;
+  z-index: 10;
+}
+
+.minimap-toggle-button:hover {
+  transform: scale(1.1);
+  box-shadow: 0 3px 8px rgba(124, 101, 246, 0.2);
+  border-color: rgba(124, 101, 246, 0.5);
+}
+
+.minimap-toggle-button svg {
+  color: rgba(124, 101, 246, 0.8);
+  width: 16px;
+  height: 16px;
+}
+
+.minimap-toggle-button:active {
+  transform: scale(0.95);
+}
+
+/* Minimap styles */
+.react-flow__minimap {
+  transition: all 0.3s ease;
+}
+
+.react-flow__minimap:hover {
+  transform: scale(1.05);
+  box-shadow: 0 4px 12px rgba(124, 101, 246, 0.15);
+  border-color: rgba(124, 101, 246, 0.5) !important;
+}
+
 .threat-panel-transition {
   animation: slideIn 0.3s ease-out;
 }
@@ -87,4 +130,424 @@
   flex-direction: row;
   gap: 2px;
   cursor: pointer;
+}
+
+/* Modern gradient background for diagram pane */
+.diagram-background {
+  background: linear-gradient(135deg, rgba(242, 244, 248, 0.8) 0%, rgba(230, 233, 240, 0.7) 50%, rgba(223, 227, 236, 0.6) 100%);
+  backdrop-filter: blur(8px);
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+}
+
+/* Animated gradient pattern for diagram background */
+.diagram-pattern {
+  position: absolute;
+  inset: 0;
+  background-image: 
+    radial-gradient(circle at 25% 25%, rgba(124, 101, 246, 0.05) 0%, transparent 50%),
+    radial-gradient(circle at 75% 75%, rgba(124, 101, 246, 0.05) 0%, transparent 50%);
+  opacity: 0.7;
+  z-index: -1;
+  animation: patternMove 20s ease-in-out infinite alternate;
+}
+
+@keyframes patternMove {
+  0% {
+    background-position: 0% 0%;
+  }
+  100% {
+    background-position: 100% 100%;
+  }
+}
+
+/* Animation for node floating */
+@keyframes float {
+  0% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+  100% {
+    transform: translateY(0px);
+  }
+}
+
+/* Animation for slower floating nodes */
+@keyframes floatSlow {
+  0% {
+    transform: translateY(0px) scale(1);
+  }
+  50% {
+    transform: translateY(-15px) scale(1.05);
+  }
+  100% {
+    transform: translateY(0px) scale(1);
+  }
+}
+
+/* Animation for delayed floating */
+@keyframes floatDelay {
+  0% {
+    transform: translateY(0px) rotate(0deg);
+  }
+  50% {
+    transform: translateY(-8px) rotate(2deg);
+  }
+  100% {
+    transform: translateY(0px) rotate(0deg);
+  }
+}
+
+/* Connection path animation */
+.connection-path {
+  stroke-dasharray: 6, 4;
+  animation: dashOffset 30s linear infinite;
+}
+
+@keyframes dashOffset {
+  0% {
+    stroke-dashoffset: 0;
+  }
+  100% {
+    stroke-dashoffset: -500;
+  }
+}
+
+/* Animated particle glow */
+.particle1, .particle2, .particle3, .particle4, .particle5, .particle6, .particle7, .particle8, .particle9, .particle10, .particle11 {
+  filter: drop-shadow(0 0 3px rgba(124, 101, 246, 0.8));
+}
+
+/* Apply animations to floating elements */
+.animate-float {
+  animation: float 4s ease-in-out infinite;
+}
+
+.animate-float-slow {
+  animation: floatSlow 6s ease-in-out infinite;
+}
+
+.animate-float-delay {
+  animation: floatDelay 5s ease-in-out infinite;
+  animation-delay: 1s;
+}
+
+/* Update animation for placeholder nodes - gentle movement near original position */
+@keyframes floatNode {
+  0% {
+    transform: translate(0, 0) scale(1);
+  }
+  20% {
+    transform: translate(20px, -15px) scale(0.98);
+  }
+  40% {
+    transform: translate(35px, 0px) scale(0.97);
+  }
+  60% {
+    transform: translate(20px, 15px) scale(0.98);
+  }
+  80% {
+    transform: translate(-15px, 10px) scale(0.97);
+  }
+  100% {
+    transform: translate(0, 0) scale(1);
+  }
+}
+
+/* Create variations of the float animation for different nodes */
+@keyframes floatNodeAlt1 {
+  0% {
+    transform: translate(0, 0) scale(1);
+  }
+  25% {
+    transform: translate(-25px, 15px) scale(0.98);
+  }
+  50% {
+    transform: translate(-15px, 30px) scale(0.97);
+  }
+  75% {
+    transform: translate(15px, 15px) scale(0.98);
+  }
+  100% {
+    transform: translate(0, 0) scale(1);
+  }
+}
+
+@keyframes floatNodeAlt2 {
+  0% {
+    transform: translate(0, 0) scale(1);
+  }
+  33% {
+    transform: translate(30px, -20px) scale(0.98);
+  }
+  66% {
+    transform: translate(-20px, -15px) scale(0.98);
+  }
+  100% {
+    transform: translate(0, 0) scale(1);
+  }
+}
+
+/* Create a diagonal movement pattern */
+@keyframes floatNodeAlt3 {
+  0% {
+    transform: translate(0, 0) scale(1);
+  }
+  20% {
+    transform: translate(-25px, -20px) scale(0.97);
+  }
+  40% {
+    transform: translate(-15px, -10px) scale(0.98);
+  }
+  60% {
+    transform: translate(10px, 10px) scale(0.99);
+  }
+  80% {
+    transform: translate(25px, 20px) scale(0.98);
+  }
+  100% {
+    transform: translate(0, 0) scale(1);
+  }
+}
+
+/* Create a horizontal-dominant movement pattern */
+@keyframes floatNodeAlt4 {
+  0% {
+    transform: translate(0, 0) scale(1);
+  }
+  30% {
+    transform: translate(30px, -10px) scale(0.97);
+  }
+  70% {
+    transform: translate(-30px, 10px) scale(0.97);
+  }
+  100% {
+    transform: translate(0, 0) scale(1);
+  }
+}
+
+/* Apply base animation to all placeholder nodes but reduce the duration */
+.placeholder-node {
+  filter: drop-shadow(0 6px 10px rgba(0, 0, 0, 0.1));
+  animation: floatNode 30s ease-in-out infinite;
+  transition: all 0.3s ease;
+  position: relative;
+  z-index: 1;
+}
+
+/* Apply different animation variations with reduced durations */
+.placeholder-node:nth-child(2n) {
+  animation-name: floatNodeAlt1;
+  animation-duration: 32s;
+  z-index: 2;
+}
+
+.placeholder-node:nth-child(3n) {
+  animation-name: floatNodeAlt2;
+  animation-duration: 34s;
+  z-index: 3;
+}
+
+.placeholder-node:nth-child(3n+1) {
+  animation-name: floatNodeAlt3;
+  animation-duration: 36s;
+  z-index: 1;
+}
+
+.placeholder-node:nth-child(4n+2) {
+  animation-name: floatNodeAlt4;
+  animation-duration: 38s;
+  z-index: 2;
+}
+
+/* Apply different delays to make the animation more natural */
+.placeholder-node:nth-child(1) {
+  animation-delay: 0s;
+}
+
+.placeholder-node:nth-child(2) {
+  animation-delay: 3s;
+}
+
+.placeholder-node:nth-child(3) {
+  animation-delay: 6s;
+}
+
+.placeholder-node:nth-child(4) {
+  animation-delay: 9s;
+}
+
+.placeholder-node:nth-child(5) {
+  animation-delay: 12s;
+}
+
+.placeholder-node:nth-child(6) {
+  animation-delay: 15s;
+}
+
+.placeholder-node:nth-child(7) {
+  animation-delay: 18s;
+}
+
+.placeholder-node:nth-child(8) {
+  animation-delay: 21s;
+}
+
+.placeholder-node:hover {
+  filter: drop-shadow(0 8px 15px rgba(0, 0, 0, 0.15));
+  transform: translateY(-3px);
+  animation-play-state: paused;
+}
+
+@keyframes fadeInNode {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes pulseConnection {
+  0% {
+    stroke-dashoffset: 24;
+  }
+  100% {
+    stroke-dashoffset: 0;
+  }
+}
+
+.placeholder-connection {
+  stroke-dasharray: 5, 5;
+  animation: pulseConnection 1.5s linear infinite;
+}
+
+/* Fade-in animation for nodes */
+.node-fade-in {
+  animation: fadeInNode 0.5s ease-out forwards;
+}
+
+.node-fade-in:nth-child(2) {
+  animation-delay: 0.1s;
+}
+
+.node-fade-in:nth-child(3) {
+  animation-delay: 0.2s;
+}
+
+.node-fade-in:nth-child(4) {
+  animation-delay: 0.3s;
+}
+
+.node-fade-in:nth-child(5) {
+  animation-delay: 0.4s;
+}
+
+.node-fade-in:nth-child(6) {
+  animation-delay: 0.5s;
+}
+
+/* Node label styles */
+.node-label {
+  position: absolute;
+  bottom: -25px;
+  left: 50%;
+  transform: translateX(-50%);
+  white-space: nowrap;
+  font-size: 12px;
+  font-weight: 500;
+  font-family: 'Geneva', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  color: rgba(55, 65, 81, 1);
+  text-shadow: 0 1px 1px rgba(255, 255, 255, 0.9);
+  background: linear-gradient(135deg, rgba(250, 250, 255, 0.9) 0%, rgba(240, 242, 250, 0.9) 100%);
+  padding: 3px 10px;
+  border-radius: 12px;
+  backdrop-filter: blur(4px);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  border: 1px solid rgba(255, 255, 255, 0.6);
+}
+
+/* Placeholder node label specific styles */
+.placeholder-node .node-label {
+  position: absolute;
+  bottom: -25px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 12px;
+  font-weight: 500;
+  font-family: 'Geneva', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  color: #374151;
+  white-space: nowrap;
+  background: linear-gradient(135deg, rgba(250, 250, 255, 0.9) 0%, rgba(240, 242, 250, 0.9) 100%);
+  border-radius: 12px;
+  padding: 3px 10px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  backdrop-filter: blur(4px);
+}
+
+/* Updated styles for the remote SVG icons */
+.aws-icon svg {
+  fill: white !important;
+  width: 100%;
+  height: 100%;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,0.1));
+}
+
+.gcp-icon svg {
+  filter: brightness(1.2) contrast(1.1);
+  padding: 4px;
+  fill: white !important; /* Force white fill for better visibility */
+  stroke: white;
+  stroke-width: 0.5;
+}
+
+/* New enhanced style specifically for GCP Cloud Run */
+.gcp-icon svg path {
+  fill: white !important;
+}
+
+/* Update any GCP-specific paths for better visibility */
+.gcp-icon svg g path {
+  fill: white !important;
+  stroke: white;
+  stroke-width: 0.1;
+}
+
+.gcp-icon-white svg {
+  fill: white !important;
+  width: 100%;
+  height: 100%;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,0.1));
+}
+
+.network-icon svg {
+  fill: white !important;
+  width: 100%;
+  height: 100%;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,0.1));
+}
+
+/* Add subtle glow effect to node icons */
+.aws-icon svg, .gcp-icon svg, .network-icon svg {
+  filter: drop-shadow(0 0 5px rgba(255, 255, 255, 0.5));
+}
+
+/* Enhance box shadow for all nodes */
+[class*="rounded-xl"] {
+  box-shadow: 0 8px 16px -4px rgba(0, 0, 0, 0.1), 0 4px 8px -2px rgba(0, 0, 0, 0.06) !important;
+}
+
+/* Ensure elements remain visible even when they animate far away */
+.empty-canvas-container {
+  overflow: visible !important;
+}
+
+.empty-canvas {
+  overflow: visible !important;
 }

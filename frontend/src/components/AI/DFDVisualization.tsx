@@ -35,7 +35,9 @@ import {
   ChevronDown,
   ExternalLink,
   Activity,
-  Target
+  Target,
+  EyeOff,
+  Eye
 } from 'lucide-react';
 import { DFDData, ThreatItem } from '../../interfaces/aiassistedinterfaces';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -986,9 +988,15 @@ const ThreatCard: React.FC<{
             <span className="text-[9px] text-gray-500 font-mono">{threat.id}</span>
           </div>
           
-          <p className="font-medium line-clamp-2 text-gray-900 mb-1">
-            {threat.description}
-          </p>
+          <div className="group relative">
+            <p className="font-medium line-clamp-2 text-gray-900 mb-1 relative">
+              {threat.description}
+            </p>
+            <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 absolute z-50 w-72 bg-white text-gray-800 text-[11px] rounded-md shadow-xl p-3 pointer-events-none left-1/2 transform -translate-x-1/2 -translate-y-full border border-gray-300 leading-relaxed top-0 mt-[-5px]">
+              {threat.description}
+              <div className="absolute bottom-[-6px] left-1/2 transform -translate-x-1/2 w-3 h-3 rotate-45 bg-white border-r border-b border-gray-300"></div>
+            </div>
+          </div>
           
           <div className="flex items-center justify-between">
             <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-semibold border ${getSeverityBadgeStyle(severity)}`}>
@@ -1314,6 +1322,23 @@ const DFDVisualization: React.FC<DFDVisualizationProps> = ({ dfdData, reactFlowI
   const [isToolbarOpen, setIsToolbarOpen] = useState(false);
   const toolbarOpenRef = useRef(isToolbarOpen);
   
+  // Add state for minimap visibility with localStorage persistence
+  const [showMinimap, setShowMinimap] = useState(() => {
+    // Try to get the stored preference from localStorage
+    const storedPreference = localStorage.getItem('diagramMinimapVisible');
+    // If there's a stored preference, use it; otherwise default to true
+    return storedPreference === null ? true : storedPreference === 'true';
+  });
+
+  // Toggle minimap visibility and save to localStorage
+  const toggleMinimap = useCallback(() => {
+    setShowMinimap(prev => {
+      const newValue = !prev;
+      localStorage.setItem('diagramMinimapVisible', String(newValue));
+      return newValue;
+    });
+  }, []);
+
   // Add a style tag to globally hide all edge labels and fix handle styles
   React.useEffect(() => {
     const styleTag = document.createElement('style');
@@ -2593,22 +2618,39 @@ const DFDVisualization: React.FC<DFDVisualizationProps> = ({ dfdData, reactFlowI
             className="bg-white overflow-x-hidden"
             style={{ overflowX: 'hidden' }} // Removed fixed marginLeft to prevent diagram being cut off
           >
-            <MiniMap 
-              nodeStrokeColor={() => '#000000'}
-              nodeColor={(n) => {
-                if (n.type === 'boundaryNode') return 'transparent';
-                return '#ffffff';
-              }}
-              style={{ 
-                width: 150, 
-                height: 100,
-                backgroundColor: '#ffffff',
-                border: '1px solid #000000',
-                borderRadius: '2px'
-              }}
-              className="shadow-sm"
-              maskColor="rgba(0, 0, 0, 0.1)"
-            />
+            {/* Minimap toggle button - positioned near the minimap */}
+            <Panel position="bottom-right" className="mr-2 mb-2">
+              <button
+                onClick={toggleMinimap}
+                className="minimap-toggle-button"
+                title={showMinimap ? "Hide minimap" : "Show minimap"}
+              >
+                {showMinimap ? (
+                  <EyeOff size={16} className="text-securetrack-purple opacity-80" />
+                ) : (
+                  <Eye size={16} className="text-securetrack-purple opacity-80" />
+                )}
+              </button>
+            </Panel>
+
+            {showMinimap && (
+              <MiniMap 
+                nodeStrokeColor={() => '#000000'}
+                nodeColor={(n) => {
+                  if (n.type === 'boundaryNode') return 'transparent';
+                  return '#ffffff';
+                }}
+                style={{ 
+                  width: 160, 
+                  height: 100,
+                  backgroundColor: '#f8f9fb',
+                  border: '1px solid rgba(124, 101, 246, 0.2)',
+                  borderRadius: '6px',
+                  zIndex: 5
+                }}
+                maskColor="rgba(124, 101, 246, 0.07)"
+              />
+            )}
             <Background color="#fff" gap={20} size={0} />
             
             {/* Data Flows legend removed */}

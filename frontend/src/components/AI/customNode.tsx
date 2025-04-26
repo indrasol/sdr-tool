@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Handle, Position, NodeResizer } from '@xyflow/react';
 import NodeContextToolbar from './NodeContextToolbar';
@@ -101,7 +100,10 @@ const CustomNode = ({
       />
 
       <div 
-        className={`custom-node flex flex-col items-center justify-center w-full h-full bg-white rounded-lg border ${selected ? 'border-securetrack-purple border-2' : 'border-gray-200'} p-1 shadow-sm transition-all duration-200 ${selected ? 'shadow-md' : ''}`}
+        className={`node-fade-in custom-node flex flex-col items-center justify-center w-full h-full rounded-lg border backdrop-blur-sm
+          ${selected ? 'border-securetrack-purple border-2 shadow-lg' : 'border-gray-200/80 shadow-sm'} 
+          p-1 transition-all duration-200 hover:shadow-md
+          ${isCloudNode ? 'bg-white/90' : 'bg-gradient-to-br from-white/95 to-white/85'}`}
         style={style}
       >
         {iconRenderer && (
@@ -121,7 +123,7 @@ const CustomNode = ({
                   {description.length > 12 ? `${description.substring(0, 12)}...` : description}
                 </div>
               </TooltipTrigger>
-              <TooltipContent className="bg-white z-[9999] text-xs p-2">
+              <TooltipContent className="bg-white/90 backdrop-blur-sm z-[9999] text-xs p-2 border-securetrack-purple/20">
                 {description}
               </TooltipContent>
             </Tooltip>
@@ -132,12 +134,12 @@ const CustomNode = ({
       <Handle 
         type="target" 
         position={Position.Left} 
-        className="w-1.5 h-1.5 border-2 border-securetrack-purple bg-white"
+        className="w-1.5 h-1.5 border-2 border-securetrack-purple bg-white/90"
       />
       <Handle 
         type="source" 
         position={Position.Right} 
-        className="w-1.5 h-1.5 border-2 border-securetrack-purple bg-white"
+        className="w-1.5 h-1.5 border-2 border-securetrack-purple bg-white/90"
       />
     </>
   );

@@ -1,0 +1,142 @@
+/* Application Icons styling */
+.applicationIconContainer {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  height: 100%;
+  transition: all 0.2s ease;
+  position: relative;
+}
+
+/* Add a subtle gradient background for Application icons */
+.applicationIcon {
+  position: relative;
+  z-index: 2;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.applicationIcon svg {
+  width: 46px;
+  height: 46px;
+  filter: drop-shadow(0 1px 1px rgba(0,0,0,0.05));
+}
+
+/* Hover effects */
+.applicationIconContainer:hover .applicationIcon svg {
+  transform: scale(1.1);
+  transition: transform 0.2s ease;
+}
+
+/* Application section styling */
+.applicationSection {
+  background: linear-gradient(to right, rgba(76, 175, 80, 0.03), rgba(76, 175, 80, 0.07));
+  border-radius: 8px;
+  padding: 12px 8px;
+  margin-bottom: 16px;
+  border: 1px solid rgba(76, 175, 80, 0.1);
+}
+
+/* Section header with toggle button */
+.applicationSectionHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.applicationSectionTitle {
+  color: #4CAF50;
+  font-weight: 600;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  margin: 0;
+}
+
+.applicationSectionTitle::before {
+  content: '';
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  margin-right: 6px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' width='14px' height='14px' fill='%234CAF50'%3E%3Cpath d='M21 13.1c-.1.4-.2.8-.4 1.1-.2.3-.5.6-.8.7-.3.2-.7.3-1 .4-.4.1-.8.1-1.2.1-.7 0-1.3-.1-1.8-.2s-1-.4-1.4-.7c-.4-.3-.7-.7-.9-1.1-.2-.4-.4-.9-.5-1.3-.1-.5-.2-.9-.2-1.4s.1-1 .2-1.4c.1-.5.3-.9.5-1.3.2-.4.5-.8.9-1.1.4-.3.8-.5 1.4-.7.5-.2 1 .3 1.6.3.4 0 .7 0 1-.1.3-.1.5-.2.7-.3.2-.1.4-.2.6-.4.2-.1.3-.3.5-.4h.1c.1 0 .2 0 .3.1.1.1.1.2.1.3v.4c0 .2-.1.3-.2.5zm-2.6-7c-.5-.3-1.1-.5-1.9-.5-.6 0-1.1.1-1.5.2-.5.2-.8.4-1.1.7-.3.3-.6.6-.7 1.1-.2.4-.3.9-.3 1.3v.2h6.3c.2 0 .4 0 .5-.1.2-.1.3-.1.4-.2.1-.1.2-.2.3-.3.1-.1.1-.3.1-.4 0-.3-.1-.5-.2-.7-.3-.5-.5-.8-.9-1.3z'/%3E%3Cpath d='M10 18.2H8.2c-3.1 0-5.5-2.4-5.5-5.5 0-3.1 2.4-5.5 5.5-5.5 0 0 .4 0 .7.1.3.1.6.4.7.7.1.1.1.3.1.4v.3c0 .3-.1.5-.3.7-.2.2-.4.3-.7.3 0 0-.2 0-.5-.1-.3.1-.5-.1-.9-.1-1.2 0-2.2 1-2.2 2.2 0 1.2 1 2.2 2.2 2.2H10c.4 0 .7.2.9.4.2.3.4.6.4.9 0 .3-.2.7-.4.9-.1.3-.5.5-.9.5z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: center;
+}
+
+/* Toggle button styling */
+.toggleButton {
+  background: transparent;
+  border: none;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: #4CAF50;
+  border-radius: 4px;
+  padding: 0;
+  transition: background-color 0.2s;
+}
+
+.toggleButton:hover {
+  background-color: rgba(76, 175, 80, 0.1);
+}
+
+.toggleButton:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(76, 175, 80, 0.2);
+}
+
+/* Tooltip styles - appears outside the toolbar */
+.tooltip {
+  position: fixed;
+  padding: 16px 20px;
+  background-color: white;
+  color: #333;
+  font-size: 12px;
+  border-radius: 8px;
+  box-shadow: 0 3px 15px rgba(0, 0, 0, 0.1);
+  width: 280px;
+  max-width: 350px;
+  z-index: 9999;
+  white-space: normal;
+  border: 1px solid rgba(76, 175, 80, 0.2);
+  line-height: 1.6;
+  text-align: left;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  hyphens: auto;
+}
+
+/* Tooltip arrow component */
+.tooltipArrow {
+  position: absolute;
+  width: 0;
+  height: 0;
+  border-style: solid;
+  border-width: 8px;
+  /* Default is arrow pointing right (for tooltips on the left) */
+  border-color: transparent white transparent transparent;
+}
+
+/* When the arrow is on the left side (pointing left, for tooltips on the right) */
+.tooltipArrow[style*="left: 100%"] {
+  border-color: transparent transparent transparent white;
+}
+
+/* Tooltip title */
+.tooltipTitle {
+  font-weight: 600;
+  margin-bottom: 8px;
+  color: #4CAF50;
+  font-size: 14px;
+  border-bottom: 1px solid rgba(76, 175, 80, 0.1);
+  padding-bottom: 6px;
+} 
