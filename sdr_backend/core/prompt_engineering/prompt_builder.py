@@ -3,6 +3,8 @@ from typing import Dict, Any, List, Optional
 from models.response_models import ResponseType
 import re
 from utils.logger import log_info
+import json
+
 
 class PromptBuilder:
     """
@@ -29,6 +31,18 @@ class PromptBuilder:
         Returns:
             A formatted prompt string
         """
+
+        try:
+            with open('node_types.json', 'r') as f:
+                node_types = json.load(f)
+            NODE_TYPES_STR = json.dumps(node_types, indent=2)
+        except FileNotFoundError:
+            NODE_TYPES_STR = "{}"  # Default to empty dictionary if file is missing
+            log_info("Warning: node_types.json not found. Using empty node types.")
+        except json.JSONDecodeError:
+            NODE_TYPES_STR = "{}"  # Default to empty dictionary if file is invalid
+            log_info("Warning: node_types.json is invalid. Using empty node types.")
+
         # Convert diagram state to a readable format
         diagram_description = await self._format_diagram_state(diagram_state)
         
@@ -47,9 +61,26 @@ class PromptBuilder:
         
         # User Request:
         {query}
+
+        # Available Node Types:
+        {NODE_TYPES_STR}
         
-        Think deeply about this architecture request. Consider multiple approaches, security implications,
-        and best practices. Explore different options before settling on your recommendation.
+        # Instructions:
+        Analyze the user’s request carefully, considering security best practices, scalability, and architectural patterns.
+
+        - Use **only the node types listed in the "generic", "aws", "gcp", or "azure" sections** of the Available Node Types.
+        - Refer to the `description` field for each node type to select the most appropriate one (e.g., "web_server" for hosting web apps).
+        - If the user specifies a cloud provider (e.g., "AWS", "GCP", "Azure"), use node types from that provider’s section.
+        - If no cloud provider is specified, default to node types from the "generic" section.
+        - For specific services mentioned (e.g., "use S3 for storage"), map to the closest node type (e.g., "aws_s3_bucket" for AWS).
+        - If no exact match exists, use the default node type for the context:
+        - Generic: {node_types['default']['generic']}
+        - AWS: {node_types['default']['aws']}
+        - GCP: {node_types['default']['gcp']}
+        - Azure: {node_types['default']['azure']}
+        - Assign unique IDs to new nodes (e.g., "node1") and edges (e.g., "edge1").
+
+        Respond with this JSON structure:
         
         When providing your response, use this JSON structure:
         ```json

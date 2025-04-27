@@ -1,0 +1,39 @@
+{
+"client": [
+    {
+      "name": "client_web_browser",
+      "description": "Web browser client that accesses web-based applications and services.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/client-icons/web_browser.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJjbGllbnQtaWNvbnMvd2ViX2Jyb3dzZXIuc3ZnIiwiaWF0IjoxNzQ1NTY2MjE0LCJleHAiOjE3NzcxMDIyMTR9.7T25dU8tduWKK1VYK3L3SrqufU0gL9Xj-t06lrfaxH8"
+    },
+    {
+      "name": "client_mobile_app",
+      "description": "Mobile application that runs on smartphones or tablets.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/client-icons/mobile_app.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJjbGllbnQtaWNvbnMvbW9iaWxlX2FwcC5zdmciLCJpYXQiOjE3NDU1NjYxOTEsImV4cCI6MTc3NzEwMjE5MX0.F5OUUaC2AbUKUuaVhgxPxA6SV7L_nAuuYGdlR7AXtio"
+    },
+    {
+      "name": "client_desktop_app",
+      "description": "Desktop application that runs on user workstations or laptops.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/client-icons/desktop_app.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJjbGllbnQtaWNvbnMvZGVza3RvcF9hcHAuc3ZnIiwiaWF0IjoxNzQ1NTY2MTM3LCJleHAiOjE3NzcxMDIxMzd9.fQ52plFBOvxx3-D2XA2_JUzQzfcJ0VEdK0Ngh1vtc4c"
+    },
+    {
+      "name": "client_iot_device",
+      "description": "Internet of Things device that connects to your system.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/client-icons/iot.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJjbGllbnQtaWNvbnMvaW90LnN2ZyIsImlhdCI6MTc0NTU2NjEyMywiZXhwIjoxNzc3MTAyMTIzfQ.3rL2pg6wiSLzFbq3gmnBZXvU8QGV1-hmhuWHG1v8e9Y"
+    },
+    {
+      "name": "client_external_clients",
+      "description": "External clients or third-party systems that interact with your application.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/client-icons/external_clients.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJjbGllbnQtaWNvbnMvZXh0ZXJuYWxfY2xpZW50cy5zdmciLCJpYXQiOjE3NDU1NjYxMDksImV4cCI6MTc3NzEwMjEwOX0.7TMvVaNyE83vUlBbXSK_TnO2vbqdjKihBIrhOgBpibM"
+    },
+    {
+      "name": "client_arvr_headset",
+      "description": "Augmented Reality (AR) or Virtual Reality (VR) headset that provides immersive experiences.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/client-icons/arvr_headset.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJjbGllbnQtaWNvbnMvYXJ2cl9oZWFkc2V0LnN2ZyIsImlhdCI6MTc0NTU2NjA3MiwiZXhwIjoxNzc3MTAyMDcyfQ._1xnlVNq_kvPfzhAKfFWue27r2OFm_D8kixa7aXvtXI"
+    },
+    {
+      "name": "client_kiosk",
+      "description": "Kiosk application that provides a touch-screen interface for public use.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/client-icons/kiosk.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJjbGllbnQtaWNvbnMva2lvc2suc3ZnIiwiaWF0IjoxNzQ1NTY2MTUxLCJleHAiOjE3NzcxMDIxNTF9.l842lO4BfZW3HlXSO3bfgEMwM4LcAdbX_HQLyyADk8Y"
+    }
+  ]
+}

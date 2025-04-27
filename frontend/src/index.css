@@ -214,3 +214,58 @@
 .report-card {
   @apply border-l-4 border-securetrack-purple bg-gray-50 p-4 rounded shadow-sm my-3;
 }
+
+/* Styles for the typing cursor in placeholders */
+.typing-cursor {
+  display: inline-block;
+  margin-left: 2px;
+  width: 2px;
+  height: 1em;
+  background-color: #6B7280;
+  vertical-align: text-bottom;
+  opacity: 0.8;
+  animation: blink 1s step-end infinite;
+}
+
+/* Bot cursor styles */
+.bot-cursor {
+  display: inline-flex;
+  align-items: center;
+  margin-left: 4px;
+  vertical-align: middle;
+  color: #6B7280;
+  opacity: 0.8;
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+.bot-cursor svg {
+  width: 14px;
+  height: 14px;
+  transform: translateY(1px);
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 0.8;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.6;
+    transform: scale(0.95);
+  }
+}
+
+@keyframes blink {
+  from, to {
+    opacity: 0.8;
+  }
+  50% {
+    opacity: 0;
+  }
+}
+
+.typing-placeholder {
+  color: #6B7280;
+  opacity: 0.9;
+  font-style: normal;
+}

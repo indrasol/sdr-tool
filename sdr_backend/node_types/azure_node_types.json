@@ -1,0 +1,2396 @@
+{
+  "azure": [
+    {
+      "name": "azure_azure_support_center_blue",
+      "description": "Azure Azure Support Center Blue service."
+    },
+    {
+      "name": "azure_versions",
+      "description": "Azure Versions service."
+    },
+    {
+      "name": "azure_batch_ai",
+      "description": "Azure Batch Ai service."
+    },
+    {
+      "name": "azure_time_series_insights_access_policies",
+      "description": "Azure Time Series Insights Access Policies service."
+    },
+    {
+      "name": "azure_app_configuration",
+      "description": "Azure App Configuration service."
+    },
+    {
+      "name": "azure_load_balancers",
+      "description": "Azure Load Balancers service."
+    },
+    {
+      "name": "azure_vm_image_version",
+      "description": "Azure Vm Image Version service."
+    },
+    {
+      "name": "azure_alerts",
+      "description": "Azure Alerts service."
+    },
+    {
+      "name": "azure_application_gateways",
+      "description": "Azure Application Gateways service."
+    },
+    {
+      "name": "azure_azure_center_for_sap",
+      "description": "Azure Azure Center For Sap service."
+    },
+    {
+      "name": "azure_code_optimization",
+      "description": "Azure Code Optimization service."
+    },
+    {
+      "name": "azure_media_file",
+      "description": "Azure Media File service."
+    },
+    {
+      "name": "azure_arc_sql_managed_instance",
+      "description": "A service for managing SQL Managed Instances with Azure Arc."
+    },
+    {
+      "name": "azure_data_share_invitations",
+      "description": "Azure Data Share Invitations service."
+    },
+    {
+      "name": "azure_azure_service_bus",
+      "description": "Azure Azure Service Bus service."
+    },
+    {
+      "name": "azure_counter",
+      "description": "Azure Counter service."
+    },
+    {
+      "name": "azure_resource_graph_explorer",
+      "description": "Azure Resource Graph Explorer service."
+    },
+    {
+      "name": "azure_image_definitions",
+      "description": "Azure Image Definitions service."
+    },
+    {
+      "name": "azure_file",
+      "description": "Azure File service."
+    },
+    {
+      "name": "azure_notification_hubs",
+      "description": "Azure Notification Hubs service."
+    },
+    {
+      "name": "azure_public_ip_addresses",
+      "description": "Azure Public Ip Addresses service."
+    },
+    {
+      "name": "azure_azure_database_migration_services",
+      "description": "Azure Azure Database Migration Services service."
+    },
+    {
+      "name": "azure_azure_communications_gateway",
+      "description": "Azure Azure Communications Gateway service."
+    },
+    {
+      "name": "azure_notification_hub_namespaces",
+      "description": "Azure Notification Hub Namespaces service."
+    },
+    {
+      "name": "azure_application_insights",
+      "description": "A tool for monitoring and diagnosing application performance and usage."
+    },
+    {
+      "name": "azure_ssd",
+      "description": "Azure Ssd service."
+    },
+    {
+      "name": "azure_azure_synapse_analytics",
+      "description": "Azure Azure Synapse Analytics service."
+    },
+    {
+      "name": "azure_vm_app_versions",
+      "description": "Azure Vm App Versions service."
+    },
+    {
+      "name": "azure_restore_points",
+      "description": "Azure Restore Points service."
+    },
+    {
+      "name": "azure_event_grid_subscriptions",
+      "description": "Azure Event Grid Subscriptions service."
+    },
+    {
+      "name": "azure_search",
+      "description": "Azure Search service."
+    },
+    {
+      "name": "azure_windows10_core_services",
+      "description": "Azure Windows10 Core Services service."
+    },
+    {
+      "name": "azure_peerings",
+      "description": "Azure Peerings service."
+    },
+    {
+      "name": "azure_intune_trends",
+      "description": "Azure Intune Trends service."
+    },
+    {
+      "name": "azure_user_subscriptions",
+      "description": "Azure User Subscriptions service."
+    },
+    {
+      "name": "azure_entra_connect_health",
+      "description": "Azure Entra Connect Health service."
+    },
+    {
+      "name": "azure_integration_service_environments",
+      "description": "Azure Integration Service Environments service."
+    },
+    {
+      "name": "azure_sendgrid_accounts",
+      "description": "Azure Sendgrid Accounts service."
+    },
+    {
+      "name": "azure_machine_learning",
+      "description": "A platform for building, training, and deploying machine learning models."
+    },
+    {
+      "name": "azure_image_versions",
+      "description": "Azure Image Versions service."
+    },
+    {
+      "name": "azure_device_provisioning_services",
+      "description": "Azure Device Provisioning Services service."
+    },
+    {
+      "name": "azure_restore_points_collections",
+      "description": "Azure Restore Points Collections service."
+    },
+    {
+      "name": "azure_dedicated_hsm",
+      "description": "Azure Dedicated Hsm service."
+    },
+    {
+      "name": "azure_ssis_lift_and_shift_ir",
+      "description": "Azure Ssis Lift And Shift Ir service."
+    },
+    {
+      "name": "azure_exchange_access",
+      "description": "Azure Exchange Access service."
+    },
+    {
+      "name": "azure_aks_automatic",
+      "description": "Azure Aks Automatic service."
+    },
+    {
+      "name": "azure_cost_export",
+      "description": "Azure Cost Export service."
+    },
+    {
+      "name": "azure_customer_lockbox_for_microsoft_azure",
+      "description": "Azure Customer Lockbox For Microsoft Azure service."
+    },
+    {
+      "name": "azure_serverless_search",
+      "description": "Azure Serverless Search service."
+    },
+    {
+      "name": "azure_devices",
+      "description": "Azure Devices service."
+    },
+    {
+      "name": "azure_firewalls",
+      "description": "Azure Firewalls service."
+    },
+    {
+      "name": "azure_entra_identity_custom_roles",
+      "description": "Azure Entra Identity Custom Roles service."
+    },
+    {
+      "name": "azure_azure_iot_operations",
+      "description": "Azure Azure Iot Operations service."
+    },
+    {
+      "name": "azure_api_connections",
+      "description": "Azure Api Connections service."
+    },
+    {
+      "name": "azure_folder_website",
+      "description": "Azure Folder Website service."
+    },
+    {
+      "name": "azure_time_series_insights_environments",
+      "description": "Azure Time Series Insights Environments service."
+    },
+    {
+      "name": "azure_virtual_wans",
+      "description": "Azure Virtual Wans service."
+    },
+    {
+      "name": "azure_mission_landing_zone",
+      "description": "Azure Mission Landing Zone service."
+    },
+    {
+      "name": "azure_managed_service_fabric",
+      "description": "A managed service for building microservices and applications."
+    },
+    {
+      "name": "azure_azure_hpc_workbenches",
+      "description": "Azure Azure Hpc Workbenches service."
+    },
+    {
+      "name": "azure_disks_(classic)",
+      "description": "Azure Disks (Classic) service."
+    },
+    {
+      "name": "azure_storsimple_data_managers",
+      "description": "Azure Storsimple Data Managers service."
+    },
+    {
+      "name": "azure_app_service_plans",
+      "description": "Azure App Service Plans service."
+    },
+    {
+      "name": "azure_iot_central_applications",
+      "description": "Azure Iot Central Applications service."
+    },
+    {
+      "name": "azure_managed_devops_pools",
+      "description": "Azure Managed Devops Pools service."
+    },
+    {
+      "name": "azure_image",
+      "description": "Azure Image service."
+    },
+    {
+      "name": "azure_application_gateway_containers",
+      "description": "Azure Application Gateway Containers service."
+    },
+    {
+      "name": "azure_entra_internet_access",
+      "description": "Azure Entra Internet Access service."
+    },
+    {
+      "name": "azure_consortium",
+      "description": "Azure Consortium service."
+    },
+    {
+      "name": "azure_defender_programable_board",
+      "description": "Azure Defender Programable Board service."
+    },
+    {
+      "name": "azure_central_service_instance_for_sap",
+      "description": "Azure Central Service Instance For Sap service."
+    },
+    {
+      "name": "azure_arc_machines",
+      "description": "Azure Arc Machines service."
+    },
+    {
+      "name": "azure_cloudtest",
+      "description": "Azure Cloudtest service."
+    },
+    {
+      "name": "azure_dns_security_policy",
+      "description": "Azure Dns Security Policy service."
+    },
+    {
+      "name": "azure_marketplace",
+      "description": "Azure Marketplace service."
+    },
+    {
+      "name": "azure_azure_database_mysql_server",
+      "description": "Azure Azure Database Mysql Server service."
+    },
+    {
+      "name": "azure_globe_success",
+      "description": "Azure Globe Success service."
+    },
+    {
+      "name": "azure_azure_purview_accounts",
+      "description": "Azure Azure Purview Accounts service."
+    },
+    {
+      "name": "azure_azure_object_understanding",
+      "description": "Azure Azure Object Understanding service."
+    },
+    {
+      "name": "azure_security",
+      "description": "Azure Security service."
+    },
+    {
+      "name": "azure_auto_scale",
+      "description": "Azure Auto Scale service."
+    },
+    {
+      "name": "azure_defender_hmi",
+      "description": "Azure Defender Hmi service."
+    },
+    {
+      "name": "azure_arc_data_services",
+      "description": "Azure Arc Data Services service."
+    },
+    {
+      "name": "azure_scheduler_job_collections",
+      "description": "Azure Scheduler Job Collections service."
+    },
+    {
+      "name": "azure_app_service_domains",
+      "description": "Azure App Service Domains service."
+    },
+    {
+      "name": "azure_lab_services",
+      "description": "Azure Lab Services service."
+    },
+    {
+      "name": "azure_private_endpoints",
+      "description": "Azure Private Endpoints service."
+    },
+    {
+      "name": "azure_signalr",
+      "description": "Azure Signalr service."
+    },
+    {
+      "name": "azure_storage_sync_services",
+      "description": "Azure Storage Sync Services service."
+    },
+    {
+      "name": "azure_website_power",
+      "description": "Azure Website Power service."
+    },
+    {
+      "name": "azure_iot_hub",
+      "description": "Azure Iot Hub service."
+    },
+    {
+      "name": "azure_sonic_dash",
+      "description": "Azure Sonic Dash service."
+    },
+    {
+      "name": "azure_search_grid",
+      "description": "Azure Search Grid service."
+    },
+    {
+      "name": "azure_event_grid_topics",
+      "description": "Azure Event Grid Topics service."
+    },
+    {
+      "name": "azure_stack_hci_premium",
+      "description": "Azure Stack Hci Premium service."
+    },
+    {
+      "name": "azure_tfs_vc_repository",
+      "description": "Azure Tfs Vc Repository service."
+    },
+    {
+      "name": "azure_preview_features",
+      "description": "Azure Preview Features service."
+    },
+    {
+      "name": "azure_virtual_machines_(classic)",
+      "description": "Azure Virtual Machines (Classic) service."
+    },
+    {
+      "name": "azure_entra_privleged_identity_management",
+      "description": "Azure Entra Privleged Identity Management service."
+    },
+    {
+      "name": "azure_azure_quotas",
+      "description": "Azure Azure Quotas service."
+    },
+    {
+      "name": "azure_azure_blockchain_service",
+      "description": "Azure Azure Blockchain Service service."
+    },
+    {
+      "name": "azure_oracle_database",
+      "description": "Azure Oracle Database service."
+    },
+    {
+      "name": "azure_virtual_wan_hub",
+      "description": "Azure Virtual Wan Hub service."
+    },
+    {
+      "name": "azure_client_apps",
+      "description": "Azure Client Apps service."
+    },
+    {
+      "name": "azure_machine_learning_studio_web_service_plans",
+      "description": "Azure Machine Learning Studio Web Service Plans service."
+    },
+    {
+      "name": "azure_storage_actions",
+      "description": "Azure Storage Actions service."
+    },
+    {
+      "name": "azure_software_as_a_service",
+      "description": "Azure Software As A Service service."
+    },
+    {
+      "name": "azure_blockchain_applications",
+      "description": "Azure Blockchain Applications service."
+    },
+    {
+      "name": "azure_exchange_on_premises_access",
+      "description": "Azure Exchange On Premises Access service."
+    },
+    {
+      "name": "azure_users",
+      "description": "Azure Users service."
+    },
+    {
+      "name": "azure_files",
+      "description": "Azure Files service."
+    },
+    {
+      "name": "azure_security_baselines",
+      "description": "Azure Security Baselines service."
+    },
+    {
+      "name": "azure_language",
+      "description": "Azure Language service."
+    },
+    {
+      "name": "azure_custom_ip_prefix",
+      "description": "Azure Custom Ip Prefix service."
+    },
+    {
+      "name": "azure_public_ip_addresses_(classic)",
+      "description": "Azure Public Ip Addresses (Classic) service."
+    },
+    {
+      "name": "azure_blob_page",
+      "description": "Azure Blob Page service."
+    },
+    {
+      "name": "azure_azure_monitor_pipeline",
+      "description": "Azure Azure Monitor Pipeline service."
+    },
+    {
+      "name": "azure_ip_address_manager",
+      "description": "Azure Ip Address Manager service."
+    },
+    {
+      "name": "azure_azure_migrate",
+      "description": "Azure Azure Migrate service."
+    },
+    {
+      "name": "azure_business_process_tracking",
+      "description": "Azure Business Process Tracking service."
+    },
+    {
+      "name": "azure_keys",
+      "description": "Azure Keys service."
+    },
+    {
+      "name": "azure_machine_learning_studio_workspaces",
+      "description": "Azure Machine Learning Studio Workspaces service."
+    },
+    {
+      "name": "azure_cubes",
+      "description": "Azure Cubes service."
+    },
+    {
+      "name": "azure_api_proxy",
+      "description": "A service for managing and routing API traffic."
+    },
+    {
+      "name": "azure_azure_sql_server_stretch_databases",
+      "description": "Azure Azure Sql Server Stretch Databases service."
+    },
+    {
+      "name": "azure_traffic_manager_profiles",
+      "description": "Azure Traffic Manager Profiles service."
+    },
+    {
+      "name": "azure_storage_functions",
+      "description": "Azure Storage Functions service."
+    },
+    {
+      "name": "azure_storage_explorer",
+      "description": "Azure Storage Explorer service."
+    },
+    {
+      "name": "azure_azurite",
+      "description": "Azure Azurite service."
+    },
+    {
+      "name": "azure_azure_lighthouse",
+      "description": "Azure Azure Lighthouse service."
+    },
+    {
+      "name": "azure_azure_media_service",
+      "description": "Azure Azure Media Service service."
+    },
+    {
+      "name": "azure_location",
+      "description": "Azure Location service."
+    },
+    {
+      "name": "azure_azure_workbooks",
+      "description": "Azure Azure Workbooks service."
+    },
+    {
+      "name": "azure_expressroute_direct",
+      "description": "Azure Expressroute Direct service."
+    },
+    {
+      "name": "azure_connected_vehicle_platform",
+      "description": "Azure Connected Vehicle Platform service."
+    },
+    {
+      "name": "azure_download",
+      "description": "Azure Download service."
+    },
+    {
+      "name": "azure_azure_hybrid_center",
+      "description": "Azure Azure Hybrid Center service."
+    },
+    {
+      "name": "azure_reserved_capacity",
+      "description": "Azure Reserved Capacity service."
+    },
+    {
+      "name": "azure_speech_services",
+      "description": "Azure Speech Services service."
+    },
+    {
+      "name": "azure_folder_blank",
+      "description": "Azure Folder Blank service."
+    },
+    {
+      "name": "azure_azure_managed_redis",
+      "description": "Azure Azure Managed Redis service."
+    },
+    {
+      "name": "azure_azure_databricks",
+      "description": "Azure Azure Databricks service."
+    },
+    {
+      "name": "azure_troubleshoot",
+      "description": "Azure Troubleshoot service."
+    },
+    {
+      "name": "azure_form_recognizers",
+      "description": "Azure Form Recognizers service."
+    },
+    {
+      "name": "azure_extensions",
+      "description": "Azure Extensions service."
+    },
+    {
+      "name": "azure_azure_monitor_dashboard",
+      "description": "Azure Azure Monitor Dashboard service."
+    },
+    {
+      "name": "azure_defender_external_management",
+      "description": "Azure Defender External Management service."
+    },
+    {
+      "name": "azure_biz_talk",
+      "description": "Azure Biz Talk service."
+    },
+    {
+      "name": "azure_entra_identity_risky_signins",
+      "description": "Azure Entra Identity Risky Signins service."
+    },
+    {
+      "name": "azure_network_interfaces",
+      "description": "Azure Network Interfaces service."
+    },
+    {
+      "name": "azure_resources_provider",
+      "description": "Azure Resources Provider service."
+    },
+    {
+      "name": "azure_dns_zones",
+      "description": "Azure Dns Zones service."
+    },
+    {
+      "name": "azure_input_output",
+      "description": "Azure Input Output service."
+    },
+    {
+      "name": "azure_express_route_traffic_collector",
+      "description": "Azure Express Route Traffic Collector service."
+    },
+    {
+      "name": "azure_expressroute_circuits",
+      "description": "Azure Expressroute Circuits service."
+    },
+    {
+      "name": "azure_recent",
+      "description": "Azure Recent service."
+    },
+    {
+      "name": "azure_azure_api_for_fhir",
+      "description": "Azure Azure Api For Fhir service."
+    },
+    {
+      "name": "azure_video_analyzers",
+      "description": "Azure Video Analyzers service."
+    },
+    {
+      "name": "azure_qna_makers",
+      "description": "Azure Qna Makers service."
+    },
+    {
+      "name": "azure_device_update_iot_hub",
+      "description": "Azure Device Update Iot Hub service."
+    },
+    {
+      "name": "azure_time_series_data_sets",
+      "description": "Azure Time Series Data Sets service."
+    },
+    {
+      "name": "azure_virtual_router",
+      "description": "A service for virtual routing within Azure networks."
+    },
+    {
+      "name": "azure_ai_at_edge",
+      "description": "Azure Ai At Edge service."
+    },
+    {
+      "name": "azure_azure_firewall_policy",
+      "description": "Azure Azure Firewall Policy service."
+    },
+    {
+      "name": "azure_detonation",
+      "description": "Azure Detonation service."
+    },
+    {
+      "name": "azure_defender_relay",
+      "description": "Azure Defender Relay service."
+    },
+    {
+      "name": "azure_partner_registration",
+      "description": "Azure Partner Registration service."
+    },
+    {
+      "name": "azure_edge_storage_accelerator",
+      "description": "Azure Edge Storage Accelerator service."
+    },
+    {
+      "name": "azure_capacity_reservation_groups",
+      "description": "Azure Capacity Reservation Groups service."
+    },
+    {
+      "name": "azure_os_images_(classic)",
+      "description": "Azure Os Images (Classic) service."
+    },
+    {
+      "name": "azure_connections",
+      "description": "Azure Connections service."
+    },
+    {
+      "name": "azure_ai_studio",
+      "description": "Azure Ai Studio service."
+    },
+    {
+      "name": "azure_azure_edge_hardware_center",
+      "description": "Azure Azure Edge Hardware Center service."
+    },
+    {
+      "name": "azure_entra_connect",
+      "description": "Azure Entra Connect service."
+    },
+    {
+      "name": "azure_network_managers",
+      "description": "Azure Network Managers service."
+    },
+    {
+      "name": "azure_resource_group_list",
+      "description": "Azure Resource Group List service."
+    },
+    {
+      "name": "azure_azure_backup_center",
+      "description": "Azure Azure Backup Center service."
+    },
+    {
+      "name": "azure_azure_experimentation_studio",
+      "description": "Azure Azure Experimentation Studio service."
+    },
+    {
+      "name": "azure_storage_accounts",
+      "description": "Azure Storage Accounts service."
+    },
+    {
+      "name": "azure_front_door_and_cdn_profiles",
+      "description": "Azure Front Door And Cdn Profiles service."
+    },
+    {
+      "name": "azure_endpoint_analytics",
+      "description": "Azure Endpoint Analytics service."
+    },
+    {
+      "name": "azure_workspace_gateway",
+      "description": "Azure Workspace Gateway service."
+    },
+    {
+      "name": "azure_web_test",
+      "description": "Azure Web Test service."
+    },
+    {
+      "name": "azure_open_supply_chain_platform",
+      "description": "Azure Open Supply Chain Platform service."
+    },
+    {
+      "name": "azure_network_security_perimeters",
+      "description": "Azure Network Security Perimeters service."
+    },
+    {
+      "name": "azure_mobile",
+      "description": "Azure Mobile service."
+    },
+    {
+      "name": "azure_mobile_engagement",
+      "description": "Azure Mobile Engagement service."
+    },
+    {
+      "name": "azure_container_services_(deprecated)",
+      "description": "Azure Container Services (Deprecated) service."
+    },
+    {
+      "name": "azure_defender_industrial_robot",
+      "description": "Azure Defender Industrial Robot service."
+    },
+    {
+      "name": "azure_event_hubs",
+      "description": "A real-time data streaming and event ingestion service."
+    },
+    {
+      "name": "azure_fhir_service",
+      "description": "Azure Fhir Service service."
+    },
+    {
+      "name": "azure_connected_cache",
+      "description": "Azure Connected Cache service."
+    },
+    {
+      "name": "azure_solutions",
+      "description": "Azure Solutions service."
+    },
+    {
+      "name": "azure_production_ready_database",
+      "description": "Azure Production Ready Database service."
+    },
+    {
+      "name": "azure_private_link_service",
+      "description": "Azure Private Link Service service."
+    },
+    {
+      "name": "azure_service_catalog_mad",
+      "description": "Azure Service Catalog Mad service."
+    },
+    {
+      "name": "azure_education",
+      "description": "Azure Education service."
+    },
+    {
+      "name": "azure_subnet",
+      "description": "Azure Subnet service."
+    },
+    {
+      "name": "azure_kubernetes_services",
+      "description": "Azure Kubernetes Services service."
+    },
+    {
+      "name": "azure_industrial_iot",
+      "description": "A service for industrial IoT solutions and data integration."
+    },
+    {
+      "name": "azure_hd_insight_clusters",
+      "description": "Azure Hd Insight Clusters service."
+    },
+    {
+      "name": "azure_quickstart_center",
+      "description": "Azure Quickstart Center service."
+    },
+    {
+      "name": "azure_resource_guard",
+      "description": "Azure Resource Guard service."
+    },
+    {
+      "name": "azure_availability_sets",
+      "description": "Azure Availability Sets service."
+    },
+    {
+      "name": "azure_web_application_firewall_policies(waf)",
+      "description": "Azure Web Application Firewall Policies(Waf) service."
+    },
+    {
+      "name": "azure_entra_domain_services",
+      "description": "Azure Entra Domain Services service."
+    },
+    {
+      "name": "azure_azure_stack_edge",
+      "description": "Azure Azure Stack Edge service."
+    },
+    {
+      "name": "azure_verification_as_a_service",
+      "description": "Azure Verification As A Service service."
+    },
+    {
+      "name": "azure_azure_vmware_solution",
+      "description": "Azure Azure Vmware Solution service."
+    },
+    {
+      "name": "azure_powershell",
+      "description": "Azure Powershell service."
+    },
+    {
+      "name": "azure_azure_database_postgresql_server_group",
+      "description": "Azure Azure Database Postgresql Server Group service."
+    },
+    {
+      "name": "azure_template_specs",
+      "description": "Azure Template Specs service."
+    },
+    {
+      "name": "azure_virtual_networks",
+      "description": "Azure Virtual Networks service."
+    },
+    {
+      "name": "azure_azure_a",
+      "description": "Azure Azure A service."
+    },
+    {
+      "name": "azure_identity_governance",
+      "description": "Azure Identity Governance service."
+    },
+    {
+      "name": "azure_server_farm",
+      "description": "Azure Server Farm service."
+    },
+    {
+      "name": "azure_azure_stack_hci_sizer",
+      "description": "Azure Azure Stack Hci Sizer service."
+    },
+    {
+      "name": "azure_help_and_support",
+      "description": "Azure Help And Support service."
+    },
+    {
+      "name": "azure_azure_network_function_manager_functions",
+      "description": "Azure Azure Network Function Manager Functions service."
+    },
+    {
+      "name": "azure_azure_programmable_connectivity",
+      "description": "Azure Azure Programmable Connectivity service."
+    },
+    {
+      "name": "azure_cost_management_and_billing",
+      "description": "Azure Cost Management And Billing service."
+    },
+    {
+      "name": "azure_heart",
+      "description": "Azure Heart service."
+    },
+    {
+      "name": "azure_defender_slot",
+      "description": "Azure Defender Slot service."
+    },
+    {
+      "name": "azure_log_streaming",
+      "description": "Azure Log Streaming service."
+    },
+    {
+      "name": "azure_cost_management",
+      "description": "A service for managing and optimizing Azure spending."
+    },
+    {
+      "name": "azure_user_settings",
+      "description": "Azure User Settings service."
+    },
+    {
+      "name": "azure_peering_service",
+      "description": "Azure Peering Service service."
+    },
+    {
+      "name": "azure_azure_spring_apps",
+      "description": "Azure Azure Spring Apps service."
+    },
+    {
+      "name": "azure_dns_private_resolver",
+      "description": "Azure Dns Private Resolver service."
+    },
+    {
+      "name": "azure_azure_sql_edge",
+      "description": "Azure Azure Sql Edge service."
+    },
+    {
+      "name": "azure_defender_web_guiding_system",
+      "description": "Azure Defender Web Guiding System service."
+    },
+    {
+      "name": "azure_maintenance_configuration",
+      "description": "Azure Maintenance Configuration service."
+    },
+    {
+      "name": "azure_automation_accounts",
+      "description": "Azure Automation Accounts service."
+    },
+    {
+      "name": "azure_marketplace_management",
+      "description": "Azure Marketplace Management service."
+    },
+    {
+      "name": "azure_app_services",
+      "description": "Azure App Services service."
+    },
+    {
+      "name": "azure_azure_netapp_files",
+      "description": "Azure Azure Netapp Files service."
+    },
+    {
+      "name": "azure_genomics_accounts",
+      "description": "Azure Genomics Accounts service."
+    },
+    {
+      "name": "azure_azure_deployment_environments",
+      "description": "Azure Azure Deployment Environments service."
+    },
+    {
+      "name": "azure_cost_analysis",
+      "description": "Azure Cost Analysis service."
+    },
+    {
+      "name": "azure_defender_cm_local_manager",
+      "description": "Azure Defender Cm Local Manager service."
+    },
+    {
+      "name": "azure_device_security_apple",
+      "description": "Azure Device Security Apple service."
+    },
+    {
+      "name": "azure_journey_hub",
+      "description": "Azure Journey Hub service."
+    },
+    {
+      "name": "azure_intune_for_education",
+      "description": "Azure Intune For Education service."
+    },
+    {
+      "name": "azure_windows_notification_services",
+      "description": "Azure Windows Notification Services service."
+    },
+    {
+      "name": "azure_iot_edge",
+      "description": "Azure Iot Edge service."
+    },
+    {
+      "name": "azure_device_configuration",
+      "description": "Azure Device Configuration service."
+    },
+    {
+      "name": "azure_event_grid_domains",
+      "description": "Azure Event Grid Domains service."
+    },
+    {
+      "name": "azure_on_premises_data_gateways",
+      "description": "Azure On Premises Data Gateways service."
+    },
+    {
+      "name": "azure_host_groups",
+      "description": "Azure Host Groups service."
+    },
+    {
+      "name": "azure_outbound_connection",
+      "description": "Azure Outbound Connection service."
+    },
+    {
+      "name": "azure_defender_industrial_printer",
+      "description": "Azure Defender Industrial Printer service."
+    },
+    {
+      "name": "azure_region_management",
+      "description": "Azure Region Management service."
+    },
+    {
+      "name": "azure_ceres",
+      "description": "Azure Ceres service."
+    },
+    {
+      "name": "azure_private_link",
+      "description": "Azure Private Link service."
+    },
+    {
+      "name": "azure_diagnostics_settings",
+      "description": "Azure Diagnostics Settings service."
+    },
+    {
+      "name": "azure_batch_accounts",
+      "description": "Azure Batch Accounts service."
+    },
+    {
+      "name": "azure_savings_plans",
+      "description": "Azure Savings Plans service."
+    },
+    {
+      "name": "azure_spot_vmss",
+      "description": "Azure Spot Vmss service."
+    },
+    {
+      "name": "azure_service_endpoint_policies",
+      "description": "Azure Service Endpoint Policies service."
+    },
+    {
+      "name": "azure_administrative_units",
+      "description": "Azure Administrative Units service."
+    },
+    {
+      "name": "azure_azure_applied_ai_services",
+      "description": "Azure Azure Applied Ai Services service."
+    },
+    {
+      "name": "azure_defender_plc",
+      "description": "Azure Defender Plc service."
+    },
+    {
+      "name": "azure_arc_kubernetes",
+      "description": "Azure Arc Kubernetes service."
+    },
+    {
+      "name": "azure_data_lake_storage_gen1",
+      "description": "Azure Data Lake Storage Gen1 service."
+    },
+    {
+      "name": "azure_management_portal",
+      "description": "Azure Management Portal service."
+    },
+    {
+      "name": "azure_event_hub_clusters",
+      "description": "Azure Event Hub Clusters service."
+    },
+    {
+      "name": "azure_service_fabric_clusters",
+      "description": "Azure Service Fabric Clusters service."
+    },
+    {
+      "name": "azure_computer_vision",
+      "description": "A service for analyzing and understanding images and videos."
+    },
+    {
+      "name": "azure_instance_pools",
+      "description": "Azure Instance Pools service."
+    },
+    {
+      "name": "azure_local_network_gateways",
+      "description": "Azure Local Network Gateways service."
+    },
+    {
+      "name": "azure_extendedsecurityupdates",
+      "description": "Azure Extendedsecurityupdates service."
+    },
+    {
+      "name": "azure_edge_management",
+      "description": "Azure Edge Management service."
+    },
+    {
+      "name": "azure_key_vaults",
+      "description": "Azure Key Vaults service."
+    },
+    {
+      "name": "azure_relays",
+      "description": "Azure Relays service."
+    },
+    {
+      "name": "azure_controls",
+      "description": "Azure Controls service."
+    },
+    {
+      "name": "azure_multi_factor_authentication",
+      "description": "Azure Multi Factor Authentication service."
+    },
+    {
+      "name": "azure_managed_identities",
+      "description": "Azure Managed Identities service."
+    },
+    {
+      "name": "azure_bastions",
+      "description": "Azure Bastions service."
+    },
+    {
+      "name": "azure_media",
+      "description": "Azure Media service."
+    },
+    {
+      "name": "azure_application_group",
+      "description": "Azure Application Group service."
+    },
+    {
+      "name": "azure_vpnclientwindows",
+      "description": "Azure Vpnclientwindows service."
+    },
+    {
+      "name": "azure_device_enrollment",
+      "description": "Azure Device Enrollment service."
+    },
+    {
+      "name": "azure_container_instances",
+      "description": "A service for running containers without managing servers."
+    },
+    {
+      "name": "azure_managed_desktop",
+      "description": "Azure Managed Desktop service."
+    },
+    {
+      "name": "azure_azure_storage_mover",
+      "description": "Azure Azure Storage Mover service."
+    },
+    {
+      "name": "azure_vm_images_(classic)",
+      "description": "Azure Vm Images (Classic) service."
+    },
+    {
+      "name": "azure_azure_chaos_studio",
+      "description": "Azure Azure Chaos Studio service."
+    },
+    {
+      "name": "azure_integration_environments",
+      "description": "Azure Integration Environments service."
+    },
+    {
+      "name": "azure_elastic_job_agents",
+      "description": "Azure Elastic Job Agents service."
+    },
+    {
+      "name": "azure_logic_apps_custom_connector",
+      "description": "Azure Logic Apps Custom Connector service."
+    },
+    {
+      "name": "azure_host_pools",
+      "description": "Azure Host Pools service."
+    },
+    {
+      "name": "azure_activity_log",
+      "description": "Azure Activity Log service."
+    },
+    {
+      "name": "azure_load_balancer_hub",
+      "description": "Azure Load Balancer Hub service."
+    },
+    {
+      "name": "azure_api_center",
+      "description": "Azure Api Center service."
+    },
+    {
+      "name": "azure_feature_previews",
+      "description": "Azure Feature Previews service."
+    },
+    {
+      "name": "azure_update_management_center",
+      "description": "Azure Update Management Center service."
+    },
+    {
+      "name": "azure_azure_sentinel",
+      "description": "Azure Azure Sentinel service."
+    },
+    {
+      "name": "azure_resource_explorer",
+      "description": "Azure Resource Explorer service."
+    },
+    {
+      "name": "azure_reserved_ip_addresses_(classic)",
+      "description": "Azure Reserved Ip Addresses (Classic) service."
+    },
+    {
+      "name": "azure_automanaged_vm",
+      "description": "A service for managing virtual machines with automated configurations."
+    },
+    {
+      "name": "azure_elastic_san",
+      "description": "Azure Elastic San service."
+    },
+    {
+      "name": "azure_azure_fileshares",
+      "description": "Azure Azure Fileshares service."
+    },
+    {
+      "name": "azure_learn",
+      "description": "Azure Learn service."
+    },
+    {
+      "name": "azure_intune_app_protection",
+      "description": "Azure Intune App Protection service."
+    },
+    {
+      "name": "azure_managed_file_shares",
+      "description": "Azure Managed File Shares service."
+    },
+    {
+      "name": "azure_tenant_status",
+      "description": "Azure Tenant Status service."
+    },
+    {
+      "name": "azure_controls_horizontal",
+      "description": "Azure Controls Horizontal service."
+    },
+    {
+      "name": "azure_container_apps_environments",
+      "description": "Azure Container Apps Environments service."
+    },
+    {
+      "name": "azure_private_link_services",
+      "description": "Azure Private Link Services service."
+    },
+    {
+      "name": "azure_data_lake_store_gen1",
+      "description": "Azure Data Lake Store Gen1 service."
+    },
+    {
+      "name": "azure_defender_engineering_station",
+      "description": "Azure Defender Engineering Station service."
+    },
+    {
+      "name": "azure_azure_operator_nexus",
+      "description": "Azure Azure Operator Nexus service."
+    },
+    {
+      "name": "azure_web_app_+_database",
+      "description": "Azure Web App + Database service."
+    },
+    {
+      "name": "azure_image_templates",
+      "description": "Azure Image Templates service."
+    },
+    {
+      "name": "azure_cognitive_services_decisions",
+      "description": "Azure Cognitive Services Decisions service."
+    },
+    {
+      "name": "azure_applens",
+      "description": "Azure Applens service."
+    },
+    {
+      "name": "azure_devops_starter",
+      "description": "Azure Devops Starter service."
+    },
+    {
+      "name": "azure_arc_postgresql ",
+      "description": "Azure Arc Postgresql  service."
+    },
+    {
+      "name": "azure_conditional_access",
+      "description": "Azure Conditional Access service."
+    },
+    {
+      "name": "azure_app_compliance_automation",
+      "description": "Azure App Compliance Automation service."
+    },
+    {
+      "name": "azure_azure_operator_service_manager",
+      "description": "Azure Azure Operator Service Manager service."
+    },
+    {
+      "name": "azure_machine_learning_studio_(classic)_web_services",
+      "description": "Azure Machine Learning Studio (Classic) Web Services service."
+    },
+    {
+      "name": "azure_icm_troubleshooting",
+      "description": "Azure Icm Troubleshooting service."
+    },
+    {
+      "name": "azure_power_up",
+      "description": "Azure Power Up service."
+    },
+    {
+      "name": "azure_metrics_advisor",
+      "description": "A service for monitoring and diagnosing metrics anomalies."
+    },
+    {
+      "name": "azure_digital_twins",
+      "description": "Azure Digital Twins service."
+    },
+    {
+      "name": "azure_log_analytics_workspaces",
+      "description": "Azure Log Analytics Workspaces service."
+    },
+    {
+      "name": "azure_defender_historian",
+      "description": "Azure Defender Historian service."
+    },
+    {
+      "name": "azure_module",
+      "description": "Azure Module service."
+    },
+    {
+      "name": "azure_azure_cosmos_db",
+      "description": "Azure Azure Cosmos Db service."
+    },
+    {
+      "name": "azure_confidential_ledgers",
+      "description": "Azure Confidential Ledgers service."
+    },
+    {
+      "name": "azure_ddos_protection_plans",
+      "description": "Azure Ddos Protection Plans service."
+    },
+    {
+      "name": "azure_content_moderators",
+      "description": "Azure Content Moderators service."
+    },
+    {
+      "name": "azure_breeze",
+      "description": "Azure Breeze service."
+    },
+    {
+      "name": "azure_mobile_networks",
+      "description": "Azure Mobile Networks service."
+    },
+    {
+      "name": "azure_error",
+      "description": "Azure Error service."
+    },
+    {
+      "name": "azure_gear",
+      "description": "Azure Gear service."
+    },
+    {
+      "name": "azure_app_space",
+      "description": "Azure App Space service."
+    },
+    {
+      "name": "azure_website_staging",
+      "description": "Azure Website Staging service."
+    },
+    {
+      "name": "azure_offers",
+      "description": "Azure Offers service."
+    },
+    {
+      "name": "azure_azure_video_indexer",
+      "description": "Azure Azure Video Indexer service."
+    },
+    {
+      "name": "azure_backup_vault",
+      "description": "A storage vault for securing backup data in Azure."
+    },
+    {
+      "name": "azure_azure_data_catalog",
+      "description": "Azure Azure Data Catalog service."
+    },
+    {
+      "name": "azure_storage_queue",
+      "description": "Azure Storage Queue service."
+    },
+    {
+      "name": "azure_azure_orbital",
+      "description": "Azure Azure Orbital service."
+    },
+    {
+      "name": "azure_metrics",
+      "description": "Azure Metrics service."
+    },
+    {
+      "name": "azure_azure_monitors_for_sap_solutions",
+      "description": "Azure Azure Monitors For Sap Solutions service."
+    },
+    {
+      "name": "azure_application_security_groups",
+      "description": "Azure Application Security Groups service."
+    },
+    {
+      "name": "azure_azure_load_testing",
+      "description": "Azure Azure Load Testing service."
+    },
+    {
+      "name": "azure_azure_communication_services",
+      "description": "Azure Azure Communication Services service."
+    },
+    {
+      "name": "azure_storage_azure_files",
+      "description": "Azure Storage Azure Files service."
+    },
+    {
+      "name": "azure_sql_elastic_pools",
+      "description": "Azure Sql Elastic Pools service."
+    },
+    {
+      "name": "azure_anomaly_detector",
+      "description": "A service for detecting anomalies in time-series data."
+    },
+    {
+      "name": "azure_language_understanding",
+      "description": "Azure Language Understanding service."
+    },
+    {
+      "name": "azure_analysis_services",
+      "description": "Azure Analysis Services service."
+    },
+    {
+      "name": "azure_mindaro",
+      "description": "Azure Mindaro service."
+    },
+    {
+      "name": "azure_branch",
+      "description": "Azure Branch service."
+    },
+    {
+      "name": "azure_dev_console",
+      "description": "Azure Dev Console service."
+    },
+    {
+      "name": "azure_custom_vision",
+      "description": "Azure Custom Vision service."
+    },
+    {
+      "name": "azure_azure_maps_accounts",
+      "description": "Azure Azure Maps Accounts service."
+    },
+    {
+      "name": "azure_partner_namespace",
+      "description": "Azure Partner Namespace service."
+    },
+    {
+      "name": "azure_remote_rendering",
+      "description": "Azure Remote Rendering service."
+    },
+    {
+      "name": "azure_wac_installer",
+      "description": "Azure Wac Installer service."
+    },
+    {
+      "name": "azure_sql_managed_instance",
+      "description": "Azure Sql Managed Instance service."
+    },
+    {
+      "name": "azure_monitor",
+      "description": "A comprehensive solution for collecting, analyzing, and acting on telemetry from cloud and on-premises environments."
+    },
+    {
+      "name": "azure_atm_multistack",
+      "description": "Azure Atm Multistack service."
+    },
+    {
+      "name": "azure_database_instance_for_sap",
+      "description": "Azure Database Instance For Sap service."
+    },
+    {
+      "name": "azure_nat",
+      "description": "Azure Nat service."
+    },
+    {
+      "name": "azure_dashboard",
+      "description": "Azure Dashboard service."
+    },
+    {
+      "name": "azure_tag",
+      "description": "Azure Tag service."
+    },
+    {
+      "name": "azure_ip_groups",
+      "description": "Azure Ip Groups service."
+    },
+    {
+      "name": "azure_azure_ad_b2c",
+      "description": "Azure Azure Ad B2C service."
+    },
+    {
+      "name": "azure_face_apis",
+      "description": "Azure Face Apis service."
+    },
+    {
+      "name": "azure_stream_analytics_jobs",
+      "description": "Azure Stream Analytics Jobs service."
+    },
+    {
+      "name": "azure_defender_rtu",
+      "description": "Azure Defender Rtu service."
+    },
+    {
+      "name": "azure_microsoft_defender_for_iot",
+      "description": "A security service for protecting IoT devices in Azure."
+    },
+    {
+      "name": "azure_azure_dev_tunnels",
+      "description": "Azure Azure Dev Tunnels service."
+    },
+    {
+      "name": "azure_microsoft_dev_box",
+      "description": "Azure Microsoft Dev Box service."
+    },
+    {
+      "name": "azure_data_box",
+      "description": "Azure Data Box service."
+    },
+    {
+      "name": "azure_community_images",
+      "description": "Azure Community Images service."
+    },
+    {
+      "name": "azure_azure_data_explorer_clusters",
+      "description": "Azure Azure Data Explorer Clusters service."
+    },
+    {
+      "name": "azure_logic_apps",
+      "description": "A service for automating workflows and integrating apps, data, and services."
+    },
+    {
+      "name": "azure_bug",
+      "description": "Azure Bug service."
+    },
+    {
+      "name": "azure_universal_print",
+      "description": "Azure Universal Print service."
+    },
+    {
+      "name": "azure_entra_verified_id",
+      "description": "Azure Entra Verified Id service."
+    },
+    {
+      "name": "azure_azure_database_mariadb_server",
+      "description": "Azure Azure Database Mariadb Server service."
+    },
+    {
+      "name": "azure_storage_accounts_(classic)",
+      "description": "Azure Storage Accounts (Classic) service."
+    },
+    {
+      "name": "azure_medtech_service",
+      "description": "Azure Medtech Service service."
+    },
+    {
+      "name": "azure_data_collection_rules",
+      "description": "Azure Data Collection Rules service."
+    },
+    {
+      "name": "azure_spot_vm",
+      "description": "Azure Spot Vm service."
+    },
+    {
+      "name": "azure_workspaces",
+      "description": "Azure Workspaces service."
+    },
+    {
+      "name": "azure_network_security_groups",
+      "description": "Azure Network Security Groups service."
+    },
+    {
+      "name": "azure_resource_linked",
+      "description": "Azure Resource Linked service."
+    },
+    {
+      "name": "azure_power_bi_embedded",
+      "description": "Azure Power Bi Embedded service."
+    },
+    {
+      "name": "azure_enterprise_applications",
+      "description": "Azure Enterprise Applications service."
+    },
+    {
+      "name": "azure_modular_data_center",
+      "description": "Azure Modular Data Center service."
+    },
+    {
+      "name": "azure_time_series_insights_event_sources",
+      "description": "Azure Time Series Insights Event Sources service."
+    },
+    {
+      "name": "azure_advisor",
+      "description": "A personalized cloud consultant for optimization recommendations."
+    },
+    {
+      "name": "azure_microsoft_defender_easm",
+      "description": "Azure Microsoft Defender Easm service."
+    },
+    {
+      "name": "azure_cloud_services_(extended_support)",
+      "description": "Azure Cloud Services (Extended Support) service."
+    },
+    {
+      "name": "azure_managed_instance_apache_cassandra",
+      "description": "Azure Managed Instance Apache Cassandra service."
+    },
+    {
+      "name": "azure_azure_sql",
+      "description": "Azure Azure Sql service."
+    },
+    {
+      "name": "azure_function_apps",
+      "description": "Azure Function Apps service."
+    },
+    {
+      "name": "azure_multifactor_authentication",
+      "description": "Azure Multifactor Authentication service."
+    },
+    {
+      "name": "azure_table",
+      "description": "Azure Table service."
+    },
+    {
+      "name": "azure_defender_freezer_monitor",
+      "description": "Azure Defender Freezer Monitor service."
+    },
+    {
+      "name": "azure_sql_server_registries",
+      "description": "Azure Sql Server Registries service."
+    },
+    {
+      "name": "azure_app_registrations",
+      "description": "Azure App Registrations service."
+    },
+    {
+      "name": "azure_arc_sql_server",
+      "description": "Azure Arc Sql Server service."
+    },
+    {
+      "name": "azure_azure_cloud_shell",
+      "description": "Azure Azure Cloud Shell service."
+    },
+    {
+      "name": "azure_osconfig",
+      "description": "Azure Osconfig service."
+    },
+    {
+      "name": "azure_recovery_services_vaults",
+      "description": "Azure Recovery Services Vaults service."
+    },
+    {
+      "name": "azure_free_services",
+      "description": "Azure Free Services service."
+    },
+    {
+      "name": "azure_proximity_placement_groups",
+      "description": "Azure Proximity Placement Groups service."
+    },
+    {
+      "name": "azure_defender_dcs_controller",
+      "description": "Azure Defender Dcs Controller service."
+    },
+    {
+      "name": "azure_microsoft_defender_for_cloud",
+      "description": "Azure Microsoft Defender For Cloud service."
+    },
+    {
+      "name": "azure_entra_identity_licenses",
+      "description": "Azure Entra Identity Licenses service."
+    },
+    {
+      "name": "azure_disk_encryption_sets",
+      "description": "Azure Disk Encryption Sets service."
+    },
+    {
+      "name": "azure_entra_private_access",
+      "description": "Azure Entra Private Access service."
+    },
+    {
+      "name": "azure_defender_industrial_scale_system",
+      "description": "Azure Defender Industrial Scale System service."
+    },
+    {
+      "name": "azure_disks_snapshots",
+      "description": "Azure Disks Snapshots service."
+    },
+    {
+      "name": "azure_backlog",
+      "description": "Azure Backlog service."
+    },
+    {
+      "name": "azure_compute_fleet",
+      "description": "Azure Compute Fleet service."
+    },
+    {
+      "name": "azure_updates",
+      "description": "Azure Updates service."
+    },
+    {
+      "name": "azure_azure_operator_5g_core",
+      "description": "Azure Azure Operator 5G Core service."
+    },
+    {
+      "name": "azure_storsimple_device_managers",
+      "description": "Azure Storsimple Device Managers service."
+    },
+    {
+      "name": "azure_resource_management_private_link",
+      "description": "Azure Resource Management Private Link service."
+    },
+    {
+      "name": "azure_integration_accounts",
+      "description": "Azure Integration Accounts service."
+    },
+    {
+      "name": "azure_workspaces",
+      "description": "Azure Workspaces service."
+    },
+    {
+      "name": "azure_load_test",
+      "description": "Azure Load Test service."
+    },
+    {
+      "name": "azure_multi_tenancy",
+      "description": "Azure Multi Tenancy service."
+    },
+    {
+      "name": "azure_hosts",
+      "description": "Azure Hosts service."
+    },
+    {
+      "name": "azure_entra_identity_roles_and_administrators",
+      "description": "Azure Entra Identity Roles And Administrators service."
+    },
+    {
+      "name": "azure_bonsai",
+      "description": "Azure Bonsai service."
+    },
+    {
+      "name": "azure_blueprints",
+      "description": "A service for defining and deploying Azure environments."
+    },
+    {
+      "name": "azure_resource_groups",
+      "description": "Azure Resource Groups service."
+    },
+    {
+      "name": "azure_external_identities",
+      "description": "Azure External Identities service."
+    },
+    {
+      "name": "azure_data_lake_analytics",
+      "description": "Azure Data Lake Analytics service."
+    },
+    {
+      "name": "azure_azure_hcp_cache",
+      "description": "Azure Azure Hcp Cache service."
+    },
+    {
+      "name": "azure_service_health",
+      "description": "A service for tracking the status of Azure services."
+    },
+    {
+      "name": "azure_azure_arc",
+      "description": "Azure Azure Arc service."
+    },
+    {
+      "name": "azure_entra_id_protection",
+      "description": "Azure Entra Id Protection service."
+    },
+    {
+      "name": "azure_azure_firewall_manager",
+      "description": "Azure Azure Firewall Manager service."
+    },
+    {
+      "name": "azure_bot_services",
+      "description": "Azure Bot Services service."
+    },
+    {
+      "name": "azure_azure_sql_vm",
+      "description": "Azure Azure Sql Vm service."
+    },
+    {
+      "name": "azure_route_filters",
+      "description": "Azure Route Filters service."
+    },
+    {
+      "name": "azure_active_directory_connect_health",
+      "description": "Azure Active Directory Connect Health service."
+    },
+    {
+      "name": "azure_test_base",
+      "description": "Azure Test Base service."
+    },
+    {
+      "name": "azure_public_ip_prefixes",
+      "description": "Azure Public Ip Prefixes service."
+    },
+    {
+      "name": "azure_intune",
+      "description": "Azure Intune service."
+    },
+    {
+      "name": "azure_virtual_clusters",
+      "description": "Azure Virtual Clusters service."
+    },
+    {
+      "name": "azure_spatial_anchor_accounts",
+      "description": "Azure Spatial Anchor Accounts service."
+    },
+    {
+      "name": "azure_azure_information_protection",
+      "description": "Azure Azure Information Protection service."
+    },
+    {
+      "name": "azure_workflow",
+      "description": "Azure Workflow service."
+    },
+    {
+      "name": "azure_reservations",
+      "description": "Azure Reservations service."
+    },
+    {
+      "name": "azure_sql_server",
+      "description": "Azure Sql Server service."
+    },
+    {
+      "name": "azure_scheduler",
+      "description": "Azure Scheduler service."
+    },
+    {
+      "name": "azure_managed_database",
+      "description": "Azure Managed Database service."
+    },
+    {
+      "name": "azure_collaborative_service",
+      "description": "Azure Collaborative Service service."
+    },
+    {
+      "name": "azure_virtual_enclaves",
+      "description": "Azure Virtual Enclaves service."
+    },
+    {
+      "name": "azure_azureattestation",
+      "description": "Azure Azureattestation service."
+    },
+    {
+      "name": "azure_builds",
+      "description": "Azure Builds service."
+    },
+    {
+      "name": "azure_power",
+      "description": "Azure Power service."
+    },
+    {
+      "name": "azure_lab_accounts",
+      "description": "Azure Lab Accounts service."
+    },
+    {
+      "name": "azure_compliance",
+      "description": "Azure Compliance service."
+    },
+    {
+      "name": "azure_avs_vm",
+      "description": "A service for running VMware virtual machines natively on Azure."
+    },
+    {
+      "name": "azure_azure_token_service",
+      "description": "Azure Azure Token Service service."
+    },
+    {
+      "name": "azure_genomics",
+      "description": "Azure Genomics service."
+    },
+    {
+      "name": "azure_cognitive_services",
+      "description": "A set of AI services for building intelligent applications."
+    },
+    {
+      "name": "azure_cache",
+      "description": "Azure Cache service."
+    },
+    {
+      "name": "azure_my_customers",
+      "description": "Azure My Customers service."
+    },
+    {
+      "name": "azure_defender_industrial_packaging_system",
+      "description": "Azure Defender Industrial Packaging System service."
+    },
+    {
+      "name": "azure_disk_pool",
+      "description": "Azure Disk Pool service."
+    },
+    {
+      "name": "azure_system_topic",
+      "description": "A feature within Azure Event Grid for system-level event management."
+    },
+    {
+      "name": "azure_virtual_instance_for_sap",
+      "description": "Azure Virtual Instance For Sap service."
+    },
+    {
+      "name": "azure_entra_identity_risky_users",
+      "description": "Azure Entra Identity Risky Users service."
+    },
+    {
+      "name": "azure_globe_error",
+      "description": "Azure Globe Error service."
+    },
+    {
+      "name": "azure_hdi_aks_cluster",
+      "description": "Azure Hdi Aks Cluster service."
+    },
+    {
+      "name": "azure_fiji",
+      "description": "Azure Fiji service."
+    },
+    {
+      "name": "azure_virtual_networks_(classic)",
+      "description": "Azure Virtual Networks (Classic) service."
+    },
+    {
+      "name": "azure_bare_metal_infrastructure",
+      "description": "Azure Bare Metal Infrastructure service."
+    },
+    {
+      "name": "azure_all_resources",
+      "description": "Azure All Resources service."
+    },
+    {
+      "name": "azure_capacity",
+      "description": "Azure Capacity service."
+    },
+    {
+      "name": "azure_monitor_health_models",
+      "description": "Azure Monitor Health Models service."
+    },
+    {
+      "name": "azure_data_factories",
+      "description": "Azure Data Factories service."
+    },
+    {
+      "name": "azure_container_registries",
+      "description": "Azure Container Registries service."
+    },
+    {
+      "name": "azure_power_platform",
+      "description": "Azure Power Platform service."
+    },
+    {
+      "name": "azure_groups",
+      "description": "Azure Groups service."
+    },
+    {
+      "name": "azure_browser",
+      "description": "Azure Browser service."
+    },
+    {
+      "name": "azure_images",
+      "description": "Azure Images service."
+    },
+    {
+      "name": "azure_storage_container",
+      "description": "Azure Storage Container service."
+    },
+    {
+      "name": "azure_management_groups",
+      "description": "Azure Management Groups service."
+    },
+    {
+      "name": "azure_wac",
+      "description": "Azure Wac service."
+    },
+    {
+      "name": "azure_launch_portal",
+      "description": "Azure Launch Portal service."
+    },
+    {
+      "name": "azure_ftp",
+      "description": "Azure Ftp service."
+    },
+    {
+      "name": "azure_entra_managed_identities",
+      "description": "Azure Entra Managed Identities service."
+    },
+    {
+      "name": "azure_azure_network_function_manager",
+      "description": "Azure Azure Network Function Manager service."
+    },
+    {
+      "name": "azure_entra_connect_sync",
+      "description": "Azure Entra Connect Sync service."
+    },
+    {
+      "name": "azure_machinesazurearc",
+      "description": "Azure Machinesazurearc service."
+    },
+    {
+      "name": "azure_identity_secure_score",
+      "description": "Azure Identity Secure Score service."
+    },
+    {
+      "name": "azure_plans",
+      "description": "Azure Plans service."
+    },
+    {
+      "name": "azure_software_updates",
+      "description": "Azure Software Updates service."
+    },
+    {
+      "name": "azure_user_privacy",
+      "description": "Azure User Privacy service."
+    },
+    {
+      "name": "azure_aks_istio",
+      "description": "Azure Aks Istio service."
+    },
+    {
+      "name": "azure_azure_sphere",
+      "description": "Azure Azure Sphere service."
+    },
+    {
+      "name": "azure_translator_text",
+      "description": "Azure Translator Text service."
+    },
+    {
+      "name": "azure_subscriptions",
+      "description": "Azure Subscriptions service."
+    },
+    {
+      "name": "azure_web_jobs",
+      "description": "Azure Web Jobs service."
+    },
+    {
+      "name": "azure_api_management_services",
+      "description": "Azure Api Management Services service."
+    },
+    {
+      "name": "azure_defender_robot_controller",
+      "description": "Azure Defender Robot Controller service."
+    },
+    {
+      "name": "azure_azure_consumption_commitment",
+      "description": "Azure Azure Consumption Commitment service."
+    },
+    {
+      "name": "azure_service_providers",
+      "description": "Azure Service Providers service."
+    },
+    {
+      "name": "azure_aquila",
+      "description": "Azure Aquila service."
+    },
+    {
+      "name": "azure_globe_warning",
+      "description": "Azure Globe Warning service."
+    },
+    {
+      "name": "azure_defender_pneumatic_device",
+      "description": "Azure Defender Pneumatic Device service."
+    },
+    {
+      "name": "azure_azure_compute_galleries",
+      "description": "Azure Azure Compute Galleries service."
+    },
+    {
+      "name": "azure_kubernetes_fleet_manager",
+      "description": "Azure Kubernetes Fleet Manager service."
+    },
+    {
+      "name": "azure_azure_red_hat_openshift",
+      "description": "Azure Azure Red Hat Openshift service."
+    },
+    {
+      "name": "azure_immersive_readers",
+      "description": "Azure Immersive Readers service."
+    },
+    {
+      "name": "azure_device_security_windows",
+      "description": "Azure Device Security Windows service."
+    },
+    {
+      "name": "azure_rtos",
+      "description": "Azure Rtos service."
+    },
+    {
+      "name": "azure_dashboard_hub",
+      "description": "Azure Dashboard Hub service."
+    },
+    {
+      "name": "azure_web_slots",
+      "description": "Azure Web Slots service."
+    },
+    {
+      "name": "azure_external_id",
+      "description": "Azure External Id service."
+    },
+    {
+      "name": "azure_device_security_google",
+      "description": "Azure Device Security Google service."
+    },
+    {
+      "name": "azure_internet_analyzer_profiles",
+      "description": "Azure Internet Analyzer Profiles service."
+    },
+    {
+      "name": "azure_app_service_environments",
+      "description": "Azure App Service Environments service."
+    },
+    {
+      "name": "azure_cache_redis",
+      "description": "Azure Cache Redis service."
+    },
+    {
+      "name": "azure_virtual_machine",
+      "description": "Azure Virtual Machine service."
+    },
+    {
+      "name": "azure_policy",
+      "description": "A service for enforcing governance and compliance policies."
+    },
+    {
+      "name": "azure_blob_block",
+      "description": "Azure Blob Block service."
+    },
+    {
+      "name": "azure_information",
+      "description": "Azure Information service."
+    },
+    {
+      "name": "azure_guide",
+      "description": "Azure Guide service."
+    },
+    {
+      "name": "azure_compliance_center",
+      "description": "Azure Compliance Center service."
+    },
+    {
+      "name": "azure_cost_alerts",
+      "description": "Azure Cost Alerts service."
+    },
+    {
+      "name": "azure_partner_topic",
+      "description": "Azure Partner Topic service."
+    },
+    {
+      "name": "azure_virtual_network_gateways",
+      "description": "Azure Virtual Network Gateways service."
+    },
+    {
+      "name": "azure_operation_log_(classic)",
+      "description": "Azure Operation Log (Classic) service."
+    },
+    {
+      "name": "azure_app_service_certificates",
+      "description": "Azure App Service Certificates service."
+    },
+    {
+      "name": "azure_data_shares",
+      "description": "Azure Data Shares service."
+    },
+    {
+      "name": "azure_dns_multistack",
+      "description": "Azure Dns Multistack service."
+    },
+    {
+      "name": "azure_defender_sensor",
+      "description": "Azure Defender Sensor service."
+    },
+    {
+      "name": "azure_tenant_properties",
+      "description": "Azure Tenant Properties service."
+    },
+    {
+      "name": "azure_cdn_profiles",
+      "description": "Azure Cdn Profiles service."
+    },
+    {
+      "name": "azure_app_space_component",
+      "description": "Azure App Space Component service."
+    },
+    {
+      "name": "azure_sql_data_warehouses",
+      "description": "Azure Sql Data Warehouses service."
+    },
+    {
+      "name": "azure_log_analytics_query_pack",
+      "description": "Azure Log Analytics Query Pack service."
+    },
+    {
+      "name": "azure_route_tables",
+      "description": "Azure Route Tables service."
+    },
+    {
+      "name": "azure_mesh_applications",
+      "description": "Azure Mesh Applications service."
+    },
+    {
+      "name": "azure_scvmm_management_servers",
+      "description": "A service for managing SCVMM servers in Azure."
+    },
+    {
+      "name": "azure_network_watcher",
+      "description": "A tool for monitoring and diagnosing network performance."
+    },
+    {
+      "name": "azure_shared_image_galleries",
+      "description": "Azure Shared Image Galleries service."
+    },
+    {
+      "name": "azure_cognitive_search",
+      "description": "Azure Cognitive Search service."
+    },
+    {
+      "name": "azure_process_explorer",
+      "description": "Azure Process Explorer service."
+    },
+    {
+      "name": "azure_personalizers",
+      "description": "Azure Personalizers service."
+    },
+    {
+      "name": "azure_cost_budgets",
+      "description": "Azure Cost Budgets service."
+    },
+    {
+      "name": "azure_toolbox",
+      "description": "Azure Toolbox service."
+    },
+    {
+      "name": "azure_cloud_services_(classic)",
+      "description": "Azure Cloud Services (Classic) service."
+    },
+    {
+      "name": "azure_vm_app_definitions",
+      "description": "Azure Vm App Definitions service."
+    },
+    {
+      "name": "azure_tags",
+      "description": "Azure Tags service."
+    },
+    {
+      "name": "azure_azure_stack",
+      "description": "Azure Azure Stack service."
+    },
+    {
+      "name": "azure_azure_database_postgresql_server",
+      "description": "Azure Azure Database Postgresql Server service."
+    },
+    {
+      "name": "azure_ssh_keys",
+      "description": "Azure Ssh Keys service."
+    },
+    {
+      "name": "azure_azure_operator_insights",
+      "description": "Azure Azure Operator Insights service."
+    },
+    {
+      "name": "azure_workbooks",
+      "description": "Azure Workbooks service."
+    },
+    {
+      "name": "azure_sql_database_fleet_manager",
+      "description": "Azure Sql Database Fleet Manager service."
+    },
+    {
+      "name": "azure_azure_managed_grafana",
+      "description": "Azure Azure Managed Grafana service."
+    },
+    {
+      "name": "azure_defender_distributer_control_system",
+      "description": "Azure Defender Distributer Control System service."
+    },
+    {
+      "name": "azure_sql_database",
+      "description": "Azure Sql Database service."
+    },
+    {
+      "name": "azure_azure_sustainability",
+      "description": "Azure Azure Sustainability service."
+    },
+    {
+      "name": "azure_templates",
+      "description": "Azure Templates service."
+    },
+    {
+      "name": "azure_infrastructure_backup",
+      "description": "Azure Infrastructure Backup service."
+    },
+    {
+      "name": "azure_managed_applications_center",
+      "description": "Azure Managed Applications Center service."
+    },
+    {
+      "name": "azure_azure_devops",
+      "description": "Azure Azure Devops service."
+    },
+    {
+      "name": "azure_code",
+      "description": "Azure Code service."
+    },
+    {
+      "name": "azure_azure_databox_gateway",
+      "description": "Azure Azure Databox Gateway service."
+    },
+    {
+      "name": "azure_worker_container_app",
+      "description": "Azure Worker Container App service."
+    },
+    {
+      "name": "azure_static_apps",
+      "description": "Azure Static Apps service."
+    },
+    {
+      "name": "azure_entra_global_secure_access",
+      "description": "Azure Entra Global Secure Access service."
+    },
+    {
+      "name": "azure_defender_meter",
+      "description": "Azure Defender Meter service."
+    },
+    {
+      "name": "azure_device_compliance",
+      "description": "Azure Device Compliance service."
+    },
+    {
+      "name": "azure_azure_openai",
+      "description": "Azure Azure Openai service."
+    },
+    {
+      "name": "azure_verifiable_credentials",
+      "description": "Azure Verifiable Credentials service."
+    },
+    {
+      "name": "azure_targets_management",
+      "description": "Azure Targets Management service."
+    },
+    {
+      "name": "azure_change_analysis",
+      "description": "Azure Change Analysis service."
+    },
+    {
+      "name": "azure_commit",
+      "description": "Azure Commit service."
+    },
+    {
+      "name": "azure_load_testing",
+      "description": "Azure Load Testing service."
+    },
+    {
+      "name": "azure_content_safety",
+      "description": "Azure Content Safety service."
+    },
+    {
+      "name": "azure_virtual_visits_builder",
+      "description": "Azure Virtual Visits Builder service."
+    },
+    {
+      "name": "azure_resource_mover",
+      "description": "Azure Resource Mover service."
+    },
+    {
+      "name": "azure_abs_member",
+      "description": "Azure Abs Member service."
+    },
+    {
+      "name": "azure_disks",
+      "description": "Azure Disks service."
+    },
+    {
+      "name": "azure_import_export_jobs",
+      "description": "Azure Import Export Jobs service."
+    },
+    {
+      "name": "azure_azure_virtual_desktop",
+      "description": "Azure Azure Virtual Desktop service."
+    },
+    {
+      "name": "azure_defender_marquee",
+      "description": "Azure Defender Marquee service."
+    },
+    {
+      "name": "azure_vm_scale_sets",
+      "description": "Azure Vm Scale Sets service."
+    },
+    {
+      "name": "azure_devtest_labs",
+      "description": "Azure Devtest Labs service."
+    },
+    {
+      "name": "azure_ebooks",
+      "description": "Azure Ebooks service."
+    }
+  ]
+}

@@ -157,9 +157,13 @@ const DiagramToolbar: React.FC<ExtendedDiagramToolbarProps> = ({
             {providers.length > 0 && (
               <button
                 onClick={toggleFilters}
-                className="p-1 hover:bg-gray-100 rounded-md flex-shrink-0"
+                className={`p-2 rounded-md flex-shrink-0 transition-all duration-200 shadow-sm ${
+                  isFiltersOpen 
+                    ? 'bg-gradient-to-br from-indigo-500 to-purple-600 text-white ring-2 ring-purple-300 ring-opacity-50' 
+                    : 'bg-gradient-to-br from-gray-50 to-gray-100 hover:from-indigo-100 hover:to-purple-100'
+                }`}
               >
-                <Filter size={16} />
+                <Filter size={16} className={isFiltersOpen ? 'text-white' : 'text-gray-700'} />
               </button>
             )}
           </div>

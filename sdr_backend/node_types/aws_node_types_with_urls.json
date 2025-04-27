@@ -1,0 +1,1539 @@
+{
+  "aws": [
+    {
+      "name": "aws_pinpoint_apis",
+      "description": "AWS Pinpoint Apis service.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_Amazon-Pinpoint-APIs_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BbWF6b24tUGlucG9pbnQtQVBJc182NC5zdmciLCJpYXQiOjE3NDU1NDE1NDQsImV4cCI6MzUyMjYxOTA4OH0.62b7ugOu5aOlRXnYkRn424_uJR5QewrbEM6_svyZYn0"
+    },
+    {
+      "name": "aws_iot_events",
+      "description": "A service for detecting and responding to IoT events.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_AWS-IoT-Events_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BV1MtSW9ULUV2ZW50c182NC5zdmciLCJpYXQiOjE3NDU1NDE1NDUsImV4cCI6MzUyMjYxOTA4OX0.XrO493FtS8MKIrKr9Q1XEB0DWohpCnu0XoUAbQZ-GJQ"
+    },
+    {
+      "name": "aws_elemental_mediastore",
+      "description": "AWS Elemental Mediastore service.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_AWS-Elemental-MediaStore_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BV1MtRWxlbWVudGFsLU1lZGlhU3RvcmVfNjQuc3ZnIiwiaWF0IjoxNzQ1NTQxNTQ1LCJleHAiOjM1MjI2MTkwOTB9.tPtztHPp6i9xnxxtvSLkKE_t8GLs7RrGCqjhsyi5Jog"
+    },
+    {
+      "name": "aws_parallel_computing_service",
+      "description": "AWS Parallel Computing Service service.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_AWS-Parallel-Computing-Service_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BV1MtUGFyYWxsZWwtQ29tcHV0aW5nLVNlcnZpY2VfNjQuc3ZnIiwiaWF0IjoxNzQ1NTQxNTQ2LCJleHAiOjM1MjI2MTkwOTF9.DPtNIUmxEFJFOQp3m3Hn2kNmT6nui4-F0D39-1hP1Js"
+    },
+    {
+      "name": "aws_iot_device_defender",
+      "description": "A security service for IoT devices.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_AWS-IoT-Device-Defender_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BV1MtSW9ULURldmljZS1EZWZlbmRlcl82NC5zdmciLCJpYXQiOjE3NDU1NDE1NDYsImV4cCI6MzUyMjYxOTA5Mn0.aeZdhE3MRVWNoyVfPaG2sZqWVa9nGVDr3uT7vFwrcA8"
+    },
+    {
+      "name": "aws_elastic_beanstalk",
+      "description": "A platform for deploying and scaling applications.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_AWS-Elastic-Beanstalk_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BV1MtRWxhc3RpYy1CZWFuc3RhbGtfNjQuc3ZnIiwiaWF0IjoxNzQ1NTQxNTQ2LCJleHAiOjM1MjI2MTkwOTJ9.dPcFnhdXaVMmH7-EM2fPXTx5YUh4dDk2hsLYBS1jc8w"
+    },
+    {
+      "name": "aws_signer",
+      "description": "AWS Signer service.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_AWS-Signer_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BV1MtU2lnbmVyXzY0LnN2ZyIsImlhdCI6MTc0NTU0MTU0NywiZXhwIjozNTIyNjE5MDk0fQ.3qLksNeFMx-QbNVoLarod8KVyZ6NCfsVxfxl7t0UnEI"
+    },
+    {
+      "name": "aws_fsx_for_wfs",
+      "description": "AWS Fsx For Wfs service.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_Amazon-FSx-for-WFS_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BbWF6b24tRlN4LWZvci1XRlNfNjQuc3ZnIiwiaWF0IjoxNzQ1NTQxNTQ3LCJleHAiOjM1MjI2MTkwOTR9.o1v2FGGtJB1ASq-3KJZrDiCp6ivv76IR4_lKjGpLsaY"
+    },
+    {
+      "name": "aws_backint_agent",
+      "description": "AWS Backint Agent service.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_AWS-Backint-Agent_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BV1MtQmFja2ludC1BZ2VudF82NC5zdmciLCJpYXQiOjE3NDU1NDE1NDgsImV4cCI6MzUyMjYxOTA5NX0.12xJNIGabxxDbGaFaUn7Ah9nLySHmdXETdDIoCgA2qA"
+    },
+    {
+      "name": "aws_entity_resolution",
+      "description": "A service for matching and linking related records.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_AWS-Entity-Resolution_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BV1MtRW50aXR5LVJlc29sdXRpb25fNjQuc3ZnIiwiaWF0IjoxNzQ1NTQxNTQ4LCJleHAiOjM1MjI2MTkwOTZ9.tNU366RNxu2P063Ucu4FCQF2MjX182To6bPzsSuia-g"
+    },
+    {
+      "name": "aws_deeplens",
+      "description": "AWS Deeplens service.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_AWS-DeepLens_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BV1MtRGVlcExlbnNfNjQuc3ZnIiwiaWF0IjoxNzQ1NTQxNTQ4LCJleHAiOjM1MjI2MTkwOTZ9.QOPZlTCJSlatSLT1FEOb2JNhENFnGtctZY7eREwQxaY"
+    },
+    {
+      "name": "aws_bedrock",
+      "description": "A service for building applications with foundation models.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_Amazon-Bedrock_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BbWF6b24tQmVkcm9ja182NC5zdmciLCJpYXQiOjE3NDU1NDE1NDksImV4cCI6MzUyMjYxOTA5OH0.XfZpzG6d_8t6XiKQ77sO9W9wxDO18u9XnVfoPfSMMSk"
+    },
+    {
+      "name": "aws_red_hat_openshift_service_on_aws",
+      "description": "AWS Red Hat Openshift Service On Aws service.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_Red-Hat-OpenShift-Service-on-AWS_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9SZWQtSGF0LU9wZW5TaGlmdC1TZXJ2aWNlLW9uLUFXU182NC5zdmciLCJpYXQiOjE3NDU1NDE1NDksImV4cCI6MzUyMjYxOTA5OH0.32XdtIHu25uZXvUZEndDUTGEFXWJnhHZ2jmKOcFBlcQ"
+    },
+    {
+      "name": "aws_file_cache",
+      "description": "AWS File Cache service.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_Amazon-File-Cache_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BbWF6b24tRmlsZS1DYWNoZV82NC5zdmciLCJpYXQiOjE3NDU1NDE1NTAsImV4cCI6MzUyMjYxOTA5OX0.mFyo-AVt5TgMbAmHCx9YqtBqjqMKtpX04B7PWBW88Tw"
+    },
+    {
+      "name": "aws_elastic_container_registry",
+      "description": "AWS Elastic Container Registry service.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_Amazon-Elastic-Container-Registry_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BbWF6b24tRWxhc3RpYy1Db250YWluZXItUmVnaXN0cnlfNjQuc3ZnIiwiaWF0IjoxNzQ1NTQxNTUwLCJleHAiOjM1MjI2MTkxMDB9.RV-EsUaS2Kh_Ymbu2vKYiNBtqzFwCzYk2XTup6-pmmc"
+    },
+    {
+      "name": "aws_managed_service_for_apache_flink",
+      "description": "AWS Managed Service For Apache Flink service.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_Amazon-Managed-Service-for-Apache-Flink_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BbWF6b24tTWFuYWdlZC1TZXJ2aWNlLWZvci1BcGFjaGUtRmxpbmtfNjQuc3ZnIiwiaWF0IjoxNzQ1NTQxNTUxLCJleHAiOjM1MjI2MTkxMDF9.mstB7NheoevhKh9Wh8Twz8iQhN2we422dG_Q02z-JPk"
+    },
+    {
+      "name": "aws_privatelink",
+      "description": "AWS Privatelink service.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_AWS-PrivateLink_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BV1MtUHJpdmF0ZUxpbmtfNjQuc3ZnIiwiaWF0IjoxNzQ1NTQxNTUxLCJleHAiOjM1MjI2MTkxMDJ9.uMK0dBfRAWrrPUU0b3glg1YpL_9QIjhwbU3N9s955-Q"
+    },
+    {
+      "name": "aws_neptune",
+      "description": "A managed graph database service.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_Amazon-Neptune_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BbWF6b24tTmVwdHVuZV82NC5zdmciLCJpYXQiOjE3NDU1NDE1NTIsImV4cCI6MzUyMjYxOTEwM30.Y-iQxMOsN5K1T_h5zQox2tAe6S46SvLn0Hcl082WfvQ"
+    },
+    {
+      "name": "aws_managed_services",
+      "description": "AWS Managed Services service.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_AWS-Managed-Services_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BV1MtTWFuYWdlZC1TZXJ2aWNlc182NC5zdmciLCJpYXQiOjE3NDU1NDE1NTIsImV4cCI6MzUyMjYxOTEwNH0.kxc8iSyqF0ZlXnHkVwmh-6PIFJAwgr7aszsOoH-jXrI"
+    },
+    {
+      "name": "aws_snowball_edge",
+      "description": "AWS Snowball Edge service.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_AWS-Snowball-Edge_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BV1MtU25vd2JhbGwtRWRnZV82NC5zdmciLCJpYXQiOjE3NDU1NDE1NTMsImV4cCI6MzUyMjYxOTEwNX0.YWhYfpKRrqJ6yPLJZKn9iAIhnHDwSensgCsU5fBEj0I"
+    },
+    {
+      "name": "aws_distro_for_opentelemetry",
+      "description": "AWS Distro For Opentelemetry service.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_AWS-Distro-for-OpenTelemetry_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BV1MtRGlzdHJvLWZvci1PcGVuVGVsZW1ldHJ5XzY0LnN2ZyIsImlhdCI6MTc0NTU0MTU1MywiZXhwIjozNTIyNjE5MTA2fQ.iI2wFLl2G55Q6qm4yVbbs_RjlKN96taZP-0JELaO9Kc"
+    },
+    {
+      "name": "aws_iq",
+      "description": "AWS Iq service.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_AWS-IQ_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BV1MtSVFfNjQuc3ZnIiwiaWF0IjoxNzQ1NTQxNTU0LCJleHAiOjM1MjI2MTkxMDh9.JPrnxTVeuBVT-AWHAovnvo81gMTTMbggTDS2yTZ3gLE"
+    },
+    {
+      "name": "aws_resilience_hub",
+      "description": "AWS Resilience Hub service.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_AWS-Resilience-Hub_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BV1MtUmVzaWxpZW5jZS1IdWJfNjQuc3ZnIiwiaWF0IjoxNzQ1NTQxNTU0LCJleHAiOjM1MjI2MTkxMDh9.1AnuD5fVgozZtdQcq9OIF1koVB1lo3qvlrUar7rPzQ4"
+    },
+    {
+      "name": "aws_corretto",
+      "description": "AWS Corretto service.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_Amazon-Corretto_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BbWF6b24tQ29ycmV0dG9fNjQuc3ZnIiwiaWF0IjoxNzQ1NTQxNTU1LCJleHAiOjM1MjI2MTkxMTB9.6GFqcNo0b7bN44SiPRAEjlY0kDdqBQSSm8yJMTY8CbI"
+    },
+    {
+      "name": "aws_deepracer",
+      "description": "AWS Deepracer service.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_AWS-DeepRacer_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BV1MtRGVlcFJhY2VyXzY0LnN2ZyIsImlhdCI6MTc0NTU0MTU1NSwiZXhwIjozNTIyNjE5MTEwfQ.0Z988uki6mlrS6PCn74IKUqEsbTWBCcYAuQNo8ZoO9o"
+    },
+    {
+      "name": "aws_finspace",
+      "description": "A service for managing and analyzing financial data.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_Amazon-FinSpace_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BbWF6b24tRmluU3BhY2VfNjQuc3ZnIiwiaWF0IjoxNzQ1NTQxNTU1LCJleHAiOjM1MjI2MTkxMTB9.Ip4qykPXhd3IuWHBQsmgnqE2Y94L64r5yXokbNAK8s4"
+    },
+    {
+      "name": "aws_iot_twinmaker",
+      "description": "AWS Iot Twinmaker service.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_AWS-IoT-TwinMaker_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BV1MtSW9ULVR3aW5NYWtlcl82NC5zdmciLCJpYXQiOjE3NDU1NDE1NTYsImV4cCI6MzUyMjYxOTExMn0.ltMp1j-5hdwTFx8nb5EbG7PU983_zzXjagCunZ3EdHk"
+    },
+    {
+      "name": "aws_serverless_application_repository",
+      "description": "AWS Serverless Application Repository service.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_AWS-Serverless-Application-Repository_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BV1MtU2VydmVybGVzcy1BcHBsaWNhdGlvbi1SZXBvc2l0b3J5XzY0LnN2ZyIsImlhdCI6MTc0NTU0MTU1NiwiZXhwIjozNTIyNjE5MTEyfQ.SfXSunghmZTlsdqscqVwzcBL_8nENB6WKS79fbM13Hw"
+    },
+    {
+      "name": "aws_wickr",
+      "description": "AWS Wickr service.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_AWS-Wickr_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BV1MtV2lja3JfNjQuc3ZnIiwiaWF0IjoxNzQ1NTQxNTU3LCJleHAiOjM1MjI2MTkxMTN9.4GD1ha63zdiinPAPvLzFMYaZg0nvvabD0jM38myUESY"
+    },
+    {
+      "name": "aws_elastic_kubernetes_service",
+      "description": "AWS Elastic Kubernetes Service service.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_Amazon-Elastic-Kubernetes-Service_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BbWF6b24tRWxhc3RpYy1LdWJlcm5ldGVzLVNlcnZpY2VfNjQuc3ZnIiwiaWF0IjoxNzQ1NTQxNTU3LCJleHAiOjM1MjI2MTkxMTR9.tEKOm9uxhHeQZ99hPTvwnR_15EHaVoLfPLgBVL-Sf60"
+    },
+    {
+      "name": "aws_waf",
+      "description": "AWS Waf service.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_AWS-WAF_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BV1MtV0FGXzY0LnN2ZyIsImlhdCI6MTc0NTU0MTU1NywiZXhwIjozNTIyNjE5MTE0fQ.76PoOMi0Ij5ZQK88DaR7eceEWpD26GornpRGwzCAxPM"
+    },
+    {
+      "name": "aws_guardduty",
+      "description": "AWS Guardduty service.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_Amazon-GuardDuty_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BbWF6b24tR3VhcmREdXR5XzY0LnN2ZyIsImlhdCI6MTc0NTU0MTU1OCwiZXhwIjozNTIyNjE5MTE2fQ.bXQsJBsgweBNnJh9rKcfl9pPlBi4GNPnnrH6wCJLoXw"
+    },
+    {
+      "name": "aws_apache_mxnet_on_aws",
+      "description": "AWS Apache Mxnet On Aws service.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_Apache-MXNet-on-AWS_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BcGFjaGUtTVhOZXQtb24tQVdTXzY0LnN2ZyIsImlhdCI6MTc0NTU0MTU1OCwiZXhwIjozNTIyNjE5MTE2fQ.5iDgwOoCrlmodEGlJ4WOnytXZRAw2s-0TEtq1OiQygE"
+    },
+    {
+      "name": "aws_professional_services",
+      "description": "AWS Professional Services service.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_AWS-Professional-Services_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BV1MtUHJvZmVzc2lvbmFsLVNlcnZpY2VzXzY0LnN2ZyIsImlhdCI6MTc0NTU0MTU1OSwiZXhwIjozNTIyNjE5MTE4fQ.eZUFIzLFnueD5PHvC9GXtVTWqyA-xE2uWZBBg27tjeE"
+    },
+    {
+      "name": "aws_elemental_server",
+      "description": "AWS Elemental Server service.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_AWS-Elemental-Server_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BV1MtRWxlbWVudGFsLVNlcnZlcl82NC5zdmciLCJpYXQiOjE3NDU1NDE1NTksImV4cCI6MzUyMjYxOTExOH0.HvNcRuwZ4OOvulII3KJbojEfdZA62QuPFIDnTmyUU-w"
+    },
+    {
+      "name": "aws_elastic_fabric_adapter",
+      "description": "AWS Elastic Fabric Adapter service.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_Elastic-Fabric-Adapter_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9FbGFzdGljLUZhYnJpYy1BZGFwdGVyXzY0LnN2ZyIsImlhdCI6MTc0NTU0MTU2MCwiZXhwIjozNTIyNjE5MTE5fQ.nZCpZjVs8iJFK6apjUctyWcJwprmfX7C4bG-dOrumgc"
+    },
+    {
+      "name": "aws_polly",
+      "description": "A text-to-speech service.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_Amazon-Polly_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BbWF6b24tUG9sbHlfNjQuc3ZnIiwiaWF0IjoxNzQ1NTQxNTYwLCJleHAiOjM1MjI2MTkxMjB9.w96eyI-Lix9MLvKUU-Zi6qKnKi4wLlmFZ94pUVZJR0w"
+    },
+    {
+      "name": "aws_fsx_for_openzfs",
+      "description": "AWS Fsx For Openzfs service.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_Amazon-FSx-for-OpenZFS_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BbWF6b24tRlN4LWZvci1PcGVuWkZTXzY0LnN2ZyIsImlhdCI6MTc0NTU0MTU2MCwiZXhwIjozNTIyNjE5MTIwfQ.DHd9Eb81K-gokrP0bkYtjfZdTLMZDKt9m56s5ioMFqI"
+    },
+    {
+      "name": "aws_timestream",
+      "description": "A time-series database service.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_Amazon-Timestream_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BbWF6b24tVGltZXN0cmVhbV82NC5zdmciLCJpYXQiOjE3NDU1NDE1NjEsImV4cCI6MzUyMjYxOTEyMn0.CDyMIIP8C1mWZVL2809dr7nN7W4y3ySNnHipk81bTWY"
+    },
+    {
+      "name": "aws_gamelift",
+      "description": "AWS Gamelift service.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_Amazon-GameLift_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BbWF6b24tR2FtZUxpZnRfNjQuc3ZnIiwiaWF0IjoxNzQ1NTQxNTYxLCJleHAiOjM1MjI2MTkxMjJ9.qtkNgwgj4WWjINfsBdFw7MXcAKs7W5JtI2-mgXborqY"
+    },
+    {
+      "name": "aws_wavelength",
+      "description": "AWS Wavelength service.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_AWS-Wavelength_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BV1MtV2F2ZWxlbmd0aF82NC5zdmciLCJpYXQiOjE3NDU1NDE1NjIsImV4cCI6MzUyMjYxOTEyM30.yp21eBSZ2E0sppt61bNsqe3D4IlR3IEZQGJHaXPFUt8"
+    },
+    {
+      "name": "aws_fargate",
+      "description": "A serverless compute engine for containers.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_AWS-Fargate_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BV1MtRmFyZ2F0ZV82NC5zdmciLCJpYXQiOjE3NDU1NDE1NjIsImV4cCI6MzUyMjYxOTEyNH0.MUvvF1gO-Y1IFym-3-RxYzVGHxAJ2H8im7CcIgeAUmk"
+    },
+    {
+      "name": "aws_iot_button",
+      "description": "AWS Iot Button service.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_AWS-IoT-Button_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BV1MtSW9ULUJ1dHRvbl82NC5zdmciLCJpYXQiOjE3NDU1NDE1NjIsImV4cCI6MzUyMjYxOTEyNH0.9kh2h0u4JUItsJ33_xDoRp24imXQdr7mAULWbgCY3jQ"
+    },
+    {
+      "name": "aws_snowball",
+      "description": "AWS Snowball service.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_AWS-Snowball_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BV1MtU25vd2JhbGxfNjQuc3ZnIiwiaWF0IjoxNzQ1NTQxNTYzLCJleHAiOjM1MjI2MTkxMjZ9.4Q0GvgthwNCrSeNDBCThNFcV1hHfDyhzavYpXLh_Wwg"
+    },
+    {
+      "name": "aws_marketplace_dark",
+      "description": "AWS Marketplace Dark service.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_AWS-Marketplace_Dark_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BV1MtTWFya2V0cGxhY2VfRGFya182NC5zdmciLCJpYXQiOjE3NDU1NDE1NjMsImV4cCI6MzUyMjYxOTEyNn0.tYGxAEZbGorcefskihRXSEhLQZu_n_ajPyooGQ21MPY"
+    },
+    {
+      "name": "aws_cloudhsm",
+      "description": "AWS Cloudhsm service.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_AWS-CloudHSM_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BV1MtQ2xvdWRIU01fNjQuc3ZnIiwiaWF0IjoxNzQ1NTQxNTY0LCJleHAiOjM1MjI2MTkxMjh9.t9Nu33GY7Lxzsum-M82GSNHu7kWrittZWN8QbVR6ctA"
+    },
+    {
+      "name": "aws_appfabric",
+      "description": "AWS Appfabric service.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_AWS-AppFabric_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BV1MtQXBwRmFicmljXzY0LnN2ZyIsImlhdCI6MTc0NTU0MTU2NCwiZXhwIjozNTIyNjE5MTI4fQ.Ne8feUAMx7r2lOhoyNoANNyQo3TmGoEQ_74RzE2nE2Q"
+    },
+    {
+      "name": "aws_pinpoint",
+      "description": "AWS Pinpoint service.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_Amazon-Pinpoint_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BbWF6b24tUGlucG9pbnRfNjQuc3ZnIiwiaWF0IjoxNzQ1NTQxNTY1LCJleHAiOjM1MjI2MTkxMjl9.Qca-JCbJKvNigp1InollMczs0bVsff74mGLg3qwyzFk"
+    },
+    {
+      "name": "aws_chatbot",
+      "description": "AWS Chatbot service.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_AWS-Chatbot_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BV1MtQ2hhdGJvdF82NC5zdmciLCJpYXQiOjE3NDU1NDE1NjUsImV4cCI6MzUyMjYxOTEzMH0.9mSvJvuVz2w21zco8QP0LJ1__FE5QkgFT6A_lyeLieA"
+    },
+    {
+      "name": "aws_amplify",
+      "description": "AWS Amplify service.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_AWS-Amplify_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BV1MtQW1wbGlmeV82NC5zdmciLCJpYXQiOjE3NDU1NDE1NjUsImV4cCI6MzUyMjYxOTEzMH0.5pQGjDLe0KTL1wFxn4kDWPsI_fh9pvpqiTKOya_FVzI"
+    },
+    {
+      "name": "aws_vpc_lattice",
+      "description": "AWS Vpc Lattice service.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_Amazon-VPC-Lattice_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BbWF6b24tVlBDLUxhdHRpY2VfNjQuc3ZnIiwiaWF0IjoxNzQ1NTQxNTY2LCJleHAiOjM1MjI2MTkxMzJ9.nw5OpQ1WV1mM8LNiqqfUf5d4qr-XV8v8o84T_uJ-Io8"
+    },
+    {
+      "name": "aws_elemental_medialive",
+      "description": "AWS Elemental Medialive service.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_AWS-Elemental-MediaLive_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BV1MtRWxlbWVudGFsLU1lZGlhTGl2ZV82NC5zdmciLCJpYXQiOjE3NDU1NDE1NjYsImV4cCI6MzUyMjYxOTEzMn0.ORVOBXvb3lRH79N1c1EpBF9HzvZ5SSNQbF0x9VYAXnw"
+    },
+    {
+      "name": "aws_x_ray",
+      "description": "AWS X Ray service.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_AWS-X-Ray_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BV1MtWC1SYXlfNjQuc3ZnIiwiaWF0IjoxNzQ1NTQxNTY3LCJleHAiOjM1MjI2MTkxMzN9.yqNb5wZHFooFGDg6hrYbiSvoAqPBPVByurJX6MItKuE"
+    },
+    {
+      "name": "aws_elastic_vmware_service",
+      "description": "AWS Elastic Vmware Service service.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_Amazon-Elastic-VMware-Service_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BbWF6b24tRWxhc3RpYy1WTXdhcmUtU2VydmljZV82NC5zdmciLCJpYXQiOjE3NDU1NDE1NjcsImV4cCI6MzUyMjYxOTEzNH0.VpR2MLAXcVuswChM88hQeAaorlErdqI9ECqxm96mtFE"
+    },
+    {
+      "name": "aws_outposts_servers",
+      "description": "AWS Outposts Servers service.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_AWS-Outposts-servers_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BV1MtT3V0cG9zdHMtc2VydmVyc182NC5zdmciLCJpYXQiOjE3NDU1NDE1NjcsImV4cCI6MzUyMjYxOTEzNH0.D3OrmJRJ1xTuXucxnhtmnKHf0L7uFlmI38Y9jWZ-XBI"
+    },
+    {
+      "name": "aws_oracle_database_at_aws",
+      "description": "AWS Oracle Database At Aws service.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_Oracle-Database-at-AWS_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9PcmFjbGUtRGF0YWJhc2UtYXQtQVdTXzY0LnN2ZyIsImlhdCI6MTc0NTU0MTU2OCwiZXhwIjozNTIyNjE5MTM2fQ.SE46fFkBjMGSiAXepYXuz8zkIOBnWpfx7QKWWbsYxlc"
+    },
+    {
+      "name": "aws_codecatalyst",
+      "description": "AWS Codecatalyst service.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_Amazon-CodeCatalyst_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BbWF6b24tQ29kZUNhdGFseXN0XzY0LnN2ZyIsImlhdCI6MTc0NTU0MTU2OCwiZXhwIjozNTIyNjE5MTM2fQ.byPQ902p1DNX8zJIoNSUlgd-lYWQyjgiNHIt5LfXGz0"
+    },
+    {
+      "name": "aws_workdocs",
+      "description": "AWS Workdocs service.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_Amazon-WorkDocs_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BbWF6b24tV29ya0RvY3NfNjQuc3ZnIiwiaWF0IjoxNzQ1NTQxNTY5LCJleHAiOjM1MjI2MTkxMzd9.wpIfnqswcLHTHV3mPsQUYzQr6WJzWTsBxtQ7TX8ncYQ"
+    },
+    {
+      "name": "aws_eventbridge",
+      "description": "A serverless event bus for connecting applications using events.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_Amazon-EventBridge_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BbWF6b24tRXZlbnRCcmlkZ2VfNjQuc3ZnIiwiaWF0IjoxNzQ1NTQxNTY5LCJleHAiOjM1MjI2MTkxMzh9.WiACTjRpNFJPGvNHbwypfMPaOmgx7AmN0QNqf5thwag"
+    },
+    {
+      "name": "aws_glue_databrew",
+      "description": "AWS Glue Databrew service.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_AWS-Glue-DataBrew_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BV1MtR2x1ZS1EYXRhQnJld182NC5zdmciLCJpYXQiOjE3NDU1NDE1NjksImV4cCI6MzUyMjYxOTEzOH0.0c8JogUV9gSxvlNWd4GQPFxnge8V32j7138ScNJf3x8"
+    },
+    {
+      "name": "aws_elemental_appliances_&_software",
+      "description": "AWS Elemental Appliances & Software service.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_AWS-Elemental-Appliances-%26-Software_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BV1MtRWxlbWVudGFsLUFwcGxpYW5jZXMtJi1Tb2Z0d2FyZV82NC5zdmciLCJpYXQiOjE3NDU1NDE1NzAsImV4cCI6MzUyMjYxOTE0MH0.8S_NS2p9BwzNF_4w6wknZ0xJv7BQJyTRHTlH1NluohE"
+    },
+    {
+      "name": "aws_nice_enginframe",
+      "description": "AWS Nice Enginframe service.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_NICE-EnginFrame_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9OSUNFLUVuZ2luRnJhbWVfNjQuc3ZnIiwiaWF0IjoxNzQ1NTQxNTcwLCJleHAiOjM1MjI2MTkxNDB9.0-UiEt-TgH9FhxIktxPgnSQYjCJneV0oWUoBVxFM2nU"
+    },
+    {
+      "name": "aws_healthlake",
+      "description": "A service for storing and analyzing healthcare data.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_AWS-HealthLake_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BV1MtSGVhbHRoTGFrZV82NC5zdmciLCJpYXQiOjE3NDU1NDE1NzEsImV4cCI6MzUyMjYxOTE0MX0.vEeyHOyluWoE01QjSr0KY6p1p-povDGoV98M58qN9Ak"
+    },
+    {
+      "name": "aws_audit_manager",
+      "description": "AWS Audit Manager service.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_AWS-Audit-Manager_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BV1MtQXVkaXQtTWFuYWdlcl82NC5zdmciLCJpYXQiOjE3NDU1NDE1NzEsImV4cCI6MzUyMjYxOTE0Mn0.gGnT40mtefy47R9__emrTLMcn-98dtpmU7C94uSiqnY"
+    },
+    {
+      "name": "aws_cloud_development_kit",
+      "description": "AWS Cloud Development Kit service.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_AWS-Cloud-Development-Kit_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BV1MtQ2xvdWQtRGV2ZWxvcG1lbnQtS2l0XzY0LnN2ZyIsImlhdCI6MTc0NTU0MTU3MiwiZXhwIjozNTIyNjE5MTQzfQ.wro0B63B6eAHVz3hCVOgFQLWCt-LOQFf5H1rOvgHMIQ"
+    },
+    {
+      "name": "aws_chime_sdk",
+      "description": "AWS Chime Sdk service.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_Amazon-Chime-SDK_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BbWF6b24tQ2hpbWUtU0RLXzY0LnN2ZyIsImlhdCI6MTc0NTU0MTU3MiwiZXhwIjozNTIyNjE5MTQ0fQ.NH0BFaN4N0jDUdwpeD8PmOjimvRncuPe3zPxspD4UWo"
+    },
+    {
+      "name": "aws_healthscribe",
+      "description": "AWS Healthscribe service.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_AWS-HealthScribe_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BV1MtSGVhbHRoU2NyaWJlXzY0LnN2ZyIsImlhdCI6MTc0NTU0MTU3MywiZXhwIjozNTIyNjE5MTQ1fQ.7VdaLiAGErX1Bo72mjAAIuxx7Rgd6_t7k78sAV56Icc"
+    },
+    {
+      "name": "aws_detective",
+      "description": "AWS Detective service.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_Amazon-Detective_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BbWF6b24tRGV0ZWN0aXZlXzY0LnN2ZyIsImlhdCI6MTc0NTU0MTU3MywiZXhwIjozNTIyNjE5MTQ2fQ.O6yGnGF8GfA4lUNlRurmjwMTo3yroNuFE4TdgWE9DFE"
+    },
+    {
+      "name": "aws_healthomics",
+      "description": "AWS Healthomics service.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_AWS-HealthOmics_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BV1MtSGVhbHRoT21pY3NfNjQuc3ZnIiwiaWF0IjoxNzQ1NTQxNTczLCJleHAiOjM1MjI2MTkxNDZ9.N2DgKQYRt0ugqD1Mop5Kbo_jamP-cOyNwL_MLdEG548"
+    },
+    {
+      "name": "aws_thinkbox_deadline",
+      "description": "AWS Thinkbox Deadline service.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_AWS-Thinkbox-Deadline_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BV1MtVGhpbmtib3gtRGVhZGxpbmVfNjQuc3ZnIiwiaWF0IjoxNzQ1NTQxNTc0LCJleHAiOjM1MjI2MTkxNDh9.k2xyk0rF0ycFWT3qxTbVvUwUkhIAJYaaRr46Pe9N20c"
+    },
+    {
+      "name": "aws_shield",
+      "description": "AWS Shield service.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_AWS-Shield_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BV1MtU2hpZWxkXzY0LnN2ZyIsImlhdCI6MTc0NTU0MTU3NCwiZXhwIjozNTIyNjE5MTQ4fQ.yDtteTaKvLygdSu5rWLQFh3-GfeFzb6rzRJ7wMFQbuo"
+    },
+    {
+      "name": "aws_cloud_wan",
+      "description": "AWS Cloud Wan service.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_AWS-Cloud-WAN_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BV1MtQ2xvdWQtV0FOXzY0LnN2ZyIsImlhdCI6MTc0NTU0MTU3NSwiZXhwIjozNTIyNjE5MTQ5fQ.TZ-OB8TjKGlurAwjyqHMkXCIHGEJ_of2TCUYLWdGtvc"
+    },
+    {
+      "name": "aws_supply_chain",
+      "description": "AWS Supply Chain service.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_AWS-Supply-Chain_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BV1MtU3VwcGx5LUNoYWluXzY0LnN2ZyIsImlhdCI6MTc0NTU0MTU3NSwiZXhwIjozNTIyNjE5MTUwfQ.UcE7py0KrqhOMUeLlgXGWrBsG4BOXG-yCDr_XdlmR-8"
+    },
+    {
+      "name": "aws_codeartifact",
+      "description": "AWS Codeartifact service.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_AWS-CodeArtifact_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BV1MtQ29kZUFydGlmYWN0XzY0LnN2ZyIsImlhdCI6MTc0NTU0MTU3NSwiZXhwIjozNTIyNjE5MTUwfQ._xA5Mh6uERx_8gu6K_5KXpa2L9XA5m3PMf1CiqTa2Cw"
+    },
+    {
+      "name": "aws_macie",
+      "description": "AWS Macie service.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_Amazon-Macie_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BbWF6b24tTWFjaWVfNjQuc3ZnIiwiaWF0IjoxNzQ1NTQxNTc2LCJleHAiOjM1MjI2MTkxNTJ9.gXPW_NxTxQGUuK_qmrQ8lYIdB7LlEgMUtM6F3m85XiU"
+    },
+    {
+      "name": "aws_firewall_manager",
+      "description": "AWS Firewall Manager service.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_AWS-Firewall-Manager_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BV1MtRmlyZXdhbGwtTWFuYWdlcl82NC5zdmciLCJpYXQiOjE3NDU1NDE1NzYsImV4cCI6MzUyMjYxOTE1Mn0.xU0ghD5ykozuAB2nf1NVOIL85sAmrXtsxxCG2FJCEl0"
+    },
+    {
+      "name": "aws_connect",
+      "description": "A cloud-based contact center service.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_Amazon-Connect_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BbWF6b24tQ29ubmVjdF82NC5zdmciLCJpYXQiOjE3NDU1NDE1NzcsImV4cCI6MzUyMjYxOTE1M30.sLsVbmxmbgUp7CjVE6jzDWJIpBXmMGMyysauvN4BriM"
+    },
+    {
+      "name": "aws_freertos",
+      "description": "AWS Freertos service.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_FreeRTOS_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9GcmVlUlRPU182NC5zdmciLCJpYXQiOjE3NDU1NDE1NzcsImV4cCI6MzUyMjYxOTE1NH0.CdkZZ3bxywG2lJ_GuAs1FX9XGIsntY1t20cP1dldoPM"
+    },
+    {
+      "name": "aws_network_firewall",
+      "description": "AWS Network Firewall service.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_AWS-Network-Firewall_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BV1MtTmV0d29yay1GaXJld2FsbF82NC5zdmciLCJpYXQiOjE3NDU1NDE1NzcsImV4cCI6MzUyMjYxOTE1NH0.dWcrfFJnHP1mK_SfbeHQEoBtGuwfg5GRCfB0esLcNNA"
+    },
+    {
+      "name": "aws_user_notifications",
+      "description": "AWS User Notifications service.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_AWS-User-Notifications_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BV1MtVXNlci1Ob3RpZmljYXRpb25zXzY0LnN2ZyIsImlhdCI6MTc0NTU0MTU3OCwiZXhwIjozNTIyNjE5MTU2fQ.XJ9DKgZy_4XiqKgxkn92vkgVfN0nLmh3v-GPp45F7XM"
+    },
+    {
+      "name": "aws_api_gateway",
+      "description": "AWS Api Gateway service.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_Amazon-API-Gateway_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BbWF6b24tQVBJLUdhdGV3YXlfNjQuc3ZnIiwiaWF0IjoxNzQ1NTQxNTc4LCJleHAiOjM1MjI2MTkxNTZ9.-gTljSBwAsjYSjqB9w-otyggy2rFDEjnKHvG1jbH4IU"
+    },
+    {
+      "name": "aws_cloudsearch",
+      "description": "A managed service for adding search capabilities to applications.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_Amazon-CloudSearch_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BbWF6b24tQ2xvdWRTZWFyY2hfNjQuc3ZnIiwiaWF0IjoxNzQ1NTQxNTc5LCJleHAiOjM1MjI2MTkxNTh9.b4ktAZHPyCrIZ2KQ6kC9C2XcfwkB9uV2vylMONJ7bWo"
+    },
+    {
+      "name": "aws_inspector",
+      "description": "AWS Inspector service.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_Amazon-Inspector_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BbWF6b24tSW5zcGVjdG9yXzY0LnN2ZyIsImlhdCI6MTc0NTU0MTU3OSwiZXhwIjozNTIyNjE5MTU4fQ.Td4jjeNMG3viFkiZgBJ2VRUou1A6JrBpBB8xOyLgwtI"
+    },
+    {
+      "name": "aws_eks_distro",
+      "description": "AWS Eks Distro service.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_Amazon-EKS-Distro_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BbWF6b24tRUtTLURpc3Ryb182NC5zdmciLCJpYXQiOjE3NDU1NDE1ODAsImV4cCI6MzUyMjYxOTE1OX0.ERZ3n--h4MzOTJHpKH1ODbehCJZc4mRWf9PquxzMaTA"
+    },
+    {
+      "name": "aws_rekognition",
+      "description": "AWS Rekognition service.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_Amazon-Rekognition_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BbWF6b24tUmVrb2duaXRpb25fNjQuc3ZnIiwiaWF0IjoxNzQ1NTQxNTgwLCJleHAiOjM1MjI2MTkxNjB9.KNleU_A16JndvehtSs0zqBJccLbAHM2De9tn-yGGUvc"
+    },
+    {
+      "name": "aws_managed_workflows_for_apache_airflow",
+      "description": "AWS Managed Workflows For Apache Airflow service.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_Amazon-Managed-Workflows-for-Apache-Airflow_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BbWF6b24tTWFuYWdlZC1Xb3JrZmxvd3MtZm9yLUFwYWNoZS1BaXJmbG93XzY0LnN2ZyIsImlhdCI6MTc0NTU0MTU4MCwiZXhwIjozNTIyNjE5MTYwfQ.x4gW0HtIv3_S1-wmoj0Ptenn8V1QvF3EAt-EeQDH2ww"
+    },
+    {
+      "name": "aws_elemental_link",
+      "description": "AWS Elemental Link service.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_AWS-Elemental-Link_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BV1MtRWxlbWVudGFsLUxpbmtfNjQuc3ZnIiwiaWF0IjoxNzQ1NTQxNTgxLCJleHAiOjM1MjI2MTkxNjJ9.x98vKHSLl7SMpbGQoKzfg69EdUAZAq2L8KZpaj_Q4Go"
+    },
+    {
+      "name": "aws_codepipeline",
+      "description": "AWS Codepipeline service.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_AWS-CodePipeline_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BV1MtQ29kZVBpcGVsaW5lXzY0LnN2ZyIsImlhdCI6MTc0NTU0MTU4MSwiZXhwIjozNTIyNjE5MTYyfQ.RUrNM8owvYJCY7yF6BQ--H_UbwNdN6Ua2Dg7B25ZmWI"
+    },
+    {
+      "name": "aws_workspaces_family",
+      "description": "AWS Workspaces Family service.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_Amazon-WorkSpaces-Family_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BbWF6b24tV29ya1NwYWNlcy1GYW1pbHlfNjQuc3ZnIiwiaWF0IjoxNzQ1NTQxNTgyLCJleHAiOjM1MjI2MTkxNjR9.JI9kbQcc7zmFDM5s_TjKj4Rw6Mv6hGA96dZTh-iIBk8"
+    },
+    {
+      "name": "aws_repost_private",
+      "description": "AWS Repost Private service.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_AWS-rePost-Private_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BV1MtcmVQb3N0LVByaXZhdGVfNjQuc3ZnIiwiaWF0IjoxNzQ1NTQxNTgyLCJleHAiOjM1MjI2MTkxNjR9.Wd9oxbie4tgJ539cnSK7RYMgfWdx6a1teT48lfni2aM"
+    },
+    {
+      "name": "aws_artifact",
+      "description": "AWS Artifact service.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_AWS-Artifact_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BV1MtQXJ0aWZhY3RfNjQuc3ZnIiwiaWF0IjoxNzQ1NTQxNTgzLCJleHAiOjM1MjI2MTkxNjV9.wmzXKhMJqEsQZ1xHyrLGi3GnwilHgZ8dqcQAjsOJaJI"
+    },
+    {
+      "name": "aws_forecast",
+      "description": "A time-series forecasting service.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_Amazon-Forecast_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BbWF6b24tRm9yZWNhc3RfNjQuc3ZnIiwiaWF0IjoxNzQ1NTQxNTgzLCJleHAiOjM1MjI2MTkxNjZ9.QTUEQbeAvdLA1r_u1dJN1wUltrIhOaiLJczNE_Y4UUs"
+    },
+    {
+      "name": "aws_simspace_weaver",
+      "description": "AWS Simspace Weaver service.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_AWS-SimSpace-Weaver_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BV1MtU2ltU3BhY2UtV2VhdmVyXzY0LnN2ZyIsImlhdCI6MTc0NTU0MTU4NCwiZXhwIjozNTIyNjE5MTY3fQ.Anqg9CWcMwoeFltwFjZ-zaOSTZLQQjGKuQWuZEISNqc"
+    },
+    {
+      "name": "aws_thinkbox_stoke",
+      "description": "AWS Thinkbox Stoke service.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_AWS-Thinkbox-Stoke_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BV1MtVGhpbmtib3gtU3Rva2VfNjQuc3ZnIiwiaWF0IjoxNzQ1NTQxNTg0LCJleHAiOjM1MjI2MTkxNjh9.uYrI1ADmkFyl_ppKd7AoQZ748fVLnDMUguYIygkbk8g"
+    },
+    {
+      "name": "aws_control_tower",
+      "description": "AWS Control Tower service.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_AWS-Control-Tower_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BV1MtQ29udHJvbC1Ub3dlcl82NC5zdmciLCJpYXQiOjE3NDU1NDE1ODQsImV4cCI6MzUyMjYxOTE2OH0.ZdTGq4kyXiJXo_CYirHnJwDtdVTS8TeJSBMkCY1-jIc"
+    },
+    {
+      "name": "aws_health_dashboard",
+      "description": "AWS Health Dashboard service.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_AWS-Health-Dashboard_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BV1MtSGVhbHRoLURhc2hib2FyZF82NC5zdmciLCJpYXQiOjE3NDU1NDE1ODUsImV4cCI6MzUyMjYxOTE3MH0.PSNTjx_fGDTMq53WczL0sFFzPIKtv0dKcnH7S2mBM1Q"
+    },
+    {
+      "name": "aws_storage_gateway",
+      "description": "AWS Storage Gateway service.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_AWS-Storage-Gateway_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BV1MtU3RvcmFnZS1HYXRld2F5XzY0LnN2ZyIsImlhdCI6MTc0NTU0MTU4NSwiZXhwIjozNTIyNjE5MTcwfQ.AKTXIGh8SMcfBczIwEzbOaCcHTaXWIEkK5Nl1cxdQmI"
+    },
+    {
+      "name": "aws_identity_and_access_management",
+      "description": "AWS Identity And Access Management service.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_AWS-Identity-and-Access-Management_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BV1MtSWRlbnRpdHktYW5kLUFjY2Vzcy1NYW5hZ2VtZW50XzY0LnN2ZyIsImlhdCI6MTc0NTU0MTU4NiwiZXhwIjozNTIyNjE5MTcyfQ.4ThOKascHvQde-KDtuJBl_vXgJMWjcR7gphjlSZdUXU"
+    },
+    {
+      "name": "aws_command_line_interface",
+      "description": "AWS Command Line Interface service.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_AWS-Command-Line-Interface_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BV1MtQ29tbWFuZC1MaW5lLUludGVyZmFjZV82NC5zdmciLCJpYXQiOjE3NDU1NDE1ODYsImV4cCI6MzUyMjYxOTE3Mn0.YOS-qbl6HXOCXEVe8G1QPcfUhILVb3TThcJt0-vAGBs"
+    },
+    {
+      "name": "aws_augmented_ai_a2i",
+      "description": "AWS Augmented Ai A2I service.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_Amazon-Augmented-AI-A2I_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BbWF6b24tQXVnbWVudGVkLUFJLUEySV82NC5zdmciLCJpYXQiOjE3NDU1NDE1ODYsImV4cCI6MzUyMjYxOTE3Mn0.VfWNtvzgVBnep3dHUtusXZPD0TO-9tSAcIHzWi5LvX0"
+    },
+    {
+      "name": "aws_reserved_instance_reporting",
+      "description": "AWS Reserved Instance Reporting service.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_Reserved-Instance-Reporting_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9SZXNlcnZlZC1JbnN0YW5jZS1SZXBvcnRpbmdfNjQuc3ZnIiwiaWF0IjoxNzQ1NTQxNTg3LCJleHAiOjM1MjI2MTkxNzR9.TQVsxkvx9Cyk0UVJAfClckHOzNGwgQ7-ZGG_lzlqaw0"
+    },
+    {
+      "name": "aws_opensearch_service",
+      "description": "A managed search and analytics service.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_Amazon-OpenSearch-Service_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BbWF6b24tT3BlblNlYXJjaC1TZXJ2aWNlXzY0LnN2ZyIsImlhdCI6MTc0NTU0MTU4NywiZXhwIjozNTIyNjE5MTc0fQ.BUvHbh6TCYt5s8OzaYov4nqozMDMnywQo2wlAYMSRYo"
+    },
+    {
+      "name": "aws_nova",
+      "description": "AWS Nova service.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_Amazon-Nova_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BbWF6b24tTm92YV82NC5zdmciLCJpYXQiOjE3NDU1NDE1ODgsImV4cCI6MzUyMjYxOTE3Nn0.TCv7NK5WPqsq5urRQhJePosqDWlBlgeHH4vi30jNIRk"
+    },
+    {
+      "name": "aws_nitro_enclaves",
+      "description": "AWS Nitro Enclaves service.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_AWS-Nitro-Enclaves_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BV1MtTml0cm8tRW5jbGF2ZXNfNjQuc3ZnIiwiaWF0IjoxNzQ1NTQxNTg4LCJleHAiOjM1MjI2MTkxNzZ9.GSycabg2ggDyBSLFtt_EJHcJPqJVWD4nX0n2EKzdD3U"
+    },
+    {
+      "name": "aws_site_to_site_vpn",
+      "description": "AWS Site To Site Vpn service.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_AWS-Site-to-Site-VPN_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BV1MtU2l0ZS10by1TaXRlLVZQTl82NC5zdmciLCJpYXQiOjE3NDU1NDE1ODksImV4cCI6MzUyMjYxOTE3N30.F4H8w5QbGCGVmZfEg7123PuwbHCRYlHhCGffc8yErzg"
+    },
+    {
+      "name": "aws_cost_explorer",
+      "description": "AWS Cost Explorer service.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_AWS-Cost-Explorer_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BV1MtQ29zdC1FeHBsb3Jlcl82NC5zdmciLCJpYXQiOjE3NDU1NDE1ODksImV4cCI6MzUyMjYxOTE3OH0.JT-PkYn6cK3cJkqNNbx2X4T6mfCF-NwGjKERpGeK-iw"
+    },
+    {
+      "name": "aws_lookout_for_equipment",
+      "description": "AWS Lookout For Equipment service.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_Amazon-Lookout-for-Equipment_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BbWF6b24tTG9va291dC1mb3ItRXF1aXBtZW50XzY0LnN2ZyIsImlhdCI6MTc0NTU0MTU5MCwiZXhwIjozNTIyNjE5MTc5fQ.BJTDDuKPx443gfUuai66WOa5nSy-toW0t67HV3QMzFU"
+    },
+    {
+      "name": "aws_ground_station",
+      "description": "AWS Ground Station service.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_AWS-Ground-Station_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BV1MtR3JvdW5kLVN0YXRpb25fNjQuc3ZnIiwiaWF0IjoxNzQ1NTQxNTkwLCJleHAiOjM1MjI2MTkxODB9.I9Ef_Su2q3eQO_4XJR-KUaJZ32KnGyZQ6EIVNqT1HJI"
+    },
+    {
+      "name": "aws_savings_plans",
+      "description": "AWS Savings Plans service.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_Savings-Plans_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9TYXZpbmdzLVBsYW5zXzY0LnN2ZyIsImlhdCI6MTc0NTU0MTU5MCwiZXhwIjozNTIyNjE5MTgwfQ.VV3ge2FT5fdBnfImBDrEQNoTFlYWsxyAuMdRe7vLh0M"
+    },
+    {
+      "name": "aws_application_auto_scaling",
+      "description": "AWS Application Auto Scaling service.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_AWS-Application-Auto-Scaling_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BV1MtQXBwbGljYXRpb24tQXV0by1TY2FsaW5nXzY0LnN2ZyIsImlhdCI6MTc0NTU0MTU5MSwiZXhwIjozNTIyNjE5MTgyfQ.BEiopuA7J1ldZkTGUFyXEvnNDy7amvfILOyUCgwRU74"
+    },
+    {
+      "name": "aws_elemental_mediaconnect",
+      "description": "AWS Elemental Mediaconnect service.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_AWS-Elemental-MediaConnect_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BV1MtRWxlbWVudGFsLU1lZGlhQ29ubmVjdF82NC5zdmciLCJpYXQiOjE3NDU1NDE1OTEsImV4cCI6MzUyMjYxOTE4Mn0.OKt4xSbrV33P_c10yd-eyuKC7RSVbAfVEMM3dDITuyY"
+    },
+    {
+      "name": "aws_iot_sitewise",
+      "description": "A service for collecting and analyzing industrial IoT data.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_AWS-IoT-SiteWise_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BV1MtSW9ULVNpdGVXaXNlXzY0LnN2ZyIsImlhdCI6MTc0NTU0MTU5MiwiZXhwIjozNTIyNjE5MTgzfQ.tR-1-bw0ZhO2Cr3KMok3unWXneqSZK9YSfZO0lbib6A"
+    },
+    {
+      "name": "aws_auto_scaling",
+      "description": "AWS Auto Scaling service.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_AWS-Auto-Scaling_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BV1MtQXV0by1TY2FsaW5nXzY0LnN2ZyIsImlhdCI6MTc0NTU0MTU5MiwiZXhwIjozNTIyNjE5MTg0fQ.U20a4jxNhL-ljA1y6Bj5T7oXNeQrh8GFH4ct0BoQa5E"
+    },
+    {
+      "name": "aws_infrastructure_composer",
+      "description": "AWS Infrastructure Composer service.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_AWS-Infrastructure-Composer_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BV1MtSW5mcmFzdHJ1Y3R1cmUtQ29tcG9zZXJfNjQuc3ZnIiwiaWF0IjoxNzQ1NTQxNTkyLCJleHAiOjM1MjI2MTkxODR9.GFyvu_sUQ3hSVfHwu5EU6BjELCCET-MThja9syiljA0"
+    },
+    {
+      "name": "aws_rds",
+      "description": "A managed relational database service.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_Amazon-RDS_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BbWF6b24tUkRTXzY0LnN2ZyIsImlhdCI6MTc0NTU0MTU5MywiZXhwIjozNTIyNjE5MTg2fQ.CmFDygWxHhAoCtIkigbtNlshnxl-NIJ2miNMK-8sNKY"
+    },
+    {
+      "name": "aws_parallel_cluster",
+      "description": "AWS Parallel Cluster service.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_AWS-Parallel-Cluster_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BV1MtUGFyYWxsZWwtQ2x1c3Rlcl82NC5zdmciLCJpYXQiOjE3NDU1NDE1OTMsImV4cCI6MzUyMjYxOTE4Nn0.VtYp6zu2b-o6jy9RDiuI9aDV3_d-5na-8793I54CBHM"
+    },
+    {
+      "name": "aws_resource_explorer",
+      "description": "AWS Resource Explorer service.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_AWS-Resource-Explorer_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BV1MtUmVzb3VyY2UtRXhwbG9yZXJfNjQuc3ZnIiwiaWF0IjoxNzQ1NTQxNTk0LCJleHAiOjM1MjI2MTkxODh9.7Mdy0FpOWEVIxyyMI_qbvlpKF_o1aZgeG_rnGBMXFRA"
+    },
+    {
+      "name": "aws_ecs_anywhere",
+      "description": "AWS Ecs Anywhere service.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_Amazon-ECS-Anywhere_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BbWF6b24tRUNTLUFueXdoZXJlXzY0LnN2ZyIsImlhdCI6MTc0NTU0MTU5NCwiZXhwIjozNTIyNjE5MTg4fQ.PfoGCw00ghDiS68B-z4dKy2w_AcNKF1yVwWuF-gotmw"
+    },
+    {
+      "name": "aws_well_architected_tool",
+      "description": "AWS Well Architected Tool service.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_AWS-Well-Architected-Tool_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BV1MtV2VsbC1BcmNoaXRlY3RlZC1Ub29sXzY0LnN2ZyIsImlhdCI6MTc0NTU0MTU5NSwiZXhwIjozNTIyNjE5MTg5fQ.KMHIQgKYGbIpzEac5IO48XotU6XcFuZRxhxJJjlS51A"
+    },
+    {
+      "name": "aws_memorydb",
+      "description": "A Redis-compatible in-memory database.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_Amazon-MemoryDB_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BbWF6b24tTWVtb3J5REJfNjQuc3ZnIiwiaWF0IjoxNzQ1NTQxNTk1LCJleHAiOjM1MjI2MTkxOTB9.G0_3P-MH63Umy0wPN39zJZu0sL8QChiyVd3JPp9Dy5I"
+    },
+    {
+      "name": "aws_redshift",
+      "description": "A fully managed data warehouse service.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_Amazon-Redshift_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BbWF6b24tUmVkc2hpZnRfNjQuc3ZnIiwiaWF0IjoxNzQ1NTQxNTk1LCJleHAiOjM1MjI2MTkxOTB9.rwC2SzDElD0HUcWmi2-mEw1LDUu2HzWLkgJfwtM4Wcc"
+    },
+    {
+      "name": "aws_elasticache",
+      "description": "An in-memory caching service.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_Amazon-ElastiCache_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BbWF6b24tRWxhc3RpQ2FjaGVfNjQuc3ZnIiwiaWF0IjoxNzQ1NTQxNTk2LCJleHAiOjM1MjI2MTkxOTJ9.84bX1wbGRidie1mHF73gqIWU-7jDanb2CjwJsjfGhvY"
+    },
+    {
+      "name": "aws_quicksight",
+      "description": "A business intelligence service for creating interactive dashboards.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_Amazon-QuickSight_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BbWF6b24tUXVpY2tTaWdodF82NC5zdmciLCJpYXQiOjE3NDU1NDE1OTcsImV4cCI6MzUyMjYxOTE5M30.9xijMprxlRK66DCTJLqM1UcMbW0wYuPjwWCZtl4KsXU"
+    },
+    {
+      "name": "aws_private_5g",
+      "description": "AWS Private 5G service.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_AWS-Private-5G_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BV1MtUHJpdmF0ZS01R182NC5zdmciLCJpYXQiOjE3NDU1NDE1OTcsImV4cCI6MzUyMjYxOTE5NH0.IkCc5qPDuNSB4vhErZGBZbz6RsA6ifsZlzZIRP4IbmI"
+    },
+    {
+      "name": "aws_simple_storage_service_glacier",
+      "description": "AWS Simple Storage Service Glacier service.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_Amazon-Simple-Storage-Service-Glacier_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BbWF6b24tU2ltcGxlLVN0b3JhZ2UtU2VydmljZS1HbGFjaWVyXzY0LnN2ZyIsImlhdCI6MTc0NTU0MTU5OCwiZXhwIjozNTIyNjE5MTk1fQ.jmm0yCgKIimxHC4lKglds-pBVf9qz6hRcpvxry2StvA"
+    },
+    {
+      "name": "aws_cloudtrail",
+      "description": "AWS Cloudtrail service.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_AWS-CloudTrail_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BV1MtQ2xvdWRUcmFpbF82NC5zdmciLCJpYXQiOjE3NDU1NDE1OTgsImV4cCI6MzUyMjYxOTE5Nn0.TdPcf7asejuVodVT_Oo5-6rpEoU0eY5KGpK8nVqB99E"
+    },
+    {
+      "name": "aws_cloud_directory",
+      "description": "AWS Cloud Directory service.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_Amazon-Cloud-Directory_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BbWF6b24tQ2xvdWQtRGlyZWN0b3J5XzY0LnN2ZyIsImlhdCI6MTc0NTU0MTU5OCwiZXhwIjozNTIyNjE5MTk2fQ.gCW_Syo0tUScccKx9DGEoKSk6kpCw9gefav0WFktVL0"
+    },
+    {
+      "name": "aws_backup",
+      "description": "AWS Backup service.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_AWS-Backup_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BV1MtQmFja3VwXzY0LnN2ZyIsImlhdCI6MTc0NTU0MTU5OSwiZXhwIjozNTIyNjE5MTk4fQ.yHjctHuQEwGOeZ0Sty7WG8hWSAc3HI--jwJhD-H1Yww"
+    },
+    {
+      "name": "aws_app_studio",
+      "description": "AWS App Studio service.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_AWS-App-Studio_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BV1MtQXBwLVN0dWRpb182NC5zdmciLCJpYXQiOjE3NDU1NDE1OTksImV4cCI6MzUyMjYxOTE5OH0.zGzszHCRXn6Sdo_2sjVM6dW1DL6kDDGy4NQrmcnr-mY"
+    },
+    {
+      "name": "aws_appsync",
+      "description": "A managed GraphQL service for building APIs.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_AWS-AppSync_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BV1MtQXBwU3luY182NC5zdmciLCJpYXQiOjE3NDU1NDE2MDAsImV4cCI6MzUyMjYxOTE5OX0.jKkwIZvri7xtBI1Pvy4cISSmrXcjZdHBpLwJeJnlbb0"
+    },
+    {
+      "name": "aws_cognito",
+      "description": "AWS Cognito service.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_Amazon-Cognito_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BbWF6b24tQ29nbml0b182NC5zdmciLCJpYXQiOjE3NDU1NDE2MDAsImV4cCI6MzUyMjYxOTIwMH0.vDaAOExdu4J5eNghA6GI5TuBSk5sJMkF7mFGitnpWWk"
+    },
+    {
+      "name": "aws_elastic_container_service",
+      "description": "AWS Elastic Container Service service.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_Amazon-Elastic-Container-Service_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BbWF6b24tRWxhc3RpYy1Db250YWluZXItU2VydmljZV82NC5zdmciLCJpYXQiOjE3NDU1NDE2MDEsImV4cCI6MzUyMjYxOTIwMX0.yDsH7_n-NWejoXdtywI0TE-pfrZI0Qkl3n563-OaTbg"
+    },
+    {
+      "name": "aws_sagemaker_studio_lab",
+      "description": "AWS Sagemaker Studio Lab service.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_Amazon-SageMaker-Studio-Lab_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BbWF6b24tU2FnZU1ha2VyLVN0dWRpby1MYWJfNjQuc3ZnIiwiaWF0IjoxNzQ1NTQxNjAyLCJleHAiOjM1MjI2MTkyMDR9.xt0QDZBj9j-4gK_GTnI0HzC2SKHHWWfDdGt0-xAbeuU"
+    },
+    {
+      "name": "aws_open_3d_engine",
+      "description": "AWS Open 3D Engine service.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_Open-3D-Engine_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9PcGVuLTNELUVuZ2luZV82NC5zdmciLCJpYXQiOjE3NDU1NDE2MDMsImV4cCI6MzUyMjYxOTIwNn0.VqKKZIFpEIOoCtsR5BxrhSFe1MRtAr8WAAhAiq2yIog"
+    },
+    {
+      "name": "aws_emr",
+      "description": "A big data processing service using frameworks like Hadoop and Spark.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_Amazon-EMR_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BbWF6b24tRU1SXzY0LnN2ZyIsImlhdCI6MTc0NTU0MTYwNCwiZXhwIjozNTIyNjE5MjA3fQ.Sl-JGvsHdXfAe67eTkFh174WF18Wa3xbSo5ZF7m-sNk"
+    },
+    {
+      "name": "aws_personalize",
+      "description": "A service for creating personalized recommendations.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_Amazon-Personalize_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BbWF6b24tUGVyc29uYWxpemVfNjQuc3ZnIiwiaWF0IjoxNzQ1NTQxNjA0LCJleHAiOjM1MjI2MTkyMDh9.TVpbbQJKNJSXv83LkbDV1UN6wFHJ4ln-lG7aBVF4Wi0"
+    },
+    {
+      "name": "aws_quantum_ledger_database",
+      "description": "AWS Quantum Ledger Database service.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_Amazon-Quantum-Ledger-Database_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BbWF6b24tUXVhbnR1bS1MZWRnZXItRGF0YWJhc2VfNjQuc3ZnIiwiaWF0IjoxNzQ1NTQxNjA1LCJleHAiOjM1MjI2MTkyMDl9.xOnpfdwAbLo-tg4ZzpSavxsSSZDkXNvA_8poS0mee0Y"
+    },
+    {
+      "name": "aws_glue",
+      "description": "A data integration service for ETL processes.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_AWS-Glue_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BV1MtR2x1ZV82NC5zdmciLCJpYXQiOjE3NDU1NDE2MDUsImV4cCI6MzUyMjYxOTIxMH0.b0t4VzE_SRWoJnuaLY9y5nwXYf7uJygm-viqAh4KAUI"
+    },
+    {
+      "name": "aws_compute_optimizer",
+      "description": "AWS Compute Optimizer service.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_AWS-Compute-Optimizer_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BV1MtQ29tcHV0ZS1PcHRpbWl6ZXJfNjQuc3ZnIiwiaWF0IjoxNzQ1NTQxNjA2LCJleHAiOjM1MjI2MTkyMTJ9.HMuI5xRRvSw3KET3mlrLL8oL5S2U8Zj9ELVHfZGO93Q"
+    },
+    {
+      "name": "aws_pytorch_on_aws",
+      "description": "AWS Pytorch On Aws service.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_PyTorch-on-AWS_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9QeVRvcmNoLW9uLUFXU182NC5zdmciLCJpYXQiOjE3NDU1NDE2MDYsImV4cCI6MzUyMjYxOTIxMn0.W2HzA0b15R4hRt8aM093tx-1nEsVq4-4bSr7QLnEyQs"
+    },
+    {
+      "name": "aws_resource_access_manager",
+      "description": "AWS Resource Access Manager service.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_AWS-Resource-Access-Manager_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BV1MtUmVzb3VyY2UtQWNjZXNzLU1hbmFnZXJfNjQuc3ZnIiwiaWF0IjoxNzQ1NTQxNjA3LCJleHAiOjM1MjI2MTkyMTN9.AyO_fufDuQNS_PD5FXBe1uw380F5LjXc5ZVwWrmFizw"
+    },
+    {
+      "name": "aws_proton",
+      "description": "AWS Proton service.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_AWS-Proton_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BV1MtUHJvdG9uXzY0LnN2ZyIsImlhdCI6MTc0NTU0MTYwNywiZXhwIjozNTIyNjE5MjE0fQ.1L9pAYMQy-WF5fi1jjNrWodiJXcKspW45EdWS-cwvEA"
+    },
+    {
+      "name": "aws_textract",
+      "description": "AWS Textract service.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_Amazon-Textract_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BbWF6b24tVGV4dHJhY3RfNjQuc3ZnIiwiaWF0IjoxNzQ1NTQxNjA3LCJleHAiOjM1MjI2MTkyMTR9.AHJTIHr4w19R0K4zrnfjzir-_y5l1-lh99fxQA9HoOQ"
+    },
+    {
+      "name": "aws_bottlerocket",
+      "description": "AWS Bottlerocket service.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_Bottlerocket_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9Cb3R0bGVyb2NrZXRfNjQuc3ZnIiwiaWF0IjoxNzQ1NTQxNjA4LCJleHAiOjM1MjI2MTkyMTZ9.faYPW4lgdfAyElSR4XMI1_NN0yetD7I-O0tfLYxqwkk"
+    },
+    {
+      "name": "aws_security_hub",
+      "description": "AWS Security Hub service.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_AWS-Security-Hub_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BV1MtU2VjdXJpdHktSHViXzY0LnN2ZyIsImlhdCI6MTc0NTU0MTYwOCwiZXhwIjozNTIyNjE5MjE2fQ.zABEUB0NnNcNCvtZXKW_cFaLbsAx6RS3gRBzpYgqXiQ"
+    },
+    {
+      "name": "aws_data_transfer_terminal",
+      "description": "AWS Data Transfer Terminal service.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_AWS-Data-Transfer-Terminal_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BV1MtRGF0YS1UcmFuc2Zlci1UZXJtaW5hbF82NC5zdmciLCJpYXQiOjE3NDU1NDE2MTAsImV4cCI6MzUyMjYxOTIxOX0.VkxxcXnCFPhTry_iK5nySfhU3dcIoqlII4fmSkdGXLE"
+    },
+    {
+      "name": "aws_elastic_inference",
+      "description": "A service for adding ML inference acceleration to applications.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_Amazon-Elastic-Inference_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BbWF6b24tRWxhc3RpYy1JbmZlcmVuY2VfNjQuc3ZnIiwiaWF0IjoxNzQ1NTQxNjEwLCJleHAiOjM1MjI2MTkyMjB9.1TFSPm_7ce9nFnOumfVYjDiYXS1-JPJ699SXPspa9bo"
+    },
+    {
+      "name": "aws_application_migration_service",
+      "description": "AWS Application Migration Service service.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_AWS-Application-Migration-Service_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BV1MtQXBwbGljYXRpb24tTWlncmF0aW9uLVNlcnZpY2VfNjQuc3ZnIiwiaWF0IjoxNzQ1NTQxNjEwLCJleHAiOjM1MjI2MTkyMjB9.bacTF0-UeULmrePWsfdo1CUWr3XJEVo5SUhkQZT_oXU"
+    },
+    {
+      "name": "aws_elastic_load_balancing",
+      "description": "AWS Elastic Load Balancing service.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_Elastic-Load-Balancing_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9FbGFzdGljLUxvYWQtQmFsYW5jaW5nXzY0LnN2ZyIsImlhdCI6MTc0NTU0MTYxMSwiZXhwIjozNTIyNjE5MjIyfQ.eTC2AHOM5VWgn1ukRrV6BQQMVwvA9LVcxQGdxg8xI_k"
+    },
+    {
+      "name": "aws_application_discovery_service",
+      "description": "AWS Application Discovery Service service.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_AWS-Application-Discovery-Service_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BV1MtQXBwbGljYXRpb24tRGlzY292ZXJ5LVNlcnZpY2VfNjQuc3ZnIiwiaWF0IjoxNzQ1NTQxNjExLCJleHAiOjM1MjI2MTkyMjJ9.iJvHNlL0fdbW2l08BCTRAnOqqn6pRL370Rkw8FEPJAk"
+    },
+    {
+      "name": "aws_lookout_for_metrics",
+      "description": "AWS Lookout For Metrics service.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_Amazon-Lookout-for-Metrics_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BbWF6b24tTG9va291dC1mb3ItTWV0cmljc182NC5zdmciLCJpYXQiOjE3NDU1NDE2MTIsImV4cCI6MzUyMjYxOTIyM30.EZIB8-yChHRFWaNFZ3ws202moOcqDY3k5gaAOI2YTwE"
+    },
+    {
+      "name": "aws_simple_notification_service",
+      "description": "A messaging service for sending notifications.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_Amazon-Simple-Notification-Service_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BbWF6b24tU2ltcGxlLU5vdGlmaWNhdGlvbi1TZXJ2aWNlXzY0LnN2ZyIsImlhdCI6MTc0NTU0MTYxMiwiZXhwIjozNTIyNjE5MjI0fQ.jeVXzQQQ-EBFfxNTgdRrE7dQY2ur_xNHPiL0mT-M888"
+    },
+    {
+      "name": "aws_security_lake",
+      "description": "AWS Security Lake service.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_Amazon-Security-Lake_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BbWF6b24tU2VjdXJpdHktTGFrZV82NC5zdmciLCJpYXQiOjE3NDU1NDE2MTMsImV4cCI6MzUyMjYxOTIyNX0.VItZk0dwRif0TvBeGeq53aaiUxeiSTI40cXVtiUd5I4"
+    },
+    {
+      "name": "aws_repost",
+      "description": "AWS Repost service.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_AWS-rePost_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BV1MtcmVQb3N0XzY0LnN2ZyIsImlhdCI6MTc0NTU0MTYxMywiZXhwIjozNTIyNjE5MjI2fQ.7LsMrTxkGrjBjb2AFL3U05zT4ghc8GW3Y_LZrcy8gLE"
+    },
+    {
+      "name": "aws_cloudformation",
+      "description": "AWS Cloudformation service.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_AWS-CloudFormation_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BV1MtQ2xvdWRGb3JtYXRpb25fNjQuc3ZnIiwiaWF0IjoxNzQ1NTQxNjEzLCJleHAiOjM1MjI2MTkyMjZ9.E_zUgmPGU15apnN4zL430zzK72bZ8fRaFohRdkA28hY"
+    },
+    {
+      "name": "aws_s3_on_outposts",
+      "description": "AWS S3 On Outposts service.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_Amazon-S3-on-Outposts_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BbWF6b24tUzMtb24tT3V0cG9zdHNfNjQuc3ZnIiwiaWF0IjoxNzQ1NTQxNjE0LCJleHAiOjM1MjI2MTkyMjh9.12mB6hNRGcJ7V-QvL39rvsnZ3jE2PRwQjTgu6VVlH_s"
+    },
+    {
+      "name": "aws_comprehend_medical",
+      "description": "AWS Comprehend Medical service.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_Amazon-Comprehend-Medical_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BbWF6b24tQ29tcHJlaGVuZC1NZWRpY2FsXzY0LnN2ZyIsImlhdCI6MTc0NTU0MTYxNSwiZXhwIjozNTIyNjE5MjI5fQ.IpP5ZHq_9291eWhWTqDnf-8n5vmg3bwFn23tbbSFcio"
+    },
+    {
+      "name": "aws_thinkbox_sequoia",
+      "description": "AWS Thinkbox Sequoia service.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_AWS-Thinkbox-Sequoia_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BV1MtVGhpbmtib3gtU2VxdW9pYV82NC5zdmciLCJpYXQiOjE3NDU1NDE2MTUsImV4cCI6MzUyMjYxOTIzMH0.2Y72Y7RBYCf01fGDfpYss1MOamfUyDiLhx7MEPNDoNA"
+    },
+    {
+      "name": "aws_managed_grafana",
+      "description": "AWS Managed Grafana service.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_Amazon-Managed-Grafana_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BbWF6b24tTWFuYWdlZC1HcmFmYW5hXzY0LnN2ZyIsImlhdCI6MTc0NTU0MTYxNiwiZXhwIjozNTIyNjE5MjMxfQ.kjwC7dn5GS8ND86k4xrHmjPN5FX6lmCSXwHKuWhXj-Q"
+    },
+    {
+      "name": "aws_launch_wizard",
+      "description": "AWS Launch Wizard service.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_AWS-Launch-Wizard_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BV1MtTGF1bmNoLVdpemFyZF82NC5zdmciLCJpYXQiOjE3NDU1NDE2MTYsImV4cCI6MzUyMjYxOTIzMn0.WdxyTv8OEJJcChz_Kol_s9VVKdX5Aqj2nQvOJvO4css"
+    },
+    {
+      "name": "aws_interactive_video_service",
+      "description": "AWS Interactive Video Service service.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_Amazon-Interactive-Video-Service_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BbWF6b24tSW50ZXJhY3RpdmUtVmlkZW8tU2VydmljZV82NC5zdmciLCJpYXQiOjE3NDU1NDE2MTYsImV4cCI6MzUyMjYxOTIzMn0.Q9MrKqTkvipASlqW1lH7O93d9Et1yRg085xgFdazvq0"
+    },
+    {
+      "name": "aws_outposts_rack",
+      "description": "AWS Outposts Rack service.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_AWS-Outposts-rack_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BV1MtT3V0cG9zdHMtcmFja182NC5zdmciLCJpYXQiOjE3NDU1NDE2MTcsImV4cCI6MzUyMjYxOTIzNH0.Km_q5YCq2WsV0dFbp6BxgmtK8cz12ZzlROic551gZwk"
+    },
+    {
+      "name": "aws_athena",
+      "description": "A query service for analyzing data in Amazon S3 using SQL.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_Amazon-Athena_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BbWF6b24tQXRoZW5hXzY0LnN2ZyIsImlhdCI6MTc0NTU0MTYxNywiZXhwIjozNTIyNjE5MjM0fQ.qn96zqS9buuMgh_za77TMD432NCr_PdgKrTw9yBv9XU"
+    },
+    {
+      "name": "aws_iot_core",
+      "description": "AWS Iot Core service.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_AWS-IoT-Core_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BV1MtSW9ULUNvcmVfNjQuc3ZnIiwiaWF0IjoxNzQ1NTQxNjE4LCJleHAiOjM1MjI2MTkyMzV9.UBaOWK2OalLUmkdTNKi7NAzSzDvovedRuDLw32BnI90"
+    },
+    {
+      "name": "aws_lake_formation",
+      "description": "A service for building and managing data lakes.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_AWS-Lake-Formation_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BV1MtTGFrZS1Gb3JtYXRpb25fNjQuc3ZnIiwiaWF0IjoxNzQ1NTQxNjE4LCJleHAiOjM1MjI2MTkyMzZ9.dwWnkKvrAYYkSVBZz9VZ1oXwT2jR8ooEk8lBNlj2ihQ"
+    },
+    {
+      "name": "aws_migration_evaluator",
+      "description": "AWS Migration Evaluator service.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_AWS-Migration-Evaluator_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BV1MtTWlncmF0aW9uLUV2YWx1YXRvcl82NC5zdmciLCJpYXQiOjE3NDU1NDE2MTgsImV4cCI6MzUyMjYxOTIzNn0.WM2gsQVVNak2a4vlj5ziyuNTB4Pwi5yudlN8fo7P29I"
+    },
+    {
+      "name": "aws_thinkbox_xmesh",
+      "description": "AWS Thinkbox Xmesh service.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_AWS-Thinkbox-XMesh_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BV1MtVGhpbmtib3gtWE1lc2hfNjQuc3ZnIiwiaWF0IjoxNzQ1NTQxNjE5LCJleHAiOjM1MjI2MTkyMzh9.Ne9V6KzmN_aOE0_DVa0wsHekAEnuhirjAFto_sVV2h4"
+    },
+    {
+      "name": "aws_management_console",
+      "description": "AWS Management Console service.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_AWS-Management-Console_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BV1MtTWFuYWdlbWVudC1Db25zb2xlXzY0LnN2ZyIsImlhdCI6MTc0NTU0MTYyMCwiZXhwIjozNTIyNjE5MjM5fQ.D4ygx4e0Zq5y8a1sXrbsbKd1rEgN6zrWUYByBHPzj1Y"
+    },
+    {
+      "name": "aws_migration_hub",
+      "description": "AWS Migration Hub service.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_AWS-Migration-Hub_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BV1MtTWlncmF0aW9uLUh1Yl82NC5zdmciLCJpYXQiOjE3NDU1NDE2MjAsImV4cCI6MzUyMjYxOTI0MH0.dYBriCozi85n_8iqAeKtuk-9K4dBDvN2v3gTs3et_QQ"
+    },
+    {
+      "name": "aws_efs",
+      "description": "AWS Efs service.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_Amazon-EFS_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BbWF6b24tRUZTXzY0LnN2ZyIsImlhdCI6MTc0NTU0MTYyMSwiZXhwIjozNTIyNjE5MjQxfQ.lQAa0PBdhJdFXYnS29Tlk7CmBRQcyIVR2CQJweuuHX4"
+    },
+    {
+      "name": "aws_dynamodb",
+      "description": "A NoSQL database service.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_Amazon-DynamoDB_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BbWF6b24tRHluYW1vREJfNjQuc3ZnIiwiaWF0IjoxNzQ1NTQxNjIxLCJleHAiOjM1MjI2MTkyNDJ9.Lr0gPhmGwtufLy6uw50xSjX2QaFyRr_p0WGUcM9bV4I"
+    },
+    {
+      "name": "aws_iot_expresslink",
+      "description": "AWS Iot Expresslink service.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_AWS-IoT-ExpressLink_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BV1MtSW9ULUV4cHJlc3NMaW5rXzY0LnN2ZyIsImlhdCI6MTc0NTU0MTYyMSwiZXhwIjozNTIyNjE5MjQyfQ.HR8ukRyRxNslWgvxPY_ZvMbK3lrmpniAnWzJ5BIhmBU"
+    },
+    {
+      "name": "aws_codeguru",
+      "description": "A tool for automated code reviews and performance optimization.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_Amazon-CodeGuru_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BbWF6b24tQ29kZUd1cnVfNjQuc3ZnIiwiaWF0IjoxNzQ1NTQxNjIyLCJleHAiOjM1MjI2MTkyNDN9.SHf2lP7aEF2g51kUQOW98Svw3Y0tcODJlcrcy6KTXyA"
+    },
+    {
+      "name": "aws_organizations",
+      "description": "AWS Organizations service.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_AWS-Organizations_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BV1MtT3JnYW5pemF0aW9uc182NC5zdmciLCJpYXQiOjE3NDU1NDE2MjIsImV4cCI6MzUyMjYxOTI0NH0.IN0AFKCvrvta94h4xqabArTasVeIHXdqIR73u3KYhcQ"
+    },
+    {
+      "name": "aws_data_exchange",
+      "description": "A marketplace for finding, subscribing to, and using third-party data.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_AWS-Data-Exchange_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BV1MtRGF0YS1FeGNoYW5nZV82NC5zdmciLCJpYXQiOjE3NDU1NDE2MjIsImV4cCI6MzUyMjYxOTI0NH0.Ld76d0XE615ZhKVPcx4th5ep1Gj2sv4X5zp-nmImKsU"
+    },
+    {
+      "name": "aws_comprehend",
+      "description": "A natural language processing service for text analysis.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_Amazon-Comprehend_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BbWF6b24tQ29tcHJlaGVuZF82NC5zdmciLCJpYXQiOjE3NDU1NDE2MjMsImV4cCI6MzUyMjYxOTI0Nn0.WysX-KBUVgcOZf8F76Tkg4Venlw4Bs-kFVxGpVapsLM"
+    },
+    {
+      "name": "aws_kendra",
+      "description": "An intelligent search service powered by machine learning.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_Amazon-Kendra_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BbWF6b24tS2VuZHJhXzY0LnN2ZyIsImlhdCI6MTc0NTU0MTYyMywiZXhwIjozNTIyNjE5MjQ2fQ.WgtICPudfnVDQKIQ1JxyxetUsan8mfyXCE1n-WEi77E"
+    },
+    {
+      "name": "aws_tools_and_sdks",
+      "description": "AWS Tools And Sdks service.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_AWS-Tools-and-SDKs_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BV1MtVG9vbHMtYW5kLVNES3NfNjQuc3ZnIiwiaWF0IjoxNzQ1NTQxNjI0LCJleHAiOjM1MjI2MTkyNDd9.SZ-5cNSWimZ6xJMBvcZinv3WSUdCi7Y0zf-6yPUk4Vs"
+    },
+    {
+      "name": "aws_data_firehose",
+      "description": "A service for delivering real-time streaming data to destinations.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_Amazon-Data-Firehose_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BbWF6b24tRGF0YS1GaXJlaG9zZV82NC5zdmciLCJpYXQiOjE3NDU1NDE2MjQsImV4cCI6MzUyMjYxOTI0OH0.-y-94jfqhkIt7nr4O9QGfcJZyAj7ShRuI1Q_rdPGUVw"
+    },
+    {
+      "name": "aws_outposts_family",
+      "description": "AWS Outposts Family service.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_AWS-Outposts-family_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BV1MtT3V0cG9zdHMtZmFtaWx5XzY0LnN2ZyIsImlhdCI6MTc0NTU0MTYyNCwiZXhwIjozNTIyNjE5MjQ4fQ.scjBpd8PxcOHBzguL_H9eSknHnSslfi36NRvsTiNjX0"
+    },
+    {
+      "name": "aws_console_mobile_application",
+      "description": "AWS Console Mobile Application service.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_AWS-Console-Mobile-Application_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BV1MtQ29uc29sZS1Nb2JpbGUtQXBwbGljYXRpb25fNjQuc3ZnIiwiaWF0IjoxNzQ1NTQxNjI1LCJleHAiOjM1MjI2MTkyNTB9.WhKEVjA8pJvkXqSvkCTWuLj5rBN78gdX-TDx6JiOqtc"
+    },
+    {
+      "name": "aws_thinkbox_frost",
+      "description": "AWS Thinkbox Frost service.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_AWS-Thinkbox-Frost_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BV1MtVGhpbmtib3gtRnJvc3RfNjQuc3ZnIiwiaWF0IjoxNzQ1NTQxNjI1LCJleHAiOjM1MjI2MTkyNTB9.wTCdebCeQ-J8xTgLtfIuwcUPNPtbXfqqWMjdCWYztrc"
+    },
+    {
+      "name": "aws_dcv",
+      "description": "AWS Dcv service.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_Amazon-DCV_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BbWF6b24tRENWXzY0LnN2ZyIsImlhdCI6MTc0NTU0MTYyNiwiZXhwIjozNTIyNjE5MjUyfQ.awMUO5lmMIDGcvd1LaEKlvl5R4eDCBUp7Hm6kNeSLXw"
+    },
+    {
+      "name": "aws_training_certification",
+      "description": "AWS Training Certification service.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_AWS-Training-Certification_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BV1MtVHJhaW5pbmctQ2VydGlmaWNhdGlvbl82NC5zdmciLCJpYXQiOjE3NDU1NDE2MjYsImV4cCI6MzUyMjYxOTI1Mn0.rTMfbYqw1DLH63msUotK1Gv13yIlfBuJZGeifg_7Mvc"
+    },
+    {
+      "name": "aws_lightsail_for_research",
+      "description": "AWS Lightsail For Research service.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_Amazon-Lightsail-for-Research_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BbWF6b24tTGlnaHRzYWlsLWZvci1SZXNlYXJjaF82NC5zdmciLCJpYXQiOjE3NDU1NDE2MjcsImV4cCI6MzUyMjYxOTI1NH0.fYXUmSxVOIsD6M7f4Q7eXN-iZ9obSaKv6SaG64uB3QE"
+    },
+    {
+      "name": "aws_activate",
+      "description": "AWS Activate service.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_AWS-Activate_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BV1MtQWN0aXZhdGVfNjQuc3ZnIiwiaWF0IjoxNzQ1NTQxNjI3LCJleHAiOjM1MjI2MTkyNTR9.3mBDtduo0leXAlF4zBxdwZjP3X6TZroFjIVuOs6ul1M"
+    },
+    {
+      "name": "aws_tensorflow_on_aws",
+      "description": "AWS Tensorflow On Aws service.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_TensorFlow-on-AWS_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9UZW5zb3JGbG93LW9uLUFXU182NC5zdmciLCJpYXQiOjE3NDU1NDE2MjgsImV4cCI6MzUyMjYxOTI1Nn0.v3_mi5hHxAhx8CtsrwFw3oCoiHT-E8xRIzbU7ibVbgA"
+    },
+    {
+      "name": "aws_aurora",
+      "description": "A MySQL and PostgreSQL-compatible relational database.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_Amazon-Aurora_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BbWF6b24tQXVyb3JhXzY0LnN2ZyIsImlhdCI6MTc0NTU0MTYyOCwiZXhwIjozNTIyNjE5MjU2fQ.sjTS59a3awEZW0z5OniDgREVUrSyOrLGJREuo-dqV7o"
+    },
+    {
+      "name": "aws_elemental_live",
+      "description": "AWS Elemental Live service.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_AWS-Elemental-Live_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BV1MtRWxlbWVudGFsLUxpdmVfNjQuc3ZnIiwiaWF0IjoxNzQ1NTQxNjI5LCJleHAiOjM1MjI2MTkyNTd9.mOFHsfYqWEsmynn-275SaezCkbTAahJEBonCW7siKyg"
+    },
+    {
+      "name": "aws_braket",
+      "description": "AWS Braket service.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_Amazon-Braket_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BbWF6b24tQnJha2V0XzY0LnN2ZyIsImlhdCI6MTc0NTU0MTYyOSwiZXhwIjozNTIyNjE5MjU4fQ.qMPgo-OudVlXC6GFWXpsaVWww_-ks3TsMsH1TJ7Q-JY"
+    },
+    {
+      "name": "aws_sagemaker_ground_truth",
+      "description": "AWS Sagemaker Ground Truth service.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_Amazon-SageMaker-Ground-Truth_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BbWF6b24tU2FnZU1ha2VyLUdyb3VuZC1UcnV0aF82NC5zdmciLCJpYXQiOjE3NDU1NDE2MjksImV4cCI6MzUyMjYxOTI1OH0.BVla0WHzRhluKR_MhrpcDgecyur7dTtUjxicDnXHOmI"
+    },
+    {
+      "name": "aws_lex",
+      "description": "A service for building conversational interfaces.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_Amazon-Lex_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BbWF6b24tTGV4XzY0LnN2ZyIsImlhdCI6MTc0NTU0MTYzMCwiZXhwIjozNTIyNjE5MjYwfQ.uieXrUJxCqf7xUYwd2yIIaIiPe7M8o54jxYXgmWFGAo"
+    },
+    {
+      "name": "aws_license_manager",
+      "description": "AWS License Manager service.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_AWS-License-Manager_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BV1MtTGljZW5zZS1NYW5hZ2VyXzY0LnN2ZyIsImlhdCI6MTc0NTU0MTYzMCwiZXhwIjozNTIyNjE5MjYwfQ.d2GaOfjwR2E7fzcth6WVBOoE0iCmcEgDur5EKV3-Kdo"
+    },
+    {
+      "name": "aws_key_management_service",
+      "description": "AWS Key Management Service service.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_AWS-Key-Management-Service_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BV1MtS2V5LU1hbmFnZW1lbnQtU2VydmljZV82NC5zdmciLCJpYXQiOjE3NDU1NDE2MzEsImV4cCI6MzUyMjYxOTI2Mn0.XWL4W80ZMjK3KYSct8OeTB3Vi7BQqQbE4YjuhYQu5tQ"
+    },
+    {
+      "name": "aws_batch",
+      "description": "AWS Batch service.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_AWS-Batch_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BV1MtQmF0Y2hfNjQuc3ZnIiwiaWF0IjoxNzQ1NTQxNjMxLCJleHAiOjM1MjI2MTkyNjJ9.AeH32LJaAd2kuq9MsvX-UBoKQFJmiwLuCjr50qpCOkE"
+    },
+    {
+      "name": "aws_panorama",
+      "description": "AWS Panorama service.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_AWS-Panorama_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BV1MtUGFub3JhbWFfNjQuc3ZnIiwiaWF0IjoxNzQ1NTQxNjMyLCJleHAiOjM1MjI2MTkyNjN9.K2BVTpDGiT-xmhy18EhMeW-sz_2pwmhPL_rOPp5DwUc"
+    },
+    {
+      "name": "aws_private_certificate_authority",
+      "description": "AWS Private Certificate Authority service.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_AWS-Private-Certificate-Authority_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BV1MtUHJpdmF0ZS1DZXJ0aWZpY2F0ZS1BdXRob3JpdHlfNjQuc3ZnIiwiaWF0IjoxNzQ1NTQxNjMyLCJleHAiOjM1MjI2MTkyNjR9.HeM7-QBBkO0Cr4nu8lWBhprMpC1bEDr0w5ji4p0CUlw"
+    },
+    {
+      "name": "aws_certificate_manager",
+      "description": "AWS Certificate Manager service.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_AWS-Certificate-Manager_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BV1MtQ2VydGlmaWNhdGUtTWFuYWdlcl82NC5zdmciLCJpYXQiOjE3NDU1NDE2MzMsImV4cCI6MzUyMjYxOTI2NX0.ydlIVP911mllsrbclMZGRT-u3qON_v0S-CDNdHKrlmE"
+    },
+    {
+      "name": "aws_service_management_connector",
+      "description": "AWS Service Management Connector service.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_AWS-Service-Management-Connector_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BV1MtU2VydmljZS1NYW5hZ2VtZW50LUNvbm5lY3Rvcl82NC5zdmciLCJpYXQiOjE3NDU1NDE2MzMsImV4cCI6MzUyMjYxOTI2Nn0.HxF_cwlN08sjuqTHF1nIOI_rfIe1aAVbZBzCFtJfrqw"
+    },
+    {
+      "name": "aws_healthimaging",
+      "description": "AWS Healthimaging service.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_AWS-HealthImaging_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BV1MtSGVhbHRoSW1hZ2luZ182NC5zdmciLCJpYXQiOjE3NDU1NDE2MzMsImV4cCI6MzUyMjYxOTI2Nn0.kIuX79VcIe2TfW6zcG2fiSlq6oEjgbyhxcjiRS70iWw"
+    },
+    {
+      "name": "aws_kinesis_data_streams",
+      "description": "AWS Kinesis Data Streams service.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_Amazon-Kinesis-Data-Streams_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BbWF6b24tS2luZXNpcy1EYXRhLVN0cmVhbXNfNjQuc3ZnIiwiaWF0IjoxNzQ1NTQxNjM0LCJleHAiOjM1MjI2MTkyNjh9.1umPWlRxGMGF74r2NCjhDiNAzhs-h48fR_e8XCYnh6I"
+    },
+    {
+      "name": "aws_elastic_disaster_recovery",
+      "description": "AWS Elastic Disaster Recovery service.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_AWS-Elastic-Disaster-Recovery_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BV1MtRWxhc3RpYy1EaXNhc3Rlci1SZWNvdmVyeV82NC5zdmciLCJpYXQiOjE3NDU1NDE2MzQsImV4cCI6MzUyMjYxOTI2OH0.fuLEj6wINGCl-09-gvQlP3muOTKhEi_SxvJPoHwQkaU"
+    },
+    {
+      "name": "aws_cost_and_usage_report",
+      "description": "AWS Cost And Usage Report service.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_AWS-Cost-and-Usage-Report_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BV1MtQ29zdC1hbmQtVXNhZ2UtUmVwb3J0XzY0LnN2ZyIsImlhdCI6MTc0NTU0MTYzNSwiZXhwIjozNTIyNjE5MjY5fQ.KiZsZe12P92B0aVHc69ebyhM6q3uPcv3OLIEcs9Z8Uk"
+    },
+    {
+      "name": "aws_eks_anywhere",
+      "description": "AWS Eks Anywhere service.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_Amazon-EKS-Anywhere_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BbWF6b24tRUtTLUFueXdoZXJlXzY0LnN2ZyIsImlhdCI6MTc0NTU0MTYzNSwiZXhwIjozNTIyNjE5MjcwfQ.XTp8F2-XT8ULjpiGNa-A32Ggf1JhNzEvLO4XLcCpPyc"
+    },
+    {
+      "name": "aws_ec2_auto_scaling",
+      "description": "AWS Ec2 Auto Scaling service.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_Amazon-EC2-Auto-Scaling_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BbWF6b24tRUMyLUF1dG8tU2NhbGluZ182NC5zdmciLCJpYXQiOjE3NDU1NDE2MzYsImV4cCI6MzUyMjYxOTI3MX0.wFZ3OL16Yf00ivJLscEUkXoJCw7ERXLQPhBlqoHX5JQ"
+    },
+    {
+      "name": "aws_elemental_conductor",
+      "description": "AWS Elemental Conductor service.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_AWS-Elemental-Conductor_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BV1MtRWxlbWVudGFsLUNvbmR1Y3Rvcl82NC5zdmciLCJpYXQiOjE3NDU1NDE2MzYsImV4cCI6MzUyMjYxOTI3Mn0.FpbJ9u2QD31Nwp7opq5NSYtOeeJYTGdO_eY5xseYnYE"
+    },
+    {
+      "name": "aws_keyspaces",
+      "description": "AWS Keyspaces service.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_Amazon-Keyspaces_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BbWF6b24tS2V5c3BhY2VzXzY0LnN2ZyIsImlhdCI6MTc0NTU0MTYzNywiZXhwIjozNTIyNjE5MjczfQ.nK-L89JF-GHA7Dsei-jGWSzGNgeVDwPvCbhdwtJ9J4w"
+    },
+    {
+      "name": "aws_fraud_detector",
+      "description": "A service for detecting fraudulent activities.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_Amazon-Fraud-Detector_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BbWF6b24tRnJhdWQtRGV0ZWN0b3JfNjQuc3ZnIiwiaWF0IjoxNzQ1NTQxNjM3LCJleHAiOjM1MjI2MTkyNzR9.9Hg0zIJ6ZYvR-ONbwtvAmD0QbTx5R_qP5ZgUHlhCfLY"
+    },
+    {
+      "name": "aws_elemental_delta",
+      "description": "AWS Elemental Delta service.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_AWS-Elemental-Delta_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BV1MtRWxlbWVudGFsLURlbHRhXzY0LnN2ZyIsImlhdCI6MTc0NTU0MTYzOCwiZXhwIjozNTIyNjE5Mjc1fQ.5ohynMyiwLeH1kEtAZ6J1pcGV286S6dxGVUVQ7uFU2w"
+    },
+    {
+      "name": "aws_verified_permissions",
+      "description": "AWS Verified Permissions service.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_Amazon-Verified-Permissions_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BbWF6b24tVmVyaWZpZWQtUGVybWlzc2lvbnNfNjQuc3ZnIiwiaWF0IjoxNzQ1NTQxNjM4LCJleHAiOjM1MjI2MTkyNzZ9.18n7ws_3M0x_VyZbzEZMNBBYWh1pWQ1VERTGWAMVehw"
+    },
+    {
+      "name": "aws_cloudshell",
+      "description": "AWS Cloudshell service.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_AWS-CloudShell_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BV1MtQ2xvdWRTaGVsbF82NC5zdmciLCJpYXQiOjE3NDU1NDE2MzgsImV4cCI6MzUyMjYxOTI3Nn0.VtUMEhQWpWWKdt9qLS5WKokvcaD2KmMg-X4MK4xlmHA"
+    },
+    {
+      "name": "aws_virtual_private_cloud",
+      "description": "AWS Virtual Private Cloud service.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_Amazon-Virtual-Private-Cloud_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BbWF6b24tVmlydHVhbC1Qcml2YXRlLUNsb3VkXzY0LnN2ZyIsImlhdCI6MTc0NTU0MTYzOSwiZXhwIjozNTIyNjE5Mjc4fQ.QX_JNj7KPQKcbUXvWvvSveNHI6K8sTshrTKkPCYwoy4"
+    },
+    {
+      "name": "aws_simple_queue_service",
+      "description": "A managed message queue service.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_Amazon-Simple-Queue-Service_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BbWF6b24tU2ltcGxlLVF1ZXVlLVNlcnZpY2VfNjQuc3ZnIiwiaWF0IjoxNzQ1NTQxNjM5LCJleHAiOjM1MjI2MTkyNzh9.3dkCR8_-ni8yRAqMzcxctFl_na0e0S8S2JZCf-vFT5w"
+    },
+    {
+      "name": "aws_simple_storage_service",
+      "description": "AWS Simple Storage Service service.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_Amazon-Simple-Storage-Service_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BbWF6b24tU2ltcGxlLVN0b3JhZ2UtU2VydmljZV82NC5zdmciLCJpYXQiOjE3NDU1NDE2NDAsImV4cCI6MzUyMjYxOTI4MH0._9BMt8wzsD9WPvgLViZNMrL13iSJO0DF3mfNWfVOK8Y"
+    },
+    {
+      "name": "aws_elemental_mediaconvert",
+      "description": "AWS Elemental Mediaconvert service.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_AWS-Elemental-MediaConvert_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BV1MtRWxlbWVudGFsLU1lZGlhQ29udmVydF82NC5zdmciLCJpYXQiOjE3NDU1NDE2NDAsImV4cCI6MzUyMjYxOTI4MH0.BrKJ3YfvtKjleLiAvQWQIgftgqSqJDObQtnEvCw75b4"
+    },
+    {
+      "name": "aws_simple_email_service",
+      "description": "AWS Simple Email Service service.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_Amazon-Simple-Email-Service_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BbWF6b24tU2ltcGxlLUVtYWlsLVNlcnZpY2VfNjQuc3ZnIiwiaWF0IjoxNzQ1NTQxNjQxLCJleHAiOjM1MjI2MTkyODJ9.JyCS8f_B4FYKZShD4A13XXsTA7fDny4OD7Gp9tD0Pp0"
+    },
+    {
+      "name": "aws_codedeploy",
+      "description": "AWS Codedeploy service.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_AWS-CodeDeploy_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BV1MtQ29kZURlcGxveV82NC5zdmciLCJpYXQiOjE3NDU1NDE2NDEsImV4cCI6MzUyMjYxOTI4Mn0.E6p_3gxNjI6_NAHtUU-fj2B02Ds0sDk45-HPQVsqqTc"
+    },
+    {
+      "name": "aws_kinesis",
+      "description": "A platform for processing real-time streaming data.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_Amazon-Kinesis_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BbWF6b24tS2luZXNpc182NC5zdmciLCJpYXQiOjE3NDU1NDE2NDIsImV4cCI6MzUyMjYxOTI4M30.JraH85EL0m5RRV98bq-s_tYCDV1RnByG6GHEJXkMptQ"
+    },
+    {
+      "name": "aws_elastic_block_store",
+      "description": "AWS Elastic Block Store service.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_Amazon-Elastic-Block-Store_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BbWF6b24tRWxhc3RpYy1CbG9jay1TdG9yZV82NC5zdmciLCJpYXQiOjE3NDU1NDE2NDIsImV4cCI6MzUyMjYxOTI4NH0.zd1KSr3mhBIYy4hLiHBvAuj_CCUeTL0drv8Cs2B4bS0"
+    },
+    {
+      "name": "aws_device_farm",
+      "description": "AWS Device Farm service.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_AWS-Device-Farm_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BV1MtRGV2aWNlLUZhcm1fNjQuc3ZnIiwiaWF0IjoxNzQ1NTQxNjQyLCJleHAiOjM1MjI2MTkyODR9.ZR3rKtXl9qjayr5cXvXpu967e2qW6qRqlBPGlcHHdOM"
+    },
+    {
+      "name": "aws_neuron",
+      "description": "AWS Neuron service.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_AWS-Neuron_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BV1MtTmV1cm9uXzY0LnN2ZyIsImlhdCI6MTc0NTU0MTY0MywiZXhwIjozNTIyNjE5Mjg2fQ.WWLX9mZWIRxnILGk8ZcZSlzrfGLK01YDo4rABUDzDuU"
+    },
+    {
+      "name": "aws_iot_device_management",
+      "description": "A service for managing IoT devices at scale.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_AWS-IoT-Device-Management_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BV1MtSW9ULURldmljZS1NYW5hZ2VtZW50XzY0LnN2ZyIsImlhdCI6MTc0NTU0MTY0MywiZXhwIjozNTIyNjE5Mjg2fQ.yJFMC41V83VJpgLVk_xcEnTouEU6HJwZQCIXbM2iyJI"
+    },
+    {
+      "name": "aws_route_53",
+      "description": "AWS Route 53 service.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_Amazon-Route-53_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BbWF6b24tUm91dGUtNTNfNjQuc3ZnIiwiaWF0IjoxNzQ1NTQxNjQ0LCJleHAiOjM1MjI2MTkyODh9.b2E5HbrohlrXsgcFd4uj8EArR_5ACftnv9F7MACyCp0"
+    },
+    {
+      "name": "aws_codewhisperer",
+      "description": "An AI-powered coding assistant.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_Amazon-CodeWhisperer_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BbWF6b24tQ29kZVdoaXNwZXJlcl82NC5zdmciLCJpYXQiOjE3NDU1NDE2NDQsImV4cCI6MzUyMjYxOTI4OH0.vBZ33Gr97AkS5V3a1HZTurh3yVBnrUOxp_RgmVvxv7U"
+    },
+    {
+      "name": "aws_appflow",
+      "description": "An integration service for transferring data between SaaS apps and AWS.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_Amazon-AppFlow_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BbWF6b24tQXBwRmxvd182NC5zdmciLCJpYXQiOjE3NDU1NDE2NDUsImV4cCI6MzUyMjYxOTI4OX0.PXAuF2Q1YLEC0ygDwP2E-8PZWGw062TYkHNCbPW0wT8"
+    },
+    {
+      "name": "aws_deadline_cloud",
+      "description": "AWS Deadline Cloud service.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_AWS-Deadline-Cloud_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BV1MtRGVhZGxpbmUtQ2xvdWRfNjQuc3ZnIiwiaWF0IjoxNzQ1NTQxNjQ1LCJleHAiOjM1MjI2MTkyOTB9.QU5LrNcAe79H3otodvKdI8VNAAyqcECLeDc1L4XUUuE"
+    },
+    {
+      "name": "aws_datazone",
+      "description": "A data management service for organizing and governing data.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_Amazon-DataZone_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BbWF6b24tRGF0YVpvbmVfNjQuc3ZnIiwiaWF0IjoxNzQ1NTQxNjQ1LCJleHAiOjM1MjI2MTkyOTB9.MVFBn-zA2dkXnwxa7GTyM3y75kYM2xW1OCPfuscBtjQ"
+    },
+    {
+      "name": "aws_codebuild",
+      "description": "AWS Codebuild service.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_AWS-CodeBuild_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BV1MtQ29kZUJ1aWxkXzY0LnN2ZyIsImlhdCI6MTc0NTU0MTY0NiwiZXhwIjozNTIyNjE5MjkyfQ._D6oYLKVVgEmnMIalcw24ibKgJTBBEaliLd5lPgn4hE"
+    },
+    {
+      "name": "aws_ec2",
+      "description": "A virtual server compute service.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_Amazon-EC2_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BbWF6b24tRUMyXzY0LnN2ZyIsImlhdCI6MTc0NTU0MTY0NiwiZXhwIjozNTIyNjE5MjkyfQ.vw5xKg9_vVn7ctxY286eSnbzfzZab3SQo09HQ6jSOCw"
+    },
+    {
+      "name": "aws_mainframe_modernization",
+      "description": "AWS Mainframe Modernization service.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_AWS-Mainframe-Modernization_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BV1MtTWFpbmZyYW1lLU1vZGVybml6YXRpb25fNjQuc3ZnIiwiaWF0IjoxNzQ1NTQxNjQ3LCJleHAiOjM1MjI2MTkyOTR9.2C6N67OGIse_XYFqoo4b1r0DKZo5hRCsCeVzLrCmNFk"
+    },
+    {
+      "name": "aws_translate",
+      "description": "AWS Translate service.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_Amazon-Translate_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BbWF6b24tVHJhbnNsYXRlXzY0LnN2ZyIsImlhdCI6MTc0NTU0MTY0NywiZXhwIjozNTIyNjE5Mjk0fQ.4RcA8ibR4bUJbKtd4JX5fcZftY5_HX7hx1A7CObTEi8"
+    },
+    {
+      "name": "aws_iam_identity_center",
+      "description": "AWS Iam Identity Center service.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_AWS-IAM-Identity-Center_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BV1MtSUFNLUlkZW50aXR5LUNlbnRlcl82NC5zdmciLCJpYXQiOjE3NDU1NDE2NDgsImV4cCI6MzUyMjYxOTI5NX0.KWKY_a8MO52pxDG0UBfUOGQ0qJPAGEMBvrXvuq7VG1k"
+    },
+    {
+      "name": "aws_clean_rooms",
+      "description": "A service for secure data collaboration across organizations.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_AWS-Clean-Rooms_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BV1MtQ2xlYW4tUm9vbXNfNjQuc3ZnIiwiaWF0IjoxNzQ1NTQxNjQ4LCJleHAiOjM1MjI2MTkyOTZ9.pbcvqSTRfjnhF-0_3L50iAu5SojZoBDalkNicQgiPbY"
+    },
+    {
+      "name": "aws_app_runner",
+      "description": "AWS App Runner service.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_AWS-App-Runner_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BV1MtQXBwLVJ1bm5lcl82NC5zdmciLCJpYXQiOjE3NDU1NDE2NDgsImV4cCI6MzUyMjYxOTI5Nn0.z3CZFkRoW9yGMsEc-LK1SpM_-hFId5AzJ4WNnCjAuuY"
+    },
+    {
+      "name": "aws_cloud9",
+      "description": "AWS Cloud9 service.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_AWS-Cloud9_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BV1MtQ2xvdWQ5XzY0LnN2ZyIsImlhdCI6MTc0NTU0MTY0OSwiZXhwIjozNTIyNjE5Mjk4fQ.irWtZf5u_7c2SnyZCPv4Q3fereY6jyugclIldrw8k7k"
+    },
+    {
+      "name": "aws_marketplace_light",
+      "description": "AWS Marketplace Light service.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_AWS-Marketplace_Light_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BV1MtTWFya2V0cGxhY2VfTGlnaHRfNjQuc3ZnIiwiaWF0IjoxNzQ1NTQxNjQ5LCJleHAiOjM1MjI2MTkyOTh9.lMhebhCDK5DnOp-WjhyGAib-yN7xJCot4uSfIDfLRR4"
+    },
+    {
+      "name": "aws_client_vpn",
+      "description": "AWS Client Vpn service.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_AWS-Client-VPN_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BV1MtQ2xpZW50LVZQTl82NC5zdmciLCJpYXQiOjE3NDU1NDE2NTAsImV4cCI6MzUyMjYxOTMwMH0.pzmVX1MFpu5QX9_s3acCKgZ31pMKUaWRuIDlIf8Q32w"
+    },
+    {
+      "name": "aws_systems_manager",
+      "description": "AWS Systems Manager service.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_AWS-Systems-Manager_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BV1MtU3lzdGVtcy1NYW5hZ2VyXzY0LnN2ZyIsImlhdCI6MTc0NTU0MTY1MCwiZXhwIjozNTIyNjE5MzAwfQ.8Rxqy5KWOaERDkodEVQCmd7SiUEs8tUVSSKm9uyLYvc"
+    },
+    {
+      "name": "aws_app_mesh",
+      "description": "AWS App Mesh service.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_AWS-App-Mesh_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BV1MtQXBwLU1lc2hfNjQuc3ZnIiwiaWF0IjoxNzQ1NTQxNjUxLCJleHAiOjM1MjI2MTkzMDF9.WDDTbBOZhgbRG_Q0BzR4vlhfEkScXWsovBbSrdl-ePY"
+    },
+    {
+      "name": "aws_express_workflows",
+      "description": "AWS Express Workflows service.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_AWS-Express-Workflows_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BV1MtRXhwcmVzcy1Xb3JrZmxvd3NfNjQuc3ZnIiwiaWF0IjoxNzQ1NTQxNjUxLCJleHAiOjM1MjI2MTkzMDJ9.r2Ff0ATSEnS7eJSdS1sWn3-7LyW8D8OKrNAJYKY1i5g"
+    },
+    {
+      "name": "aws_workmail",
+      "description": "AWS Workmail service.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_Amazon-WorkMail_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BbWF6b24tV29ya01haWxfNjQuc3ZnIiwiaWF0IjoxNzQ1NTQxNjUxLCJleHAiOjM1MjI2MTkzMDJ9.W1RBEy6kEbANbsVqZ-COFib2DkRrEI0mNwd3i7KzFiM"
+    },
+    {
+      "name": "aws_support",
+      "description": "AWS Support service.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_AWS-Support_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BV1MtU3VwcG9ydF82NC5zdmciLCJpYXQiOjE3NDU1NDE2NTIsImV4cCI6MzUyMjYxOTMwNH0.nfVof_tVRR7PS11KZ5VfeicE2xiBv9T5rmoViAqyvhA"
+    },
+    {
+      "name": "aws_lightsail",
+      "description": "AWS Lightsail service.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_Amazon-Lightsail_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BbWF6b24tTGlnaHRzYWlsXzY0LnN2ZyIsImlhdCI6MTc0NTU0MTY1MiwiZXhwIjozNTIyNjE5MzA0fQ.mOfxtDIceddMxPMF2_vvOCNy_wv53m1REyhD3RKwbVE"
+    },
+    {
+      "name": "aws_telco_network_builder",
+      "description": "AWS Telco Network Builder service.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_AWS-Telco-Network-Builder_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BV1MtVGVsY28tTmV0d29yay1CdWlsZGVyXzY0LnN2ZyIsImlhdCI6MTc0NTU0MTY1MywiZXhwIjozNTIyNjE5MzA1fQ.JR8gqo6K8kHkQI_UuWZMV6mzS_Gkr1_Ckd2pkC_doDs"
+    },
+    {
+      "name": "aws_fault_injection_service",
+      "description": "AWS Fault Injection Service service.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_AWS-Fault-Injection-Service_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BV1MtRmF1bHQtSW5qZWN0aW9uLVNlcnZpY2VfNjQuc3ZnIiwiaWF0IjoxNzQ1NTQxNjUzLCJleHAiOjM1MjI2MTkzMDZ9.w7SjjhHNUuq-ilcIioePqsFxPvci48Pqn4Xs6jaFjxs"
+    },
+    {
+      "name": "aws_thinkbox_krakatoa",
+      "description": "AWS Thinkbox Krakatoa service.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_AWS-Thinkbox-Krakatoa_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BV1MtVGhpbmtib3gtS3Jha2F0b2FfNjQuc3ZnIiwiaWF0IjoxNzQ1NTQxNjUzLCJleHAiOjM1MjI2MTkzMDZ9.3WyQOf5GC-rGwq9jxn4_Tv3kCz_B3EuP5o3z7J_M3n0"
+    },
+    {
+      "name": "aws_deep_learning_containers",
+      "description": "AWS Deep Learning Containers service.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_AWS-Deep-Learning-Containers_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BV1MtRGVlcC1MZWFybmluZy1Db250YWluZXJzXzY0LnN2ZyIsImlhdCI6MTc0NTU0MTY1NCwiZXhwIjozNTIyNjE5MzA4fQ.hf4jrKrNBMsFIMBoeCk2iJRhBXsV_OlJ0ApD24IlZGI"
+    },
+    {
+      "name": "aws_trusted_advisor",
+      "description": "AWS Trusted Advisor service.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_AWS-Trusted-Advisor_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BV1MtVHJ1c3RlZC1BZHZpc29yXzY0LnN2ZyIsImlhdCI6MTc0NTU0MTY1NCwiZXhwIjozNTIyNjE5MzA4fQ.QSJJWqppKYOqrA9U1SP5RusBbVe7FlZleG47a3req3o"
+    },
+    {
+      "name": "aws_application_recovery_controller",
+      "description": "AWS Application Recovery Controller service.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_Amazon-Application-Recovery-Controller_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BbWF6b24tQXBwbGljYXRpb24tUmVjb3ZlcnktQ29udHJvbGxlcl82NC5zdmciLCJpYXQiOjE3NDU1NDE2NTUsImV4cCI6MzUyMjYxOTMwOX0.-p_mTuDG7hZHJVGVQLAkvYIlQ5D6EdGTD7WhwenRiTA"
+    },
+    {
+      "name": "aws_cloudwatch",
+      "description": "A monitoring and observability service.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_Amazon-CloudWatch_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BbWF6b24tQ2xvdWRXYXRjaF82NC5zdmciLCJpYXQiOjE3NDU1NDE2NTUsImV4cCI6MzUyMjYxOTMxMH0.QN1bmP5gSHA2SXFzgHDBdXx6O6bdmOrAUgcPvNzNaf8"
+    },
+    {
+      "name": "aws_chime",
+      "description": "AWS Chime service.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_Amazon-Chime_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BbWF6b24tQ2hpbWVfNjQuc3ZnIiwiaWF0IjoxNzQ1NTQxNjU2LCJleHAiOjM1MjI2MTkzMTF9.SU7D4ydawyrZ5OrgYyvS4lAqm6UkVv8BRgrYetnnap4"
+    },
+    {
+      "name": "aws_elastic_transcoder",
+      "description": "AWS Elastic Transcoder service.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_Amazon-Elastic-Transcoder_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BbWF6b24tRWxhc3RpYy1UcmFuc2NvZGVyXzY0LnN2ZyIsImlhdCI6MTc0NTU0MTY1NiwiZXhwIjozNTIyNjE5MzEyfQ.boUZU9_gvquEo81wG67tIPWJ3fB7FPtIVinkvygTIKg"
+    },
+    {
+      "name": "aws_alexa_for_business",
+      "description": "AWS Alexa For Business service.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_Alexa-For-Business_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BbGV4YS1Gb3ItQnVzaW5lc3NfNjQuc3ZnIiwiaWF0IjoxNzQ1NTQxNjU2LCJleHAiOjM1MjI2MTkzMTJ9.shKWzmLwkHzJ7ZvmZHOKRo8fQfCQdFHszZ3ZlKoWJm4"
+    },
+    {
+      "name": "aws_iot_analytics",
+      "description": "AWS Iot Analytics service.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_AWS-IoT-Analytics_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BV1MtSW9ULUFuYWx5dGljc182NC5zdmciLCJpYXQiOjE3NDU1NDE2NTcsImV4cCI6MzUyMjYxOTMxNH0.eFyDhAON275yUdjt3W_HaI3as29h-UTUm2GW0IGe53o"
+    },
+    {
+      "name": "aws_fsx_for_netapp_ontap",
+      "description": "AWS Fsx For Netapp Ontap service.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_Amazon-FSx-for-NetApp-ONTAP_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BbWF6b24tRlN4LWZvci1OZXRBcHAtT05UQVBfNjQuc3ZnIiwiaWF0IjoxNzQ1NTQxNjU3LCJleHAiOjM1MjI2MTkzMTR9.3dXG0GvoOl_iv1xvxLayOh1H2F_-MAhm-AB4xq-kY2A"
+    },
+    {
+      "name": "aws_lookout_for_vision",
+      "description": "A service for detecting defects using computer vision.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_Amazon-Lookout-for-Vision_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BbWF6b24tTG9va291dC1mb3ItVmlzaW9uXzY0LnN2ZyIsImlhdCI6MTc0NTU0MTY1OCwiZXhwIjozNTIyNjE5MzE2fQ.oGSn5lv5uNgHfiIcALE8qwaNjeL7JTFXMQnSVrlV1NM"
+    },
+    {
+      "name": "aws_elemental_mediapackage",
+      "description": "AWS Elemental Mediapackage service.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_AWS-Elemental-MediaPackage_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BV1MtRWxlbWVudGFsLU1lZGlhUGFja2FnZV82NC5zdmciLCJpYXQiOjE3NDU1NDE2NTgsImV4cCI6MzUyMjYxOTMxNn0.ZvsFKW5wnXlALspCI0TwG5tZacQIdO8BdMz8qCVqtxs"
+    },
+    {
+      "name": "aws_direct_connect",
+      "description": "AWS Direct Connect service.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_AWS-Direct-Connect_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BV1MtRGlyZWN0LUNvbm5lY3RfNjQuc3ZnIiwiaWF0IjoxNzQ1NTQxNjU5LCJleHAiOjM1MjI2MTkzMTh9.EdFiqDHCj4sAoIOM7i1ysv5TeVzAUSBzS4ivzCzLLew"
+    },
+    {
+      "name": "aws_security_incident_response",
+      "description": "AWS Security Incident Response service.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_AWS-Security-Incident-Response_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BV1MtU2VjdXJpdHktSW5jaWRlbnQtUmVzcG9uc2VfNjQuc3ZnIiwiaWF0IjoxNzQ1NTQxNjU5LCJleHAiOjM1MjI2MTkzMTh9.eaU-7kjWtqBCKrvZ3X9GcfMO84x3jsWy7USxnOGQ958"
+    },
+    {
+      "name": "aws_iot_fleetwise",
+      "description": "AWS Iot Fleetwise service.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_AWS-IoT-FleetWise_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BV1MtSW9ULUZsZWV0V2lzZV82NC5zdmciLCJpYXQiOjE3NDU1NDE2NjAsImV4cCI6MzUyMjYxOTMyMH0.f8u_M-zqG-YQPLMv9umRWAlJQ_AjC3y5weVBvnDjD5c"
+    },
+    {
+      "name": "aws_lambda",
+      "description": "A serverless compute service for running code.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_AWS-Lambda_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BV1MtTGFtYmRhXzY0LnN2ZyIsImlhdCI6MTc0NTU0MTY2MSwiZXhwIjozNTIyNjE5MzIxfQ.dFH7tD0Q_dYz9j8RczAeEl6q7rWNLrGsaX4mUo_5888"
+    },
+    {
+      "name": "aws_database_migration_service",
+      "description": "AWS Database Migration Service service.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_AWS-Database-Migration-Service_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BV1MtRGF0YWJhc2UtTWlncmF0aW9uLVNlcnZpY2VfNjQuc3ZnIiwiaWF0IjoxNzQ1NTQxNjYxLCJleHAiOjM1MjI2MTkzMjJ9.9I4z5BZg1AxpsYuxBxWjPjKBTGmZe_m14fFs0dT39Uk"
+    },
+    {
+      "name": "aws_kinesis_video_streams",
+      "description": "A service for processing and analyzing video streams.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_Amazon-Kinesis-Video-Streams_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BbWF6b24tS2luZXNpcy1WaWRlby1TdHJlYW1zXzY0LnN2ZyIsImlhdCI6MTc0NTU0MTY2MiwiZXhwIjozNTIyNjE5MzI0fQ.DME6RG9FlRaoQA0Fnwo7i4gDtnGBq2y9ZXhPIBP98lI"
+    },
+    {
+      "name": "aws_fsx",
+      "description": "AWS Fsx service.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_Amazon-FSx_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BbWF6b24tRlN4XzY0LnN2ZyIsImlhdCI6MTc0NTU0MTY2MywiZXhwIjozNTIyNjE5MzI1fQ.4au51x4pCfUkMd-im7BzZWgwKMEZTWABa5SdhE_pPnQ"
+    },
+    {
+      "name": "aws_codecommit",
+      "description": "AWS Codecommit service.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_AWS-CodeCommit_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BV1MtQ29kZUNvbW1pdF82NC5zdmciLCJpYXQiOjE3NDU1NDE2NjMsImV4cCI6MzUyMjYxOTMyNn0.sT0wgROBr05MGYdlMk5vLX3Zldl98m2nOXKuBSM0foM"
+    },
+    {
+      "name": "aws_iot_greengrass",
+      "description": "AWS Iot Greengrass service.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_AWS-IoT-Greengrass_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BV1MtSW9ULUdyZWVuZ3Jhc3NfNjQuc3ZnIiwiaWF0IjoxNzQ1NTQxNjY0LCJleHAiOjM1MjI2MTkzMjd9.3ARCXmvKuR9VNv_ttWGAjMZTs3ddus_yFwB8_SIcyRU"
+    },
+    {
+      "name": "aws_devops_guru",
+      "description": "A service for improving application performance and reliability.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_Amazon-DevOps-Guru_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BbWF6b24tRGV2T3BzLUd1cnVfNjQuc3ZnIiwiaWF0IjoxNzQ1NTQxNjY0LCJleHAiOjM1MjI2MTkzMjh9.q-QDBe7-WZuuD4XeKElU7rJDXO4IoL3gcCyFA9TYYr8"
+    },
+    {
+      "name": "aws_payment_cryptography",
+      "description": "AWS Payment Cryptography service.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_AWS-Payment-Cryptography_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BV1MtUGF5bWVudC1DcnlwdG9ncmFwaHlfNjQuc3ZnIiwiaWF0IjoxNzQ1NTQxNjY0LCJleHAiOjM1MjI2MTkzMjh9.LrQ7lgsUdhqHteB9O555WywqwvBBt5xNR8DlBb35wds"
+    },
+    {
+      "name": "aws_robomaker",
+      "description": "AWS Robomaker service.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_AWS-RoboMaker_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BV1MtUm9ib01ha2VyXzY0LnN2ZyIsImlhdCI6MTc0NTU0MTY2NSwiZXhwIjozNTIyNjE5MzMwfQ.d8w9-HM4aYbtO_UROs60BaQI18x62f7QWtc5qny1jPk"
+    },
+    {
+      "name": "aws_sagemaker_ai",
+      "description": "AWS Sagemaker Ai service.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_Amazon-SageMaker-AI_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BbWF6b24tU2FnZU1ha2VyLUFJXzY0LnN2ZyIsImlhdCI6MTc0NTU0MTY2NSwiZXhwIjozNTIyNjE5MzMwfQ.u_jxR6LOGbZLnnqeY-eu5Ddyero7GTjedSTRBATEYHs"
+    },
+    {
+      "name": "aws_eks_cloud",
+      "description": "AWS Eks Cloud service.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_Amazon-EKS-Cloud_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BbWF6b24tRUtTLUNsb3VkXzY0LnN2ZyIsImlhdCI6MTc0NTU0MTY2NiwiZXhwIjozNTIyNjE5MzMxfQ.5IOWA6ZjRcTsGPJN6MHKsNyOkSEYtJQ319KYGKZbsyA"
+    },
+    {
+      "name": "aws_datasync",
+      "description": "AWS Datasync service.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_AWS-DataSync_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BV1MtRGF0YVN5bmNfNjQuc3ZnIiwiaWF0IjoxNzQ1NTQxNjY2LCJleHAiOjM1MjI2MTkzMzJ9.6yATwMXk3ixKWx5cRaIhVbZMhZOpr7sXAYPr6WdXI0Q"
+    },
+    {
+      "name": "aws_ec2_image_builder",
+      "description": "AWS Ec2 Image Builder service.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_Amazon-EC2-Image-Builder_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BbWF6b24tRUMyLUltYWdlLUJ1aWxkZXJfNjQuc3ZnIiwiaWF0IjoxNzQ1NTQxNjY2LCJleHAiOjM1MjI2MTkzMzJ9.7bcBev2L2GNd601-i2Gmvhl9wSk-WvrOeZa2gZM_ixs"
+    },
+    {
+      "name": "aws_config",
+      "description": "AWS Config service.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_AWS-Config_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BV1MtQ29uZmlnXzY0LnN2ZyIsImlhdCI6MTc0NTU0MTY2NywiZXhwIjozNTIyNjE5MzM0fQ.HZLRsAhljT4bYRahoa_N1yYP2mW7RkcBztX__xJT8gQ"
+    },
+    {
+      "name": "aws_secrets_manager",
+      "description": "AWS Secrets Manager service.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_AWS-Secrets-Manager_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BV1MtU2VjcmV0cy1NYW5hZ2VyXzY0LnN2ZyIsImlhdCI6MTc0NTU0MTY2NywiZXhwIjozNTIyNjE5MzM0fQ.2IoRpAMqrBX-rbuamYVuLN_HYFYzRzP4FPyQTSQPAnc"
+    },
+    {
+      "name": "aws_managed_service_for_prometheus",
+      "description": "A monitoring service compatible with Prometheus.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_Amazon-Managed-Service-for-Prometheus_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BbWF6b24tTWFuYWdlZC1TZXJ2aWNlLWZvci1Qcm9tZXRoZXVzXzY0LnN2ZyIsImlhdCI6MTc0NTU0MTY2OCwiZXhwIjozNTIyNjE5MzM2fQ.OoRTWsPrDOEIjuOhv5vax-QYZLNpdwDl-ULO-gvJmQ0"
+    },
+    {
+      "name": "aws_global_accelerator",
+      "description": "AWS Global Accelerator service.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_AWS-Global-Accelerator_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BV1MtR2xvYmFsLUFjY2VsZXJhdG9yXzY0LnN2ZyIsImlhdCI6MTc0NTU0MTY2OCwiZXhwIjozNTIyNjE5MzM2fQ.DWW4jyqCNi-djXBd6cL58xfDzwfZEJ-8ZAaMCC9EuRI"
+    },
+    {
+      "name": "aws_deep_learning_amis",
+      "description": "AWS Deep Learning Amis service.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_AWS-Deep-Learning-AMIs_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BV1MtRGVlcC1MZWFybmluZy1BTUlzXzY0LnN2ZyIsImlhdCI6MTc0NTU0MTY2OCwiZXhwIjozNTIyNjE5MzM2fQ.dpEHs5LpRUHJUJFekC--Tu4qP-HvII9EGuz9PH1vpM0"
+    },
+    {
+      "name": "aws_verified_access",
+      "description": "AWS Verified Access service.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_AWS-Verified-Access_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BV1MtVmVyaWZpZWQtQWNjZXNzXzY0LnN2ZyIsImlhdCI6MTc0NTU0MTY2OSwiZXhwIjozNTIyNjE5MzM4fQ.6ey1H4ADQXQfEA4-lQQk2Nlq4TZZI5EILUg2IVrtNUY"
+    },
+    {
+      "name": "aws_managed_streaming_for_apache_kafka",
+      "description": "AWS Managed Streaming For Apache Kafka service.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_Amazon-Managed-Streaming-for-Apache-Kafka_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BbWF6b24tTWFuYWdlZC1TdHJlYW1pbmctZm9yLUFwYWNoZS1LYWZrYV82NC5zdmciLCJpYXQiOjE3NDU1NDE2NjksImV4cCI6MzUyMjYxOTMzOH0.b-YYBPdnDVFrLe2qQkKww8IIK0dBNj0HnT1EwaNf-yw"
+    },
+    {
+      "name": "aws_step_functions",
+      "description": "A serverless orchestration service for coordinating workflows.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_AWS-Step-Functions_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BV1MtU3RlcC1GdW5jdGlvbnNfNjQuc3ZnIiwiaWF0IjoxNzQ1NTQxNjcwLCJleHAiOjM1MjI2MTkzNDB9.JxGCL1zxXCeI-KtK2JeBToIABXiViWhAVHiU0z1nndU"
+    },
+    {
+      "name": "aws_fsx_for_lustre",
+      "description": "AWS Fsx For Lustre service.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_Amazon-FSx-for-Lustre_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BbWF6b24tRlN4LWZvci1MdXN0cmVfNjQuc3ZnIiwiaWF0IjoxNzQ1NTQxNjcwLCJleHAiOjM1MjI2MTkzNDB9.df_i-2Y6brBI5Gue1Gf-McXHAjYeEZWFy7MAPPipf20"
+    },
+    {
+      "name": "aws_cloud_control_api",
+      "description": "AWS Cloud Control Api service.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_AWS-Cloud-Control-API_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BV1MtQ2xvdWQtQ29udHJvbC1BUElfNjQuc3ZnIiwiaWF0IjoxNzQ1NTQxNjcxLCJleHAiOjM1MjI2MTkzNDF9.juW8q2mlMidhjB6Zqr47e-p8arvpfItD5ocFECu6W9w"
+    },
+    {
+      "name": "aws_transit_gateway",
+      "description": "AWS Transit Gateway service.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_AWS-Transit-Gateway_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BV1MtVHJhbnNpdC1HYXRld2F5XzY0LnN2ZyIsImlhdCI6MTc0NTU0MTY3MSwiZXhwIjozNTIyNjE5MzQyfQ.7RYvdO_3OORPKboF6wkX6nyr6oBxGzCO5f68vo0h7-4"
+    },
+    {
+      "name": "aws_appstream_2",
+      "description": "AWS Appstream 2 service.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_Amazon-AppStream-2_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BbWF6b24tQXBwU3RyZWFtLTJfNjQuc3ZnIiwiaWF0IjoxNzQ1NTQxNjcxLCJleHAiOjM1MjI2MTkzNDJ9.AS98KLeFdy2CnXdjCTjBg-AthkmQEAB4FCUG8JSWL4w"
+    },
+    {
+      "name": "aws_appconfig",
+      "description": "AWS Appconfig service.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_AWS-AppConfig_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BV1MtQXBwQ29uZmlnXzY0LnN2ZyIsImlhdCI6MTc0NTU0MTY3MiwiZXhwIjozNTIyNjE5MzQ0fQ.u-xTiVkTWEXdEqQ_oBYMoiZfRn8mQjtSWhO6lETSilA"
+    },
+    {
+      "name": "aws_elemental_mediatailor",
+      "description": "AWS Elemental Mediatailor service.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_AWS-Elemental-MediaTailor_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BV1MtRWxlbWVudGFsLU1lZGlhVGFpbG9yXzY0LnN2ZyIsImlhdCI6MTc0NTU0MTY3MiwiZXhwIjozNTIyNjE5MzQ0fQ.vr3eAIv0XoMZMTN23jI3DXdHfh_TvAmq1evsVS-FQvM"
+    },
+    {
+      "name": "aws_location_service",
+      "description": "AWS Location Service service.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_Amazon-Location-Service_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BbWF6b24tTG9jYXRpb24tU2VydmljZV82NC5zdmciLCJpYXQiOjE3NDU1NDE2NzMsImV4cCI6MzUyMjYxOTM0NX0.gOcFENb3zc3R-rg7kYQ5-EeQM4TtKUtpIuM05fkoYx8"
+    },
+    {
+      "name": "aws_budgets",
+      "description": "AWS Budgets service.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_AWS-Budgets_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BV1MtQnVkZ2V0c182NC5zdmciLCJpYXQiOjE3NDU1NDE2NzMsImV4cCI6MzUyMjYxOTM0Nn0.WlE8JKLTc9PIIebVeIJ0uEb3DYHHzKqq1zcpu6NrwYM"
+    },
+    {
+      "name": "aws_local_zones",
+      "description": "AWS Local Zones service.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_AWS-Local-Zones_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BV1MtTG9jYWwtWm9uZXNfNjQuc3ZnIiwiaWF0IjoxNzQ1NTQxNjczLCJleHAiOjM1MjI2MTkzNDZ9.gS1SJUF_8zgklsTKe3pa9HrpJQOsDWl_IbukZVrIrSk"
+    },
+    {
+      "name": "aws_workdocs_sdk",
+      "description": "AWS Workdocs Sdk service.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_Amazon-WorkDocs-SDK_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BbWF6b24tV29ya0RvY3MtU0RLXzY0LnN2ZyIsImlhdCI6MTc0NTU0MTY3NCwiZXhwIjozNTIyNjE5MzQ4fQ.jr687FKbyJ4ETnqXgr99qJcLlwi6wrt9Kg7KEfuvohI"
+    },
+    {
+      "name": "aws_deepcomposer",
+      "description": "AWS Deepcomposer service.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_AWS-DeepComposer_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BV1MtRGVlcENvbXBvc2VyXzY0LnN2ZyIsImlhdCI6MTc0NTU0MTY3NCwiZXhwIjozNTIyNjE5MzQ4fQ.B-2uz5xjiHXn-0ZJy6wxmXC9FIAgocCrnHHuU5F1bS8"
+    },
+    {
+      "name": "aws_transfer_family",
+      "description": "AWS Transfer Family service.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_AWS-Transfer-Family_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BV1MtVHJhbnNmZXItRmFtaWx5XzY0LnN2ZyIsImlhdCI6MTc0NTU0MTY3NSwiZXhwIjozNTIyNjE5MzQ5fQ.dAYrgVbhkH1vl2bNuI4bLIAX8rJVkXykDHIcMsbNdek"
+    },
+    {
+      "name": "aws_cloudfront",
+      "description": "AWS Cloudfront service.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_Amazon-CloudFront_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BbWF6b24tQ2xvdWRGcm9udF82NC5zdmciLCJpYXQiOjE3NDU1NDE2NzUsImV4cCI6MzUyMjYxOTM1MH0.8AplrMM0EyPDsYhU4VkGAt3n_NL2m_oBKuVvWQHFcMU"
+    },
+    {
+      "name": "aws_transcribe",
+      "description": "AWS Transcribe service.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_Amazon-Transcribe_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BbWF6b24tVHJhbnNjcmliZV82NC5zdmciLCJpYXQiOjE3NDU1NDE2NzUsImV4cCI6MzUyMjYxOTM1MH0.b6V1PlheWk_QmvMDLT0FzkiP4ao7PzDyqixzKd58VU0"
+    },
+    {
+      "name": "aws_cloud_map",
+      "description": "AWS Cloud Map service.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_AWS-Cloud-Map_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BV1MtQ2xvdWQtTWFwXzY0LnN2ZyIsImlhdCI6MTc0NTU0MTY3NiwiZXhwIjozNTIyNjE5MzUxfQ.NTTAn6v6KBDbMQum0skcjTVfoXvwY5K3WVx5iy9oAMk"
+    },
+    {
+      "name": "aws_service_catalog",
+      "description": "AWS Service Catalog service.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_AWS-Service-Catalog_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BV1MtU2VydmljZS1DYXRhbG9nXzY0LnN2ZyIsImlhdCI6MTc0NTU0MTY3NiwiZXhwIjozNTIyNjE5MzUyfQ.xezoN1kEW_cefosxffQrulT7O-ci91F0vCStmjEy26A"
+    },
+    {
+      "name": "aws_monitron",
+      "description": "A service for monitoring equipment health.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_Amazon-Monitron_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BbWF6b24tTW9uaXRyb25fNjQuc3ZnIiwiaWF0IjoxNzQ1NTQxNjc3LCJleHAiOjM1MjI2MTkzNTN9.T1JFL99kdPISU7rQjoQH_n1DDz9vhQDi3YF95pVbkU0"
+    },
+    {
+      "name": "aws_billing_conductor",
+      "description": "AWS Billing Conductor service.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_AWS-Billing-Conductor_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BV1MtQmlsbGluZy1Db25kdWN0b3JfNjQuc3ZnIiwiaWF0IjoxNzQ1NTQxNjc3LCJleHAiOjM1MjI2MTkzNTR9.Z8G1OdkxuJcmoCNJ21NrkNeDrjXcthIzdQXijsRqhRI"
+    },
+    {
+      "name": "aws_documentdb",
+      "description": "AWS Documentdb service.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_Amazon-DocumentDB_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BbWF6b24tRG9jdW1lbnREQl82NC5zdmciLCJpYXQiOjE3NDU1NDE2NzcsImV4cCI6MzUyMjYxOTM1NH0.9t5Zbk-K8iIsqWfa9qmowtcpHB40qy2G2sI68A1h_H8"
+    },
+    {
+      "name": "aws_b2b_data_interchange",
+      "description": "A service for exchanging EDI data with trading partners.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_AWS-B2B-Data-Interchange_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BV1MtQjJCLURhdGEtSW50ZXJjaGFuZ2VfNjQuc3ZnIiwiaWF0IjoxNzQ1NTQxNjc4LCJleHAiOjM1MjI2MTkzNTZ9.0H-eMvitYstN9xRzUyMt_461YGckvvoBVPkYLRkpJYs"
+    },
+    {
+      "name": "aws_q",
+      "description": "AWS Q service.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_Amazon-Q_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BbWF6b24tUV82NC5zdmciLCJpYXQiOjE3NDU1NDE2NzgsImV4cCI6MzUyMjYxOTM1Nn0.zAaIbjxgeJ9H7-QAa8fQvoR94qOPb0U-QSMRa_Slkr0"
+    },
+    {
+      "name": "aws_mq",
+      "description": "A managed message broker service supporting multiple protocols.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_Amazon-MQ_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BbWF6b24tTVFfNjQuc3ZnIiwiaWF0IjoxNzQ1NTQxNjc5LCJleHAiOjM1MjI2MTkzNTd9.dgz8y42bak1l4ghh837TXTeliPEz5LfsMU5ogM3yvx4"
+    },
+    {
+      "name": "aws_end_user_messaging",
+      "description": "AWS End User Messaging service.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_AWS-End-User-Messaging_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BV1MtRW5kLVVzZXItTWVzc2FnaW5nXzY0LnN2ZyIsImlhdCI6MTc0NTU0MTY3OSwiZXhwIjozNTIyNjE5MzU4fQ.Lvi74c8jx1n9z9GxOB7Cpmum0l4xel9XaC9TnRMgLMQ"
+    },
+    {
+      "name": "aws_sagemaker",
+      "description": "A machine learning platform for building and deploying models.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_Amazon-SageMaker_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BbWF6b24tU2FnZU1ha2VyXzY0LnN2ZyIsImlhdCI6MTc0NTU0MTY3OSwiZXhwIjozNTIyNjE5MzU4fQ.lIpNHWW_vPIroj4nWBv6kvAtjm8Iq1neTBtp5ahDDXs"
+    },
+    {
+      "name": "aws_managed_blockchain",
+      "description": "AWS Managed Blockchain service.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_Amazon-Managed-Blockchain_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BbWF6b24tTWFuYWdlZC1CbG9ja2NoYWluXzY0LnN2ZyIsImlhdCI6MTc0NTU0MTY4MCwiZXhwIjozNTIyNjE5MzYwfQ.8pRvJdGrzM0LWHBEgpqXAdx6suBN5JLLpBja5pFS7zk"
+    },
+    {
+      "name": "aws_directory_service",
+      "description": "AWS Directory Service service.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_AWS-Directory-Service_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BV1MtRGlyZWN0b3J5LVNlcnZpY2VfNjQuc3ZnIiwiaWF0IjoxNzQ1NTQxNjgwLCJleHAiOjM1MjI2MTkzNjB9.PNyx6ls74dtWujAgKjfoW0q2RMvtdXjep7ndEQCRUXc"
+    }
+  ]
+}

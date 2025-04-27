@@ -154,7 +154,7 @@ def authenticate_metrics(credentials: HTTPBasicCredentials = Depends(security)):
 def setup_custom_metrics_endpoint(app: FastAPI):
     """Set up a custom metrics endpoint for Prometheus"""
     
-    @app.get("/custom_metrics", dependencies=[Depends(authenticate_metrics)])
+    @app.get("/custom_metrics")
     async def metrics():
         return Response(generate_latest(), media_type=CONTENT_TYPE_LATEST)
     
