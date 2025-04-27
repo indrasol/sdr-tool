@@ -1,13 +1,15 @@
-import aioredis
+import redis.asyncio as redis
+import hashlib
 import json
 import uuid
 from datetime import datetime, timezone
-from typing import Dict, Optional, Any, List, AsyncContextManager, AsyncIterator
+from typing import Dict, Optional, Any, List, AsyncContextManager, AsyncIterator, Tuple
 from contextlib import asynccontextmanager
 from fastapi import HTTPException
 from utils.logger import log_info
 from config.settings import REDIS_DB, REDIS_HOST, REDIS_PASSWORD, REDIS_PORT, SESSION_EXPIRY
 from core.db.supabase_db import get_supabase_client, safe_supabase_operation
+import asyncio
 
 
 class SessionManager:
@@ -25,7 +27,7 @@ class SessionManager:
         if not self.redis_pool:
             try:
                 log_info(f"Redis URL : {self.redis_url}")
-                self.redis_pool = await aioredis.from_url(self.redis_url, decode_responses=True)
+                self.redis_pool = redis.from_url(self.redis_url, decode_responses=True)
                 log_info(f"Connected to Redis at {self.redis_url}")
             except Exception as e:
                 raise RuntimeError(f"Failed to connect to Redis: {str(e)}")
@@ -64,9 +66,6 @@ class SessionManager:
             "last_updated": timestamp,
             "conversation_history": [],
             "diagram_state": {},
-            "thinking_history": [],           # extended thinking support
-            "thinking_signatures": {},        # Store thinking signatures for multi-turn conversations
-            "redacted_thinking_count": 0,      # Track occurrences of redacted thinking
             "classification_metadata": [],    # Store classification data for analysis
             "feedback_history": []            # Track feedback for continuous learning
         }
@@ -155,9 +154,6 @@ class SessionManager:
                         "last_updated": datetime.now(timezone.utc).isoformat(),
                         "conversation_history": [],  # Empty as we'll reload this from DB
                         "diagram_state": {},  # Empty as we'll reload this from DB
-                        "thinking_history": [],
-                        "thinking_signatures": {},
-                        "redacted_thinking_count": 0,
                         "classification_metadata": [],
                         "feedback_history": []
                     }
@@ -198,14 +194,6 @@ class SessionManager:
                 if field not in session_data:
                     log_info(f"Session {session_id} is missing required field: {field}")
                     raise HTTPException(status_code=400, detail=f"Invalid session format: missing {field}")
-            
-            # Add thinking fields if they don't exist (for backward compatibility)
-            if "thinking_history" not in session_data:
-                session_data["thinking_history"] = []
-            if "thinking_signatures" not in session_data:
-                session_data["thinking_signatures"] = {}
-            if "redacted_thinking_count" not in session_data:
-                session_data["redacted_thinking_count"] = 0
             
             # Verify project ID if specified
             if expected_project_id and session_data["project_id"] != expected_project_id:
@@ -249,14 +237,15 @@ class SessionManager:
 
     async def add_to_conversation(self, session_id: str, query: str, response: Dict[str, Any], diagram_state: Optional[Dict[str, Any]] = None, changed: bool = False) -> bool:
         """
-        Add a query-response pair to the conversation history.
+        Add a conversation entry (query and response) to the session's conversation history.
+        Optionally updates the diagram state if provided.
         
         Args:
             session_id: The unique session identifier
             query: The user's query
-            response: The system's response data
-            diagram_state: Current diagram state after applying changes (optional)
-            changed: Flag indicating if the diagram was modified (optional)
+            response: The system's response
+            diagram_state: Optional new diagram state to save
+            changed: Whether the diagram was changed by this interaction
             
         Returns:
             bool: True if successful, False otherwise
@@ -265,6 +254,7 @@ class SessionManager:
             await self.connect()
             
         try:
+            # Get current session data
             session_data = await self.get_session(session_id)
             
             # Add to conversation history
@@ -344,108 +334,28 @@ class SessionManager:
         signature: Optional[str] = None
     ) -> bool:
         """
-        Add a thinking entry to the thinking history.
-        
-        Args:
-            session_id: The unique session identifier
-            query: The user's query that triggered this thinking
-            thinking: The thinking content
-            has_redacted_thinking: Whether any part of thinking was redacted
-            signature: Optional thinking signature for multi-turn conversations
-            
-        Returns:
-            bool: True if successful, False otherwise
+        Legacy method kept for backward compatibility.
+        No longer stores thinking as the feature has been removed.
         """
-        if not self.redis_pool:
-            await self.connect()
-            
-        try:
-            session_data = await self.get_session(session_id)
-            
-            # Ensure thinking_history exists
-            if "thinking_history" not in session_data:
-                session_data["thinking_history"] = []
-                
-            # Add entry to thinking history
-            thinking_entry = {
-                "timestamp": datetime.now(timezone.utc).isoformat(),
-                "query": query,
-                "thinking": thinking,
-                "has_redacted_thinking": has_redacted_thinking
-            }
-            
-            session_data["thinking_history"].append(thinking_entry)
-            
-            # Update redacted thinking counter if needed
-            if has_redacted_thinking:
-                session_data["redacted_thinking_count"] = session_data.get("redacted_thinking_count", 0) + 1
-            
-            # Store signature if provided
-            if signature:
-                # Store by query timestamp for retrieval 
-                session_data["thinking_signatures"][thinking_entry["timestamp"]] = signature
-            
-            # Limit thinking history to most recent 10 entries to prevent bloat
-            if len(session_data["thinking_history"]) > 10:
-                # Get timestamps to remove
-                removed_timestamps = [entry["timestamp"] for entry in session_data["thinking_history"][:-10]]
-                # Remove associated signatures
-                for timestamp in removed_timestamps:
-                    if timestamp in session_data["thinking_signatures"]:
-                        del session_data["thinking_signatures"][timestamp]
-                # Keep only the most recent 10 entries
-                session_data["thinking_history"] = session_data["thinking_history"][-10:]
-            
-            # Update last_updated
-            session_data["last_updated"] = datetime.now(timezone.utc).isoformat()
-            
-            # Update in Redis
-            await self.redis_pool.setex(
-                f"session:{session_id}",
-                SESSION_EXPIRY,
-                json.dumps(session_data)
-            )
-            
-            return True
-        except Exception as e:
-            log_info(f"Error adding to thinking history: {str(e)}")
-            return False
-    
+        # This method is maintained for backward compatibility but does nothing
+        log_info(f"add_to_thinking_history called but thinking feature is disabled")
+        return True
+
     async def get_thinking_history(self, session_id: str, limit: int = 5) -> List[Dict[str, Any]]:
         """
-        Get the thinking history for a session.
-        
-        Args:
-            session_id: The unique session identifier
-            limit: Maximum number of thinking entries to return
-            
-        Returns:
-            List of thinking entries, most recent first
-            
-        Raises:
-            HTTPException: If session is not found
+        Legacy method kept for backward compatibility.
+        Returns empty list as thinking feature has been removed.
         """
-        session_data = await self.get_session(session_id)
-        history = session_data.get("thinking_history", [])
-        
-        # Return most recent entries first
-        return list(reversed(history[-limit:]))
-    
+        # This method is maintained for backward compatibility but returns empty list
+        return []
+
     async def get_thinking_signatures(self, session_id: str) -> Dict[str, str]:
         """
-        Get the thinking signatures for a session.
-        
-        Args:
-            session_id: The unique session identifier
-            
-        Returns:
-            Dict mapping timestamps to signatures
-            
-        Raises:
-            HTTPException: If session is not found
+        Legacy method kept for backward compatibility.
+        Returns empty dict as thinking feature has been removed.
         """
-        session_data = await self.get_session(session_id)
-        return session_data.get("thinking_signatures", {})
+        # This method is maintained for backward compatibility but returns empty dict
+        return {}
     
     async def update_diagram_state(self, session_id: str, diagram_state: Dict[str, Any]) -> bool:
         """
@@ -495,8 +405,7 @@ class SessionManager:
         session_id: str, 
         user_query: Optional[str] = None,
         system_response: Optional[Dict[str, Any]] = None,
-        diagram_state: Optional[Dict[str, Any]] = None,
-        thinking_data: Optional[Dict[str, Any]] = None
+        diagram_state: Optional[Dict[str, Any]] = None
     ) -> None:
         """
         Update session data with new conversation entry, diagram state, and/or thinking data.
@@ -506,7 +415,6 @@ class SessionManager:
             user_query: User's query message
             system_response: System's response to the query
             diagram_state: New diagram state to save
-            thinking_data: Thinking data including content, signature, etc.
             
         Raises:
             HTTPException: If session update fails
@@ -535,44 +443,6 @@ class SessionManager:
                 session_data["conversation_history"].append(conversation_entry)
                 if len(session_data["conversation_history"]) > 50:
                     session_data["conversation_history"] = session_data["conversation_history"][-50:]
-
-            # Add thinking data if provided
-            if thinking_data and isinstance(thinking_data, dict):
-                # Initialize thinking_history if it doesn't exist
-                if "thinking_history" not in session_data:
-                    session_data["thinking_history"] = []
-                
-                thinking_entry = {
-                    "timestamp": current_time,
-                    "query": user_query or "",
-                    "thinking": thinking_data.get("thinking", ""),
-                    "has_redacted_thinking": thinking_data.get("has_redacted_thinking", False)
-                }
-                
-                session_data["thinking_history"].append(thinking_entry)
-                
-                # Update redacted thinking counter if needed
-                if thinking_data.get("has_redacted_thinking", False):
-                    session_data["redacted_thinking_count"] = session_data.get("redacted_thinking_count", 0) + 1
-                
-                # Store signature if provided
-                if "signature" in thinking_data:
-                    # Ensure thinking_signatures exists
-                    if "thinking_signatures" not in session_data:
-                        session_data["thinking_signatures"] = {}
-                    
-                    session_data["thinking_signatures"][current_time] = thinking_data["signature"]
-                
-                # Limit thinking history to most recent 10 entries to prevent bloat
-                if len(session_data["thinking_history"]) > 10:
-                    # Get timestamps to remove
-                    removed_timestamps = [entry["timestamp"] for entry in session_data["thinking_history"][:-10]]
-                    # Remove associated signatures
-                    for timestamp in removed_timestamps:
-                        if "thinking_signatures" in session_data and timestamp in session_data["thinking_signatures"]:
-                            del session_data["thinking_signatures"][timestamp]
-                    # Keep only the most recent 10 entries
-                    session_data["thinking_history"] = session_data["thinking_history"][-10:]
 
             # Update diagram state if provided
             if diagram_state is not None:
@@ -911,3 +781,217 @@ class SessionManager:
         
         # Return most recent entries first
         return list(reversed(history[-limit:]))
+
+    async def store_threat_model(self, session_id: str, threat_model: Dict[str, Any], diagram_state: Dict[str, Any]) -> bool:
+        """
+        Store a generated threat model in the session cache.
+        
+        Args:
+            session_id: The session identifier
+            threat_model: The threat model data to store
+            diagram_state: The diagram state used to generate the threat model
+            
+        Returns:
+            bool: Whether the operation succeeded
+        """
+        try:
+            if not self.redis_pool:
+                await self.connect()
+                if not self.redis_pool:
+                    log_info(f"Cannot store threat model: Redis pool not available")
+                    return False
+            
+            # Check if session exists
+            session_exists = await self.redis_pool.exists(f"session:{session_id}")
+            if not session_exists:
+                log_info(f"Cannot store threat model: Session {session_id} not found")
+                return False
+            
+            # Store threat model with 30 minute TTL
+            threat_model_key = f"threat_model:{session_id}"
+            threat_model_json = json.dumps(threat_model)
+            await self.redis_pool.setex(
+                threat_model_key,
+                3600,  # 30 minutes TTL
+                threat_model_json
+            )
+            
+            # Store diagram hash for future comparisons
+            if diagram_state:
+                log_info(f"Storing diagram hash for session {session_id}")
+                log_info(f"Diagram state has {len(diagram_state.get('nodes', []))} nodes and {len(diagram_state.get('edges', []))} edges")
+                
+                # Sanitize the diagram state to ensure consistent hashing
+                clean_diagram_state = self._sanitize_diagram_state(diagram_state)
+                
+                # Serialize the diagram state consistently for hashing
+                serialized_diagram = json.dumps(clean_diagram_state, sort_keys=True)
+                diagram_hash = hashlib.md5(serialized_diagram.encode()).hexdigest()
+                diagram_hash_key = f"diagram_hash:{session_id}"
+                
+                log_info(f"Generated diagram hash: {diagram_hash}")
+                
+                await self.redis_pool.setex(
+                    diagram_hash_key,
+                    3600,  # 30 minutes TTL
+                    diagram_hash
+                )
+            else:
+                log_info(f"No diagram state provided to store hash for session {session_id}")
+            
+            # Extend session TTL
+            await self.extend_session_ttl(session_id)
+            
+            log_info(f"Stored threat model in session {session_id}")
+            return True
+            
+        except Exception as e:
+            log_info(f"Error storing threat model in session: {str(e)}")
+            return False
+            
+    def _sanitize_diagram_state(self, diagram_state: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Sanitize diagram state to ensure consistent hashing.
+        Removes UI-specific and transient properties.
+        
+        Args:
+            diagram_state: The original diagram state
+            
+        Returns:
+            A cleaned diagram state with only essential properties
+        """
+        if not diagram_state:
+            return {}
+            
+        # Clean nodes - keep only essential properties
+        clean_nodes = []
+        for node in diagram_state.get("nodes", []):
+            if not node or not isinstance(node, dict):
+                continue
+                
+            clean_node = {
+                "id": node.get("id"),
+                "type": node.get("type"),
+                "position": node.get("position", {})
+            }
+            
+            # Extract essential data properties
+            node_data = node.get("data", {})
+            if node_data and isinstance(node_data, dict):
+                clean_node["data"] = {
+                    "label": node_data.get("label"),
+                    "description": node_data.get("description"),
+                    "nodeType": node_data.get("nodeType")
+                }
+            
+            clean_nodes.append(clean_node)
+            
+        # Clean edges - keep only essential properties
+        clean_edges = []
+        for edge in diagram_state.get("edges", []):
+            if not edge or not isinstance(edge, dict):
+                continue
+                
+            clean_edge = {
+                "id": edge.get("id"),
+                "source": edge.get("source"),
+                "target": edge.get("target"),
+                "type": edge.get("type")
+            }
+            
+            # Only include label if it exists
+            if "label" in edge:
+                clean_edge["label"] = edge.get("label")
+                
+            clean_edges.append(clean_edge)
+            
+        return {
+            "nodes": clean_nodes,
+            "edges": clean_edges
+        }
+            
+    async def get_threat_model(self, session_id: str, diagram_state: Optional[Dict[str, Any]] = None) -> Tuple[Optional[Dict[str, Any]], bool]:
+        """
+        Retrieve a stored threat model from the session cache.
+        Also checks if the diagram has changed since the threat model was generated.
+        
+        Args:
+            session_id: The session identifier
+            diagram_state: Current diagram state to compare with stored hash (optional)
+            
+        Returns:
+            Tuple[Optional[Dict[str, Any]], bool]: The threat model and whether diagram has changed
+                - First element is the threat model or None if not found
+                - Second element is True if diagram has changed, False otherwise
+        """
+        try:
+            if not self.redis_pool:
+                await self.connect()
+                if not self.redis_pool:
+                    log_info(f"Cannot retrieve threat model: Redis pool not available")
+                    return None, True
+            
+            # Check if session exists
+            session_exists = await self.redis_pool.exists(f"session:{session_id}")
+            if not session_exists:
+                log_info(f"Cannot retrieve threat model: Session {session_id} not found")
+                return None, True
+            
+            # Get threat model from cache
+            threat_model_key = f"threat_model:{session_id}"
+            cached_model = await self.redis_pool.get(threat_model_key)
+            
+            if not cached_model:
+                log_info(f"No threat model found in session {session_id}")
+                return None, True
+            
+            # Parse the cached model
+            threat_model = json.loads(cached_model)
+            
+            # Check if diagram has changed, if diagram_state is provided
+            diagram_changed = True
+            
+            if diagram_state:
+                # Get stored diagram hash
+                diagram_hash_key = f"diagram_hash:{session_id}"
+                stored_hash = await self.redis_pool.get(diagram_hash_key)
+                
+                log_info(f"Comparing diagram hashes for session {session_id}")
+                log_info(f"Diagram state provided: {bool(diagram_state)} with {len(diagram_state.get('nodes', []))} nodes and {len(diagram_state.get('edges', []))} edges")
+                
+                if stored_hash:
+                    # Sanitize the current diagram state
+                    clean_diagram_state = self._sanitize_diagram_state(diagram_state)
+                    
+                    # Generate hash of current diagram
+                    current_hash = hashlib.md5(json.dumps(clean_diagram_state, sort_keys=True).encode()).hexdigest()
+                    
+                    # Handle the stored hash correctly based on its type
+                    stored_hash_str = stored_hash
+                    if hasattr(stored_hash, 'decode'):
+                        stored_hash_str = stored_hash.decode('utf-8')
+                    
+                    log_info(f"Stored hash: {stored_hash_str}")
+                    log_info(f"Current hash: {current_hash}")
+                    log_info(f"Hashes match: {stored_hash_str == current_hash}")
+                    
+                    # If hashes match, diagram hasn't changed
+                    if stored_hash_str == current_hash:
+                        log_info(f"Diagram has not changed...")
+                        diagram_changed = False
+                        log_info(f"Diagram unchanged for session {session_id}")
+                    else:
+                        log_info(f"Diagram has changed for session {session_id}")
+                else:
+                    log_info(f"No stored hash found for session {session_id}")
+            else:
+                log_info(f"No diagram state provided for comparison in session {session_id}")
+            
+            # Extend session TTL
+            await self.extend_session_ttl(session_id)
+            
+            return threat_model, diagram_changed
+            
+        except Exception as e:
+            log_info(f"Error retrieving threat model from session: {str(e)}")
+            return None, True

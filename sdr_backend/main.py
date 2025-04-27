@@ -1,7 +1,8 @@
 # main.py
 import time
 import uvicorn
-from fastapi import FastAPI
+from prometheus_client import generate_latest, CONTENT_TYPE_LATEST
+from fastapi import FastAPI, Request, Response, Depends
 from v1.api.routes.routes import router as api_router
 from fastapi.middleware.cors import CORSMiddleware
 import asyncio
@@ -18,7 +19,7 @@ import traceback
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from fastapi import Request
-from core.intent_classification.intent_dataset import train_intent_classifier
+# from core.intent_classification.intent_dataset import train_intent_classifier
 from contextlib import asynccontextmanager
 from utils.logger import log_info
 from core.cache.session_manager import SessionManager
@@ -31,10 +32,23 @@ from v1.api.health.health_monitor import health_monitor
 from v1.api.routes.health import setup_health_monitoring
 from services.logging import setup_logging
 import sys
-
+# Prometheus instrumentation
+from prometheus_fastapi_instrumentator import Instrumentator
+from utils.prometheus_metrics import setup_custom_metrics_endpoint, APP_ACTIVE_SESSIONS, authenticate_metrics
+import os
+# Hugging Face Transformer Model download
+from core.intent_classification.intent_classifier_v1 import download_transformer_models
 
 session_manager = SessionManager()
 # logger = setup_logging()
+
+# Models to download with fallbacks
+MODELS = [
+    {
+        "primary": "all-MiniLM-L6-v2",
+        "fallbacks": ["paraphrase-MiniLM-L6-v2", "distilbert-base-nli-stsb-mean-tokens"]
+    }
+]
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -45,27 +59,29 @@ async def lifespan(app: FastAPI):
     # Startup: Connect to database and Redis
     log_info("Connecting redis session manager...")
     
-    await session_manager.connect()  # Connect to Redis
-    log_info("Connected to session manager...")
+    try:
+        await session_manager.connect()  # Connect to Redis
+        log_info("Connected to session manager...")
 
-    # Apply database migrations with Alembic
-    # logger.info("Loading Alembic configuration...")
-    # alembic_cfg = Config("alembic.ini")  # Load config from alembic.ini
-    # alembic_cfg.set_main_option("sqlalchemy.url", SUPABASE_URL)  # Set the database URL
-    # logger.info("Applying all pending migrations...")
-    # command.upgrade(alembic_cfg, "head")  # Apply migrations to the latest version
-    # logger.info("Database migrations applied successfully.")
+        # Initialize health monitoring after app is fully set up
+        log_info("Setting up health monitoring...")
+        # Capture initial route information after all routes are registered
+        health_monitor.capture_routes_info(app)
+        log_info("Health monitoring initialized.")
 
-    # Initialize health monitoring after app is fully set up
-    log_info("Setting up health monitoring...")
-    # Capture initial route information after all routes are registered
-    health_monitor.capture_routes_info(app)
-    log_info("Health monitoring initialized.")
-
-    yield
-    await session_manager.disconnect()  # Disconnect from Redis
-    log_info("disconnected redis session manager...")
-    log_info("Shutting down")
+        # Set cache directory
+        log_info("Downloading transformer models...")
+        download_transformer_models(max_retries=5)
+        log_info("Transformer models downloaded.")
+        # Initialize active sessions gauge
+        APP_ACTIVE_SESSIONS.set(0)
+        
+        yield
+    finally:
+        # Cleanup resources in finally block to ensure they run even on errors
+        await session_manager.disconnect()  # Disconnect from Redis
+        log_info("disconnected redis session manager...")
+        log_info("Shutting down")
 
 
 app = FastAPI(
@@ -74,11 +90,6 @@ app = FastAPI(
     version="1.0.0",
     lifespan=lifespan
 )
-
-
-# app.mount("/reports", StaticFiles(directory=REPORTS_DIR), name="reports")
-# Mount the "outputs" directory as a static files directory
-# app.mount("/outputs", StaticFiles(directory="outputs"), name="outputs")
 
 # Allow frontend origins
 origins = [
@@ -104,84 +115,11 @@ app.add_middleware(
 # Set up health monitoring middleware (needs to be after CORS middleware)
 setup_health_monitoring(app, session_manager)
 
-# Add request ID middleware
-# @app.middleware("http")
-# async def request_middleware(request: Request, call_next):
-#     """
-#     Middleware to add request ID and timing information.
-#     """
-#     # Generate unique request ID
-#     request_id = str(uuid.uuid4())
-#     request.state.request_id = request_id
-    
-#     # Track request timing
-#     start_time = time.time()
-    
-#     # Process request
-#     try:
-#         response = await call_next(request)
-        
-#         # Add request ID and processing time headers
-#         process_time = time.time() - start_time
-#         response.headers["X-Request-ID"] = request_id
-#         response.headers["X-Process-Time"] = str(process_time)
-        
-#         # Log request details
-#         logger.info(
-#             f"Request processed",
-#             extra={
-#                 "props": {
-#                     "request_id": request_id,
-#                     "method": request.method,
-#                     "path": request.url.path,
-#                     "status_code": response.status_code,
-#                     "process_time": process_time
-#                 }
-#             }
-#         )
-        
-#         return response
-#     except Exception as e:
-#         # Log error details
-#         logger.error(
-#             f"Request failed: {str(e)}",
-#             exc_info=True,
-#             extra={
-#                 "props": {
-#                     "request_id": request_id,
-#                     "method": request.method,
-#                     "path": request.url.path
-#                 }
-#             }
-#         )
-        
-#         # Re-raise to be handled by exception handlers
-#         raise
+# Set up custom metrics endpoint
+setup_custom_metrics_endpoint(app)
 
-
-# # Exception handlers
-# @app.exception_handler(RequestValidationError)
-# async def validation_exception_handler(request: Request, exc: RequestValidationError):
-#     """
-#     Handle validation errors in request data.
-#     """
-#     logger.warning(
-#         "Validation error",
-#         extra={
-#             "props": {
-#                 "request_id": getattr(request.state, "request_id", "unknown"),
-#                 "errors": exc.errors()
-#             }
-#         }
-#     )
-    
-#     return JSONResponse(
-#         status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-#         content={
-#             "detail": exc.errors(),
-#             "request_id": getattr(request.state, "request_id", "unknown")
-#         }
-#     )
+# Prometheus instrumentation for default metrics
+Instrumentator().instrument(app)
 
 # Custom exception handler for HTTP exceptions
 @app.exception_handler(StarletteHTTPException)
@@ -214,6 +152,11 @@ async def generic_exception_handler(request: Request, exc: Exception):
 # Include our API routes under the /api prefix
 app.include_router(api_router, prefix="/v1/routes")
 
+
+@app.get("/metrics", dependencies=[Depends(authenticate_metrics)])
+async def default_metrics():
+    return Response(generate_latest(), media_type=CONTENT_TYPE_LATEST)
+
 # Root endpoint
 @app.get("/")
 async def root():
@@ -229,4 +172,5 @@ async def root():
     }
 
 if __name__ == "__main__":
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    port = int(os.environ.get("PORT", 8000))
+    uvicorn.run(app, host="0.0.0.0", port=port)

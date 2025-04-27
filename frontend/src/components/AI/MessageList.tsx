@@ -144,7 +144,6 @@ const MessageList: React.FC<MessageListProps> = ({ messages, isThinking = false,
 };
 
 export default MessageList;
-
 // import React, { useRef, useEffect } from 'react';
 // import ChatMessage, { Message } from './ChatMessage';
 // import EmptyChatState from './EmptyChatState';

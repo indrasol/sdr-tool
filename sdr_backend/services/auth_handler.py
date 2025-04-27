@@ -68,23 +68,28 @@ async def verify_token(authorization: str = Header(None)):
         log_info(f"Token valid for Supabase user ID: {user_id}")
 
         # Use Supabase client to fetch the user data from your 'users' table
-        # supabase = get_supabase_client()
-        # log_info(f"Supabase: {supabase}")
+        supabase = get_supabase_client()
+        log_info(f"Supabase: {supabase}")
 
-        # def user_operation():
-        #     return supabase.from_("auth.users").select("*").eq("id", user_id).execute()
+        def user_operation():
+            return supabase.from_("users").select("*").eq("id", user_id).execute()
 
-        # user_response = await safe_supabase_operation(
-        #     user_operation,
-        #     "Failed to fetch user data"
-        # )
-        # log_info(f"User response: {user_response}")
+        user_response = await safe_supabase_operation(
+            user_operation,
+            "Failed to fetch user data"
+        )
+        log_info(f"User response: {user_response}")
 
-        # if not user_response.data:
-        #     log_info(f"User not found in database for Supabase ID: {user_id}")
-        #     raise HTTPException(status_code=404, detail="User not found in database")
+        if not user_response.data:
+            log_info(f"User not found in database for Supabase ID: {user_id}")
+            raise HTTPException(status_code=404, detail="User not found in database")
 
-        return user_id
+        # Return a dictionary with both user_id and username
+        user_data = user_response.data[0]
+        return {
+            "id": user_id,
+            "username": user_data["username"]
+        }
 
     except HTTPException as http_exc:
         # Re-raise known HTTP exceptions

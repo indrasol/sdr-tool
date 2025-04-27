@@ -76,6 +76,7 @@ export interface DesignRequest {
     message: string;
     project_code: string;
     detail?: string;
+    status?: number;
   }
 
   export interface DFDElement {
@@ -98,16 +99,16 @@ export interface DFDBoundary {
     id: string;
     label: string;
     element_ids: string[];
+    properties?: Record<string, unknown>;
 }
 
-export interface DFDThreat {
+export interface ThreatItem {
     id: string;
     description: string;
+    mitigation: string;
     severity: string;
-    target_element_id: string;
-    target_element_type: string;
-    title?: string;
-    status?: string;
+    target_elements?: string[];
+    properties?: Record<string, unknown>;
 }
 
 export interface DFDData {
@@ -115,7 +116,48 @@ export interface DFDData {
     nodes: DFDElement[];
     edges: DFDDataFlow[];
     boundaries: DFDBoundary[];
-    threats: DFDThreat[];
+    threats: ThreatItem[];
     generated_at: string;
     name?: string;
+}
+
+// New interfaces aligned with backend structures
+
+export interface DFDSwitchRequest {
+    diagram_state?: {
+        nodes: any[];
+        edges: any[];
+    };
+    session_id?: string;
+    project_code?: string;
+}
+
+export interface ThreatsResponse {
+    severity_counts: {
+        HIGH: number;
+        MEDIUM: number;
+        LOW: number;
+    };
+    threats: ThreatItem[];
+}
+
+export interface DFDModelResponse {
+    elements: DFDElement[];
+    edges: DFDEdge[];
+    boundaries: DFDBoundary[];
+}
+
+export interface DFDEdge {
+    id: string;
+    source: string;
+    target: string;
+    label?: string;
+    properties?: Record<string, unknown>;
+}
+
+export interface FullThreatModelResponse {
+    threat_model_id?: string;
+    dfd_model: DFDModelResponse;
+    threats: ThreatsResponse;
+    generated_at?: string;
 }

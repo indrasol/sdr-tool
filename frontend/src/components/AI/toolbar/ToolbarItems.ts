@@ -1,4 +1,3 @@
-
 import { ToolbarItem } from './ToolbarTypes';
 import {
   Search, Square, LayoutGrid, Circle, Type,
@@ -63,165 +62,100 @@ import {
   CloudDrizzle
 } from 'lucide-react';
 
-// export const toolbarItems: ToolbarItem[] = [
-// AWS Compute
-// { icon: Server, label: 'EC2 Instance', category: 'Compute', color: 'white', bgColor: '#ED7615', provider: 'AWS', tags: ['server', 'virtual machine'] },
-// { icon: Scale, label: 'EC2 Auto Scaling', category: 'Compute', color: 'white', bgColor: '#ED7615', provider: 'AWS', tags: ['scaling', 'auto scaling'] },
-// { icon: Layers, label: 'Elastic Beanstalk', category: 'Compute', color: 'white', bgColor: '#ED7615', provider: 'AWS', tags: ['paas', 'platform'] },
-// { icon: Container, label: 'ECS', category: 'Containers', color: 'white', bgColor: '#ED7615', provider: 'AWS', tags: ['container', 'docker'] },
-// { icon: Boxes, label: 'EKS', category: 'Containers', color: 'white', bgColor: '#ED7615', provider: 'AWS', tags: ['kubernetes', 'k8s'] },
-// { icon: Cpu, label: 'Lambda', category: 'Serverless', color: 'white', bgColor: '#ED7615', provider: 'AWS', tags: ['serverless', 'function'] },
-// { icon: Maximize, label: 'Fargate', category: 'Containers', color: 'white', bgColor: '#ED7615', provider: 'AWS', tags: ['serverless', 'container'] },
-// { icon: MessageSquare, label: 'SES', category: 'Messaging', color: 'white', bgColor: '#ED7615', provider: 'AWS', tags: ['email', 'messaging'] },
+// Import the GCP icons
+import { convertGCPIconsToToolbarItems } from '../icons/GCPIconsLoader';
 
-// // AWS Storage
-// { icon: Folder, label: 'S3', category: 'Storage', color: 'white', bgColor: '#5DA93C', provider: 'AWS', tags: ['storage', 'object'] },
-// { icon: HardDrive, label: 'EBS', category: 'Storage', color: 'white', bgColor: '#5DA93C', provider: 'AWS', tags: ['storage', 'block'] },
-// { icon: Archive, label: 'EFS', category: 'Storage', color: 'white', bgColor: '#5DA93C', provider: 'AWS', tags: ['storage', 'file'] },
-// { icon: Folder, label: 'S3 Glacier', category: 'Storage', color: 'white', bgColor: '#5DA93C', provider: 'AWS', tags: ['storage', 'archive'] },
-// { icon: Database, label: 'Storage Gateway', category: 'Storage', color: 'white', bgColor: '#5DA93C', provider: 'AWS', tags: ['storage', 'hybrid'] },
+// Import the AWS icons
+import { convertAWSIconsToToolbarItems } from '../icons/AWSIconsLoader';
 
-// // AWS Database
-// { icon: Database, label: 'RDS', category: 'Database', color: 'white', bgColor: '#3046DF', provider: 'AWS', tags: ['database', 'sql'] },
-// { icon: Database, label: 'DynamoDB', category: 'Database', color: 'white', bgColor: '#3046DF', provider: 'AWS', tags: ['database', 'nosql'] },
-// { icon: Database, label: 'ElastiCache', category: 'Database', color: 'white', bgColor: '#3046DF', provider: 'AWS', tags: ['cache', 'in-memory'] },
-// { icon: Database, label: 'Neptune', category: 'Database', color: 'white', bgColor: '#3046DF', provider: 'AWS', tags: ['database', 'graph'] },
-// { icon: Database, label: 'Redshift', category: 'Database', color: 'white', bgColor: '#3046DF', provider: 'AWS', tags: ['database', 'data warehouse'] },
-// { icon: Database, label: 'DocumentDB', category: 'Database', color: 'white', bgColor: '#3046DF', provider: 'AWS', tags: ['database', 'mongodb'] },
-// { icon: Database, label: 'Timestream', category: 'Database', color: 'white', bgColor: '#3046DF', provider: 'AWS', tags: ['database', 'time series'] },
+// Import the Azure icons
+import { convertAzureIconsToToolbarItems } from '../icons/AzureIconsLoader';
 
-// // AWS Networking
-// { icon: Globe, label: 'Route 53', category: 'Network', color: 'white', bgColor: '#8356DB', provider: 'AWS', tags: ['dns', 'routing'] },
-// { icon: Cloud, label: 'CloudFront', category: 'Network', color: 'white', bgColor: '#8356DB', provider: 'AWS', tags: ['cdn', 'edge'] },
-// { icon: NetworkIcon, label: 'VPC', category: 'Network', color: 'white', bgColor: '#8356DB', provider: 'AWS', tags: ['network', 'virtual'] },
-// { icon: Share2, label: 'ELB', category: 'Network', color: 'white', bgColor: '#8356DB', provider: 'AWS', tags: ['load balancer'] },
-// { icon: Router, label: 'Direct Connect', category: 'Network', color: 'white', bgColor: '#8356DB', provider: 'AWS', tags: ['dedicated', 'connection'] },
-// { icon: Globe, label: 'API Gateway', category: 'Network', color: 'white', bgColor: '#8356DB', provider: 'AWS', tags: ['api', 'gateway'] },
-// { icon: Share2, label: 'App Mesh', category: 'Network', color: 'white', bgColor: '#8356DB', provider: 'AWS', tags: ['service mesh'] },
-// { icon: NetworkIcon, label: 'Transit Gateway', category: 'Network', color: 'white', bgColor: '#8356DB', provider: 'AWS', tags: ['networking', 'transit'] },
+// Import the Application icons
+import { convertApplicationIconsToToolbarItems } from '../icons/ApplicationIconsLoader';
 
-// // AWS Security
-// { icon: Lock, label: 'IAM', category: 'Security', color: 'white', bgColor: '#D93653', provider: 'AWS', tags: ['identity', 'access'] },
-// { icon: Shield, label: 'WAF', category: 'Security', color: 'white', bgColor: '#D93653', provider: 'AWS', tags: ['firewall', 'web'] },
-// { icon: ShieldCheck, label: 'Shield', category: 'Security', color: 'white', bgColor: '#D93653', provider: 'AWS', tags: ['ddos', 'protection'] },
-// { icon: Key, label: 'KMS', category: 'Security', color: 'white', bgColor: '#D93653', provider: 'AWS', tags: ['key', 'encryption'] },
-// { icon: Unlock, label: 'Secrets Manager', category: 'Security', color: 'white', bgColor: '#D93653', provider: 'AWS', tags: ['secrets', 'credentials'] },
-// { icon: AlertTriangle, label: 'Inspector', category: 'Security', color: 'white', bgColor: '#D93653', provider: 'AWS', tags: ['security', 'assessment'] },
-// { icon: Users, label: 'Cognito', category: 'Security', color: 'white', bgColor: '#D93653', provider: 'AWS', tags: ['identity', 'user'] },
-// { icon: Anchor, label: 'Certificate Manager', category: 'Security', color: 'white', bgColor: '#D93653', provider: 'AWS', tags: ['ssl', 'certificates'] },
+// Import the Client icons
+import { convertClientIconsToToolbarItems } from '../icons/ClientIconsLoader';
 
-// // AWS Management
-// { icon: Settings, label: 'CloudWatch', category: 'DevOps', color: 'white', bgColor: '#FF9900', provider: 'AWS', tags: ['monitoring', 'logs'] },
-// { icon: CloudCog, label: 'CloudFormation', category: 'DevOps', color: 'white', bgColor: '#FF9900', provider: 'AWS', tags: ['iac', 'templates'] },
-// { icon: Settings, label: 'Systems Manager', category: 'DevOps', color: 'white', bgColor: '#FF9900', provider: 'AWS', tags: ['management', 'automation'] },
-// { icon: Gauge, label: 'Trusted Advisor', category: 'DevOps', color: 'white', bgColor: '#FF9900', provider: 'AWS', tags: ['recommendations', 'best practices'] },
-// { icon: GitBranch, label: 'CodeCommit', category: 'DevOps', color: 'white', bgColor: '#FF9900', provider: 'AWS', tags: ['git', 'repository'] },
-// { icon: Workflow, label: 'CodePipeline', category: 'DevOps', color: 'white', bgColor: '#FF9900', provider: 'AWS', tags: ['cicd', 'pipeline'] },
-// { icon: Code, label: 'CodeBuild', category: 'DevOps', color: 'white', bgColor: '#FF9900', provider: 'AWS', tags: ['build', 'ci'] },
-// { icon: Workflow, label: 'CodeDeploy', category: 'DevOps', color: 'white', bgColor: '#FF9900', provider: 'AWS', tags: ['deployment', 'cd'] },
+// Import the Network icons
+import { convertNetworkIconsToToolbarItems } from '../icons/NetworkIconsLoader';
 
-// // AWS Analytics
-// { icon: LineChart, label: 'Kinesis', category: 'Analytics', color: 'white', bgColor: '#6610F2', provider: 'AWS', tags: ['streaming', 'data'] },
-// { icon: Cpu, label: 'EMR', category: 'Analytics', color: 'white', bgColor: '#6610F2', provider: 'AWS', tags: ['hadoop', 'spark'] },
-// { icon: Table, label: 'Athena', category: 'Analytics', color: 'white', bgColor: '#6610F2', provider: 'AWS', tags: ['query', 'sql'] },
-// { icon: LineChart, label: 'QuickSight', category: 'Analytics', color: 'white', bgColor: '#6610F2', provider: 'AWS', tags: ['bi', 'visualization'] },
-// { icon: Workflow, label: 'Data Pipeline', category: 'Analytics', color: 'white', bgColor: '#6610F2', provider: 'AWS', tags: ['etl', 'workflow'] },
-// { icon: Brain, label: 'Glue', category: 'Analytics', color: 'white', bgColor: '#6610F2', provider: 'AWS', tags: ['etl', 'catalog'] },
-// { icon: Cloud, label: 'Lake Formation', category: 'Analytics', color: 'white', bgColor: '#6610F2', provider: 'AWS', tags: ['data lake'] },
+// Get GCP icons from JSON
+const gcpToolbarItems: ToolbarItem[] = convertGCPIconsToToolbarItems();
 
-// // AWS Application Integration
-// { icon: MessageSquare, label: 'SNS', category: 'Messaging', color: 'white', bgColor: '#FF9900', provider: 'AWS', tags: ['notification', 'pub/sub'] },
-// { icon: Mailbox, label: 'SQS', category: 'Messaging', color: 'white', bgColor: '#FF9900', provider: 'AWS', tags: ['queue', 'messaging'] },
-// { icon: Workflow, label: 'Step Functions', category: 'Serverless', color: 'white', bgColor: '#FF9900', provider: 'AWS', tags: ['workflow', 'state machine'] },
-// { icon: Workflow, label: 'AppFlow', category: 'DevOps', color: 'white', bgColor: '#FF9900', provider: 'AWS', tags: ['integration', 'saas'] },
-// { icon: Workflow, label: 'EventBridge', category: 'Serverless', color: 'white', bgColor: '#FF9900', provider: 'AWS', tags: ['events', 'bus'] },
-// { icon: Shuffle, label: 'MQ', category: 'Messaging', color: 'white', bgColor: '#FF9900', provider: 'AWS', tags: ['messaging', 'broker'] },
+// Get AWS icons from JSON
+const awsToolbarItems: ToolbarItem[] = convertAWSIconsToToolbarItems();
 
-// // AWS IoT
-// { icon: Cpu, label: 'IoT Core', category: 'IoT', color: 'white', bgColor: '#6610F2', provider: 'AWS', tags: ['iot', 'devices'] },
-// { icon: Workflow, label: 'IoT Greengrass', category: 'IoT', color: 'white', bgColor: '#6610F2', provider: 'AWS', tags: ['iot', 'edge'] },
-// { icon: LineChart, label: 'IoT Analytics', category: 'IoT', color: 'white', bgColor: '#6610F2', provider: 'AWS', tags: ['iot', 'data'] },
-// { icon: Workflow, label: 'IoT Events', category: 'IoT', color: 'white', bgColor: '#6610F2', provider: 'AWS', tags: ['iot', 'events'] },
-// { icon: Smartphone, label: 'IoT 1-Click', category: 'IoT', color: 'white', bgColor: '#6610F2', provider: 'AWS', tags: ['iot', 'simple'] },
+// Get Azure icons from JSON
+const azureToolbarItems: ToolbarItem[] = convertAzureIconsToToolbarItems();
 
-// // AWS Machine Learning
-// { icon: Brain, label: 'SageMaker', category: 'Analytics', color: 'white', bgColor: '#6610F2', provider: 'AWS', tags: ['ml', 'ai'] },
-// { icon: Webcam, label: 'Rekognition', category: 'Analytics', color: 'white', bgColor: '#6610F2', provider: 'AWS', tags: ['ml', 'vision'] },
-// { icon: Wand2, label: 'Comprehend', category: 'Analytics', color: 'white', bgColor: '#6610F2', provider: 'AWS', tags: ['ml', 'nlp'] },
-// { icon: Headphones, label: 'Transcribe', category: 'Analytics', color: 'white', bgColor: '#6610F2', provider: 'AWS', tags: ['ml', 'speech'] },
-// { icon: MessageSquare, label: 'Polly', category: 'Analytics', color: 'white', bgColor: '#6610F2', provider: 'AWS', tags: ['ml', 'text-to-speech'] },
-// { icon: Globe, label: 'Translate', category: 'Analytics', color: 'white', bgColor: '#6610F2', provider: 'AWS', tags: ['ml', 'translation'] },
-// { icon: Brain, label: 'Lex', category: 'Analytics', color: 'white', bgColor: '#6610F2', provider: 'AWS', tags: ['ml', 'chatbot'] },
-// { icon: Lightbulb, label: 'Personalize', category: 'Analytics', color: 'white', bgColor: '#6610F2', provider: 'AWS', tags: ['ml', 'recommendations'] },
+// Get Application icons from JSON
+const applicationToolbarItems: ToolbarItem[] = convertApplicationIconsToToolbarItems();
 
-// // Azure services
-// { icon: Server, label: 'Azure VM', category: 'Compute', color: 'white', bgColor: '#008AD7', provider: 'Azure', tags: ['vm', 'server'] },
-// { icon: Boxes, label: 'Azure Kubernetes', category: 'Containers', color: 'white', bgColor: '#008AD7', provider: 'Azure', tags: ['kubernetes', 'container'] },
-// { icon: Folder, label: 'Azure Blob Storage', category: 'Storage', color: 'white', bgColor: '#008AD7', provider: 'Azure', tags: ['storage', 'blob'] },
-// { icon: Database, label: 'Azure SQL', category: 'Database', color: 'white', bgColor: '#008AD7', provider: 'Azure', tags: ['database', 'sql'] },
-// { icon: Database, label: 'Azure Cosmos DB', category: 'Database', color: 'white', bgColor: '#008AD7', provider: 'Azure', tags: ['database', 'nosql'] },
-// { icon: Code, label: 'Azure Functions', category: 'Serverless', color: 'white', bgColor: '#008AD7', provider: 'Azure', tags: ['serverless', 'function'] },
-// { icon: Workflow, label: 'Azure Logic Apps', category: 'DevOps', color: 'white', bgColor: '#008AD7', provider: 'Azure', tags: ['workflow', 'integration'] },
-// { icon: AppWindow, label: 'Azure App Service', category: 'Compute', color: 'white', bgColor: '#008AD7', provider: 'Azure', tags: ['web', 'app'] },
+// Get Client icons from JSON
+const clientToolbarItems: ToolbarItem[] = convertClientIconsToToolbarItems();
 
-// // GCP services
-// { icon: Server, label: 'GCP Compute Engine', category: 'Compute', color: 'white', bgColor: '#4285F4', provider: 'GCP', tags: ['vm', 'server'] },
-// { icon: Boxes, label: 'GCP Kubernetes Engine', category: 'Containers', color: 'white', bgColor: '#4285F4', provider: 'GCP', tags: ['kubernetes', 'container'] },
-// { icon: Folder, label: 'GCP Cloud Storage', category: 'Storage', color: 'white', bgColor: '#4285F4', provider: 'GCP', tags: ['storage', 'object'] },
-// { icon: Database, label: 'GCP BigQuery', category: 'Database', color: 'white', bgColor: '#4285F4', provider: 'GCP', tags: ['database', 'warehouse'] },
-// { icon: Database, label: 'GCP Firestore', category: 'Database', color: 'white', bgColor: '#4285F4', provider: 'GCP', tags: ['database', 'nosql'] },
-// { icon: Code, label: 'GCP Cloud Functions', category: 'Serverless', color: 'white', bgColor: '#4285F4', provider: 'GCP', tags: ['serverless', 'function'] },
-// { icon: Workflow, label: 'GCP Cloud Composer', category: 'DevOps', color: 'white', bgColor: '#4285F4', provider: 'GCP', tags: ['workflow', 'airflow'] },
-// { icon: AppWindow, label: 'GCP App Engine', category: 'Compute', color: 'white', bgColor: '#4285F4', provider: 'GCP', tags: ['app', 'paas'] },
+// Get Network icons from JSON
+const networkToolbarItems: ToolbarItem[] = convertNetworkIconsToToolbarItems();
 
-// // Generic components
-// { icon: Globe, label: 'Internet', category: 'Network', color: 'white', bgColor: '#0078D7', provider: 'Generic', tags: ['internet', 'global'] },
-// { icon: User, label: 'User', category: 'General', color: 'white', bgColor: '#6C757D', provider: 'Generic', tags: ['user', 'person'] },
-// { icon: Users, label: 'User Group', category: 'General', color: 'white', bgColor: '#6C757D', provider: 'Generic', tags: ['users', 'group'] },
-// { icon: Building, label: 'Data Center', category: 'Infrastructure', color: 'white', bgColor: '#198754', provider: 'Generic', tags: ['datacenter', 'facility'] },
-// { icon: Router, label: 'Router', category: 'Network', color: 'white', bgColor: '#0078D7', provider: 'Generic', tags: ['router', 'networking'] },
-// { icon: Lock, label: 'Firewall', category: 'Security', color: 'white', bgColor: '#D93653', provider: 'Generic', tags: ['firewall', 'security'] },
-// { icon: Smartphone, label: 'Mobile Device', category: 'IoT', color: 'white', bgColor: '#6610F2', provider: 'Generic', tags: ['mobile', 'device'] },
-// { icon: Laptop, label: 'Laptop', category: 'IoT', color: 'white', bgColor: '#6610F2', provider: 'Generic', tags: ['laptop', 'computer'] },
-
-// // Additional components for complete diagram scenarios
-// { icon: Type, label: 'Label', category: 'General', color: 'white', bgColor: '#6C757D', provider: 'Generic', tags: ['label', 'text'] },
-// { icon: LayoutGrid, label: 'Group', category: 'General', color: 'white', bgColor: '#6C757D', provider: 'Generic', tags: ['group', 'box'] },
-// { icon: ArrowRightLeft, label: 'Connection', category: 'General', color: 'white', bgColor: '#6C757D', provider: 'Generic', tags: ['connection', 'line'] },
-// { icon: MapPin, label: 'Region', category: 'Infrastructure', color: 'white', bgColor: '#198754', provider: 'Generic', tags: ['region', 'location'] },
-// { icon: Landmark, label: 'Enterprise', category: 'Infrastructure', color: 'white', bgColor: '#198754', provider: 'Generic', tags: ['enterprise', 'business'] },
-// { icon: Home, label: 'On-Premises', category: 'Infrastructure', color: 'white', bgColor: '#198754', provider: 'Generic', tags: ['on-premises', 'local'] }
-// ];
-
-export const toolbarItems: ToolbarItem[] = [
-  // Client
-  { icon: LayoutDashboard, label: 'Web App', category: 'Client', color: 'white', bgColor: '#3046df', provider: 'AWS', tags: ['ui', 'frontend'] },
-  { icon: Globe, label: 'Browser', category: 'Client', color: 'white', bgColor: '#3046df', provider: 'AWS', tags: ['ui', 'frontend'] },
-  { icon: Smartphone, label: 'Mobile App', category: 'Client', color: 'white', bgColor: '#3046df', provider: 'AWS', tags: ['ui', 'frontend'] },
-  { icon: Laptop, label: 'Desktop App', category: 'Client', color: 'white', bgColor: '#3046df', provider: 'AWS', tags: ['ui', 'frontend'] },
-  { icon: Cpu, label: 'IoT Device', category: 'Client', color: 'white', bgColor: '#3046df', provider: 'AWS', tags: ['hardware', 'embedded'] },
-  { icon: Satellite, label: 'External Clients', category: 'Client', color: 'white', bgColor: '#3046df', provider: 'AWS', tags: ['integration', 'external'] },
-  { icon: Wifi, label: 'Internet', category: 'Client', color: 'white', bgColor: '#3046df', provider: 'AWS', tags: ['network', 'connectivity'] },
-
-
+// Original toolbar items
+const originalToolbarItems: ToolbarItem[] = [
   // Gateway
-  { icon: Share2, label: 'API Gateway', category: 'Gateway', color: 'white', bgColor: '#ED7615', provider: 'AWS', tags: ['gateway', 'network'] },
-  { icon: Network, label: 'Load Balancer', category: 'Gateway', color: 'white', bgColor: '#ED7615', provider: 'AWS', tags: ['traffic', 'balancing'] },
-  { icon: Router, label: 'Reverse Proxy', category: 'Gateway', color: 'white', bgColor: '#ED7615', provider: 'AWS', tags: ['proxy', 'routing'] },
+  { 
+    icon: Share2, 
+    label: 'API Gateway', 
+    category: 'Gateway', 
+    color: 'white', 
+    bgColor: '#ED7615', 
+    provider: 'AWS', 
+    tags: ['gateway', 'network'],
+    description: 'An API Gateway that manages, secures and routes API requests. Provides a single entry point for external clients to access services.'
+  },
+  { 
+    icon: Network, 
+    label: 'Load Balancer', 
+    category: 'Gateway', 
+    color: 'white', 
+    bgColor: '#ED7615', 
+    provider: 'AWS', 
+    tags: ['traffic', 'balancing'],
+    description: 'Distributes incoming network traffic across multiple servers to ensure high availability and reliability. Essential for scaling applications.'
+  },
+  { 
+    icon: Router, 
+    label: 'Reverse Proxy', 
+    category: 'Gateway', 
+    color: 'white', 
+    bgColor: '#ED7615', 
+    provider: 'AWS', 
+    tags: ['proxy', 'routing'],
+    description: 'A server that sits between client devices and backend servers, forwarding client requests to appropriate servers. Used for security and routing.'
+  },
   { icon: TrafficCone, label: 'Rate Limiter', category: 'Gateway', color: 'white', bgColor: '#ED7615', provider: 'AWS', tags: ['security', 'throttling'] },
   { icon: Globe, label: 'CDN', category: 'Gateway', color: 'white', bgColor: '#ED7615', provider: 'AWS', tags: ['cache', 'distribution'] },
   { icon: CloudCog, label: 'Edge Service', category: 'Gateway', color: 'white', bgColor: '#ED7615', provider: 'AWS', tags: ['edge', 'latency'] },
 
-  // Security
-  { icon: ShieldCheck, label: 'Auth Service', category: 'Security', color: 'white', bgColor: '#EA4335', provider: 'AWS', tags: ['auth', 'security'] },
-  { icon: KeyRound, label: 'IAM', category: 'Security', color: 'white', bgColor: '#EA4335', provider: 'AWS', tags: ['identity', 'roles'] },
-  { icon: ShieldAlert, label: 'WAF', category: 'Security', color: 'white', bgColor: '#EA4335', provider: 'AWS', tags: ['firewall', 'protection'] },
-  { icon: KeySquare, label: 'Secrets Manager', category: 'Security', color: 'white', bgColor: '#EA4335', provider: 'AWS', tags: ['secrets', 'config'] },
-  { icon: LockKeyhole, label: 'Encryption Service', category: 'Security', color: 'white', bgColor: '#EA4335', provider: 'AWS', tags: ['encryption', 'kms'] },
-
   // Application
-  { icon: Server, label: 'Web Server', category: 'Application', color: 'white', bgColor: '#009688', provider: 'Azure', tags: ['backend', 'api'] },
-  { icon: Boxes, label: 'Microservice', category: 'Application', color: 'white', bgColor: '#009688', provider: 'Azure', tags: ['service', 'logic'] },
+  { 
+    icon: Server, 
+    label: 'Web Server', 
+    category: 'Application', 
+    color: 'white', 
+    bgColor: '#009688', 
+    provider: 'Azure', 
+    tags: ['backend', 'api'],
+    description: 'Serves web content or hosts applications. Handles HTTP requests and delivers responses to clients. Core component of web applications.'
+  },
+  { 
+    icon: Boxes, 
+    label: 'Microservice', 
+    category: 'Application', 
+    color: 'white', 
+    bgColor: '#009688', 
+    provider: 'Azure', 
+    tags: ['service', 'logic'],
+    description: 'Small, independently deployable service focused on a specific business capability. Part of a microservices architecture.'
+  },
   { icon: Code2, label: 'API Service', category: 'Application', color: 'white', bgColor: '#009688', provider: 'Azure', tags: ['endpoint', 'rest'] },
   { icon: Repeat, label: 'Background Worker', category: 'Application', color: 'white', bgColor: '#009688', provider: 'Azure', tags: ['async', 'processing'] },
   { icon: Rocket, label: 'App Server', category: 'Application', color: 'white', bgColor: '#009688', provider: 'Azure', tags: ['runtime', 'execution'] },
@@ -229,23 +163,43 @@ export const toolbarItems: ToolbarItem[] = [
   { icon: LayoutList, label: 'Job Scheduler', category: 'Application', color: 'white', bgColor: '#009688', provider: 'Azure', tags: ['cron', 'jobs'] },
 
   // Database
-  { icon: Database, label: 'SQL Database', category: 'Database', color: 'white', bgColor: '#4CAF50', provider: 'Azure', tags: ['relational', 'storage'] },
-  { icon: HardDriveDownload, label: 'NoSQL DB', category: 'Database', color: 'white', bgColor: '#4CAF50', provider: 'Azure', tags: ['nosql', 'document'] },
+  { 
+    icon: Database, 
+    label: 'SQL Database', 
+    category: 'Database', 
+    color: 'white', 
+    bgColor: '#4CAF50', 
+    provider: 'Azure', 
+    tags: ['relational', 'storage'],
+    description: 'Relational database management system for structured data storage. Used for data with defined relationships and schema.'
+  },
+  { 
+    icon: HardDriveDownload, 
+    label: 'NoSQL DB', 
+    category: 'Database', 
+    color: 'white', 
+    bgColor: '#4CAF50', 
+    provider: 'Azure', 
+    tags: ['nosql', 'document'],
+    description: 'Non-relational database for flexible, schema-less data storage. Good for unstructured data, document storage, or high-scale applications.'
+  },
   { icon: CloudLightning, label: 'Cache Store', category: 'Database', color: 'white', bgColor: '#4CAF50', provider: 'Azure', tags: ['redis', 'memory'] },
   { icon: FolderSearch2, label: 'Blob Storage', category: 'Database', color: 'white', bgColor: '#4CAF50', provider: 'Azure', tags: ['files', 'objects'] },
   { icon: BarChart3, label: 'Analytics DB', category: 'Database', color: 'white', bgColor: '#4CAF50', provider: 'Azure', tags: ['analytics', 'bigdata'] },
   { icon: FolderKanban, label: 'Data Lake', category: 'Database', color: 'white', bgColor: '#4CAF50', provider: 'Azure', tags: ['lake', 'storage'] },
   { icon: FileBarChart, label: 'Data Warehouse', category: 'Database', color: 'white', bgColor: '#4CAF50', provider: 'Azure', tags: ['warehouse', 'analytics'] },
 
-  // Integration
-  { icon: MessageSquareCode, label: 'Message Queue', category: 'Integration', color: 'white', bgColor: '#FFC107', provider: 'GCP', tags: ['queue', 'broker'] },
-  { icon: Send, label: 'Event Bus', category: 'Integration', color: 'white', bgColor: '#FFC107', provider: 'GCP', tags: ['events', 'pubsub'] },
-  { icon: Plug, label: '3rd Party API', category: 'Integration', color: 'white', bgColor: '#FFC107', provider: 'GCP', tags: ['external', 'api'] },
-  { icon: Webhook, label: 'Webhook Handler', category: 'Integration', color: 'white', bgColor: '#FFC107', provider: 'GCP', tags: ['events', 'http'] },
-  { icon: MessageCircleCode, label: 'Event Processor', category: 'Integration', color: 'white', bgColor: '#FFC107', provider: 'GCP', tags: ['stream', 'handler'] },
-
   // Monitoring & DevOps
-  { icon: Activity, label: 'Monitoring', category: 'DevOps', color: 'white', bgColor: '#607D8B', provider: 'Azure', tags: ['logs', 'metrics'] },
+  { 
+    icon: Activity, 
+    label: 'Monitoring', 
+    category: 'DevOps', 
+    color: 'white', 
+    bgColor: '#607D8B', 
+    provider: 'Azure', 
+    tags: ['logs', 'metrics'],
+    description: 'System for tracking application health, performance metrics, and logs. Essential for maintaining service reliability and troubleshooting.'
+  },
   { icon: MonitorDot, label: 'Dashboard', category: 'DevOps', color: 'white', bgColor: '#607D8B', provider: 'Azure', tags: ['visibility', 'health'] },
   { icon: GitBranch, label: 'CI/CD Pipeline', category: 'DevOps', color: 'white', bgColor: '#607D8B', provider: 'Azure', tags: ['build', 'deploy'] },
   { icon: Terminal, label: 'IaC', category: 'DevOps', color: 'white', bgColor: '#607D8B', provider: 'Azure', tags: ['terraform', 'automation'] },
@@ -253,34 +207,42 @@ export const toolbarItems: ToolbarItem[] = [
   { icon: RefreshCw, label: 'Auto Scaling', category: 'DevOps', color: 'white', bgColor: '#607D8B', provider: 'Azure', tags: ['scale', 'autoscale'] },
   { icon: LogOut, label: 'Backup Service', category: 'DevOps', color: 'white', bgColor: '#607D8B', provider: 'Azure', tags: ['backup', 'recovery'] },
 
-  // AWS
-  { icon: ServerCog, label: 'EC2', category: 'AWS', color: 'white', bgColor: '#FF9900', provider: 'AWS', tags: ['compute', 'server'] },
-  { icon: CloudDrizzle, label: 'S3', category: 'AWS', color: 'white', bgColor: '#FF9900', provider: 'AWS', tags: ['storage', 'objects'] },
-  { icon: CloudLightning, label: 'Lambda', category: 'AWS', color: 'white', bgColor: '#FF9900', provider: 'AWS', tags: ['serverless', 'function'] },
-  { icon: Database, label: 'RDS', category: 'AWS', color: 'white', bgColor: '#FF9900', provider: 'AWS', tags: ['relational', 'database'] },
-  { icon: CloudCog, label: 'EKS', category: 'AWS', color: 'white', bgColor: '#FF9900', provider: 'AWS', tags: ['kubernetes', 'cluster'] },
-  { icon: Database, label: 'DynamoDB', category: 'AWS', color: 'white', bgColor: '#FF9900', provider: 'AWS', tags: ['nosql', 'aws'] },
-  { icon: ShieldCheck, label: 'Shield', category: 'AWS', color: 'white', bgColor: '#FF9900', provider: 'AWS', tags: ['ddos', 'protection'] },
-  { icon: Boxes, label: 'Fargate', category: 'AWS', color: 'white', bgColor: '#FF9900', provider: 'AWS', tags: ['containers', 'compute'] },
-  { icon: BarChart3, label: 'CloudWatch', category: 'AWS', color: 'white', bgColor: '#FF9900', provider: 'AWS', tags: ['monitoring', 'logs'] },
-
-  // GCP
-  { icon: CloudCog, label: 'Compute Engine', category: 'GCP', color: 'white', bgColor: '#9C27B0', provider: 'GCP', tags: ['vm', 'compute'] },
-  { icon: HardDriveDownload, label: 'Cloud Storage', category: 'GCP', color: 'white', bgColor: '#9C27B0', provider: 'GCP', tags: ['storage', 'buckets'] },
-  { icon: CloudLightning, label: 'Cloud Functions', category: 'GCP', color: 'white', bgColor: '#9C27B0', provider: 'GCP', tags: ['functions', 'serverless'] },
-  { icon: Database, label: 'Cloud SQL', category: 'GCP', color: 'white', bgColor: '#9C27B0', provider: 'GCP', tags: ['sql', 'database'] },
-  { icon: CloudCog, label: 'GKE', category: 'GCP', color: 'white', bgColor: '#9C27B0', provider: 'GCP', tags: ['kubernetes', 'orchestration'] },
-  { icon: Database, label: 'BigQuery', category: 'GCP', color: 'white', bgColor: '#9C27B0', provider: 'GCP', tags: ['analytics', 'gcp'] },
-  { icon: Terminal, label: 'Cloud Build', category: 'GCP', color: 'white', bgColor: '#9C27B0', provider: 'GCP', tags: ['cicd', 'build'] },
-
-
   // Azure
-  { icon: CloudCog, label: 'VM', category: 'Azure', color: 'white', bgColor: '#0072C6', provider: 'Azure', tags: ['compute', 'virtual machine'] },
+  { 
+    icon: CloudCog, 
+    label: 'VM', 
+    category: 'Azure', 
+    color: 'white', 
+    bgColor: '#0072C6', 
+    provider: 'Azure', 
+    tags: ['compute', 'virtual machine'],
+    description: 'Azure Virtual Machines - On-demand, scalable computing resources. Provides flexibility of virtualization without buying hardware.'
+  },
   { icon: CloudLightning, label: 'Azure Functions', category: 'Azure', color: 'white', bgColor: '#0072C6', provider: 'Azure', tags: ['serverless', 'functions'] },
   { icon: CloudCog, label: 'AKS', category: 'Azure', color: 'white', bgColor: '#0072C6', provider: 'Azure', tags: ['kubernetes', 'cluster'] },
   { icon: Database, label: 'Cosmos DB', category: 'Azure', color: 'white', bgColor: '#0072C6', provider: 'Azure', tags: ['nosql', 'cosmos'] },
   { icon: BarChart3, label: 'Application Insights', category: 'Azure', color: 'white', bgColor: '#0072C6', provider: 'Azure', tags: ['telemetry', 'monitoring'] },
   { icon: Network, label: 'Virtual Network', category: 'Azure', color: 'white', bgColor: '#0072C6', provider: 'Azure', tags: ['vnet', 'networking'] },
   { icon: FolderSearch2, label: 'Data Factory', category: 'Azure', color: 'white', bgColor: '#0072C6', provider: 'Azure', tags: ['etl', 'integration'] }
+];
 
+// Export combined toolbar items, replacing the basic AWS, Azure, and GCP icons with the icons from JSON
+export const toolbarItems: ToolbarItem[] = [
+  ...originalToolbarItems.filter(item => 
+    item.category !== 'GCP' && 
+    item.category !== 'AWS' && 
+    item.category !== 'Azure' && 
+    item.category !== 'Application' &&
+    item.category !== 'Client' &&
+    item.category !== 'Gateway' &&
+    item.category !== 'Database' &&
+    item.category !== 'DevOps' &&
+    item.category !== 'Network'
+  ),
+  ...clientToolbarItems,
+  ...awsToolbarItems,
+  ...azureToolbarItems,
+  ...gcpToolbarItems,
+  ...applicationToolbarItems,
+  ...networkToolbarItems
 ];

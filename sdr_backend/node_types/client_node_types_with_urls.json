@@ -1,0 +1,34 @@
+{
+    "client": [
+        {
+        "name": "client_mobile_app",
+      "description": "Mobile application client that runs on smartphones and tablets, providing user interface for interacting with backend services.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/client-icons/mobile_app.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJjbGllbnQtaWNvbnMvbW9iaWxlX2FwcC5zdmciLCJpYXQiOjE3NDU1NjQ1MjAsImV4cCI6MTc3NzEwMDUyMH0.N5ABgXUKB7oTxB6DOFE5h1K5De7jGGeoTO2DqXbDZuo"
+    },
+    {
+      "name": "client_web_browser",
+      "description": "Web browser client that runs in standard browsers, providing web-based interface for accessing application services.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/client-icons/web_browser.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJjbGllbnQtaWNvbnMvd2ViX2Jyb3dzZXIuc3ZnIiwiaWF0IjoxNzQ1NTY0NTA1LCJleHAiOjE3NzcxMDA1MDV9.KfL4-8Zu9cMlZ_N7_FMlJ6tRY9B6EFdx7L0W3xg31s8"
+    },
+    {
+      "name": "client_desktop_app",
+      "description": "Desktop application client that runs natively on user computers, offering rich functionality with direct system access.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/client-icons/desktop_app.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJjbGllbnQtaWNvbnMvZGVza3RvcF9hcHAuc3ZnIiwiaWF0IjoxNzQ1NTY0NTY0LCJleHAiOjE3NzcxMDA1NjR9.sJQW8VWncP-HEp0JoEWOWZcBmSI7LjKcO3TbmFy3BdA"
+    },
+    {
+      "name": "client_iot_device",
+      "description": "Internet of Things device client that connects physical devices to the network, enabling monitoring and control of hardware.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/client-icons/iot.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJjbGllbnQtaWNvbnMvaW90LnN2ZyIsImlhdCI6MTc0NTU2NDU3NiwiZXhwIjoxNzc3MTAwNTc2fQ.4sbHQwA8ewSdl5eci041qwYaM4aaz_NlHMe7qCTNtHw"
+    },
+    {
+      "name": "client_kiosk",
+      "description": "Kiosk client application designed for public-facing self-service terminals with restricted functionality.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/client-icons/kiosk.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJjbGllbnQtaWNvbnMva2lvc2suc3ZnIiwiaWF0IjoxNzQ1NTY0NTg2LCJleHAiOjE3NzcxMDA1ODZ9.KRGl6exT0gjPp87v0eIyx-4ZHjRnPxXXrHFH5O3Q85w"
+    },
+    {
+      "name": "client_external_clients",
+      "description": "External clients are clients that are not part of the main application, but are used to access the application.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/client-icons/external_clients.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJjbGllbnQtaWNvbnMvZXh0ZXJuYWxfY2xpZW50cy5zdmciLCJpYXQiOjE3NDU1NjQ1OTcsImV4cCI6MTc3NzEwMDU5N30.OXEhswixB_4qr8yKtOrmeiorQIcoxdT9LBJKx_UkgXM"
+    }
+  ]
+}

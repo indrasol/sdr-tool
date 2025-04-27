@@ -10,7 +10,67 @@ from sentence_transformers import SentenceTransformer
 from models.response_models import ResponseType
 from core.llm.llm_gateway_v1 import LLMService
 from utils.logger import log_info
+import random
+import time
+from config.settings import ML_MODELS_DIR, TRANSFORMER_MODEL_TOKEN
+from huggingface_hub import login
 
+# Models to download with fallbacks
+MODELS = [
+    {
+        "primary": "all-MiniLM-L6-v2",
+        "fallbacks": ["distilbert-base-nli-stsb-mean-tokens"]
+    }
+]
+
+def download_transformer_models(max_retries=5):
+    """Download all models with exponential backoff retry logic"""
+    cache_dir = ML_MODELS_DIR
+    os.makedirs(cache_dir, exist_ok=True)
+    log_info(f"Using cache directory: {cache_dir}")
+    
+    # Authenticate with Hugging Face if token is available
+    hf_token = TRANSFORMER_MODEL_TOKEN
+    if hf_token:
+        log_info("Authenticating with Hugging Face")
+        login(token=hf_token)
+    else:
+        log_info("No Hugging Face token provided, downloads may be rate-limited")
+    for model_set in MODELS:
+        primary = model_set["primary"]
+        try:
+            download_with_retry(primary, cache_dir, max_retries)
+        except Exception as e:
+            log_info(f"Failed to download primary model {primary}: {str(e)}")
+            # Try fallbacks
+            for fallback in model_set.get("fallbacks", []):
+                try:
+                    log_info(f"Attempting fallback model: {fallback}")
+                    download_with_retry(fallback, cache_dir, max_retries)
+                    log_info(f"Successfully downloaded fallback model {fallback}")
+                    break
+                except Exception as e:
+                    log_info(f"Failed to download fallback model {fallback}: {str(e)}")
+
+# Hugging Face Transformer Model download
+def download_with_retry(model_name, cache_dir, max_retries=5):
+    """Download model with exponential backoff retry logic"""
+    for attempt in range(max_retries):
+        try:
+            log_info(f"Downloading {model_name}, attempt {attempt+1}/{max_retries}")
+            start_time = time.time()
+            model = SentenceTransformer(model_name, cache_folder=cache_dir)
+            log_info(f"Successfully downloaded {model_name} in {time.time() - start_time:.2f} seconds")
+            return model
+        except Exception as e:
+            if attempt < max_retries - 1:
+                backoff_time = (2 ** attempt) * (0.5 + random.random())
+                log_info(f"Error downloading {model_name}: {str(e)}")
+                log_info(f"Retrying in {backoff_time:.2f} seconds...")
+                time.sleep(backoff_time)
+            else:
+                log_info(f"Failed to download {model_name} after {max_retries} attempts")
+                raise
 
 class IntentClassifier:
     """
@@ -35,10 +95,27 @@ class IntentClassifier:
         
         # Initialize metrics tracking
         self.metrics = self._load_metrics()
+
+        # Set cache directory from environment or use default
+        cache_dir = ML_MODELS_DIR
         
         # Load sentence transformer model for embeddings
         log_info(f"Loading sentence transformer model: {model_name}")
-        self.embedding_model = SentenceTransformer(model_name)
+        models_to_try = [model_name,'distilbert-base-nli-stsb-mean-tokens']
+    
+        for i, model_to_try in enumerate(models_to_try):
+            try:
+                self.embedding_model = SentenceTransformer(model_to_try, cache_folder=cache_dir)
+                if i > 0:  # If not the first choice
+                    log_info(f"Successfully loaded fallback model: {model_to_try}")
+                else:
+                    log_info(f"Successfully loaded model: {model_to_try}")
+                break
+            except Exception as e:
+                log_info(f"Error loading model {model_to_try}: {str(e)}")
+                if i == len(models_to_try) - 1:  # If this is the last model to try
+                    raise RuntimeError(f"Failed to load any embedding model after trying {len(models_to_try)} options")
+
         
         # High-precision patterns (reduced set focused on quality)
         self.architecture_patterns = [
@@ -76,6 +153,14 @@ class IntentClassifier:
             r"how are you",
             r"thanks",
             r"thank you",
+        ]
+        
+        self.dfd_threat_patterns = [
+            r"generate dfd with threat analysis",
+            r"create dfd and analyze threats",
+            r"build dfd and perform threat modeling",
+            r"dfd threat analysis",
+            r"data flow diagram with threats"
         ]
         
         # Load example queries and build vector index
@@ -357,12 +442,14 @@ class IntentClassifier:
         expert_score = self._match_patterns(query, self.expert_patterns)
         clarification_score = self._match_patterns(query, self.clarification_patterns)
         out_of_context_score = self._match_patterns(query, self.out_of_context_patterns)
+        dfd_threat_score = self._match_patterns(query, self.dfd_threat_patterns)
         
         scores = {
             ResponseType.ARCHITECTURE: architecture_score,
             ResponseType.EXPERT: expert_score,
             ResponseType.CLARIFICATION: clarification_score,
-            ResponseType.OUT_OF_CONTEXT: out_of_context_score
+            ResponseType.OUT_OF_CONTEXT: out_of_context_score,
+            ResponseType.DFD: dfd_threat_score
         }
         
         # Get highest scoring intent
@@ -478,7 +565,7 @@ class IntentClassifier:
         Example: "ExpertResponse 0.85"
         """
         
-        response = await self.llm_service.generate_response(prompt, temperature=0.3)
+        response = await self.llm_service.generate_llm_response(prompt=prompt, temperature=0.3,model_provider="openai",model_name="gpt-4o-mini")
         log_info(f"LLM classification response: {response}")
         
         # Parse LLM response to extract intent and confidence

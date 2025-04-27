@@ -6,13 +6,15 @@ export interface ToolbarItem {
   label: string;
   category: 
   // 'General' | 'AWS' | 'Network' | 'Security' | 'Azure' | 'GCP' | 'DevOps' | 'Infrastructure' | 'IoT' | 'Containers' | 'Database' | 'Analytics' | 'Storage' | 'Compute' | 'Serverless' | 'Messaging' | 
-  'Client' |  'Gateway'|'Security'|'Application'|'Database'|'Integration'|'DevOps'|'AWS'|'Azure'|'GCP'|
+  'Client' |  'Gateway'|'Application'|'Database'|'DevOps'|'AWS'|'Azure'|'GCP'| 'Network' |
   // DFD-specific categories
     'DFD Elements' | 'External Entities' | 'Processes' | 'Data Stores' | 'Security Controls' | 'Boundaries';
   color?: string;
   bgColor?: string;
   provider?: 'AWS' | 'Azure' | 'GCP' | 'Generic' | 'DFD';
   tags?: string[];
+  description?: string;
+  tooltipTitle?: string;
 }
 
 export interface DiagramToolbarProps {

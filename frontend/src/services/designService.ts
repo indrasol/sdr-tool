@@ -1,5 +1,5 @@
 // src/services/designService.ts
-import { DesignRequest, DesignResponse, ResponseType, ArchitectureResponse, DFDData, ExpertResponse, ClarificationResponse, OutOfContextResponse, DFDGenerationStartedResponse } from '@/interfaces/aiassistedinterfaces';
+import { DesignRequest, DesignResponse, ResponseType, ArchitectureResponse, DFDData, ExpertResponse, ClarificationResponse, OutOfContextResponse, DFDGenerationStartedResponse, DFDSwitchRequest, FullThreatModelResponse, ThreatsResponse } from '@/interfaces/aiassistedinterfaces';
 import tokenService from '@/services/tokenService';
 import { getAuthHeaders, BASE_API_URL, fetchWithTimeout, DEFAULT_TIMEOUT } from './apiService'
 
@@ -160,7 +160,6 @@ export const sendSimpleDesignRequest = (request: DesignRequest, showThinking: bo
 };
 
 // Service function to get Threat Model
-
 export const getThreatModel = async (projectCode: string, toast?: any): Promise<DFDData> => {
   try {
       const response = await fetchWithTimeout(
@@ -210,5 +209,111 @@ export const getThreatModel = async (projectCode: string, toast?: any): Promise<
             }
         }
       throw error; // Re-throw
+  }
+};
+
+// Function to generate threat model directly
+export const generateThreatModel = async (
+    projectCode: string, 
+    request: DFDSwitchRequest,
+    toast?: any
+): Promise<FullThreatModelResponse> => {
+    try {
+        console.log(`Generating threat model for project ${projectCode}`, request);
+        
+        const response = await fetchWithTimeout(
+            `${BASE_API_URL}/projects/${projectCode}/generate-threatmodel`,
+            {
+                method: 'POST',
+                headers: getAuthHeaders(),
+                body: JSON.stringify(request)
+            },
+            120000 // 2 minute timeout for threat model generation
+        );
+
+        console.log('Threat Model Response:', response);
+        
+        if (!response.ok) {
+            let errorDetail = `Failed to generate threat model: ${response.statusText}`;
+            try {
+                const errorData = await response.json();
+                errorDetail = errorData.detail || JSON.stringify(errorData);
+            } catch (e) { /* Ignore JSON parsing error */ }
+            
+            if (toast) {
+                toast({ title: "Error", description: errorDetail, variant: "destructive" });
+            }
+            throw new Error(errorDetail);
+        }
+        
+        const threatModelResponse = await response.json();
+        console.log('Generated threat model:', threatModelResponse);
+        
+        return threatModelResponse as FullThreatModelResponse;
+    } catch (error) {
+        console.error('Error generating threat model:', error);
+        if (toast) {
+            toast({ 
+                title: "Error Generating Threat Model", 
+                description: error.message || "Could not generate threat model",
+                variant: "destructive" 
+            });
+        }
+        throw error;
+    }
+};
+
+// Function to run threat analysis
+export const runThreatAnalysis = async (
+  projectCode: string,
+  request: DFDSwitchRequest,
+  toast?: any
+): Promise<ThreatsResponse> => {
+  try {
+    console.log(`Running threat analysis for project ${projectCode}`, request);
+    
+    const response = await fetchWithTimeout(
+      `${BASE_API_URL}/projects/${projectCode}/threat_analysis`,
+      {
+        method: 'POST',
+        headers: getAuthHeaders(),
+        body: JSON.stringify(request)
+      },
+      120000 // 2 minute timeout for threat analysis
+    );
+
+    console.log('Threat Analysis Response:', response);
+    
+    if (!response.ok) {
+      let errorDetail = `Failed to run threat analysis: ${response.statusText}`;
+      try {
+        const errorData = await response.json();
+        errorDetail = errorData.detail || JSON.stringify(errorData);
+      } catch (e) { /* Ignore JSON parsing error */ }
+      
+      if (toast) {
+        toast({ 
+          title: "Error", 
+          description: errorDetail, 
+          variant: "destructive" 
+        });
+      }
+      throw new Error(errorDetail);
+    }
+    
+    const threatAnalysisResponse = await response.json();
+    console.log('Threat analysis result:', threatAnalysisResponse);
+    
+    return threatAnalysisResponse as ThreatsResponse;
+  } catch (error) {
+    console.error('Error running threat analysis:', error);
+    if (toast) {
+      toast({ 
+        title: "Error Running Threat Analysis", 
+        description: error.message || "Could not complete threat analysis",
+        variant: "destructive" 
+      });
+    }
+    throw error;
   }
 };

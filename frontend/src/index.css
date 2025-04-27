@@ -215,7 +215,62 @@
   }
 }
 
-/* Report page styles */
+/* Rotation animation for the Earth globe */
+.rotate-animation {
+  animation: rotate 40s linear infinite;
+}
+
+@keyframes rotate {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+/* Pulsing animation for threat badges */
+.threat-badge-pulse {
+  animation: threat-pulse 2s ease-in-out infinite;
+}
+
+@keyframes threat-pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.6;
+    text-shadow: 0 0 5px rgba(239, 68, 68, 0.5);
+  }
+}
+
+/* Animation for threat cards */
+.threat-card-hover-effect {
+  transition: all 0.2s ease-in-out;
+}
+
+.threat-card-hover-effect:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+/* Panel transition */
+.threat-panel-transition {
+  transition: all 0.3s ease-in-out;
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateX(-20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+/* New styles for the report page */
 .font-playfair {
   font-family: 'Playfair Display', serif;
 }
@@ -228,187 +283,57 @@
   @apply border-l-4 border-securetrack-purple bg-gray-50 p-4 rounded shadow-sm my-3;
 }
 
-/* Node customization styles derived from customNode.tsx */
-.custom-node {
-  transition: all 0.2s;
-}
-
-/* Handle styles from customNode.tsx */
-.react-flow__handle {
-  width: 8px;
-  height: 8px;
-  /* border-radius: 50%; */
-}
-
-.react-flow__handle-left {
-  left: -5px;
-}
-
-.react-flow__handle-right {
-  right: -5px;
-}
-
-/* ========================================================= */
-/* AI Chat Styles (from AI.css)                             */
-/* ========================================================= */
-
-.AIChat-wrapper > div {
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-}
-
-/* Make sure the messages container scrolls, not the whole chat */
-.AIChat-wrapper .messages-container {
-  flex: 1;
-  overflow-y: auto;
-  overflow-x: hidden;
-}
-
-/* Fix the input at the bottom */
-.AIChat-wrapper .input-container {
-  position: sticky;
-  bottom: 0;
-  background: white;
-  padding: 1rem;
-  border-top: 1px solid #e5e7eb;
-}
-
-/* ========================================================= */
-/* Thinking Display Styles (from ThinkingDisplay.css)       */
-/* ========================================================= */
-
-.thinking-container {
-  width: 100%;
-  margin: 8px 0;
-  border-radius: 8px;
-  background-color: #f5f7ff;
-  overflow: hidden;
-}
-
-.thinking-toggle {
-  width: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 12px 16px;
-  background-color: #e8ecff;
-  border: none;
-  cursor: pointer;
-  font-size: 14px;
-  font-weight: 500;
-  color: #4a57b9;
-  text-align: left;
-}
-
-.thinking-toggle:hover {
-  background-color: #dce3ff;
-}
-
-.toggle-icon {
-  transition: transform 0.2s ease;
-}
-
-.toggle-icon.expanded {
-  transform: rotate(180deg);
-}
-
-.thinking-content {
-  padding: 16px;
-  font-size: 14px;
-  line-height: 1.5;
-  color: #333;
-  max-height: 400px;
-  overflow-y: auto;
-}
-
-.thinking-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 8px;
-}
-
-.thinking-title {
-  font-weight: 600;
-  color: #4a57b9;
-}
-
-.redacted-notice {
-  font-size: 12px;
-  color: #9e5400;
-  background-color: #fff3e0;
-  padding: 4px 8px;
-  border-radius: 4px;
-}
-
-.thinking-text {
-  white-space: pre-wrap;
-  font-family: monospace;
-  background-color: #ffffff;
-  padding: 12px;
-  border-radius: 6px;
-  border: 1px solid #e0e0e0;
-}
-
-/* ========================================================= */
-/* Message List Styles (from MessageList.css)               */
-/* ========================================================= */
-
-.typing-indicator {
-  display: flex;
-  align-items: center;
-  column-gap: 6px;
-  padding: 4px 8px;
-}
-
-.typing-indicator span {
-  height: 8px;
-  width: 8px;
-  background-color: #9ca3af;
-  border-radius: 50%;
+/* Styles for the typing cursor in placeholders */
+.typing-cursor {
   display: inline-block;
-  animation: bounce 1s infinite alternate;
+  margin-left: 2px;
+  width: 2px;
+  height: 1em;
+  background-color: #6B7280;
+  vertical-align: text-bottom;
+  opacity: 0.8;
+  animation: blink 1s step-end infinite;
 }
 
-.typing-indicator span:nth-child(2) {
-  animation-delay: 0.2s;
+/* Bot cursor styles */
+.bot-cursor {
+  display: inline-flex;
+  align-items: center;
+  margin-left: 4px;
+  vertical-align: middle;
+  color: #6B7280;
+  opacity: 0.8;
+  animation: pulse 1.5s ease-in-out infinite;
 }
 
-.typing-indicator span:nth-child(3) {
-  animation-delay: 0.4s;
+.bot-cursor svg {
+  width: 14px;
+  height: 14px;
+  transform: translateY(1px);
 }
 
-/* Note: The bounce animation is already defined earlier in the file */
-
-/* ========================================================= */
-/* Chat Message Styles (from ChatMessage.css)               */
-/* ========================================================= */
-
-.message-content {
-  line-height: 1.5;
+@keyframes pulse {
+  0%, 100% {
+    opacity: 0.8;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.6;
+    transform: scale(0.95);
+  }
 }
 
-.markdown-content h3 {
-  color: #180404;
-  margin-top: 0.5rem;
-  margin-bottom: 0.25rem;
+@keyframes blink {
+  from, to {
+    opacity: 0.8;
+  }
+  50% {
+    opacity: 0;
+  }
 }
 
-.markdown-content p {
-  margin-bottom: 0.5rem;
-}
-
-.markdown-content ul, .markdown-content ol {
-  margin-left: 1rem;
-  margin-bottom: 0.5rem;
-}
-
-.markdown-content li {
-  margin-bottom: 0.25rem;
-}
-
-.markdown-content strong {
-  font-weight: 600;
+.typing-placeholder {
+  color: #6B7280;
+  opacity: 0.9;
+  font-style: normal;
 }

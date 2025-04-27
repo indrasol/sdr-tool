@@ -21,6 +21,8 @@ print(f"title: {title}, description: {description}, version: {version}")
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 # CLAUDE_API_KEY = os.getenv("CLAUDE_API_KEY")
 ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY")
+GROK_API_KEY = os.getenv("GROK_API_KEY")
+# CLAUDE_API_KEY = os.getenv("CLAUDE_API_KEY"
 
 
 # Langsmith Tracing
@@ -92,3 +94,10 @@ REDIS_PORT = os.getenv("REDIS_PORT")
 REDIS_PASSWORD = os.getenv("REDIS_PASSWORD")
 REDIS_DB = os.getenv("REDIS_DB")
 SESSION_EXPIRY = 86400
+
+# Custom Metrics
+METRICS_USERNAME = os.getenv("METRICS_USERNAME")
+METRICS_PASSWORD = os.getenv("METRICS_PASSWORD")
+
+# Trasnformer Model Token
+TRANSFORMER_MODEL_TOKEN = os.getenv("TRANSFORMER_MODEL_TOKEN")

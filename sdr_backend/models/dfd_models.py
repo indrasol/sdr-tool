@@ -56,6 +56,7 @@ class DFDResponse(BaseModel):
 class DFDSwitchRequest(BaseModel):
     diagram_state: Optional[Dict[str, Any]] = Field(None, description="Current state of the architecture diagram")
     session_id: Optional[str] = Field(None, description="Session identifier if available")
+    project_code: Optional[str] = Field(None, description="Project code, required when session_id is not provided")
 
 class DFDGenerationStartedResponse(BaseModel):
     """Response model when DFD generation starts asynchronously."""

@@ -1,0 +1,1232 @@
+{
+  "aws": [
+    {
+      "name": "aws_pinpoint_apis",
+      "description": "aws_pinpoint_apis service"
+    },
+    {
+      "name": "aws_iot_events",
+      "description": "A service for detecting and responding to IoT events."
+    },
+    {
+      "name": "aws_elemental_mediastore",
+      "description": "aws_elemental_mediastore service"
+    },
+    {
+      "name": "aws_parallel_computing_service",
+      "description": "aws_parallel_computing_service service"
+    },
+    {
+      "name": "aws_iot_device_defender",
+      "description": "A security service for IoT devices."
+    },
+    {
+      "name": "aws_elastic_beanstalk",
+      "description": "A platform for deploying and scaling applications."
+    },
+    {
+      "name": "aws_signer",
+      "description": "aws_signer service"
+    },
+    {
+      "name": "aws_fsx_for_wfs",
+      "description": "aws_fsx_for_wfs service"
+    },
+    {
+      "name": "aws_backint_agent",
+      "description": "aws_backint_agent service"
+    },
+    {
+      "name": "aws_entity_resolution",
+      "description": "A service for matching and linking related records."
+    },
+    {
+      "name": "aws_deeplens",
+      "description": "aws_deeplens service"
+    },
+    {
+      "name": "aws_bedrock",
+      "description": "A service for building applications with foundation models."
+    },
+    {
+      "name": "aws_red_hat_openshift_service_on_aws",
+      "description": "aws_red_hat_openshift_service_on_aws service"
+    },
+    {
+      "name": "aws_file_cache",
+      "description": "aws_file_cache service"
+    },
+    {
+      "name": "aws_elastic_container_registry",
+      "description": "aws_elastic_container_registry service"
+    },
+    {
+      "name": "aws_managed_service_for_apache_flink",
+      "description": "aws_managed_service_for_apache_flink service"
+    },
+    {
+      "name": "aws_privatelink",
+      "description": "aws_privatelink service"
+    },
+    {
+      "name": "aws_neptune",
+      "description": "A managed graph database service."
+    },
+    {
+      "name": "aws_managed_services",
+      "description": "aws_managed_services service"
+    },
+    {
+      "name": "aws_snowball_edge",
+      "description": "aws_snowball_edge service"
+    },
+    {
+      "name": "aws_distro_for_opentelemetry",
+      "description": "aws_distro_for_opentelemetry service"
+    },
+    {
+      "name": "aws_iq",
+      "description": "aws_iq service"
+    },
+    {
+      "name": "aws_resilience_hub",
+      "description": "aws_resilience_hub service"
+    },
+    {
+      "name": "aws_corretto",
+      "description": "aws_corretto service"
+    },
+    {
+      "name": "aws_deepracer",
+      "description": "aws_deepracer service"
+    },
+    {
+      "name": "aws_finspace",
+      "description": "A service for managing and analyzing financial data."
+    },
+    {
+      "name": "aws_iot_twinmaker",
+      "description": "aws_iot_twinmaker service"
+    },
+    {
+      "name": "aws_serverless_application_repository",
+      "description": "aws_serverless_application_repository service"
+    },
+    {
+      "name": "aws_wickr",
+      "description": "aws_wickr service"
+    },
+    {
+      "name": "aws_elastic_kubernetes_service",
+      "description": "aws_elastic_kubernetes_service service"
+    },
+    {
+      "name": "aws_waf",
+      "description": "aws_waf service"
+    },
+    {
+      "name": "aws_guardduty",
+      "description": "aws_guardduty service"
+    },
+    {
+      "name": "aws_apache_mxnet_on_aws",
+      "description": "aws_apache_mxnet_on_aws service"
+    },
+    {
+      "name": "aws_professional_services",
+      "description": "aws_professional_services service"
+    },
+    {
+      "name": "aws_elemental_server",
+      "description": "aws_elemental_server service"
+    },
+    {
+      "name": "aws_elastic_fabric_adapter",
+      "description": "aws_elastic_fabric_adapter service"
+    },
+    {
+      "name": "aws_polly",
+      "description": "A text-to-speech service."
+    },
+    {
+      "name": "aws_fsx_for_openzfs",
+      "description": "aws_fsx_for_openzfs service"
+    },
+    {
+      "name": "aws_timestream",
+      "description": "A time-series database service."
+    },
+    {
+      "name": "aws_gamelift",
+      "description": "aws_gamelift service"
+    },
+    {
+      "name": "aws_wavelength",
+      "description": "aws_wavelength service"
+    },
+    {
+      "name": "aws_fargate",
+      "description": "A serverless compute engine for containers."
+    },
+    {
+      "name": "aws_iot_button",
+      "description": "aws_iot_button service"
+    },
+    {
+      "name": "aws_snowball",
+      "description": "aws_snowball service"
+    },
+    {
+      "name": "aws_marketplace_dark",
+      "description": "aws_marketplace_dark service"
+    },
+    {
+      "name": "aws_cloudhsm",
+      "description": "aws_cloudhsm service"
+    },
+    {
+      "name": "aws_appfabric",
+      "description": "aws_appfabric service"
+    },
+    {
+      "name": "aws_pinpoint",
+      "description": "aws_pinpoint service"
+    },
+    {
+      "name": "aws_chatbot",
+      "description": "aws_chatbot service"
+    },
+    {
+      "name": "aws_amplify",
+      "description": "aws_amplify service"
+    },
+    {
+      "name": "aws_vpc_lattice",
+      "description": "aws_vpc_lattice service"
+    },
+    {
+      "name": "aws_elemental_medialive",
+      "description": "aws_elemental_medialive service"
+    },
+    {
+      "name": "aws_x_ray",
+      "description": "aws_x_ray service"
+    },
+    {
+      "name": "aws_elastic_vmware_service",
+      "description": "aws_elastic_vmware_service service"
+    },
+    {
+      "name": "aws_outposts_servers",
+      "description": "aws_outposts_servers service"
+    },
+    {
+      "name": "aws_oracle_database_at_aws",
+      "description": "aws_oracle_database_at_aws service"
+    },
+    {
+      "name": "aws_codecatalyst",
+      "description": "aws_codecatalyst service"
+    },
+    {
+      "name": "aws_workdocs",
+      "description": "aws_workdocs service"
+    },
+    {
+      "name": "aws_eventbridge",
+      "description": "A serverless event bus for connecting applications using events."
+    },
+    {
+      "name": "aws_glue_databrew",
+      "description": "aws_glue_databrew service"
+    },
+    {
+      "name": "aws_elemental_appliances_&_software",
+      "description": "aws_elemental_appliances_&_software service"
+    },
+    {
+      "name": "aws_nice_enginframe",
+      "description": "aws_nice_enginframe service"
+    },
+    {
+      "name": "aws_healthlake",
+      "description": "A service for storing and analyzing healthcare data."
+    },
+    {
+      "name": "aws_audit_manager",
+      "description": "aws_audit_manager service"
+    },
+    {
+      "name": "aws_cloud_development_kit",
+      "description": "aws_cloud_development_kit service"
+    },
+    {
+      "name": "aws_chime_sdk",
+      "description": "aws_chime_sdk service"
+    },
+    {
+      "name": "aws_healthscribe",
+      "description": "aws_healthscribe service"
+    },
+    {
+      "name": "aws_detective",
+      "description": "aws_detective service"
+    },
+    {
+      "name": "aws_healthomics",
+      "description": "aws_healthomics service"
+    },
+    {
+      "name": "aws_thinkbox_deadline",
+      "description": "aws_thinkbox_deadline service"
+    },
+    {
+      "name": "aws_shield",
+      "description": "aws_shield service"
+    },
+    {
+      "name": "aws_cloud_wan",
+      "description": "aws_cloud_wan service"
+    },
+    {
+      "name": "aws_supply_chain",
+      "description": "aws_supply_chain service"
+    },
+    {
+      "name": "aws_codeartifact",
+      "description": "aws_codeartifact service"
+    },
+    {
+      "name": "aws_macie",
+      "description": "aws_macie service"
+    },
+    {
+      "name": "aws_firewall_manager",
+      "description": "aws_firewall_manager service"
+    },
+    {
+      "name": "aws_connect",
+      "description": "A cloud-based contact center service."
+    },
+    {
+      "name": "aws_freertos",
+      "description": "aws_freertos service"
+    },
+    {
+      "name": "aws_network_firewall",
+      "description": "aws_network_firewall service"
+    },
+    {
+      "name": "aws_user_notifications",
+      "description": "aws_user_notifications service"
+    },
+    {
+      "name": "aws_api_gateway",
+      "description": "aws_api_gateway service"
+    },
+    {
+      "name": "aws_cloudsearch",
+      "description": "A managed service for adding search capabilities to applications."
+    },
+    {
+      "name": "aws_inspector",
+      "description": "aws_inspector service"
+    },
+    {
+      "name": "aws_eks_distro",
+      "description": "aws_eks_distro service"
+    },
+    {
+      "name": "aws_rekognition",
+      "description": "aws_rekognition service"
+    },
+    {
+      "name": "aws_managed_workflows_for_apache_airflow",
+      "description": "aws_managed_workflows_for_apache_airflow service"
+    },
+    {
+      "name": "aws_elemental_link",
+      "description": "aws_elemental_link service"
+    },
+    {
+      "name": "aws_codepipeline",
+      "description": "aws_codepipeline service"
+    },
+    {
+      "name": "aws_workspaces_family",
+      "description": "aws_workspaces_family service"
+    },
+    {
+      "name": "aws_repost_private",
+      "description": "aws_repost_private service"
+    },
+    {
+      "name": "aws_artifact",
+      "description": "aws_artifact service"
+    },
+    {
+      "name": "aws_forecast",
+      "description": "A time-series forecasting service."
+    },
+    {
+      "name": "aws_simspace_weaver",
+      "description": "aws_simspace_weaver service"
+    },
+    {
+      "name": "aws_thinkbox_stoke",
+      "description": "aws_thinkbox_stoke service"
+    },
+    {
+      "name": "aws_control_tower",
+      "description": "aws_control_tower service"
+    },
+    {
+      "name": "aws_health_dashboard",
+      "description": "aws_health_dashboard service"
+    },
+    {
+      "name": "aws_storage_gateway",
+      "description": "aws_storage_gateway service"
+    },
+    {
+      "name": "aws_identity_and_access_management",
+      "description": "aws_identity_and_access_management service"
+    },
+    {
+      "name": "aws_command_line_interface",
+      "description": "aws_command_line_interface service"
+    },
+    {
+      "name": "aws_augmented_ai_a2i",
+      "description": "aws_augmented_ai_a2i service"
+    },
+    {
+      "name": "aws_reserved_instance_reporting",
+      "description": "aws_reserved_instance_reporting service"
+    },
+    {
+      "name": "aws_opensearch_service",
+      "description": "A managed search and analytics service."
+    },
+    {
+      "name": "aws_nova",
+      "description": "aws_nova service"
+    },
+    {
+      "name": "aws_nitro_enclaves",
+      "description": "aws_nitro_enclaves service"
+    },
+    {
+      "name": "aws_site_to_site_vpn",
+      "description": "aws_site_to_site_vpn service"
+    },
+    {
+      "name": "aws_cost_explorer",
+      "description": "aws_cost_explorer service"
+    },
+    {
+      "name": "aws_lookout_for_equipment",
+      "description": "aws_lookout_for_equipment service"
+    },
+    {
+      "name": "aws_ground_station",
+      "description": "aws_ground_station service"
+    },
+    {
+      "name": "aws_savings_plans",
+      "description": "aws_savings_plans service"
+    },
+    {
+      "name": "aws_application_auto_scaling",
+      "description": "aws_application_auto_scaling service"
+    },
+    {
+      "name": "aws_elemental_mediaconnect",
+      "description": "aws_elemental_mediaconnect service"
+    },
+    {
+      "name": "aws_iot_sitewise",
+      "description": "A service for collecting and analyzing industrial IoT data."
+    },
+    {
+      "name": "aws_auto_scaling",
+      "description": "aws_auto_scaling service"
+    },
+    {
+      "name": "aws_infrastructure_composer",
+      "description": "aws_infrastructure_composer service"
+    },
+    {
+      "name": "aws_rds",
+      "description": "A managed relational database service."
+    },
+    {
+      "name": "aws_parallel_cluster",
+      "description": "aws_parallel_cluster service"
+    },
+    {
+      "name": "aws_resource_explorer",
+      "description": "aws_resource_explorer service"
+    },
+    {
+      "name": "aws_ecs_anywhere",
+      "description": "aws_ecs_anywhere service"
+    },
+    {
+      "name": "aws_well_architected_tool",
+      "description": "aws_well_architected_tool service"
+    },
+    {
+      "name": "aws_memorydb",
+      "description": "A Redis-compatible in-memory database."
+    },
+    {
+      "name": "aws_redshift",
+      "description": "A fully managed data warehouse service."
+    },
+    {
+      "name": "aws_elasticache",
+      "description": "An in-memory caching service."
+    },
+    {
+      "name": "aws_quicksight",
+      "description": "A business intelligence service for creating interactive dashboards."
+    },
+    {
+      "name": "aws_private_5g",
+      "description": "aws_private_5g service"
+    },
+    {
+      "name": "aws_simple_storage_service_glacier",
+      "description": "aws_simple_storage_service_glacier service"
+    },
+    {
+      "name": "aws_cloudtrail",
+      "description": "aws_cloudtrail service"
+    },
+    {
+      "name": "aws_cloud_directory",
+      "description": "aws_cloud_directory service"
+    },
+    {
+      "name": "aws_backup",
+      "description": "aws_backup service"
+    },
+    {
+      "name": "aws_app_studio",
+      "description": "aws_app_studio service"
+    },
+    {
+      "name": "aws_appsync",
+      "description": "A managed GraphQL service for building APIs."
+    },
+    {
+      "name": "aws_cognito",
+      "description": "aws_cognito service"
+    },
+    {
+      "name": "aws_elastic_container_service",
+      "description": "aws_elastic_container_service service"
+    },
+    {
+      "name": "aws_sagemaker_studio_lab",
+      "description": "aws_sagemaker_studio_lab service"
+    },
+    {
+      "name": "aws_open_3d_engine",
+      "description": "aws_open_3d_engine service"
+    },
+    {
+      "name": "aws_emr",
+      "description": "A big data processing service using frameworks like Hadoop and Spark."
+    },
+    {
+      "name": "aws_personalize",
+      "description": "A service for creating personalized recommendations."
+    },
+    {
+      "name": "aws_quantum_ledger_database",
+      "description": "aws_quantum_ledger_database service"
+    },
+    {
+      "name": "aws_glue",
+      "description": "A data integration service for ETL processes."
+    },
+    {
+      "name": "aws_compute_optimizer",
+      "description": "aws_compute_optimizer service"
+    },
+    {
+      "name": "aws_pytorch_on_aws",
+      "description": "aws_pytorch_on_aws service"
+    },
+    {
+      "name": "aws_resource_access_manager",
+      "description": "aws_resource_access_manager service"
+    },
+    {
+      "name": "aws_proton",
+      "description": "aws_proton service"
+    },
+    {
+      "name": "aws_textract",
+      "description": "aws_textract service"
+    },
+    {
+      "name": "aws_bottlerocket",
+      "description": "aws_bottlerocket service"
+    },
+    {
+      "name": "aws_security_hub",
+      "description": "aws_security_hub service"
+    },
+    {
+      "name": "aws_data_transfer_terminal",
+      "description": "aws_data_transfer_terminal service"
+    },
+    {
+      "name": "aws_elastic_inference",
+      "description": "A service for adding ML inference acceleration to applications."
+    },
+    {
+      "name": "aws_application_migration_service",
+      "description": "aws_application_migration_service service"
+    },
+    {
+      "name": "aws_elastic_load_balancing",
+      "description": "aws_elastic_load_balancing service"
+    },
+    {
+      "name": "aws_application_discovery_service",
+      "description": "aws_application_discovery_service service"
+    },
+    {
+      "name": "aws_lookout_for_metrics",
+      "description": "aws_lookout_for_metrics service"
+    },
+    {
+      "name": "aws_simple_notification_service",
+      "description": "A messaging service for sending notifications."
+    },
+    {
+      "name": "aws_security_lake",
+      "description": "aws_security_lake service"
+    },
+    {
+      "name": "aws_repost",
+      "description": "aws_repost service"
+    },
+    {
+      "name": "aws_cloudformation",
+      "description": "aws_cloudformation service"
+    },
+    {
+      "name": "aws_s3_on_outposts",
+      "description": "aws_s3_on_outposts service"
+    },
+    {
+      "name": "aws_comprehend_medical",
+      "description": "aws_comprehend_medical service"
+    },
+    {
+      "name": "aws_thinkbox_sequoia",
+      "description": "aws_thinkbox_sequoia service"
+    },
+    {
+      "name": "aws_managed_grafana",
+      "description": "aws_managed_grafana service"
+    },
+    {
+      "name": "aws_launch_wizard",
+      "description": "aws_launch_wizard service"
+    },
+    {
+      "name": "aws_interactive_video_service",
+      "description": "aws_interactive_video_service service"
+    },
+    {
+      "name": "aws_outposts_rack",
+      "description": "aws_outposts_rack service"
+    },
+    {
+      "name": "aws_athena",
+      "description": "A query service for analyzing data in Amazon S3 using SQL."
+    },
+    {
+      "name": "aws_iot_core",
+      "description": "aws_iot_core service"
+    },
+    {
+      "name": "aws_lake_formation",
+      "description": "A service for building and managing data lakes."
+    },
+    {
+      "name": "aws_migration_evaluator",
+      "description": "aws_migration_evaluator service"
+    },
+    {
+      "name": "aws_thinkbox_xmesh",
+      "description": "aws_thinkbox_xmesh service"
+    },
+    {
+      "name": "aws_management_console",
+      "description": "aws_management_console service"
+    },
+    {
+      "name": "aws_migration_hub",
+      "description": "aws_migration_hub service"
+    },
+    {
+      "name": "aws_efs",
+      "description": "aws_efs service"
+    },
+    {
+      "name": "aws_dynamodb",
+      "description": "A NoSQL database service."
+    },
+    {
+      "name": "aws_iot_expresslink",
+      "description": "aws_iot_expresslink service"
+    },
+    {
+      "name": "aws_codeguru",
+      "description": "A tool for automated code reviews and performance optimization."
+    },
+    {
+      "name": "aws_organizations",
+      "description": "aws_organizations service"
+    },
+    {
+      "name": "aws_data_exchange",
+      "description": "A marketplace for finding, subscribing to, and using third-party data."
+    },
+    {
+      "name": "aws_comprehend",
+      "description": "A natural language processing service for text analysis."
+    },
+    {
+      "name": "aws_kendra",
+      "description": "An intelligent search service powered by machine learning."
+    },
+    {
+      "name": "aws_tools_and_sdks",
+      "description": "aws_tools_and_sdks service"
+    },
+    {
+      "name": "aws_data_firehose",
+      "description": "A service for delivering real-time streaming data to destinations."
+    },
+    {
+      "name": "aws_outposts_family",
+      "description": "aws_outposts_family service"
+    },
+    {
+      "name": "aws_console_mobile_application",
+      "description": "aws_console_mobile_application service"
+    },
+    {
+      "name": "aws_thinkbox_frost",
+      "description": "aws_thinkbox_frost service"
+    },
+    {
+      "name": "aws_dcv",
+      "description": "aws_dcv service"
+    },
+    {
+      "name": "aws_training_certification",
+      "description": "aws_training_certification service"
+    },
+    {
+      "name": "aws_lightsail_for_research",
+      "description": "aws_lightsail_for_research service"
+    },
+    {
+      "name": "aws_activate",
+      "description": "aws_activate service"
+    },
+    {
+      "name": "aws_tensorflow_on_aws",
+      "description": "aws_tensorflow_on_aws service"
+    },
+    {
+      "name": "aws_aurora",
+      "description": "A MySQL and PostgreSQL-compatible relational database."
+    },
+    {
+      "name": "aws_elemental_live",
+      "description": "aws_elemental_live service"
+    },
+    {
+      "name": "aws_braket",
+      "description": "aws_braket service"
+    },
+    {
+      "name": "aws_sagemaker_ground_truth",
+      "description": "aws_sagemaker_ground_truth service"
+    },
+    {
+      "name": "aws_lex",
+      "description": "A service for building conversational interfaces."
+    },
+    {
+      "name": "aws_license_manager",
+      "description": "aws_license_manager service"
+    },
+    {
+      "name": "aws_key_management_service",
+      "description": "aws_key_management_service service"
+    },
+    {
+      "name": "aws_batch",
+      "description": "aws_batch service"
+    },
+    {
+      "name": "aws_panorama",
+      "description": "aws_panorama service"
+    },
+    {
+      "name": "aws_private_certificate_authority",
+      "description": "aws_private_certificate_authority service"
+    },
+    {
+      "name": "aws_certificate_manager",
+      "description": "aws_certificate_manager service"
+    },
+    {
+      "name": "aws_service_management_connector",
+      "description": "aws_service_management_connector service"
+    },
+    {
+      "name": "aws_healthimaging",
+      "description": "aws_healthimaging service"
+    },
+    {
+      "name": "aws_kinesis_data_streams",
+      "description": "aws_kinesis_data_streams service"
+    },
+    {
+      "name": "aws_elastic_disaster_recovery",
+      "description": "aws_elastic_disaster_recovery service"
+    },
+    {
+      "name": "aws_cost_and_usage_report",
+      "description": "aws_cost_and_usage_report service"
+    },
+    {
+      "name": "aws_eks_anywhere",
+      "description": "aws_eks_anywhere service"
+    },
+    {
+      "name": "aws_ec2_auto_scaling",
+      "description": "aws_ec2_auto_scaling service"
+    },
+    {
+      "name": "aws_elemental_conductor",
+      "description": "aws_elemental_conductor service"
+    },
+    {
+      "name": "aws_keyspaces",
+      "description": "aws_keyspaces service"
+    },
+    {
+      "name": "aws_fraud_detector",
+      "description": "A service for detecting fraudulent activities."
+    },
+    {
+      "name": "aws_elemental_delta",
+      "description": "aws_elemental_delta service"
+    },
+    {
+      "name": "aws_verified_permissions",
+      "description": "aws_verified_permissions service"
+    },
+    {
+      "name": "aws_cloudshell",
+      "description": "aws_cloudshell service"
+    },
+    {
+      "name": "aws_virtual_private_cloud",
+      "description": "aws_virtual_private_cloud service"
+    },
+    {
+      "name": "aws_simple_queue_service",
+      "description": "A managed message queue service."
+    },
+    {
+      "name": "aws_simple_storage_service",
+      "description": "aws_simple_storage_service service"
+    },
+    {
+      "name": "aws_elemental_mediaconvert",
+      "description": "aws_elemental_mediaconvert service"
+    },
+    {
+      "name": "aws_simple_email_service",
+      "description": "aws_simple_email_service service"
+    },
+    {
+      "name": "aws_codedeploy",
+      "description": "aws_codedeploy service"
+    },
+    {
+      "name": "aws_kinesis",
+      "description": "A platform for processing real-time streaming data."
+    },
+    {
+      "name": "aws_elastic_block_store",
+      "description": "aws_elastic_block_store service"
+    },
+    {
+      "name": "aws_device_farm",
+      "description": "aws_device_farm service"
+    },
+    {
+      "name": "aws_neuron",
+      "description": "aws_neuron service"
+    },
+    {
+      "name": "aws_iot_device_management",
+      "description": "A service for managing IoT devices at scale."
+    },
+    {
+      "name": "aws_route_53",
+      "description": "aws_route_53 service"
+    },
+    {
+      "name": "aws_codewhisperer",
+      "description": "An AI-powered coding assistant."
+    },
+    {
+      "name": "aws_appflow",
+      "description": "An integration service for transferring data between SaaS apps and AWS."
+    },
+    {
+      "name": "aws_deadline_cloud",
+      "description": "aws_deadline_cloud service"
+    },
+    {
+      "name": "aws_datazone",
+      "description": "A data management service for organizing and governing data."
+    },
+    {
+      "name": "aws_codebuild",
+      "description": "aws_codebuild service"
+    },
+    {
+      "name": "aws_ec2",
+      "description": "A virtual server compute service."
+    },
+    {
+      "name": "aws_mainframe_modernization",
+      "description": "aws_mainframe_modernization service"
+    },
+    {
+      "name": "aws_translate",
+      "description": "aws_translate service"
+    },
+    {
+      "name": "aws_iam_identity_center",
+      "description": "aws_iam_identity_center service"
+    },
+    {
+      "name": "aws_clean_rooms",
+      "description": "A service for secure data collaboration across organizations."
+    },
+    {
+      "name": "aws_app_runner",
+      "description": "aws_app_runner service"
+    },
+    {
+      "name": "aws_cloud9",
+      "description": "aws_cloud9 service"
+    },
+    {
+      "name": "aws_marketplace_light",
+      "description": "aws_marketplace_light service"
+    },
+    {
+      "name": "aws_client_vpn",
+      "description": "aws_client_vpn service"
+    },
+    {
+      "name": "aws_systems_manager",
+      "description": "aws_systems_manager service"
+    },
+    {
+      "name": "aws_app_mesh",
+      "description": "aws_app_mesh service"
+    },
+    {
+      "name": "aws_express_workflows",
+      "description": "aws_express_workflows service"
+    },
+    {
+      "name": "aws_workmail",
+      "description": "aws_workmail service"
+    },
+    {
+      "name": "aws_support",
+      "description": "aws_support service"
+    },
+    {
+      "name": "aws_lightsail",
+      "description": "aws_lightsail service"
+    },
+    {
+      "name": "aws_telco_network_builder",
+      "description": "aws_telco_network_builder service"
+    },
+    {
+      "name": "aws_fault_injection_service",
+      "description": "aws_fault_injection_service service"
+    },
+    {
+      "name": "aws_thinkbox_krakatoa",
+      "description": "aws_thinkbox_krakatoa service"
+    },
+    {
+      "name": "aws_deep_learning_containers",
+      "description": "aws_deep_learning_containers service"
+    },
+    {
+      "name": "aws_trusted_advisor",
+      "description": "aws_trusted_advisor service"
+    },
+    {
+      "name": "aws_application_recovery_controller",
+      "description": "aws_application_recovery_controller service"
+    },
+    {
+      "name": "aws_cloudwatch",
+      "description": "A monitoring and observability service."
+    },
+    {
+      "name": "aws_chime",
+      "description": "aws_chime service"
+    },
+    {
+      "name": "aws_elastic_transcoder",
+      "description": "aws_elastic_transcoder service"
+    },
+    {
+      "name": "aws_alexa_for_business",
+      "description": "aws_alexa_for_business service"
+    },
+    {
+      "name": "aws_iot_analytics",
+      "description": "aws_iot_analytics service"
+    },
+    {
+      "name": "aws_fsx_for_netapp_ontap",
+      "description": "aws_fsx_for_netapp_ontap service"
+    },
+    {
+      "name": "aws_lookout_for_vision",
+      "description": "A service for detecting defects using computer vision."
+    },
+    {
+      "name": "aws_elemental_mediapackage",
+      "description": "aws_elemental_mediapackage service"
+    },
+    {
+      "name": "aws_direct_connect",
+      "description": "aws_direct_connect service"
+    },
+    {
+      "name": "aws_security_incident_response",
+      "description": "aws_security_incident_response service"
+    },
+    {
+      "name": "aws_iot_fleetwise",
+      "description": "aws_iot_fleetwise service"
+    },
+    {
+      "name": "aws_lambda",
+      "description": "A serverless compute service for running code."
+    },
+    {
+      "name": "aws_database_migration_service",
+      "description": "aws_database_migration_service service"
+    },
+    {
+      "name": "aws_kinesis_video_streams",
+      "description": "A service for processing and analyzing video streams."
+    },
+    {
+      "name": "aws_fsx",
+      "description": "aws_fsx service"
+    },
+    {
+      "name": "aws_codecommit",
+      "description": "aws_codecommit service"
+    },
+    {
+      "name": "aws_iot_greengrass",
+      "description": "aws_iot_greengrass service"
+    },
+    {
+      "name": "aws_devops_guru",
+      "description": "A service for improving application performance and reliability."
+    },
+    {
+      "name": "aws_payment_cryptography",
+      "description": "aws_payment_cryptography service"
+    },
+    {
+      "name": "aws_robomaker",
+      "description": "aws_robomaker service"
+    },
+    {
+      "name": "aws_sagemaker_ai",
+      "description": "aws_sagemaker_ai service"
+    },
+    {
+      "name": "aws_eks_cloud",
+      "description": "aws_eks_cloud service"
+    },
+    {
+      "name": "aws_datasync",
+      "description": "aws_datasync service"
+    },
+    {
+      "name": "aws_ec2_image_builder",
+      "description": "aws_ec2_image_builder service"
+    },
+    {
+      "name": "aws_config",
+      "description": "aws_config service"
+    },
+    {
+      "name": "aws_secrets_manager",
+      "description": "aws_secrets_manager service"
+    },
+    {
+      "name": "aws_managed_service_for_prometheus",
+      "description": "A monitoring service compatible with Prometheus."
+    },
+    {
+      "name": "aws_global_accelerator",
+      "description": "aws_global_accelerator service"
+    },
+    {
+      "name": "aws_deep_learning_amis",
+      "description": "aws_deep_learning_amis service"
+    },
+    {
+      "name": "aws_verified_access",
+      "description": "aws_verified_access service"
+    },
+    {
+      "name": "aws_managed_streaming_for_apache_kafka",
+      "description": "aws_managed_streaming_for_apache_kafka service"
+    },
+    {
+      "name": "aws_step_functions",
+      "description": "A serverless orchestration service for coordinating workflows."
+    },
+    {
+      "name": "aws_fsx_for_lustre",
+      "description": "aws_fsx_for_lustre service"
+    },
+    {
+      "name": "aws_cloud_control_api",
+      "description": "aws_cloud_control_api service"
+    },
+    {
+      "name": "aws_transit_gateway",
+      "description": "aws_transit_gateway service"
+    },
+    {
+      "name": "aws_appstream_2",
+      "description": "aws_appstream_2 service"
+    },
+    {
+      "name": "aws_appconfig",
+      "description": "aws_appconfig service"
+    },
+    {
+      "name": "aws_elemental_mediatailor",
+      "description": "aws_elemental_mediatailor service"
+    },
+    {
+      "name": "aws_location_service",
+      "description": "aws_location_service service"
+    },
+    {
+      "name": "aws_budgets",
+      "description": "aws_budgets service"
+    },
+    {
+      "name": "aws_local_zones",
+      "description": "aws_local_zones service"
+    },
+    {
+      "name": "aws_workdocs_sdk",
+      "description": "aws_workdocs_sdk service"
+    },
+    {
+      "name": "aws_deepcomposer",
+      "description": "aws_deepcomposer service"
+    },
+    {
+      "name": "aws_transfer_family",
+      "description": "aws_transfer_family service"
+    },
+    {
+      "name": "aws_cloudfront",
+      "description": "aws_cloudfront service"
+    },
+    {
+      "name": "aws_transcribe",
+      "description": "aws_transcribe service"
+    },
+    {
+      "name": "aws_cloud_map",
+      "description": "aws_cloud_map service"
+    },
+    {
+      "name": "aws_service_catalog",
+      "description": "aws_service_catalog service"
+    },
+    {
+      "name": "aws_monitron",
+      "description": "A service for monitoring equipment health."
+    },
+    {
+      "name": "aws_billing_conductor",
+      "description": "aws_billing_conductor service"
+    },
+    {
+      "name": "aws_documentdb",
+      "description": "aws_documentdb service"
+    },
+    {
+      "name": "aws_b2b_data_interchange",
+      "description": "A service for exchanging EDI data with trading partners."
+    },
+    {
+      "name": "aws_q",
+      "description": "aws_q service"
+    },
+    {
+      "name": "aws_mq",
+      "description": "A managed message broker service supporting multiple protocols."
+    },
+    {
+      "name": "aws_end_user_messaging",
+      "description": "aws_end_user_messaging service"
+    },
+    {
+      "name": "aws_sagemaker",
+      "description": "A machine learning platform for building and deploying models."
+    },
+    {
+      "name": "aws_managed_blockchain",
+      "description": "aws_managed_blockchain service"
+    },
+    {
+      "name": "aws_directory_service",
+      "description": "aws_directory_service service"
+    }
+  ]
+}

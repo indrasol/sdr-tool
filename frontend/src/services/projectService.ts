@@ -208,7 +208,7 @@ const projectService = {
   },
 
   // Function to save a project
-  async saveProject(sessionId: string, diagramState: any): Promise<boolean> {
+  async saveProject(sessionId: string, diagramState: any, projectCode?: string): Promise<boolean> {
     try {
       console.log(`Saving project with session ID: ${sessionId}`);
       console.log(`Diagram state summary: ${diagramState.nodes.length} nodes, ${diagramState.edges.length} edges`);
@@ -219,7 +219,8 @@ const projectService = {
         headers: getAuthHeaders(),
         body: JSON.stringify({
           session_id: sessionId,
-          diagram_state: diagramState 
+          diagram_state: diagramState,
+          project_code: projectCode
         })
       });
 
@@ -309,14 +310,25 @@ const projectService = {
 
       const result = await response.json();
       console.log("Project Load details:", result);
-      return result
+      
+      // Log if there's threat model data
+      if (result.dfd_data) {
+        console.log("Project has threat model data:", !!result.dfd_data);
+      }
+      
+      if (result.threat_model_id) {
+        console.log("Project has threat model ID:", result.threat_model_id);
+      }
+      
+      return result;
     } catch (error: any) {
-      console.error('Error saving project:', error);
+      console.error('Error loading project:', error);
       toast({
         title: "Error",
-        description: error.message || 'Failed to save project',
+        description: error.message || 'Failed to load project',
         variant: "destructive"
       });
+      throw error;
     }
   }
 }

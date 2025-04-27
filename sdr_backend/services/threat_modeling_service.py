@@ -5,935 +5,697 @@ from contextlib import redirect_stdout
 from typing import Dict, Any, List, Tuple
 from datetime import datetime, timezone
 import uuid
+import json
+import re
+import os
+
+from core.llm.llm_gateway_v1 import LLMService
+from core.prompt_engineering.prompt_builder import PromptBuilder
+from utils.logger import log_info
 
 # Direct PyTM imports
 from pytm import TM, Server, Datastore, Actor, Boundary, Dataflow, Lambda, Process, ExternalEntity
 from pytm.pytm import Element, Dataflow as PyTMDataflow  # For type checking
 
-from services.dfd_mapper import ADToPytmMapper
+from services.dfd_mapper import DirectDFDMapper
 from utils.logger import log_info
 from models.dfd_models import DFDResponse, DFDElement, DFDDataFlow, DFDBoundary, DFDThreat
+from models.threat_models import DFDModelResponse, ThreatsResponse, FullThreatModelResponse, ThreatItem
 
 class ThreatModelingService:
 
     def __init__(self):
-        self.mapper = ADToPytmMapper()
 
-    def _extract_structured_data(self, tm_instance, threat_model_id: str) -> Dict[str, Any]:
-        """Extracts structured data from a processed pytm TM object and includes the threat_model_id."""
-        nodes = []
-        edges = []
-        boundaries = []
-        threats = []
+        self.dfd_mapper = DirectDFDMapper()
 
-        try:
-            # Extract Boundaries
-            if hasattr(tm_instance, 'boundaries'):
-                for b_obj in tm_instance.boundaries:
-                    boundary_id = getattr(b_obj, 'name', f'boundary_{uuid.uuid4()}')
-                    boundaries.append(DFDBoundary(
-                        id=boundary_id,
-                        label=boundary_id,
-                        element_ids=[]
-                    ))
-    
-            # Extract Elements (Nodes)
-            if hasattr(tm_instance, 'elements'):
-                for element_obj in tm_instance.elements:
-                    element_name = getattr(element_obj, 'name', f'element_{uuid.uuid4()}')
-                    
-                    # Safely get properties
-                    props = {}
-                    
-                    # Basic properties from the element itself
-                    for prop_name in ['OS', 'isSQL', 'isHardened', 'sanitizesInput', 'encodesOutput', 'storesSensitiveData']:
-                        # Try direct access first
-                        if hasattr(element_obj, prop_name):
-                            props[prop_name] = getattr(element_obj, prop_name)
-                        # Then try via controls
-                        elif hasattr(element_obj, 'controls') and hasattr(element_obj.controls, prop_name):
-                            props[prop_name] = getattr(element_obj.controls, prop_name)
-                    
-                    # Clean up properties - remove None values
-                    props = {k: v for k, v in props.items() if v is not None}
-    
-                    # Get boundary information if available
-                    boundary_id = None
-                    if hasattr(element_obj, 'inBoundary') and element_obj.inBoundary:
-                        boundary_ref = element_obj.inBoundary
-                        boundary_id = getattr(boundary_ref, 'name', None)
-    
-                    # Create the element
-                    element_type = element_obj.__class__.__name__ if hasattr(element_obj, '__class__') else "Unknown"
-                    nodes.append(DFDElement(
-                        id=element_name,
-                        type=element_type,
-                        label=element_name,
-                        properties=props,
-                        boundary_id=boundary_id
-                    ))
-                    
-                    # Add element to its boundary
-                    if boundary_id:
-                        for b in boundaries:
-                            if b.id == boundary_id:
-                                b.element_ids.append(element_name)
-                                break
-    
-            # Extract Dataflows (Edges)
-            # Find dataflows using the same flexible approach as in _serialize_model
-            dataflows = []
-            if hasattr(tm_instance, 'dataflows'):
-                dataflows = tm_instance.dataflows
-            elif hasattr(tm_instance, '_flows'):
-                dataflows = tm_instance._flows
-            else:
-                # Look for dataflows in any attribute that might contain them
-                for attr_name in dir(tm_instance):
-                    if attr_name.startswith('_') and not attr_name.startswith('__'):
-                        attr_value = getattr(tm_instance, attr_name, None)
-                        if isinstance(attr_value, list) and attr_value and hasattr(attr_value[0], 'source') and hasattr(attr_value[0], 'sink'):
-                            dataflows = attr_value
-                            break
-    
-            for flow_obj in dataflows:
-                flow_name = getattr(flow_obj, 'name', f'flow_{uuid.uuid4()}')
-                
-                # Safely collect properties
-                props = {}
-                for prop_name in ['protocol', 'isEncrypted', 'dstPort', 'data', 'authenticatesSource', 'authenticatesDestination']:
-                    # Try direct access first
-                    if hasattr(flow_obj, prop_name):
-                        props[prop_name] = getattr(flow_obj, prop_name)
-                    # Then try via controls
-                    elif hasattr(flow_obj, 'controls') and hasattr(flow_obj.controls, prop_name):
-                        props[prop_name] = getattr(flow_obj.controls, prop_name)
-                
-                # Handle data specially to avoid complex objects
-                if 'data' in props and props['data'] is not None:
-                    props['data'] = str(props['data'])
-                
-                # Clean up properties
-                props = {k: v for k, v in props.items() if v is not None}
-    
-                # Get source and target
-                source_obj = getattr(flow_obj, 'source', None)
-                sink_obj = getattr(flow_obj, 'sink', None)
-                
-                source_name = getattr(source_obj, 'name', 'unknown_source') if source_obj else 'unknown_source'
-                sink_name = getattr(sink_obj, 'name', 'unknown_sink') if sink_obj else 'unknown_sink'
-    
-                edges.append(DFDDataFlow(
-                    id=flow_name,
-                    source=source_name,
-                    target=sink_name,
-                    label=flow_name,
-                    properties=props
-                ))
-    
-            # Extract Threats (Findings)
-            if hasattr(tm_instance, 'findings') and tm_instance.findings:
-                for finding in tm_instance.findings:
-                    # Handle both object-style findings and dict-style findings
-                    if isinstance(finding, dict):
-                        # Dict-style findings (from our _minimal_threat_matching)
-                        target_obj = finding.get('target')
-                        finding_sid = finding.get('SID', f'threat_{uuid.uuid4()}')
-                        finding_desc = finding.get('description', 'No description')
-                        finding_sev = finding.get('severity', 'Medium')
-                    else:
-                        # Object-style findings (from PyTM's native processing)
-                        target_obj = getattr(finding, 'target', None)
-                        finding_sid = getattr(finding, 'SID', f'threat_{uuid.uuid4()}')
-                        finding_desc = getattr(finding, 'description', 'No description')
-                        finding_sev = getattr(finding, 'severity', 'Medium')
-                    
-                    # Default to unknown target
-                    target_id = None
-                    target_type = None
-                    
-                    # Try to identify the target element or flow
-                    if target_obj:
-                        # Get the target name
-                        if hasattr(target_obj, 'name'):
-                            target_name = target_obj.name
-                        elif isinstance(target_obj, dict) and 'name' in target_obj:
-                            target_name = target_obj['name']
-                        else:
-                            target_name = str(target_obj)
-                            
-                        # Check if it's a dataflow or an element
-                        if (hasattr(target_obj, 'source') and hasattr(target_obj, 'sink')) or \
-                           (isinstance(target_obj, dict) and 'source' in target_obj and 'sink' in target_obj):
-                            target_id = target_name
-                            target_type = 'dataflow'
-                        else:
-                            target_id = target_name
-                            target_type = 'element'
-                    
-                    # Create the threat
-                    threats.append(DFDThreat(
-                        id=finding_sid,
-                        description=finding_desc,
-                        severity=finding_sev,
-                        target_element_id=target_id,
-                        target_element_type=target_type
-                    ))
-        except Exception as e:
-            log_info(f"Error extracting structured data: {e}")
-            # If extraction fails, create a minimal result
-            if not nodes:
-                nodes = [DFDElement(
-                    id="system",
-                    type="System",
-                    label="System",
-                    properties={},
-                    boundary_id=None
-                )]
-            
-            if not threats:
-                threats = [DFDThreat(
-                    id="GENERIC-THREAT",
-                    description="Generic security threat - error during threat modeling",
-                    severity="Medium",
-                    target_element_id="system",
-                    target_element_type="element"
-                )]
 
-        response = DFDResponse(
-            threat_model_id=threat_model_id,
-            nodes=nodes,
-            edges=edges,
-            boundaries=boundaries,
-            threats=threats,
-            generated_at=datetime.now(timezone.utc).isoformat()
-        )
-        # Return as dict matching the DFDResponse model structure
-        return response.model_dump(exclude_none=True)
-
-    def build_direct_threat_model(self, diagram_state: Dict[str, Any], threat_model_id: str) -> Tuple[str, Dict[str, Any]]:
+    async def generate_threat_model(
+        self, 
+        conversation_history: List[Dict[str, Any]], 
+        diagram_state: Dict[str, Any], 
+        threat_model_id: str = None
+    ) -> FullThreatModelResponse:
         """
-        Directly builds a PyTM threat model from diagram state without using exec().
+        Generate a comprehensive threat model using LLM.
+        
+        This method orchestrates the process of:
+        1. Building specialized prompts for DFD and threat analysis
+        2. Calling the LLM service to generate responses
+        3. Structuring the responses into the FullThreatModelResponse format
         
         Args:
-            diagram_state: The diagram state with nodes and edges
-            threat_model_id: Unique ID for the threat model
+            conversation_history: List of previous exchanges
+            diagram_state: Current state of the architecture diagram
+            threat_model_id: Optional threat model ID to use
             
         Returns:
-            Tuple of (serialized_model_code, structured_data)
+            A structured FullThreatModelResponse with DFD and threats
         """
-        log_info(f"Building direct threat model with ID: {threat_model_id}")
-        start_time = datetime.now(timezone.utc)
-        
-        # Save and modify sys.argv to prevent PyTM from trying to parse arguments
-        original_argv = sys.argv
-        sys.argv = ["pytm"]  # Set a minimal argv to avoid parsing errors
+        # Generate a new threat model ID if not provided
+        if not threat_model_id:
+            threat_model_id = str(uuid.uuid4())
+            
+        log_info(f"Generating threat model with ID: {threat_model_id}")
         
         try:
-            # Create the threat model
-            tm = TM(name=f"Threat Model {threat_model_id[:8]}")
-            tm.description = "Threat model generated from architecture diagram"
-            tm.isOrdered = True
-            tm.mergeResponses = True
+            # Initialize the services
+            llm_service = LLMService()
+            prompt_builder = PromptBuilder()
             
-            # Track created objects for reference
-            boundaries = {}
-            elements = {}
+            # CHANGE: Use the DirectDFDMapper to map diagram to DFD without relying on LLM
+            log_info(f"Generating DFD model using LLM")
             
-            # Create default boundaries
-            b_external = Boundary(name="External Boundary")
-            b_system = Boundary(name="System Boundary")
-            b_data = Boundary(name="Data Boundary")
+            # First, analyze the diagram using the analyze_diagram function
+            data_flow_description = await llm_service.analyze_diagram(
+                diagram_content=diagram_state,
+                model_provider="openai",
+                model_name="gpt-4.1-mini"
+            )
+            data_flow_content = data_flow_description.get("data_flow_description", "")
+            log_info(f"Generated data flow description with {len(data_flow_content)} characters")
             
-            boundaries = {
-                "External Boundary": b_external,
-                "System Boundary": b_system,
-                "Data Boundary": b_data
-            }
+            # Build the DFD prompt with the data flow description
+            dfd_prompt = await prompt_builder.build_dfd_prompt(
+                conversation_history=conversation_history,
+                data_flow_description=data_flow_content
+            )
             
-            # Process nodes
-            nodes = diagram_state.get("nodes", [])
-            edges = diagram_state.get("edges", [])
+            # Generate the DFD model using the appropriate prompt
+            dfd_model_response = await llm_service.generate_llm_response(
+                prompt=dfd_prompt,
+                model_provider="openai",
+                model_name="gpt-4.1-mini",
+                temperature=0.1,
+                timeout=60
+            )
             
-            # Step 1: Create elements from nodes
-            for node in nodes:
-                node_id = node.get("id")
-                if not node_id:
-                    continue
-                    
-                node_data = node.get("data", {})
-                label = node_data.get("label", f"Component {node_id}")
-                description = node_data.get("description", f"Description for {label}")
+            # Extract the DFD model from the response
+            dfd_model = {}
+            if isinstance(dfd_model_response, dict) and "content" in dfd_model_response:
+                # Use our simple JSON extractor
+                content = dfd_model_response["content"]
+                log_info(f"DFD Model raw response length: {len(content)} characters")
                 
-                # Determine element type and boundary
-                element_type = "Server"  # Default
-                boundary = b_system  # Default boundary
-                
-                label_lower = label.lower()
-                
-                # Map node to PyTM element type
-                if "database" in label_lower or "db" in label_lower or "store" in label_lower:
-                    element_class = Datastore
-                    boundary = b_data
-                elif "user" in label_lower or "actor" in label_lower or "client" in label_lower:
-                    element_class = Actor
-                    boundary = b_external
-                elif "process" in label_lower or "job" in label_lower or "task" in label_lower:
-                    element_class = Process
-                    boundary = b_system
-                elif "lambda" in label_lower or "function" in label_lower:
-                    element_class = Lambda
-                    boundary = b_system
-                elif "external" in label_lower or "third party" in label_lower:
-                    element_class = ExternalEntity
-                    boundary = b_external
-                else:
-                    element_class = Server
-                    boundary = b_system
-                
-                # Create the element
-                element = element_class(name=label)
-                element.description = description
-                element.inBoundary = boundary
-                
-                # Add element-specific properties
-                if element_class == Datastore:
-                    element.isSQL = 'sql' in label_lower or 'database' in label_lower
-                    element.controls.storesSensitiveData = 'sensitive' in label_lower or 'user' in label_lower
-                    
-                if element_class == Server:
-                    element.OS = "Linux"  # Default
-                    element.controls.isHardened = False
-                    element.controls.sanitizesInput = True
-                    element.controls.encodesOutput = True
-                
-                # Store for later reference
-                elements[node_id] = element
-            
-            # Step 2: Create dataflows from edges
-            for edge in edges:
-                source_id = edge.get("source")
-                target_id = edge.get("target")
-                
-                if not source_id or not target_id:
-                    continue
-                    
-                if source_id not in elements or target_id not in elements:
-                    log_info(f"Skipping edge: source or target node not found: {source_id} -> {target_id}")
-                    continue
-                    
-                source = elements[source_id]
-                target = elements[target_id]
-                
-                # Get source and target labels for better description
-                source_label = source.name
-                target_label = target.name
-                
-                flow = Dataflow(source, target, name=f"Flow from {source_label} to {target_label}")
-                
-                # Determine flow properties
-                is_external = False
-                is_sensitive = False
-                is_authentication = False
-                
-                source_label_lower = source_label.lower()
-                target_label_lower = target_label.lower()
-                
-                # Check sensitivity and security context
-                if any(term in source_label_lower or term in target_label_lower for term in 
-                    ["auth", "login", "user", "account", "credential", "password"]):
-                    is_sensitive = True
-                    is_authentication = True
-                    
-                if (isinstance(source, Actor) or isinstance(source, ExternalEntity) or
-                    isinstance(target, Actor) or isinstance(target, ExternalEntity)):
-                    is_external = True
-                
-                # Set appropriate properties
-                if is_external:
-                    flow.protocol = "HTTPS"
-                    flow.isEncrypted = True
-                    if is_authentication:
-                        flow.authenticatesDestination = True
-                        flow.controls.authenticatesSource = True
-                else:
-                    # Internal flow
-                    flow.protocol = "HTTP"
-                    flow.isEncrypted = False
-                    flow.controls.authenticatesSource = True
-            
-            # Process the model using our custom method that doesn't try to parse arguments
-            self._custom_process_model(tm)
-            
-            # Serialize the model for storage (optional but useful for debugging)
-            serialized_code = self._serialize_model(tm, elements, boundaries)
-            
-            # Extract structured data
-            structured_data = self._extract_structured_data(tm, threat_model_id)
-            
-            # Get dataflows count using the same method as in _serialize_model
-            dataflows = []
-            if hasattr(tm, 'dataflows'):
-                dataflows = tm.dataflows
-            elif hasattr(tm, '_flows'):
-                dataflows = tm._flows
+                # Extract and parse the JSON from the LLM response
+                dfd_model = self._extract_json_from_llm_response(content)
             else:
-                for attr_name in dir(tm):
-                    if attr_name.startswith('_') and not attr_name.startswith('__'):
-                        attr_value = getattr(tm, attr_name, None)
-                        if isinstance(attr_value, list) and attr_value and len(attr_value) > 0 and hasattr(attr_value[0], 'source') and hasattr(attr_value[0], 'sink'):
-                            dataflows = attr_value
-                            break
+                log_info(f"Unexpected DFD model response format: {dfd_model_response}")
+                dfd_model = {"elements": [], "edges": [], "boundaries": []}
             
-            # Add performance metadata
-            generation_time = (datetime.now(timezone.utc) - start_time).total_seconds()
-            structured_data["performance"] = {
-                "direct_generation_time": generation_time,
-                "element_count": len(elements),
-                "dataflow_count": len(dataflows) if dataflows else 0,
-                "boundary_count": len(boundaries),
-                "generated_at": datetime.now(timezone.utc).isoformat()
-            }
+            # Validate the model to ensure it has required properties
+            dfd_model = self._validate_dfd_model(dfd_model)
             
-            log_info(f"Direct threat model generation completed in {generation_time:.2f} seconds")
-            return serialized_code, structured_data
-        except Exception as e:
-            log_info(f"Error in direct threat model generation: {str(e)}")
-            raise
-        finally:
-            # Always restore the original sys.argv
-            sys.argv = original_argv
-
-    def _serialize_model(self, tm, elements, boundaries):
-        """
-        Serializes the PyTM model to code representation for storage/debugging.
-        This doesn't use exec() - it's just for storage of the model definition.
-        """
-        code_lines = [
-            "from pytm import TM, Server, Datastore, Actor, Boundary, Dataflow, Lambda, Process, ExternalEntity",
-            "",
-            f"tm = TM('{tm.name}')",
-            f"tm.description = '{tm.description}'",
-            "tm.isOrdered = True",
-            "tm.mergeResponses = True",
-            ""
-        ]
-        
-        # Add boundaries
-        for name, boundary in boundaries.items():
-            code_lines.append(f"b_{name.lower().replace(' ', '_')} = Boundary('{name}')")
-        code_lines.append("")
-        
-        # Add elements
-        element_vars = {}
-        for i, (element_id, element) in enumerate(elements.items()):
-            var_name = f"element_{i}"
-            element_vars[element_id] = var_name
+            log_info(f"DFD model processed with {len(dfd_model.get('elements', []))} elements, "
+                   f"{len(dfd_model.get('edges', []))} edges, and "
+                   f"{len(dfd_model.get('boundaries', []))} boundaries")
             
-            element_type = element.__class__.__name__
-            code_lines.append(f"{var_name} = {element_type}('{element.name}')")
+            # Build the specialized threat prompt with data flow description
+            base_threat_prompt = await prompt_builder.build_threat_prompt(
+                conversation_history, 
+                diagram_state,
+                data_flow_content
+            )
             
-            if hasattr(element, 'description') and element.description:
-                code_lines.append(f"{var_name}.description = '{element.description}'")
-                
-            if hasattr(element, 'inBoundary') and element.inBoundary:
-                boundary_name = element.inBoundary.name
-                boundary_var = f"b_{boundary_name.lower().replace(' ', '_')}"
-                code_lines.append(f"{var_name}.inBoundary = {boundary_var}")
-                
-            # Add type-specific properties
-            if element_type == "Datastore":
-                if hasattr(element, 'isSQL'):
-                    code_lines.append(f"{var_name}.isSQL = {element.isSQL}")
-                if hasattr(element, 'controls') and hasattr(element.controls, 'storesSensitiveData'):
-                    code_lines.append(f"{var_name}.controls.storesSensitiveData = {element.controls.storesSensitiveData}")
-                    
-            if element_type == "Server":
-                if hasattr(element, 'OS'):
-                    code_lines.append(f"{var_name}.OS = '{element.OS}'")
-                if hasattr(element, 'controls'):
-                    if hasattr(element.controls, 'isHardened'):
-                        code_lines.append(f"{var_name}.controls.isHardened = {element.controls.isHardened}")
-                    if hasattr(element.controls, 'sanitizesInput'):
-                        code_lines.append(f"{var_name}.controls.sanitizesInput = {element.controls.sanitizesInput}")
-                    if hasattr(element.controls, 'encodesOutput'):
-                        code_lines.append(f"{var_name}.controls.encodesOutput = {element.controls.encodesOutput}")
-                        
-            code_lines.append("")
-        
-        # Add data flows - use the internal data structure from PyTM
-        dataflows = []
-        if hasattr(tm, 'dataflows'):
-            dataflows = tm.dataflows
-        elif hasattr(tm, '_flows'):
-            dataflows = tm._flows
-        else:
-            # Look for dataflows in any attribute that might contain them
-            for attr_name in dir(tm):
-                if attr_name.startswith('_') and not attr_name.startswith('__'):
-                    attr_value = getattr(tm, attr_name, None)
-                    if isinstance(attr_value, list) and attr_value and hasattr(attr_value[0], 'source') and hasattr(attr_value[0], 'sink'):
-                        dataflows = attr_value
-                        break
-        
-        for i, flow in enumerate(dataflows):
-            source_id = None
-            target_id = None
+            # Enhance threat prompt with additional instructions
+            threat_prompt = base_threat_prompt
             
-            # Find the element IDs for this flow
-            for eid, element in elements.items():
-                if flow.source == element:
-                    source_id = eid
-                if flow.sink == element:
-                    target_id = eid
-                    
-            if source_id in element_vars and target_id in element_vars:
-                source_var = element_vars[source_id]
-                target_var = element_vars[target_id]
-                
-                flow_name = f"flow_{i}"
-                code_lines.append(f"{flow_name} = Dataflow({source_var}, {target_var}, '{flow.name}')")
-                
-                if hasattr(flow, 'protocol'):
-                    code_lines.append(f"{flow_name}.protocol = '{flow.protocol}'")
-                if hasattr(flow, 'isEncrypted'):
-                    code_lines.append(f"{flow_name}.isEncrypted = {flow.isEncrypted}")
-                if hasattr(flow, 'authenticatesDestination'):
-                    code_lines.append(f"{flow_name}.authenticatesDestination = {flow.authenticatesDestination}")
-                if hasattr(flow, 'controls') and hasattr(flow.controls, 'authenticatesSource'):
-                    code_lines.append(f"{flow_name}.controls.authenticatesSource = {flow.controls.authenticatesSource}")
-                    
-                code_lines.append("")
-        
-        # Add processing command
-        code_lines.append("# Process the model")
-        code_lines.append("tm.process()")
-        
-        return "\n".join(code_lines)
-
-    def _custom_process_model(self, tm):
-        """
-        Custom implementation of the TM.process() method that doesn't try to parse arguments.
-        This avoids the command-line argument parsing that causes issues.
-        """
-        log_info("Processing threat model without command line arguments")
-        
-        # First ensure threats are loaded
-        try:
-            # Make sure threats are loaded - this is critical
-            if hasattr(tm, '_threats') and not tm._threats:
+            # Generate threats using the threat prompt
+            log_info(f"Generating threats analysis using threat prompt")
+            threat_response = await llm_service.generate_llm_response(
+                prompt=threat_prompt,
+                model_provider="openai",
+                model_name="gpt-4.1",
+                temperature=0.3,  # Lower temperature for more deterministic output
+                stream=False,
+                timeout=90
+            )
+            
+            # Extract the threat JSON from the response
+            threat_json = {}
+            if isinstance(threat_response, dict) and "content" in threat_response:
+                content = threat_response["content"]
                 try:
-                    from pytm.pytm import Threat
-                    tm._threats = Threat.load()
-                    log_info(f"Loaded {len(tm._threats)} threats")
-                except Exception as threat_error:
-                    log_info(f"Error loading threats: {threat_error}")
-                    # Create a minimal threat if loading fails
-                    from pytm.pytm import Threat
-                    class MinimalThreat(Threat):
-                        def __init__(self):
-                            self.id = "GENERIC-THREAT"
-                            self.description = "Generic security threat"
-                            self.condition = "True"
-                    tm._threats = [MinimalThreat()]
-        except Exception as e:
-            log_info(f"Error preparing threats: {e}")
-        
-        # Direct processing approach - skip the command-line argument handling
-        try:
-            # METHOD 1: Try direct processing with timeout protection
-            import threading
-            import time
-            
-            # Create a flag for timeout detection
-            timeout_occurred = [False]
-            processing_completed = [False]
-            processing_error = [None]
-            
-            # Define a function to be run in a thread with timeout protection
-            def process_with_timeout():
-                try:
-                    start_time = time.time()
-                    log_info("Starting direct threat model processing")
-                    
-                    # Direct method - call internal processing if available
-                    if hasattr(tm, '_process'):
-                        log_info("Using internal _process method")
-                        tm._process()
+                    # Look for JSON in the content
+                    json_match = re.search(r'```(?:json)?\s*(.*?)\s*```', content, re.DOTALL)
+                    if json_match:
+                        threat_json = json.loads(json_match.group(1))
                     else:
-                        log_info("No _process method found, using fallback")
-                        # Fallback to minimal processing
-                        self._minimal_threat_matching(tm)
-                    
-                    processing_time = time.time() - start_time
-                    log_info(f"Threat model processing completed in {processing_time:.2f} seconds")
-                    processing_completed[0] = True
-                except Exception as e:
-                    log_info(f"Error in direct processing: {e}")
-                    processing_error[0] = str(e)
-                    # Still attempt minimal processing as fallback
-                    try:
-                        log_info("Attempting minimal threat matching as fallback")
-                        self._minimal_threat_matching(tm)
-                        processing_completed[0] = True
-                    except Exception as fallback_error:
-                        log_info(f"Fallback processing also failed: {fallback_error}")
-            
-            # Create and start the processing thread
-            processing_thread = threading.Thread(target=process_with_timeout)
-            processing_thread.daemon = True  # Allow the thread to be killed when main thread exits
-            processing_thread.start()
-            
-            # Wait with timeout
-            max_wait_time = 60  # Maximum seconds to wait for processing
-            wait_increment = 0.5  # Check every half second
-            elapsed = 0
-            
-            while elapsed < max_wait_time and not processing_completed[0] and processing_thread.is_alive():
-                time.sleep(wait_increment)
-                elapsed += wait_increment
-            
-            if not processing_completed[0]:
-                timeout_occurred[0] = True
-                log_info(f"Threat model processing timed out after {elapsed} seconds")
-                # We can't forcibly terminate the thread in Python, but we can proceed
-                # Fallback to minimal threat matching
-                self._minimal_threat_matching(tm)
-            
-            if processing_error[0]:
-                log_info(f"Processing completed with error: {processing_error[0]}")
-            
-            # Ensure we have at least some findings
-            if not hasattr(tm, 'findings') or not tm.findings:
-                log_info("No findings generated, creating minimal findings")
-                self._ensure_minimal_findings(tm)
-            
-            return
-            
-        except Exception as direct_error:
-            log_info(f"Error in direct processing approach: {direct_error}")
-            # Fall through to the next method
-        
-        # METHOD 2: Simplified manual threat matching - this is our fallback
-        try:
-            log_info("Using simplified manual threat matching")
-            self._minimal_threat_matching(tm)
-        except Exception as e:
-            log_info(f"Error in simplified manual threat matching: {e}")
-            self._ensure_minimal_findings(tm)
+                        # Try to parse the whole content as JSON
+                        threat_json = json.loads(content)
+                except json.JSONDecodeError as e:
+                    log_info(f"Failed to parse threat JSON: {e}")
+                    threat_json = {"threats": [], "severity_counts": {"HIGH": 0, "MEDIUM": 0, "LOW": 0}}
+            else:
+                threat_json = {"threats": [], "severity_counts": {"HIGH": 0, "MEDIUM": 0, "LOW": 0}}
 
-    def _minimal_threat_matching(self, tm):
-        """Simple implementation of threat matching to avoid PyTM's complex processing."""
-        log_info("Performing minimal threat matching")
-        
-        if not hasattr(tm, 'elements'):
-            log_info("No elements found in threat model")
-            tm.findings = []
-            return
+            log_info(f"LLM threats json : {threat_json}")
             
-        if not hasattr(tm, '_threats') or not tm._threats:
-            log_info("No threats loaded for matching")
-            tm.findings = []
-            return
-        
-        findings = []
-        element_count = len(tm.elements)
-        threat_count = len(tm._threats) if hasattr(tm, '_threats') else 0
-        
-        log_info(f"Processing {element_count} elements against {threat_count} threats")
-        
-        # Process a limited number of threats to avoid excessive processing
-        max_threats_per_element = 3
-        processed = 0
-        
-        try:
-            # Get all elements
-            elements = list(tm.elements)
-            
-            # Process each element
-            for element in elements:
-                # Track processed elements for debugging
-                processed += 1
-                if processed % 10 == 0:
-                    log_info(f"Processed {processed}/{element_count} elements")
-                
-                # Get the element name for logging
-                element_name = getattr(element, 'name', f"Element-{processed}")
-                
-                # Find matching threats (limit to avoid excessive processing)
-                matched_threats = 0
-                
-                # Try the normal apply method first
-                for threat in tm._threats:
-                    # Skip after max threats per element
-                    if matched_threats >= max_threats_per_element:
-                        break
+            # Enhanced recovery mechanism for truncated or incomplete responses
+            if isinstance(threat_json, dict):
+                # Check if we need to extract threats from thinking
+                if "thinking" in threat_json and isinstance(threat_json["thinking"], str):
+                    thinking_text = threat_json["thinking"]
+                    if "threats" not in threat_json or not threat_json.get("threats"):
+                        # Try to extract JSON from thinking which might contain more complete responses
+                        try:
+                            # Look for JSON blocks in thinking
+                            json_matches = re.findall(r'```(?:json)?\s*(.*?)\s*```', thinking_text, re.DOTALL)
+                            
+                            # Try each JSON block found
+                            for json_str in json_matches:
+                                try:
+                                    extracted_json = json.loads(json_str)
+                                    
+                                    # If we found threats, use them
+                                    if "threats" in extracted_json and isinstance(extracted_json["threats"], list) and len(extracted_json["threats"]) > 0:
+                                        log_info(f"Found {len(extracted_json['threats'])} threats in thinking text")
+                                        
+                                        # Copy to the main response
+                                        threat_json["threats"] = extracted_json["threats"]
+                                        
+                                        # Also copy severity counts if available
+                                        if "severity_counts" in extracted_json:
+                                            threat_json["severity_counts"] = extracted_json["severity_counts"]
+                                        
+                                        # Found what we need, break
+                                        break
+                                except json.JSONDecodeError:
+                                    # Try to extract threats array directly from truncated JSON
+                                    threats_match = re.search(r'"threats"\s*:\s*\[(.*?)(?:\]\s*}|$)', json_str, re.DOTALL)
+                                    if threats_match:
+                                        try:
+                                            # Extract threats array with proper JSON wrapping
+                                            threats_str = '{"threats":[' + threats_match.group(1) + ']}'
+                                            # Fix potential truncation
+                                            if not threats_str.endswith("]}"):
+                                                last_complete_threat = threats_str.rfind("},")
+                                                if last_complete_threat > 0:
+                                                    threats_str = threats_str[:last_complete_threat+1] + "]}"
+                                            
+                                            threats_data = json.loads(threats_str)
+                                            if "threats" in threats_data and len(threats_data["threats"]) > 0:
+                                                log_info(f"Extracted {len(threats_data['threats'])} threats from truncated JSON in thinking")
+                                                threat_json["threats"] = threats_data["threats"]
+                                                # Found what we need, break
+                                                break
+                                        except Exception as e:
+                                            log_info(f"Failed to extract threats array from thinking: {str(e)}")
+                                    continue
+                        except Exception as e:
+                            log_info(f"Error extracting threats from thinking: {str(e)}")
+
+                # If the message field contains a code block with JSON, try to extract it
+                if "message" in threat_json and isinstance(threat_json["message"], str) and ("threats" not in threat_json or not threat_json.get("threats")):
+                    try:
+                        message_text = threat_json["message"]
+                        json_match = re.search(r'```(?:json)?\s*(.*?)\s*```', message_text, re.DOTALL)
                         
-                    try:
-                        # Use PyTM's built-in apply method if available
-                        if hasattr(threat, 'apply') and callable(threat.apply):
-                            applies = threat.apply(element)
-                            if applies:
-                                finding = threat.generate(element)
-                                findings.append(finding)
-                                matched_threats += 1
-                    except Exception as apply_error:
-                        # If apply fails, use a simple approach
-                        pass
-                
-                # If no threats matched, add a generic one
-                if matched_threats == 0 and hasattr(element, '__class__'):
-                    # Create a simple generic finding
-                    element_type = element.__class__.__name__
-                    finding = {
-                        'target': element,
-                        'description': f"Generic security consideration for {element_type}",
-                        'SID': f"GENERIC-{element_type}-{len(findings)}",
-                        'severity': 'Medium'
-                    }
-                    findings.append(finding)
-        except Exception as e:
-            log_info(f"Error during minimal threat matching: {e}")
-            
-        # Set the findings on the TM object
-        tm.findings = findings
-        log_info(f"Generated {len(findings)} findings through minimal matching")
+                        if json_match:
+                            nested_json_str = json_match.group(1)
+                            try:
+                                nested_json = json.loads(nested_json_str)
+                                
+                                # If nested JSON has a "threats" field, use it
+                                if "threats" in nested_json and isinstance(nested_json["threats"], list):
+                                    log_info(f"Found nested JSON with {len(nested_json['threats'])} threats in message field")
+                                    threat_json["threats"] = nested_json["threats"]
+                                    
+                                    # Also copy severity counts if available
+                                    if "severity_counts" in nested_json:
+                                        threat_json["severity_counts"] = nested_json["severity_counts"]
+                            except json.JSONDecodeError:
+                                # Try to extract threats array directly
+                                threats_match = re.search(r'"threats"\s*:\s*\[(.*?)(?:\]\s*}|$)', nested_json_str, re.DOTALL)
+                                if threats_match:
+                                    try:
+                                        threats_str = '{"threats":[' + threats_match.group(1) + ']}'
+                                        # Fix potential truncation
+                                        if not threats_str.endswith("]}"):
+                                            last_complete_threat = threats_str.rfind("},")
+                                            if last_complete_threat > 0:
+                                                threats_str = threats_str[:last_complete_threat+1] + "]}"
+                                        
+                                        threats_data = json.loads(threats_str)
+                                        if "threats" in threats_data:
+                                            log_info(f"Extracted {len(threats_data['threats'])} threats from truncated JSON in message")
+                                            threat_json["threats"] = threats_data["threats"]
+                                    except Exception as e:
+                                        log_info(f"Failed to extract threats array from message: {str(e)}")
+                    except Exception as e:
+                        log_info(f"Error processing message field for threats: {str(e)}")
 
-    def _ensure_minimal_findings(self, tm):
-        """Ensure that there are at least some findings for the elements."""
-        if not hasattr(tm, 'findings'):
-            tm.findings = []
+            # Process the threat analysis
+            severity_counts = threat_json.get("severity_counts", {"HIGH": 0, "MEDIUM": 0, "LOW": 0})
+            threat_items = threat_json.get("threats", [])
+            log_info(f"Severity Counts from LLM Response : {severity_counts}")
+            log_info(f"Threats from LLM Response : {threat_items}")
             
-        if len(tm.findings) > 0:
-            return  # Already has findings
-            
-        log_info("Generating minimal findings")
-        findings = []
-        
-        # Get elements
-        elements = []
-        if hasattr(tm, 'elements'):
-            elements = list(tm.elements)
-        
-        # Generate at least one finding per element type
-        element_types_seen = set()
-        
-        for element in elements:
-            if hasattr(element, '__class__'):
-                element_type = element.__class__.__name__
+            # Process threats into ThreatItem objects
+            processed_threats = []
+            for threat in threat_items:
+                # Skip invalid threat entries
+                if not isinstance(threat, dict):
+                    log_info(f"Skipping non-dict threat: {threat}")
+                    continue
                 
-                # Only add one finding per element type
-                if element_type not in element_types_seen:
-                    # Generic finding based on element type
-                    finding = {
-                        'target': element,
-                        'description': self._get_generic_finding_for_type(element_type),
-                        'SID': f"GENERIC-{element_type}",
-                        'severity': 'Medium'
+                threat_id = threat.get("id", f"THREAT-{len(processed_threats) + 1}")
+                description = threat.get("description", "Unnamed threat")
+                mitigation = threat.get("mitigation", "No mitigation provided")
+                severity = threat.get("severity", "MEDIUM")
+                
+                # Safely handle target_elements field
+                target_elements = threat.get("target_elements", [])
+                if not isinstance(target_elements, list):
+                    target_elements = []
+                
+                # Safely handle properties field
+                properties = threat.get("properties", {})
+                if not isinstance(properties, dict):
+                    properties = {}
+                
+                # Extract property values with fallbacks
+                threat_type = properties.get("threat_type", "UNKNOWN")
+                attack_vector = properties.get("attack_vector", "Unknown attack vector")
+                impact = properties.get("impact", "Unknown impact")
+                
+                # Create a processed threat item
+                processed_threat = {
+                    "id": threat_id,
+                    "description": description,
+                    "mitigation": mitigation,
+                    "severity": severity,
+                    "target_elements": target_elements,
+                    "properties": {
+                        "threat_type": threat_type,
+                        "attack_vector": attack_vector,
+                        "impact": impact
                     }
-                    findings.append(finding)
-                    element_types_seen.add(element_type)
-        
-        # Add the findings to the model
-        tm.findings = findings
-        log_info(f"Added {len(findings)} minimal findings")
-    
-    def _get_generic_finding_for_type(self, element_type):
-        """Return a generic finding description based on element type."""
-        if element_type == "Server":
-            return "Servers should be hardened, use firewalls, and have proper access controls."
-        elif element_type == "Datastore":
-            return "Ensure data is encrypted and access is properly controlled."
-        elif element_type == "Actor":
-            return "Validate all user input and authenticate users properly."
-        elif element_type == "Dataflow":
-            return "Ensure data in transit is encrypted and authenticated."
-        elif element_type == "Process":
-            return "Processes should be isolated and have minimal privileges."
-        elif element_type == "Lambda":
-            return "Ensure cloud functions have proper IAM controls and input validation."
-        elif element_type == "ExternalEntity":
-            return "Validate and sanitize all data from external systems."
-        else:
-            return f"Ensure proper security controls are in place for {element_type}."
-
-    async def generate_threat_model(self, diagram_state: Dict[str, Any], 
-                                  check_cancellation_func=None, project_code=None) -> Tuple[str, str, Dict[str, Any]]:
-        """Orchestrates the generation process. Returns (pytm_code, threat_model_id, dfd_data)."""
-        log_info(f"Generating threat model for project {project_code}")
-        
-        # Create a local status update function
-        async def update_status(progress_pct: int, message: str):
-            """Updates the status in Redis only (for more frequent updates without DB load)"""
-            if not project_code:
-                return
-                
-            import json
-            from datetime import datetime, timezone
-            
-            try:
-                # Create the status object
-                status_data = {
-                    "status": "in_progress",
-                    "progress": progress_pct,
-                    "step": "generating_threat_model",
-                    "message": message,
-                    "updated_at": datetime.now(timezone.utc).isoformat()
                 }
                 
-                # Use session_manager to update Redis if available 
-                from core.cache.session_manager import SessionManager
-                try:
-                    session_manager = SessionManager()
-                    if session_manager.redis_pool:
-                        status_cache_key = f"dfd_status:{project_code}"
-                        # Update Redis with a short TTL
-                        await session_manager.redis_pool.setex(
-                            status_cache_key,
-                            30,  # 30 seconds TTL for intermediate updates
-                            json.dumps(status_data)
-                        )
-                except Exception as e:
-                    log_info(f"Error updating status in Redis: {e}")
-            except Exception as outer_e:
-                log_info(f"Error in update_status: {outer_e}")
-        
-        try:
-            # Validate diagram state has minimum components needed
-            nodes = diagram_state.get("nodes", [])
-            edges = diagram_state.get("edges", [])
+                processed_threats.append(processed_threat)
             
-            if not nodes or len(nodes) < 2:
-                log_info("Diagram has insufficient nodes for threat modeling")
-                raise ValueError("Diagram must have at least two components for threat modeling")
-                
-            if not edges or len(edges) < 1:
-                log_info("Diagram has no connections between components")
-                raise ValueError("Diagram must have at least one connection between components")
+            # Update severity counts if missing or invalid
+            if not severity_counts or not isinstance(severity_counts, dict):
+                severity_counts = {"HIGH": 0, "MEDIUM": 0, "LOW": 0}
+                for threat in processed_threats:
+                    severity = threat.get("severity", "MEDIUM").upper()
+                    if severity in severity_counts:
+                        severity_counts[severity] += 1
             
-            # Check for cancellation before starting heavy work
-            if check_cancellation_func and callable(check_cancellation_func):
-                cancelled = await check_cancellation_func()
-                if cancelled:
-                    log_info(f"Threat model generation cancelled before processing for project {project_code}")
-                    raise RuntimeError("Threat model generation was cancelled")
+            # Log the number of processed threats
+            log_info(f"Processed {len(processed_threats)} threats with severity counts: {severity_counts}")
             
-            # Generate unique ID for this threat model version
-            new_threat_model_id = str(uuid.uuid4())
-            log_info(f"Generated new Threat Model ID: {new_threat_model_id} for project {project_code}")
-            await update_status(25, "Preparing threat modeling environment")
+            # Construct the DFDModelResponse
+            dfd_model_response = DFDModelResponse(
+                elements=dfd_model.get("elements", []),
+                edges=dfd_model.get("edges", []),
+                boundaries=dfd_model.get("boundaries", [])
+            )
             
-            # Use the direct implementation only (no fallback to exec)
-            log_info(f"Using direct PyTM implementation for project {project_code}")
-            start_time = datetime.now(timezone.utc)
+            # Construct the ThreatsResponse
+            threats_response = ThreatsResponse(
+                severity_counts=severity_counts,
+                threats=processed_threats
+            )
             
-            try:
-                # Use the direct implementation - we no longer need a fallback using exec()
-                await update_status(30, "Creating threat model components")
-                pytm_code, dfd_data = await self.build_direct_threat_model_with_status(
-                    diagram_state, 
-                    new_threat_model_id, 
-                    update_status
-                )
-                
-                execution_time = (datetime.now(timezone.utc) - start_time).total_seconds()
-                log_info(f"Direct PyTM implementation completed in {execution_time:.2f} seconds")
-                
-                # Check cancellation after generation
-                if check_cancellation_func and callable(check_cancellation_func):
-                    cancelled = await check_cancellation_func()
-                    if cancelled:
-                        log_info(f"Threat model generation cancelled after processing for project {project_code}")
-                        raise RuntimeError("Threat model generation was cancelled")
-                
-                await update_status(65, "Formatting threat model for display")
-                return pytm_code, new_threat_model_id, dfd_data
-                
-            except Exception as direct_error:
-                log_info(f"Error in threat model generation: {str(direct_error)}")
-                raise
+            # Construct the FullThreatModelResponse
+            full_response = FullThreatModelResponse(
+                threat_model_id=threat_model_id,
+                dfd_model=dfd_model_response,
+                threats=threats_response,
+                generated_at=datetime.now(timezone.utc).isoformat()
+            )
+            
+            log_info(f"Threat model generation complete. Model has {len(processed_threats)} threats.")
+            return full_response
             
         except Exception as e:
-            # Log the error
-            log_info(f"Threat model generation failed for project {project_code}: {e}")
-            # Re-raise the exception so the calling function knows it failed
-            raise
-    
-    async def build_direct_threat_model_with_status(
-        self, 
-        diagram_state: Dict[str, Any], 
-        threat_model_id: str,
-        status_update_func = None
-    ) -> Tuple[str, Dict[str, Any]]:
+            log_info(f"Error in threat model generation: {str(e)}")
+            
+            # Return minimal response on error
+            return FullThreatModelResponse(
+                threat_model_id=threat_model_id,
+                dfd_model=DFDModelResponse(elements=[], edges=[], boundaries=[]),
+                threats=ThreatsResponse(severity_counts={"HIGH": 0, "MEDIUM": 0, "LOW": 0}, threats=[]),
+                generated_at=datetime.now(timezone.utc).isoformat()
+            )
+
+    def _format_elements_for_prompt(self, elements: List[Dict[str, Any]]) -> str:
+        """Formats DFD elements for inclusion in the threat prompt."""
+        if not elements:
+            return "No elements in the DFD."
+            
+        result = []
+        for idx, element in enumerate(elements[:10]):  # Limit to 10 elements
+            element_id = element.get("id", "unknown")
+            element_type = element.get("type", "process")
+            element_label = element.get("label", element.get("name", "Unnamed element"))
+            result.append(f"- {element_id} ({element_type}): {element_label}")
+            
+        return "\n".join(result)
+        
+    def _format_boundaries_for_prompt(self, boundaries: List[Dict[str, Any]]) -> str:
+        """Formats DFD boundaries for inclusion in the threat prompt."""
+        if not boundaries:
+            return "No trust boundaries in the DFD."
+            
+        result = []
+        for idx, boundary in enumerate(boundaries[:5]):  # Limit to 5 boundaries
+            boundary_id = boundary.get("id", "unknown")
+            boundary_label = boundary.get("label", boundary.get("name", "Unnamed boundary"))
+            element_count = len(boundary.get("element_ids", []))
+            result.append(f"- {boundary_id}: {boundary_label} (contains {element_count} elements)")
+            
+        return "\n".join(result)
+
+    def _extract_json_from_llm_response(self, response_text: str) -> Dict[str, Any]:
         """
-        Async version of build_direct_threat_model that includes status updates
+        Extract JSON from the LLM response text, handling common parsing issues.
+        
+        Args:
+            response_text: The raw text response from the LLM
+            
+        Returns:
+            A dictionary containing the parsed JSON or a minimal valid structure
         """
-        # Wrap the synchronous method in a way that allows status updates
-        import asyncio
+        # Default fallback model
+        default_model = {"elements": [], "edges": [], "boundaries": []}
         
-        # Create a wrapper function that will run in an executor
-        def _run_build():
-            return self.build_direct_threat_model(diagram_state, threat_model_id)
-        
-        # Create status update points
-        if status_update_func and callable(status_update_func):
-            await status_update_func(35, "Creating threat model structure")
-            # Wait a moment to allow the status to be seen
-            await asyncio.sleep(0.5)
-        
-        # Run the CPU-bound threat model building in a separate thread
-        loop = asyncio.get_event_loop()
-        
-        # Add intermediate status updates
-        if status_update_func and callable(status_update_func):
-            # Schedule status updates during the build process
-            asyncio.create_task(self._send_intermediate_status_updates(status_update_func))
-        
-        # Execute the build function in a thread pool executor
-        result = await loop.run_in_executor(None, _run_build)
-        
-        # Final status update before returning
-        if status_update_func and callable(status_update_func):
-            await status_update_func(60, "Threat model built successfully")
-        
-        return result
+        try:
+            # First try: Look for JSON in code blocks
+            json_match = re.search(r'```(?:json)?\s*(.*?)\s*```', response_text, re.DOTALL)
+            if json_match:
+                json_str = json_match.group(1).strip()
+                log_info(f"Found JSON in code block, length: {len(json_str)} characters")
+                
+                # Try to fix common JSON issues before parsing
+                fixed_json = self._fix_json_format(json_str)
+                return json.loads(fixed_json)
+                
+            # Second try: Look for entire content as JSON
+            trimmed_content = response_text.strip()
+            if trimmed_content.startswith('{') and trimmed_content.endswith('}'):
+                fixed_json = self._fix_json_format(trimmed_content)
+                return json.loads(fixed_json)
+                
+            # Third try: Look for any JSON-like block in the response
+            json_block_match = re.search(r'(\{.*\})', response_text, re.DOTALL)
+            if json_block_match:
+                json_block = json_block_match.group(1).strip()
+                fixed_json = self._fix_json_format(json_block)
+                return json.loads(fixed_json)
+                
+            # Fourth try: Check if this is valid JSON but missing outer braces
+            # This is useful for cases where the outer braces are missing
+            try:
+                if 'elements' in response_text or 'edges' in response_text or 'boundaries' in response_text:
+                    # Try wrapping in braces
+                    wrapped_json = '{' + response_text + '}'
+                    fixed_json = self._fix_json_format(wrapped_json)
+                    return json.loads(fixed_json)
+            except Exception:
+                pass
+                
+            log_info("No JSON structure found in LLM response")
+            return default_model
+            
+        except json.JSONDecodeError as e:
+            log_info(f"JSON parsing error: {e}")
+            
+            # Special handling for case where there are message, confidence fields from LLM
+            if 'message' in response_text and 'confidence' in response_text:
+                try:
+                    # Extract the individual fields we care about
+                    message_match = re.search(r'"message"\s*:\s*"([^"]*)"', response_text, re.DOTALL)
+                    message = message_match.group(1) if message_match else ""
+                    
+                    # Build a simple valid JSON model
+                    log_info("Reconstructing model from partial content")
+                    
+                    # Try to extract elements, edges, and boundaries
+                    elements = self._extract_array_by_name(response_text, "elements")
+                    edges = self._extract_array_by_name(response_text, "edges")
+                    boundaries = self._extract_array_by_name(response_text, "boundaries")
+                    
+                    return {
+                        "message": message,
+                        "elements": elements,
+                        "edges": edges,
+                        "boundaries": boundaries
+                    }
+                except Exception as reconstruct_error:
+                    log_info(f"Error reconstructing JSON: {str(reconstruct_error)}")
+            
+            # Try to extract essential parts
+            try:
+                # Look for arrays with our improved method
+                elements = self._extract_array_by_name(response_text, "elements")
+                edges = self._extract_array_by_name(response_text, "edges")
+                boundaries = self._extract_array_by_name(response_text, "boundaries")
+                
+                if elements or edges or boundaries:
+                    log_info(f"Recovered partial model: {len(elements)} elements, {len(edges)} edges, {len(boundaries)} boundaries")
+                    return {
+                        "elements": elements,
+                        "edges": edges,
+                        "boundaries": boundaries
+                    }
+            except Exception as recovery_error:
+                log_info(f"Failed to recover partial model: {str(recovery_error)}")
+            
+            # Check for a sample file as a last resort
+            try:
+                sample_path = "sdr_backend/resources/sample_dfd.json"
+                if os.path.exists(sample_path):
+                    with open(sample_path, "r") as f:
+                        return json.load(f)
+            except Exception:
+                pass
+                
+            return default_model
     
-    async def _send_intermediate_status_updates(self, status_update_func):
-        """Sends intermediate status updates during long-running operations"""
-        import asyncio
+    def _fix_json_format(self, json_str: str) -> str:
+        """
+        Fix common JSON formatting issues.
         
-        # List of status messages to cycle through
-        status_messages = [
-            "Creating model components",
-            "Analyzing component interactions",
-            "Mapping data flows",
-            "Analyzing trust boundaries",
-            "Identifying threat vectors",
-            "Applying threat rules",
-            "Processing security considerations",
-            "Analyzing attack surfaces",
-            "Validating model integrity",
-            "Building threat matrix"
-        ]
+        Args:
+            json_str: The JSON string to fix
+            
+        Returns:
+            A corrected JSON string
+        """
+        # First, try more aggressive property name quoting - directly addressing the 
+        # "Expecting property name enclosed in double quotes" error
+        lines = json_str.split('\n')
+        fixed_lines = []
         
-        # Start from 35% (where we left off) and go to 60%
-        start_progress = 35
-        end_progress = 60
+        for line in lines:
+            # Find property names not in quotes at the beginning of lines
+            # This matches patterns like:  message: "value" or  message : "value"
+            line = re.sub(r'^\s*(\w+)\s*:', r'"\1":', line)
+            
+            # Also fix property names in the middle of lines
+            line = re.sub(r',\s*(\w+)\s*:', r', "\1":', line)
+            
+            fixed_lines.append(line)
         
-        # Send an update every 3-5 seconds to avoid overloading Redis
-        # but still give feedback that processing is happening
-        for i, message in enumerate(status_messages):
-            # Calculate progress percentage
-            progress = start_progress + (i * (end_progress - start_progress) / len(status_messages))
+        json_str = '\n'.join(fixed_lines)
+        
+        # Remove trailing commas in objects and arrays
+        json_str = re.sub(r',\s*}', '}', json_str)
+        json_str = re.sub(r',\s*]', ']', json_str)
+        
+        # Replace single quotes with double quotes
+        json_str = re.sub(r"'", '"', json_str)
+        
+        # Replace unquoted property names with quoted ones - more general case
+        json_str = re.sub(r'([{,])\s*(\w+)\s*:', r'\1"\2":', json_str)
+        
+        # Fix possible issues with null, true, false values
+        json_str = re.sub(r':\s*null\b', ': null', json_str)
+        json_str = re.sub(r':\s*true\b', ': true', json_str)
+        json_str = re.sub(r':\s*false\b', ': false', json_str)
+        
+        # Balance brackets if needed
+        open_braces = json_str.count('{')
+        close_braces = json_str.count('}')
+        if open_braces > close_braces:
+            json_str += '}' * (open_braces - close_braces)
+        
+        open_brackets = json_str.count('[')
+        close_brackets = json_str.count(']')
+        if open_brackets > close_brackets:
+            json_str += ']' * (open_brackets - close_brackets)
             
-            # Send status update
-            await status_update_func(int(progress), message)
+        # Last-ditch effort for problem characters
+        json_str = json_str.replace('\t', ' ')
+        
+        return json_str
+    
+    def _extract_array_by_name(self, json_str: str, array_name: str) -> List[Dict[str, Any]]:
+        """
+        Extract an array from a JSON string by its name.
+        
+        Args:
+            json_str: The JSON string to search
+            array_name: The name of the array to extract
             
-            # Wait before sending next update
-            await asyncio.sleep(4)
+        Returns:
+            A list of dictionaries from the array, or an empty list if not found
+        """
+        try:
+            # Look for the array pattern
+            # First try a more precise extraction with balanced bracket tracking
+            start_pattern = f'"{array_name}"\\s*:\\s*\\['
+            start_match = re.search(start_pattern, json_str)
             
-            # If we've gone through all messages but the operation is still running,
-            # recycle with slight variations so users know it's still working
-            if i == len(status_messages) - 1:
-                await status_update_func(58, "Finalizing threat analysis (this may take a moment)")
-                await asyncio.sleep(5)
+            if start_match:
+                start_pos = start_match.end() - 1  # Position of the opening bracket
+                pos = start_pos
+                open_brackets = 1
+                
+                # Track bracket nesting to find the matching closing bracket
+                while open_brackets > 0 and pos < len(json_str) - 1:
+                    pos += 1
+                    if json_str[pos] == '[':
+                        open_brackets += 1
+                    elif json_str[pos] == ']':
+                        open_brackets -= 1
+                
+                if open_brackets == 0:
+                    # Extract the full array with matched brackets
+                    array_str = json_str[start_pos:pos+1]
+                    
+                    # Fix JSON formatting issues in the array
+                    fixed_array_str = self._fix_json_format(array_str)
+                    
+                    # Try to parse the array
+                    return json.loads(fixed_array_str)
+            
+            # Fallback to simpler regex pattern if bracket matching failed
+            pattern = f'"{array_name}"\\s*:\\s*(\\[.*?\\])'
+            array_match = re.search(pattern, json_str, re.DOTALL)
+            
+            if array_match:
+                array_str = array_match.group(1)
+                fixed_array_str = self._fix_json_format(array_str)
+                return json.loads(fixed_array_str)
+                
+            # Ultimate fallback: manually extract objects from the array
+            # For cases where the array is badly malformed but objects are mostly intact
+            if array_name in json_str:
+                try:
+                    # Find where the array starts
+                    array_start = json_str.find('[', json_str.find(f'"{array_name}"'))
+                    if array_start > 0:
+                        # Look for object patterns within this section
+                        objects = re.findall(r'(\{[^{}]*(?:\{[^{}]*\}[^{}]*)*\})', json_str[array_start:])
+                        if objects:
+                            items = []
+                            for obj_str in objects:
+                                try:
+                                    fixed_obj = self._fix_json_format(obj_str)
+                                    obj = json.loads(fixed_obj)
+                                    items.append(obj)
+                                except json.JSONDecodeError:
+                                    pass  # Skip objects that can't be parsed
+                            return items
+                except Exception:
+                    pass
+                    
+        except Exception as e:
+            log_info(f"Error extracting {array_name} array with improved method: {e}")
+            
+        return []
+        
+    def _validate_dfd_model(self, dfd_model: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Validate the DFD model structure, ensuring it has all required fields.
+        
+        Args:
+            dfd_model: The DFD model to validate
+            
+        Returns:
+            A validated DFD model
+        """
+        # Ensure we have the basic structure
+        if not isinstance(dfd_model, dict):
+            return {"elements": [], "edges": [], "boundaries": []}
+            
+        # Ensure all required arrays exist
+        elements = dfd_model.get("elements", [])
+        edges = dfd_model.get("edges", [])
+        boundaries = dfd_model.get("boundaries", [])
+        
+        # Ensure arrays are actually lists
+        if not isinstance(elements, list):
+            elements = []
+        if not isinstance(edges, list):
+            edges = []
+        if not isinstance(boundaries, list):
+            boundaries = []
+            
+        # Validate elements to ensure they have required fields
+        valid_elements = []
+        for idx, element in enumerate(elements):
+            if not isinstance(element, dict):
+                continue
+                
+            # Add missing required fields with sensible defaults
+            if "id" not in element:
+                element["id"] = f"element_{idx}"
+            if "type" not in element:
+                element["type"] = "process"
+            if "label" not in element:
+                element["label"] = f"Element {idx}"
+            if "properties" not in element or not isinstance(element["properties"], dict):
+                element["properties"] = {}
+                
+            # Add position if missing
+            if "position" not in element["properties"]:
+                element["properties"]["position"] = {
+                    "x": 100 + (idx % 5) * 150,
+                    "y": 100 + (idx // 5) * 150
+                }
+                
+            valid_elements.append(element)
+            
+        # Validate edges to ensure they have required fields
+        valid_edges = []
+        for idx, edge in enumerate(edges):
+            if not isinstance(edge, dict):
+                continue
+                
+            # Add missing required fields
+            if "id" not in edge:
+                edge["id"] = f"edge_{idx}"
+            if "source" not in edge or "target" not in edge:
+                continue  # Skip edges without source or target
+            if "properties" not in edge or not isinstance(edge["properties"], dict):
+                edge["properties"] = {}
+                
+            valid_edges.append(edge)
+            
+        # Validate boundaries
+        valid_boundaries = []
+        for idx, boundary in enumerate(boundaries):
+            if not isinstance(boundary, dict):
+                continue
+                
+            # Add missing required fields
+            if "id" not in boundary:
+                boundary["id"] = f"boundary_{idx}"
+            if "label" not in boundary:
+                boundary["label"] = f"Boundary {idx}"
+            if "element_ids" not in boundary or not isinstance(boundary["element_ids"], list):
+                boundary["element_ids"] = []
+            if "properties" not in boundary or not isinstance(boundary["properties"], dict):
+                boundary["properties"] = {}
+                
+            valid_boundaries.append(boundary)
+            
+        return {
+            "elements": valid_elements,
+            "edges": valid_edges,
+            "boundaries": valid_boundaries
+        }

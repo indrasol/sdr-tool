@@ -1,0 +1,54 @@
+steps:
+  # Step 1: Retrieve the Hugging Face token from Secret Manager
+  - name: 'gcr.io/cloud-builders/gcloud'
+    entrypoint: 'bash'
+    args:
+      - '-c'
+      - |
+        export TRANSFORMER_MODEL_TOKEN=$(gcloud secrets versions access latest --secret=TRANSFORMER_MODEL_TOKEN)
+        echo "TRANSFORMER_MODEL_TOKEN=$$TRANSFORMER_MODEL_TOKEN" >> build.env
+
+  # Step 2: Pull the latest image to use as cache (ignores errors if image doesn't exist yet)
+  - name: 'gcr.io/cloud-builders/docker'
+    entrypoint: 'bash'
+    args: ['-c', 'docker pull us-central1-docker.pkg.dev/$PROJECT_ID/securetrack-repo/securetrack-service:latest || exit 0']
+    
+  # Step 3: Build using the pulled image as cache
+  - name: 'gcr.io/cloud-builders/docker'
+    args: [
+      'build', 
+      '-t', 'us-central1-docker.pkg.dev/$PROJECT_ID/securetrack-repo/securetrack-service:latest', 
+      '--cache-from', 'us-central1-docker.pkg.dev/$PROJECT_ID/securetrack-repo/securetrack-service:latest',
+      '.'
+    ]
+    dir: 'sdr_backend'
+
+  # Step 4: Push the newly built image
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['push', 'us-central1-docker.pkg.dev/$PROJECT_ID/securetrack-repo/securetrack-service:latest']
+
+  # Step 5: Deploy to Cloud Run
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    entrypoint: 'gcloud'
+    args:
+      - 'run'
+      - 'deploy'
+      - 'securetrack-service'
+      - '--image'
+      - 'us-central1-docker.pkg.dev/$PROJECT_ID/securetrack-repo/securetrack-service:latest'
+      - '--platform'
+      - 'managed'
+      - '--region'
+      - 'us-central1'
+      - '--allow-unauthenticated'
+      - '--service-account=cloudbuild@securetrack-457423.iam.gserviceaccount.com'
+      - '--memory=1Gi'
+      - '--set-secrets=OPENAI_API_KEY=OPENAI_API_KEY:latest,ANTHROPIC_API_KEY=ANTHROPIC_API_KEY:latest,SUPABASE_URL=SUPABASE_URL:latest,SUPABASE_SERVICE_KEY=SUPABASE_SERVICE_KEY:latest,SUPABASE_API_KEY=SUPABASE_API_KEY:latest,SUPABASE_SECRET_KEY=SUPABASE_SECRET_KEY:latest,REDIS_HOST=REDIS_HOST:latest,REDIS_PORT=REDIS_PORT:latest,REDIS_PASSWORD=REDIS_PASSWORD:latest,REDIS_DB=REDIS_DB:latest,SESSION_EXPIRY=SESSION_EXPIRY:latest'
+
+images:
+  - 'us-central1-docker.pkg.dev/$PROJECT_ID/securetrack-repo/securetrack-service:latest'
+
+options:
+  logging: CLOUD_LOGGING_ONLY
+  pool:
+    name: 'projects/securetrack-457423/locations/us-central1/workerPools/securetrack-pool'

@@ -107,16 +107,11 @@ const CustomNode = ({ id, data, selected, style }: NodeProps) => {
       />
 
       <div 
-        className={`custom-node flex flex-col items-center justify-center w-full h-full transition-all duration-300 ${selected ? 'shadow-md' : 'shadow-md'}`}
-        style={{
-          ...style,
-          backgroundColor: nodeColors.background,
-          // border: selected ? `0px solid ${nodeColors.primary}` : `0px solid ${nodeColors.primary}`,
-          // borderRadius: '30px',
-          position: 'relative',
-          padding: '0px',
-          aspectRatio: '1 / 1',
-        }}
+        className={`node-fade-in custom-node flex flex-col items-center justify-center w-full h-full rounded-lg border backdrop-blur-sm
+          ${selected ? 'border-securetrack-purple border-2 shadow-lg' : 'border-gray-200/80 shadow-sm'} 
+          p-1 transition-all duration-200 hover:shadow-md
+          ${isCloudNode ? 'bg-white/90' : 'bg-gradient-to-br from-white/95 to-white/85'}`}
+        style={style}
       >
         {iconRenderer && (
           <div className="flex justify-center items-center mb-3 transition-transform duration-200 hover:scale-110">
@@ -127,30 +122,32 @@ const CustomNode = ({ id, data, selected, style }: NodeProps) => {
         <div className="font-Extrabold text-center break-words" style={{ color: 'black', fontSize: '10px',fontWeight: 900 }}>
           {label}
         </div>
+        
+        {description && (
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div className="text-[9px] text-gray-500 mt-0.5 truncate max-w-full text-center cursor-help">
+                  {description.length > 12 ? `${description.substring(0, 12)}...` : description}
+                </div>
+              </TooltipTrigger>
+              <TooltipContent className="bg-white/90 backdrop-blur-sm z-[9999] text-xs p-2 border-securetrack-purple/20">
+                {description}
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        )}
       </div>
 
       <Handle 
         type="target" 
         position={Position.Left} 
-        className="!w-2 !h-2 !rounded-full !z-10 transition-all duration-200 hover:scale-125" 
-        style={{ 
-          borderColor: nodeColors.primary, 
-          backgroundColor: 'white', 
-          border: `1px solid ${nodeColors.primary}`,
-          left: -6,
-          boxShadow: `0 0 0 1px rgba(255, 255, 255, 0.8)`
-        }}
+        className="w-1.5 h-1.5 border-2 border-securetrack-purple bg-white/90"
       />
       <Handle 
         type="source" 
         position={Position.Right} 
-        className="!w-2 !h-2 !rounded-full !z-10 transition-all duration-200 hover:scale-125" 
-        style={{ 
-          backgroundColor: nodeColors.primary, 
-          border: 'none',
-          right: -6,
-          boxShadow: `0 0 0 2px rgba(255, 255, 255, 0.8)`
-        }}
+        className="w-1.5 h-1.5 border-2 border-securetrack-purple bg-white/90"
       />
     </>
   );

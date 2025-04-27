@@ -1,0 +1,22 @@
+/* Styles for the typing cursor in placeholders */
+.typing-cursor {
+  display: inline-block;
+  margin-left: 2px;
+  width: 1px;
+  height: 16px;
+  background-color: currentColor;
+  vertical-align: middle;
+  opacity: 0.7;
+  animation: blink 1s steps(2, start) infinite;
+}
+
+@keyframes blink {
+  to {
+    visibility: hidden;
+  }
+}
+
+.typing-placeholder {
+  color: #7C65F6;
+  opacity: 0.8;
+} 
