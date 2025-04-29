@@ -1,4 +1,6 @@
-from fastapi import APIRouter, Body, Depends, HTTPException
+import asyncio
+import json
+from fastapi import APIRouter, BackgroundTasks, Body, Depends, HTTPException
 from fastapi.responses import JSONResponse
 from services.auth_handler import verify_token
 from services.supabase_manager import SupabaseManager
@@ -11,12 +13,20 @@ from constants import ProjectStatus, ProjectPriority
 from core.cache.session_manager import SessionManager
 from datetime import datetime, timezone, timedelta
 import zoneinfo
-
+import time
+import logging
 router = APIRouter()
 
 # Initialize DatabaseManager
 supabase_manager = SupabaseManager()
 session_manager = SessionManager()
+
+# Set up structured logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - [User:%(user_id)s Project:%(project_code)s Session:%(session_id)s] - %(message)s'
+)
+logger = logging.getLogger(__name__)
 
 # Create a new project
 @router.post("/projects")
@@ -79,7 +89,8 @@ async def create_project(
             creator=project.creator,
             domain=project.domain,
             template_type=project.template_type,
-            imported_file=project.imported_file
+            imported_file=project.imported_file,
+            version=0
         )
         log_info("project id : {project_id}")
         return {
@@ -573,7 +584,8 @@ async def load_project(
 async def save_project(
     session_id: str,
     request_data: SaveProjectRequest = Body(...),
-    current_user: dict = Depends(verify_token)
+    current_user: dict = Depends(verify_token),
+    background_tasks: BackgroundTasks = None
 ):
     """
     Save the project state from the active session to the database.
@@ -583,34 +595,66 @@ async def save_project(
         session_id: Active session identifier
         request_data: Project save request data
         current_user: Current authenticated user
+        background_tasks: FastAPI background tasks for logging
         
     Returns:
         JSON response with save status
     """
     user_id = current_user["id"]
     project_code = request_data.project_code
-    log_info(f"Saving project {project_code} from session {session_id}")
+    diagram_state_request = request_data.diagram_state
+    # Add logging context
+    log_extra = {
+        "user_id": user_id,
+        "project_code": project_code,
+        "session_id": session_id
+    }
+    log = logging.LoggerAdapter(logger, log_extra)
     
+    start_time = time.time()
+
+    log.info("Saving project started")
     try:
         # Initialize services
         session_mgr = SessionManager()
         if not session_mgr.redis_pool:
+            log.info("Connecting to Redis")
             await session_mgr.connect()
+        else:
+            log.info("Reusing existing Redis connection")
             
         # 1. Verify session exists and belongs to this user/project
-        session_data = await session_mgr.get_session(
-            session_id=session_id,
-            expected_project_id=project_code,
-            expected_user_id=user_id
+        log.info("Verifying session")
+        session_data = await asyncio.wait_for(
+            session_mgr.get_session(
+                session_id=session_id,
+                expected_project_id=project_code,
+                expected_user_id=user_id
+            ),
+            timeout=15.0  # 5-second timeout for Redis operation
         )
         
         if not session_data:
+            log.error("Session not found or access denied")
             raise HTTPException(status_code=404, detail=f"Session {session_id} not found or access denied")
             
         # 2. Extract data to save
-        diagram_state = session_data.get("diagram_state", {})
+        diagram_state = diagram_state_request
+        if not isinstance(diagram_state, dict):
+            log.error(f"Invalid diagram_state_request: {diagram_state}")
+            raise ValueError("diagram_state_request must be a dictionary")
+        if "nodes" not in diagram_state or "edges" not in diagram_state:
+            log.error(f"Invalid diagram_state_request structure: {diagram_state}")
+            raise ValueError("diagram_state_request must contain 'nodes' and 'edges' keys")
+        log.info(f"Diagram state to save: {json.dumps(diagram_state, sort_keys=True)}")
+
+        # 3. Extract conversation history
         conversation_history = session_data.get("conversation_history", [])
-        
+        if not isinstance(conversation_history, list):
+            log.warning(f"Invalid conversation history in session, defaulting to empty list: {conversation_history}")
+            conversation_history = []
+        log.info(f"Conversation history length to save: {len(conversation_history)}")
+
         # 3. Check if there's a threat model in the session
         threat_model = None
         threat_model_id = None
@@ -633,14 +677,42 @@ async def save_project(
         
         # Get current time with timezone using Python 3.11's improved timezone handling
         current_time = datetime.now(timezone.utc)
+
+        # Fetch the current project version
+        def fetch_current_project_data():
+            return supabase.from_("projects")\
+                .select("version")\
+                .eq("project_code", project_code)\
+                .eq("user_id", user_id)\
+                .single()\
+                .execute()
         
+        current_project = await safe_supabase_operation(
+            fetch_current_project_data,
+            f"Failed to fetch current project version for {project_code}"
+        )
+        log_info(f"Current project: {current_project}")
+        
+        if current_project.data:
+            current_version = current_project.data.get("version", 0)
+            log.info(f"Current version from database: {current_version}")
+        else:
+            # New project, initialize version to 0 (will be incremented to 1)
+            current_version = 0
+            log.info("Project not found in database, treating as new project with version 0")
+        
+        log_info(f"Current version before update data : {current_version}")
         # Prepare update data
         update_data = {
             "diagram_state": diagram_state,
             "conversation_history": conversation_history,
-            "diagram_updated_at": current_time.isoformat()
+            "diagram_updated_at": current_time.isoformat(),
+            "version": current_version + 1
         }
-        
+        log_info(f"Calling update_and_validate_project with update data")
+        log_info(f"Update data diagram state : {update_data['diagram_state']}")
+        log_info(f"Update Version: {update_data['version']}")
+
         # Add threat model data if available
         if threat_model:
             update_data["dfd_data"] = threat_model
@@ -648,27 +720,65 @@ async def save_project(
             if threat_model_id:
                 update_data["threat_model_id"] = threat_model_id
                 
-        # Update the project
-        def update_project_data():
-            return supabase.from_("projects").update(update_data).eq("project_code", project_code).eq("user_id", user_id).execute()
-            
-        update_response = await safe_supabase_operation(
-            update_project_data,
-            f"Failed to update project {project_code}"
+       # 6. Update or insert the project in the database
+        if current_project.data:
+            # Update existing project with version check
+            def update_project_data():
+                return supabase.from_("projects")\
+                    .update(update_data)\
+                    .eq("project_code", project_code)\
+                    .eq("user_id", user_id)\
+                    .eq("version", current_version)\
+                    .execute()
+            update_response = await safe_supabase_operation(
+                update_project_data,
+                f"Failed to update project {project_code}"
+            )
+            if not update_response.data:
+                log.error("Update failed: no rows updated, possible version mismatch")
+                raise HTTPException(status_code=500, detail="Update failed: no rows updated")
+        else:
+            # Insert new project (assuming project_code and user_id are set elsewhere)
+            update_data["project_code"] = project_code
+            update_data["user_id"] = user_id
+            update_response = await supabase.from_("projects")\
+                .insert(update_data)\
+                .execute()
+            if not update_response.data:
+                log.error("Insert failed")
+                raise HTTPException(status_code=500, detail="Insert failed")
+
+        # 7. Update session data with new version
+        session_data["version"] = update_data["version"]
+        await session_mgr.update_session(session_id, diagram_state=diagram_state)
+        
+        # Log the operation duration
+        duration = time.time() - start_time
+        log.info(f"Project saved successfully in {duration:.2f} seconds")
+        
+        # Background task for additional logging or cleanup
+        background_tasks.add_task(
+            log.info,
+            f"Background: Saved project with {len(diagram_state['nodes'])} nodes and {len(diagram_state['edges'])} edges"
         )
-        
-        log_info(f"Successfully saved project {project_code} from session {session_id}")
-        
+
         return JSONResponse(content={
-            "status": "success",
-            "message": "Project saved successfully",
-            "project_code": project_code
-        })
+                "status": "success",
+                "message": "Project saved successfully",
+                "project_code": project_code,
+                "version": update_data["version"]
+            }, status_code=200)
             
+    except asyncio.TimeoutError:
+        log.error("Operation timed out while saving project")
+        raise HTTPException(status_code=504, detail="Operation timed out while saving project")
+    except ValueError as ve:
+        log.error(f"Validation error: {str(ve)}")
+        raise HTTPException(status_code=400, detail=f"Validation error: {str(ve)}")
     except HTTPException as http_exc:
         raise http_exc
     except Exception as e:
-        log_info(f"Error saving project {project_code} from session {session_id}: {str(e)}")
+        log.error(f"Unexpected error saving project: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Failed to save project: {str(e)}")
 
 @router.get("/projects/{project_code}/history")

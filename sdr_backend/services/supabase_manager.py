@@ -109,7 +109,8 @@ class SupabaseManager:
         due_date: Optional[date] = None,
         domain: Optional[str] = None,
         template_type: Optional[str] = None,
-        imported_file: Optional[str] = None
+        imported_file: Optional[str] = None,
+        version: int = 0
     ) -> str:
         """
         Create a new project in Supabase with robust validation and unique project code.
@@ -205,6 +206,7 @@ class SupabaseManager:
                 "domain": domain,
                 "template_type": template_type,
                 "imported_file": imported_file,
+                "version": version,
                 # Only include if needed by GET or schema
                 "conversation_history": [],
                 "diagram_state": {"nodes": [], "edges": []}

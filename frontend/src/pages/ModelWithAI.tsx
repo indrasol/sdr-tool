@@ -31,6 +31,7 @@ import { Button } from '@/components/ui/button';
 import DFDVisualization from '@/components/AI/DFDVisualization';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { getAuthHeaders, BASE_API_URL, fetchWithTimeout, DEFAULT_TIMEOUT } from '../services/apiService'
+import { debounce } from 'lodash';
 
 // Interface for proper TypeScript support
 interface DiagramPanelEdgesProps {
@@ -308,6 +309,29 @@ const ModelWithAI = () => {
   const fixedExpandedWidth = 600;
   const collapsedWidth = 48;
 
+  // Utility function for saving project with current state
+  const saveCurrentState = useCallback(
+    debounce(async () => {
+      if (!sessionIdRef.current) {
+        console.warn("Cannot save - no session ID available");
+        return false; // Return false to indicate failure
+      }
+      
+      console.log(`Saving project with session ID: ${sessionIdRef.current}`);
+      const currentDiagramState = { nodes: nodesRef.current, edges: edgesRef.current };
+      
+      try {
+        const result = await projectService.saveProject(sessionIdRef.current, currentDiagramState, projectId);
+        console.log(`Project save result: ${result ? 'success' : 'failed'}`);
+        return result;
+      } catch (err) {
+        console.error("Error saving project:", err);
+        return false;
+      }
+    }, 1000), // 1-second debounce delay
+    [projectId] // Dependency array
+  );
+
   // Initialize component and load project if available
   useEffect(() => {
     toast({
@@ -341,13 +365,18 @@ const ModelWithAI = () => {
         console.log(`Saving project on unmount with session ID: ${sessionIdRef.current}`);
         console.log(`Current message count: ${messages.length}`);
         
-        // Use our utility function for more reliable saving
-        saveCurrentState().catch(err => {
-          console.error("Failed to save project on unmount:", err);
-        });
+        // Safely handle the case where saveCurrentState might be undefined
+        const savePromise = saveCurrentState?.();
+        if (savePromise && typeof savePromise.then === 'function') {
+          savePromise.catch(err => {
+            console.error("Failed to save project on unmount:", err);
+          });
+        } else {
+          console.warn("saveCurrentState is not available during cleanup");
+        }
       }
     };
-  }, [toast, location.state, params, projectId, projectLoaded]);
+  }, [toast, location.state, params, projectId, projectLoaded, saveCurrentState]);
 
   const handleSwitchView = useCallback(async (mode: 'AD' | 'DFD') => {
     console.log(`Switching view mode to: ${mode}`);
@@ -1261,26 +1290,6 @@ const ModelWithAI = () => {
       dfdReactFlowInstance.current.fitView({ padding: 0.2, duration: 300 });
     }
   }, []);
-
-  // Utility function for saving project with current state
-  const saveCurrentState = useCallback(async () => {
-    if (!sessionIdRef.current) {
-      console.warn("Cannot save - no session ID available");
-      return;
-    }
-    
-    console.log(`Saving project with session ID: ${sessionIdRef.current}`);
-    const currentDiagramState = { nodes: nodesRef.current, edges: edgesRef.current };
-    
-    try {
-      const result = await projectService.saveProject(sessionIdRef.current, currentDiagramState, projectId);
-      console.log(`Project save result: ${result ? 'success' : 'failed'}`);
-      return result;
-    } catch (err) {
-      console.error("Error saving project:", err);
-      return false;
-    }
-  }, [projectId]);
 
   // Add this function before the return statement in ModelWithAI
   const processAndDisplayThreatModel = useCallback((threatModelResponse: FullThreatModelResponse) => {
