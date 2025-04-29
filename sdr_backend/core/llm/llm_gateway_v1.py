@@ -851,16 +851,7 @@ class LLMService:
             timeout: Optional timeout in seconds
             
         Returns:
-            A dictionary containing the response text and usage information:
-            {
-                "content": "The response text",
-                "usage": {
-                    "input_tokens": 123,
-                    "output_tokens": 456
-                },
-                "model_used": "claude-3-7-sonnet-20250219",
-                "success": true
-            }
+            Dictionary containing the response and metadata
         """
         # Resolve the model name from our mapping if needed
         client = self.anthropic_client
@@ -878,6 +869,7 @@ class LLMService:
             "temperature": temperature or TEMPERATURE,
             "messages": [{"role": "user", "content": prompt}]
         }
+        log_info(f"API Request : {api_params}")
         
         # Add system parameter for Claude if provided (Claude requires it as a separate parameter)
         if system_prompt and isinstance(system_prompt, str):
@@ -918,6 +910,7 @@ class LLMService:
                     **client_options
                 )
                 
+                
                 for chunk in stream_obj:
                     if chunk.type == 'content_block_start' and hasattr(chunk.content_block, 'type') and chunk.content_block.type == 'text':
                         continue
@@ -925,6 +918,8 @@ class LLMService:
                         text_chunk = chunk.delta.text
                         full_response += text_chunk
                         response_chunks.append(text_chunk)
+                    
+                    # log_info(f"streaming reponse : {full_response}")
                     
                     # Capture usage if present in the chunk
                     if hasattr(chunk, 'usage'):
@@ -936,6 +931,7 @@ class LLMService:
                     # Allow asyncio to yield control occasionally
                     await asyncio.sleep(0)
                 
+                log_info(f"Streaming Response : {full_response}")
                 # Make an estimate if usage wasn't provided
                 if not usage["input_tokens"] and not usage["output_tokens"]:
                     estimated_tokens = len(prompt.split())
@@ -978,10 +974,9 @@ class LLMService:
             return {
                 "content": f"Error: Unexpected error occurred: {str(e)}",
                 "usage": {"input_tokens": 0, "output_tokens": 0},
-                "model_used": model,
-                "error": str(e),
-                "error_type": "Unexpected error",
-                "success": False
+                "model_used": model_name,
+                "success": False,
+                "error": str(e)
             }
     
     async def generate_llm_response(
