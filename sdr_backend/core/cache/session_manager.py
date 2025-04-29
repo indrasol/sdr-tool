@@ -67,7 +67,8 @@ class SessionManager:
             "conversation_history": [],
             "diagram_state": {},
             "classification_metadata": [],    # Store classification data for analysis
-            "feedback_history": []            # Track feedback for continuous learning
+            "feedback_history": [],            # Track feedback for continuous learning
+            "version": 0  # Initialize version to 0
         }
 
         try:
@@ -88,7 +89,8 @@ class SessionManager:
                     "project_id": project_id,
                     "created_at": timestamp,
                     "last_accessed": timestamp,
-                    "is_active": True
+                    "is_active": True,
+                    "version": 0
                 }).execute()
                 
             await safe_supabase_operation(
@@ -145,6 +147,7 @@ class SessionManager:
                     session_record = session_check.data[0]
                     user_id = session_record["user_id"]
                     project_id = session_record["project_id"]
+                    version = session_record.get("version", 0)  # Get
                     
                     # Create a fresh Redis session
                     fresh_session_data = {
@@ -155,7 +158,8 @@ class SessionManager:
                         "conversation_history": [],  # Empty as we'll reload this from DB
                         "diagram_state": {},  # Empty as we'll reload this from DB
                         "classification_metadata": [],
-                        "feedback_history": []
+                        "feedback_history": [],
+                        "version": version  # Use version from Supabase
                     }
                     
                     await self.redis_pool.setex(
@@ -189,7 +193,7 @@ class SessionManager:
             session_data = json.loads(session_data_str)
             
             # Validate required fields
-            required_fields = ["user_id", "project_id", "conversation_history", "diagram_state"]
+            required_fields = ["user_id", "project_id", "conversation_history", "diagram_state", "version"]
             for field in required_fields:
                 if field not in session_data:
                     log_info(f"Session {session_id} is missing required field: {field}")
@@ -256,6 +260,7 @@ class SessionManager:
         try:
             # Get current session data
             session_data = await self.get_session(session_id)
+            session_data["version"] += 1  # Increment version on modification
             
             # Add to conversation history
             conversation = session_data.get("conversation_history", [])
@@ -373,6 +378,7 @@ class SessionManager:
             
         try:
             session_data = await self.get_session(session_id)
+            session_data["version"] += 1  # Increment version on modification
             
             # Validate diagram state structure
             if not isinstance(diagram_state, dict):
@@ -424,6 +430,7 @@ class SessionManager:
             
         try:
             session_data = await self.get_session(session_id)
+            session_data["version"] += 1  # Increment version on modification
             current_time = datetime.now(timezone.utc).isoformat()
             session_data["last_updated"] = current_time
 

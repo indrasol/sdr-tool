@@ -56,6 +56,7 @@ class Project(Base):
     user = relationship("User", back_populates="projects")
     conversation_history = Column(ARRAY(JSONB), default=[])
     diagram_state = Column(JSONB, default={"nodes": [], "edges": []})
+    version = Column(Integer, default=0, nullable=True)
     tenant_id = Column(Integer, ForeignKey("tenants.id"), nullable=True)
     tenant = relationship("Tenant", back_populates="projects")
     created_at = Column(DateTime(timezone=True), server_default=func.now())
@@ -82,6 +83,7 @@ class Project(Base):
             "updated_at": self.updated_at.isoformat() if self.updated_at else None,
             "conversation_history": self.conversation_history,
             "diagram_state": self.diagram_state,
+            "version": self.version,
             "threat_model_id" : self.threat_model_id,
             "dfd_data" : self.dfd_model,
             "diagram_updated_at" : self.diagram_updated_at
@@ -121,6 +123,7 @@ class Session(Base):
     session_id = Column(String, nullable=False, unique=True, index=True)
     user_id = Column(String, nullable=False, index=True)
     project_id = Column(String, nullable=False, index=True)
+    version = Column(Integer, default=0, nullable=True)
     created_at = Column(DateTime(timezone=True), nullable=False, server_default=func.now())
     last_accessed = Column(DateTime(timezone=True), nullable=False, server_default=func.now(), onupdate=func.now())
     is_active = Column(Boolean, nullable=False, default=True)
