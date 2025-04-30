@@ -3,14 +3,9 @@ import { CSSProperties } from 'react';
 // Enhanced node styles with better shadows and borders but smaller size
 export const nodeDefaults: { style: CSSProperties } = {
   style: {
-    border: '1px solid #7C65F6', // Guardian AI purple border
-    borderRadius: '5px', // Even smaller border radius
-    padding: '4px', // Further reduced padding
-    boxShadow: '0 2px 5px rgba(0,0,0,0.08)',
-    backgroundColor: 'white',
-    fontSize: '10px', // Smaller font size
-    minWidth: '70px', // Smaller minimum width
-    maxWidth: '100px', // Smaller max width
+    // We're now handling styles in the CustomNode component directly
+    // Keep minimal defaults here
+    fontSize: '12px',
   }
 };
 
@@ -28,63 +23,98 @@ export const getNodeShapeStyle = (nodeType: string): CSSProperties => {
     };
   }
   
-  // AWS specific styling
-  if (nodeType.includes('EC2') || nodeType === 'Server') {
-    return {
-      borderColor: '#ED7615',
-      borderLeftWidth: '3px',
-    };
-  }
-  
-  if (nodeType.includes('RDS') || nodeType.includes('Database')) {
-    return {
-      borderColor: '#3046DF',
-      borderLeftWidth: '3px',
-    };
-  }
-  
-  if (nodeType.includes('S3') || nodeType.includes('Storage')) {
-    return {
-      borderColor: '#5DA93C',
-      borderLeftWidth: '3px',
-    };
-  }
-  
-  if (nodeType.includes('CloudFront') || nodeType.includes('CDN')) {
-    return {
-      borderColor: '#8356DB',
-      borderLeftWidth: '3px',
-    };
-  }
-  
-  if (nodeType.includes('Lambda') || nodeType.includes('Function')) {
-    return {
-      borderColor: '#ED7615',
-      borderLeftWidth: '3px',
-    };
-  }
-  
-  if (nodeType.includes('IAM') || nodeType.includes('Security')) {
-    return {
-      borderColor: '#D93653',
-      borderLeftWidth: '3px',
-    };
-  }
-  
+  // We've moved all styling to the customNode component
   return {};
 };
 
-// Get category-specific styles for node icons but with smaller sizes
-export const getCategoryStyle = (category: string): { color: string; bgColor: string } => {
-  switch (category) {
-    case 'AWS':
-      return { color: 'white', bgColor: '#FF9900' };
-    case 'Network':
-      return { color: 'white', bgColor: '#0078D7' };
-    case 'Security':
-      return { color: 'white', bgColor: '#D93653' };
-    case 'General':
-    default:
-      return { color: '#7C65F6', bgColor: '#F5F7F9' };
+// Helper function to check if a node is a database type
+const isDatabaseNode = (category: string): boolean => {
+  const lowerCategory = category.toLowerCase();
+  return lowerCategory.includes('database') || 
+         lowerCategory.includes('sql') || 
+         lowerCategory.includes('storage');
+};
+
+// Get category-specific styles for node icons with color mapping that matches toolbar categories
+export const getCategoryStyle = (category: string): { color: string; bgColor: string; borderColor: string } => {
+  const lowerCategory = category.toLowerCase();
+  
+  // AWS Category - Orange
+  if (lowerCategory.includes('aws') || lowerCategory.includes('amazon')) {
+    return { 
+      color: 'white', 
+      bgColor: '#FF9900', 
+      borderColor: '#F5C375'
+    };
   }
+  
+  // Network Category - Red
+  if (lowerCategory.includes('network') || lowerCategory.includes('firewall') || lowerCategory.includes('waf')) {
+    return { 
+      color: 'white', 
+      bgColor: '#DC3545', 
+      borderColor: '#E56A76'
+    };
+  }
+  
+  // Database nodes - Treat as Application category (teal)
+  if (isDatabaseNode(lowerCategory)) {
+    return { 
+      color: 'white', 
+      bgColor: '#009688', 
+      borderColor: '#4DB6AC'
+    };
+  }
+  
+  // Azure Category - Blue
+  if (lowerCategory.includes('azure') || lowerCategory.includes('microsoft')) {
+    return { 
+      color: 'white', 
+      bgColor: '#0072C6', 
+      borderColor: '#4A98D6'
+    };
+  }
+  
+  // Application/Microservice Category - Teal
+  if (lowerCategory.includes('microservice') || lowerCategory.includes('service') || lowerCategory.includes('application')) {
+    return { 
+      color: 'white', 
+      bgColor: '#009688', 
+      borderColor: '#4DB6AC'
+    };
+  }
+  
+  // GCP Category - Blue
+  if (lowerCategory.includes('gcp') || lowerCategory.includes('google')) {
+    return { 
+      color: 'white', 
+      bgColor: '#1A73E8', 
+      borderColor: '#5B98ED'
+    };
+  }
+  
+  // Client/Device Category - Transparent (icon only)
+  if (lowerCategory.includes('client') || lowerCategory.includes('device') || lowerCategory.includes('user')) {
+    return { 
+      color: 'white', 
+      bgColor: 'transparent', 
+      borderColor: 'transparent'
+    };
+  }
+  
+  // API Gateway - Blue
+  if (lowerCategory.includes('api') || lowerCategory.includes('gateway')) {
+    return { 
+      color: 'white', 
+      bgColor: '#0078D7', 
+      borderColor: '#4C9FE2'
+    };
+  }
+  
+  // Default color scheme - Purple
+  return { 
+    color: 'white', 
+    bgColor: '#7C65F6', 
+    borderColor: '#ADA0F9'
+  };
 };

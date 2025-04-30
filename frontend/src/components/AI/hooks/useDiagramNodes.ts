@@ -1,8 +1,10 @@
 import { useState, useCallback, useMemo } from 'react';
 import { useToast } from '@/hooks/use-toast';
-import { addEdge } from '@xyflow/react';
+import { addEdge, MarkerType } from '@xyflow/react';
 import { getNodeShapeStyle, nodeDefaults } from '../utils/nodeStyles';
 import { edgeStyles } from '../utils/edgeStyles';
+import { mapNodeTypeToIcon } from '../utils/mapNodeTypeToIcon';
+import RemoteSvgIcon from '../icons/RemoteSvgIcon';
 
 
 const determineEdgeType = (sourceId, targetId, nodes = []) => {
@@ -83,61 +85,6 @@ export function useDiagramNodes(
   const [editNodeDialogOpen, setEditNodeDialogOpen] = useState(false);
   const [currentEditNode, setCurrentEditNode] = useState(null);
 
-  // Apply style defaults to all nodes and add callbacks
-  const prepareNodes = useCallback((nodes) => {
-    if (!nodes || !Array.isArray(nodes) || nodes.length === 0) {
-      console.warn("prepareNodes received invalid or empty nodes:", nodes);
-      return [];
-    }
-    
-    return nodes.map(node => {
-      if (!node) {
-        console.warn("Encountered null or undefined node in prepareNodes");
-        return null;
-      }
-      
-      // Determine category from node type for styling purposes
-      const nodeType = node.data?.nodeType || node.type || 'Component';
-      
-      // Apply category-specific styling
-      const nodeTypeStyle = getNodeShapeStyle(nodeType);
-      
-      // Ensure position is not undefined
-      const position = node.position || { x: Math.random() * 500, y: Math.random() * 300 };
-      
-      // Ensure data object exists
-      const data = node.data || {};
-      
-      return {
-        ...node,
-        type: node.type || 'default', // Use our custom node for all nodes
-        position: position,
-        data: {
-          ...data,
-          label: data.label || node.id || nodeType,
-          onEdit: handleEditNode,
-          onDelete: handleDeleteNode,
-          description: data.description || '',
-          nodeType: nodeType,
-          iconRenderer: data.iconRenderer, // Pass iconRenderer to node data
-        },
-        style: {
-          background: '#fff', // White background
-          border: 'none', // No border
-          borderRadius: '8px', // Rounded corners
-          padding: '10px', // Consistent padding
-          boxShadow: '0 2px 4px rgba(0,0,0,0.1)', // Subtle shadow
-          width: 150, // Fixed width
-          height: 50, // Fixed height
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-        },
-        draggable: node.draggable !== false  // Ensure nodes are draggable by default
-      };
-    }).filter(Boolean); // Filter out any null values
-  }, []);
-
   // Handle editing a node
   const handleEditNode = useCallback((id, label) => {
     console.log(`Editing node: ${id} (${label})`);
@@ -156,37 +103,6 @@ export function useDiagramNodes(
       console.warn(`Node with id ${id} not found for editing`);
     }
   }, [initialNodes]);
-
-  // Handle saving edited node data
-  const handleSaveNodeEdit = useCallback((id, updatedData) => {
-    console.log(`Saving edits for node: ${id}`, updatedData);
-    
-    if (!externalSetNodes) {
-      console.warn("externalSetNodes is not available for handleSaveNodeEdit");
-      return;
-    }
-    
-    externalSetNodes(nds => 
-      nds.map(node => {
-        if (node.id === id) {
-          return {
-            ...node,
-            data: {
-              ...node.data,
-              label: updatedData.label,
-              description: updatedData.description
-            }
-          };
-        }
-        return node;
-      })
-    );
-
-    toast({
-      title: "Node Updated",
-      description: `Node "${updatedData.label}" has been updated`
-    });
-  }, [externalSetNodes, toast]);
 
   // Handle deleting a node
   const handleDeleteNode = useCallback((id) => {
@@ -217,6 +133,101 @@ export function useDiagramNodes(
     }
   }, [initialNodes, externalSetNodes, externalSetEdges, toast]);
 
+  // Apply style defaults to all nodes and add callbacks
+  const prepareNodes = useCallback((nodes) => {
+    if (!nodes || !Array.isArray(nodes) || nodes.length === 0) {
+      console.warn("prepareNodes received invalid or empty nodes:", nodes);
+      return [];
+    }
+    
+    return nodes.map(node => {
+      if (!node) {
+        console.warn("Encountered null or undefined node in prepareNodes");
+        return null;
+      }
+      
+      // Extract node type and ensure it exists
+      // First look for it in node.data.nodeType, then node.type, then default to 'default'
+      const nodeType = node.data?.nodeType || node.type || 'default';
+      console.log('Processing node with type:', nodeType);
+      
+      // Check if the node already has an iconRenderer from toolbar
+      const existingIconRenderer = node.data?.iconRenderer;
+      
+      let iconRenderer = existingIconRenderer;
+      
+      // If no existing iconRenderer, try to create one from the nodeType
+      if (!existingIconRenderer) {
+        // Get icon URL based on node type
+        const iconUrl = mapNodeTypeToIcon(nodeType);
+        console.log('Icon URL for node type:', nodeType, iconUrl);
+        
+        // Extract section from node type (e.g., 'network' from 'network_internet')
+        const [section = '', component = ''] = nodeType.split('_');
+        
+        // Check if this is a microservice or application type node
+        const isMicroserviceNode = nodeType.includes('microservice') || component === 'microservice';
+        
+        // Create iconRenderer if we have an icon URL
+        if (iconUrl) {
+          iconRenderer = () => {
+            console.log('Rendering icon for node:', nodeType, 'URL:', iconUrl);
+            return {
+              component: RemoteSvgIcon,
+              props: { 
+                url: iconUrl, 
+                size: 48, // Maintain icon size from 48
+                className: `${section}-icon${isMicroserviceNode ? ' microservice-icon' : ''} node-icon-container` // Add special class for microservices and animation
+              },
+              bgColor: 'transparent' // Make background transparent to show just the icon
+            };
+          };
+        }
+      } else {
+        console.log('Node already has iconRenderer:', nodeType);
+      }
+      
+      console.log('Using iconRenderer:', iconRenderer ? 'Yes' : 'No');
+      
+      // Ensure position is not undefined
+      const position = node.position || { x: Math.random() * 500, y: Math.random() * 300 };
+      
+      // Ensure data object exists
+      const data = node.data || {};
+      
+      // Extract label from node data or generate from component part of nodeType
+      const [section = '', component = ''] = nodeType.split('_');
+      const label = data.label || 
+                   (component ? component.charAt(0).toUpperCase() + component.slice(1) : 'Node');
+      
+      // Check if this is an application or microservice node
+      const isApplicationNode = section === 'application';
+      const isMicroserviceNode = nodeType.includes('microservice') || component === 'microservice';
+      
+      return {
+        ...node,
+        type: 'default', // Always use our custom node
+        position: position,
+        // Preserve dragging state if it exists
+        dragging: node.dragging || false,
+        data: {
+          ...data,
+          label: label,
+          onEdit: handleEditNode,
+          onDelete: handleDeleteNode,
+          description: data.description || '',
+          nodeType: nodeType,
+          section: section,
+          isMicroservice: isMicroserviceNode,
+          // Assign the iconRenderer
+          iconRenderer: iconRenderer,
+        },
+        draggable: node.draggable !== false,
+        className: node.dragging ? 'dragging' : '',
+      };
+    }).filter(Boolean);
+  }, [handleEditNode, handleDeleteNode]);
+
   // Memoized function for determining edge type
   const getEdgeType = useCallback((sourceId, targetId) => {
     return determineEdgeType(sourceId, targetId, initialNodes);
@@ -242,17 +253,32 @@ export function useDiagramNodes(
     // Determine edge type based on connected nodes
     const edgeType = getEdgeType(params.source, params.target);
     
+    // Get stroke color based on edge type
+    let strokeColor = '#555'; // Default color
+    if (edgeStyles[edgeType] && typeof edgeStyles[edgeType].stroke === 'string') {
+      strokeColor = edgeStyles[edgeType].stroke;
+    } else if (edgeStyles.default && typeof edgeStyles.default.stroke === 'string') {
+      strokeColor = edgeStyles.default.stroke;
+    }
+    
     // Create the new edge with consistent arrowhead
     const newEdge = {
       ...params,
       id: edgeId,
       type: edgeType,
-      animated: false,
+      animated: edgeType === 'dataFlow' || edgeType === 'database',
       // Always include markerEnd for arrowhead display
-      markerEnd: 'url(#arrowhead)',
+      markerEnd: {
+        type: MarkerType.ArrowClosed,
+        width: 15,
+        height: 15,
+        color: strokeColor
+      },
       // Include styling based on edge type
       style: {
-        ...(edgeStyles[edgeType] || edgeStyles.default)
+        strokeWidth: 2,
+        stroke: strokeColor,
+        ...(params.style || {}),
       },
       data: {
         // You can add additional edge data here if needed
@@ -293,7 +319,14 @@ export function useDiagramNodes(
     }
     
     // Create a unique ID for the new node
-    const newId = `node-${nodeType.toLowerCase()}-${Date.now()}`;
+    const newId = `node-${nodeType.toLowerCase().replace(/\s+/g, '_')}-${Date.now()}`;
+    
+    // Convert nodeType from display label (e.g., "Network Firewall") to normalized format (e.g., "network_firewall")
+    // This ensures consistency with how backend nodes are processed
+    const normalizedNodeType = nodeType.toLowerCase().replace(/\s+/g, '_');
+    
+    // Log the conversion to help with debugging
+    console.log(`Converting nodeType from "${nodeType}" to normalized format: "${normalizedNodeType}"`);
     
     // Determine category based on node type
     const nodeCategory = 
@@ -311,13 +344,13 @@ export function useDiagramNodes(
     // Define the new node
     const newNode = {
       id: newId,
-      type: 'default',
+      type: normalizedNodeType, // Store the normalized type format here
       position,
       data: { 
-        label: nodeType, 
+        label: nodeType, // Keep original label for display
         onEdit: handleEditNode,
         onDelete: handleDeleteNode,
-        nodeType: nodeType,
+        nodeType: normalizedNodeType, // Use normalized type in data as well
         description: `A ${nodeType.toLowerCase()} component`,
         iconRenderer: iconRenderer, // Include the iconRenderer in node data
         category: nodeCategory,
@@ -338,6 +371,37 @@ export function useDiagramNodes(
     
     return newId; // Return the ID of the newly created node
   }, [externalSetNodes, handleEditNode, handleDeleteNode, toast]);
+
+  // Handle saving edited node data
+  const handleSaveNodeEdit = useCallback((id, updatedData) => {
+    console.log(`Saving edits for node: ${id}`, updatedData);
+    
+    if (!externalSetNodes) {
+      console.warn("externalSetNodes is not available for handleSaveNodeEdit");
+      return;
+    }
+    
+    externalSetNodes(nds => 
+      nds.map(node => {
+        if (node.id === id) {
+          return {
+            ...node,
+            data: {
+              ...node.data,
+              label: updatedData.label,
+              description: updatedData.description
+            }
+          };
+        }
+        return node;
+      })
+    );
+
+    toast({
+      title: "Node Updated",
+      description: `Node "${updatedData.label}" has been updated`
+    });
+  }, [externalSetNodes, toast]);
 
   // Process edges to ensure proper typing and arrowheads
   const processEdges = useCallback((edgesToProcess) => {
@@ -519,8 +583,7 @@ export function useDiagramNodes(
         
 //       toast({
 //         title: "Node Deleted",
-//         description: `Node "${nodeLabel}" has been removed`
-//       });
+//         description: `Node "${nodeLabel}" has been removed`//       });
 //     }
 //   }, [initialNodes, externalSetNodes, externalSetEdges, toast]);
 

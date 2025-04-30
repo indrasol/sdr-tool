@@ -319,6 +319,16 @@ const ModelWithAI = () => {
       
       console.log(`Saving project with session ID: ${sessionIdRef.current}`);
       const currentDiagramState = { nodes: nodesRef.current, edges: edgesRef.current };
+      console.log('Saving Diagram State Nodes:');
+      
+      // Also log a nodes summary for better readability
+      console.log('Nodes Summary:', currentDiagramState.nodes.map(node => ({
+        id: node.id,
+        type: node.type,
+        nodeType: node.data?.nodeType,
+        label: node.data?.label,
+        hasIconRenderer: !!node.data?.iconRenderer
+      })));
       
       try {
         const result = await projectService.saveProject(sessionIdRef.current, currentDiagramState, projectId);
@@ -541,7 +551,7 @@ const ModelWithAI = () => {
             type: 'default', // Normalize to 'default' for React Flow
             data: {
               ...node.data,
-              nodeType: node.type || 'default', // Preserve original type
+              nodeType: node.data?.nodeType || 'default',
               label: node.data?.label || node.id || 'Node',
               onEdit: handleEditNode,
               onDelete: handleDeleteNode,
