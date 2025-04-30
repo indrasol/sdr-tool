@@ -4,51 +4,52 @@
 export const edgeStyles = {
     // Default edge style (fallback)
     default: {
-      stroke: '#555',
-      strokeWidth: 2,
+      stroke: '#999999',
+      strokeWidth: 1.5,
     },
     
     // Data flow connections (API, services)
     dataFlow: {
-      stroke: '#1d4ed8', // blue
-      strokeWidth: 2,
+      stroke: '#AAAAAA',
+      strokeWidth: 1.5,
     },
     
     // Network connections
     network: {
-      stroke: '#0369a1', // blue
-      strokeWidth: 2,
+      stroke: '#B0B0B0',
+      strokeWidth: 1.5,
     },
     
     // Database connections
     database: {
-      stroke: '#15803d', // green
-      strokeWidth: 2,
+      stroke: '#A5A5A5',
+      strokeWidth: 1.5,
+      animated: true,
     },
     
     // Log and monitoring connections
     log: {
-      stroke: '#a16207', // amber
-      strokeWidth: 2,
+      stroke: '#ACACAC',
+      strokeWidth: 1.5,
       strokeDasharray: '5,5',
     },
     
     // Security-related connections
     security: {
-      stroke: '#9333ea', // purple
-      strokeWidth: 2,
+      stroke: '#989898',
+      strokeWidth: 1.5,
     },
     
     // Secure connections (SSL/TLS)
     'secure-connection': {
-      stroke: '#16a34a', // green
-      strokeWidth: 2,
+      stroke: '#A0A0A0',
+      strokeWidth: 1.5,
     },
     
     // Vulnerable or insecure connections
     vulnerable: {
-      stroke: '#dc2626', // red
-      strokeWidth: 2,
+      stroke: '#B8B8B8',
+      strokeWidth: 1.5,
       strokeDasharray: '3,3',
     }
   };

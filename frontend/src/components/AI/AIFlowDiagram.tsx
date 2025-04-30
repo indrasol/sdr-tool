@@ -28,6 +28,7 @@ import { useToast } from '@/hooks/use-toast';
 import { ThreatItem } from '@/interfaces/aiassistedinterfaces';
 import ThreatPanel from './ThreatPanel';
 import RemoteSvgIcon from './icons/RemoteSvgIcon';
+import { mapNodeTypeToIcon } from '../AI/utils/mapNodeTypeToIcon';
 
 
 // Layout algorithm function - uses dagre to calculate node positions
@@ -125,6 +126,8 @@ const AIFlowDiagram: React.FC<AIFlowDiagramProps> = ({
   
   // Add state for data flow diagram toggle
   const [isDataFlowActive, setIsDataFlowActive] = useState(false);
+  // Add state to control empty canvas view visibility
+  const [showEmptyCanvas, setShowEmptyCanvas] = useState(true);
   // Add state for minimap visibility with localStorage persistence
   const [showMinimap, setShowMinimap] = useState(() => {
     // Try to get the stored preference from localStorage
@@ -166,6 +169,7 @@ const AIFlowDiagram: React.FC<AIFlowDiagramProps> = ({
       strokeWidth: 2,
       stroke: '#555',
     },
+    animated: false,
   }), []);
 
   const reactFlowInstance = useRef(null);
@@ -242,6 +246,7 @@ const AIFlowDiagram: React.FC<AIFlowDiagramProps> = ({
         id: edge.id || `edge-${edge.source}-${edge.target}-${Date.now()}`,
         type: 'smoothstep', // Force consistency in edge type
         animated: edgeType === 'dataFlow' || edgeType === 'database',
+        // Always include markerEnd for arrowhead display
         markerEnd: {
           type: MarkerType.ArrowClosed,
           width: 15,
@@ -658,6 +663,51 @@ const AIFlowDiagram: React.FC<AIFlowDiagramProps> = ({
     setSelectedNode(null);
   }, []);
 
+  // Use effect to control empty canvas visibility
+  useEffect(() => {
+    // If we have actual nodes to display, don't show the empty canvas
+    if (nodes && nodes.length > 0) {
+      // If we have nodes, never show the empty canvas
+      if (showEmptyCanvas) {
+        console.log('Hiding empty canvas because nodes are present:', nodes.length);
+        setShowEmptyCanvas(false);
+      }
+    } else if (initialNodes?.length === 0 && nodes.length === 0) {
+      // Only show empty canvas when we truly have no nodes
+      if (!showEmptyCanvas) {
+        console.log('Showing empty canvas because no nodes are present');
+        setShowEmptyCanvas(true);
+      }
+    }
+  }, [initialNodes, nodes, showEmptyCanvas]);
+
+  // Add state for welcome message visibility
+  const [showWelcomeMessage, setShowWelcomeMessage] = useState(true);
+  
+  // Handle welcome message visibility separately from empty canvas
+  useEffect(() => {
+    // If we have nodes, don't show the welcome message
+    if (nodes && nodes.length > 0) {
+      if (showWelcomeMessage) {
+        console.log('Hiding welcome message because nodes are present:', nodes.length);
+        setShowWelcomeMessage(false);
+      }
+      return;
+    }
+    
+    // Show welcome message briefly if no nodes
+    if (!showWelcomeMessage) {
+      setShowWelcomeMessage(true);
+    }
+    
+    // Set a timeout to hide after a while
+    const timer = setTimeout(() => {
+      setShowWelcomeMessage(false);
+    }, 3000);
+    
+    return () => clearTimeout(timer);
+  }, [nodes, showWelcomeMessage]);
+
   // AIFlowDiagram.tsx
   return (
     <div className="h-full w-full flex flex-col">
@@ -688,155 +738,83 @@ const AIFlowDiagram: React.FC<AIFlowDiagramProps> = ({
           </div>
         )}
         
-        {/* Show placeholder animated diagram when no nodes exist */}
-        {initialNodes.length === 0 && nodes.length === 0 && (
-          <div className="absolute inset-0 flex items-center justify-center empty-canvas-container">
+        {/* Always visible welcome message overlay that fades out */}
+        {/* <div 
+          className={`absolute bottom-1 left-1/2 transform -translate-x-1/8 text-center transition-opacity duration-1000 ${showWelcomeMessage ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
+          style={{ zIndex: 5 }}
+        >
+          <div className="welcome-message px-6 py-4">
+            <div className="welcome-text text-gray-800 font-medium text-lg">
+              Drag and drop components from toolbar to create your architecture diagram
+            </div>
+            <div className="text-gray-600 text-base mt-1">
+              Or start with AI-generated diagram based on requirements
+            </div>
+          </div>
+        </div> */}
+        
+        {/* Show empty canvas background without animated placeholder nodes */}
+        {showEmptyCanvas && (
+          <div className="absolute inset-0 flex items-center justify-center empty-canvas-container" style={{ zIndex: 5 }}>
             <div className="absolute inset-0 diagram-background"></div>
             
-            {/* Animated cloud platform nodes from different sections */}
-            <div className="w-full h-full max-w-5xl max-h-xl relative overflow-visible empty-canvas">
-              {/* Network Firewall Node */}
-              <div 
-                className="placeholder-node absolute top-[15%] left-[25%] transform -translate-x-1/2 -translate-y-1/2"
-                style={{ animationDuration: '22s' }}
-              >
-                <div className="w-20 h-20 rounded-xl bg-[#DC3545]/90 flex items-center justify-center shadow-sm border border-red-300 relative">
-                  <div className="w-14 h-14 flex items-center justify-center">
-                    <svg width="40" height="40" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
-                      <path d="M57.2,60.5c-16.5,2-33.3,2-50.4,0c-1.7-0.2-3.1-1.6-3.3-3.3c-2-16.8-2-33.6,0-50.4c0.2-1.7,1.6-3.1,3.3-3.3 c16.8-2,33.7-2,50.5,0c1.7,0.2,3,1.5,3.3,3.2c2,16.5,2,33.3,0,50.5C60.3,58.9,58.9,60.3,57.2,60.5z" fill="#DC3545" fillOpacity="1" />
-                      <path d="M33.8,24v-5.5c0-4.3-3.5-7.9-7.9-7.9h0c-4.3,0-7.9,3.5-7.9,7.9V24" fill="none" stroke="#FFFFFF" strokeWidth="4" strokeMiterlimit="10" strokeOpacity="0.8" />
-                      <path d="M40,22.2c-0.1-0.9-0.8-1.6-1.7-1.7c-8.3-0.9-16.6-0.9-24.9,0c-0.9,0.1-1.6,0.8-1.7,1.6 c-0.6,5.9-0.6,11.7,0,17.5c0.1,0.9,0.8,1.5,1.6,1.6c8.3,1,16.6,1,24.9,0c0.9-0.1,1.5-0.8,1.6-1.7C40.5,33.8,40.5,28,40,22.2z M27.5,31.3v3.4c0,0.8-0.7,1.5-1.5,1.5s-1.5-0.7-1.5-1.5v-3.4c-0.9-0.5-1.5-1.5-1.5-2.6c0-1.7,1.3-3,3-3s3,1.3,3,3 C29,29.9,28.4,30.8,27.5,31.3z" fill="#FFFFFF" fillOpacity="1" />
-                    </svg>
-                  </div>
-                  <div className="node-label">Network Firewall</div>
-                </div>
-              </div>
-
-              {/* AWS Lambda Node */}
-              <div 
-                className="placeholder-node absolute top-[20%] right-[15%] transform translate-x-1/2 -translate-y-1/2"
-                style={{ animationDuration: '25s', animationDelay: '3s' }}
-              >
-                <div className="w-20 h-20 rounded-xl bg-[#FF9900]/90 flex items-center justify-center shadow-sm border border-orange-300 relative">
-                  <div className="w-14 h-14 flex items-center justify-center">
-                    <RemoteSvgIcon 
-                      url="https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/aws-icons/Arch_AWS-Lambda_64.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhd3MtaWNvbnMvQXJjaF9BV1MtTGFtYmRhXzY0LnN2ZyIsImlhdCI6MTc0NTU0MTY2MSwiZXhwIjozNTIyNjE5MzIxfQ.dFH7tD0Q_dYz9j8RczAeEl6q7rWNLrGsaX4mUo_5888" 
-                      size={40}
-                      className="aws-icon"
-                    />
-                  </div>
-                  <div className="node-label">AWS Lambda</div>
-                </div>
-              </div>
-
-              {/* Database Node */}
-              <div 
-                className="placeholder-node absolute top-[60%] left-[10%] transform -translate-x-1/2 -translate-y-1/2"
-                style={{ animationDuration: '23s', animationDelay: '2s' }}
-              >
-                <div className="w-20 h-20 rounded-xl bg-[#4CAF50]/90 flex items-center justify-center shadow-sm border border-green-300 relative">
-                  <div className="w-14 h-14 flex items-center justify-center">
-                    <svg width="40" height="40" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                      <path d="M12 8C16.4183 8 20 6.65685 20 5C20 3.34315 16.4183 2 12 2C7.58172 2 4 3.34315 4 5C4 6.65685 7.58172 8 12 8Z" stroke="#FFFFFF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" strokeOpacity="1"/>
-                      <path d="M20 12C20 13.66 16.42 15 12 15C7.58 15 4 13.66 4 12" stroke="#FFFFFF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" strokeOpacity="1"/>
-                      <path d="M4 5V19C4 20.66 7.58 22 12 22C16.42 22 20 20.66 20 19V5" stroke="#FFFFFF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" strokeOpacity="1"/>
-                    </svg>
-                  </div>
-                  <div className="node-label">Database</div>
-                </div>
-              </div>
-
-              {/* Azure App Service Node */}
-              <div 
-                className="placeholder-node absolute bottom-[20%] right-[25%] transform translate-x-1/2 -translate-y-1/2"
-                style={{ animationDuration: '28s', animationDelay: '1.5s' }}
-              >
-                <div className="w-20 h-20 rounded-xl bg-[#0072C6]/90 flex items-center justify-center shadow-sm border border-blue-300 relative">
-                  <div className="w-14 h-14 flex items-center justify-center">
-                    <RemoteSvgIcon 
-                      url="https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/azure-icons/10035-icon-service-App-Services.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhenVyZS1pY29ucy8xMDAzNS1pY29uLXNlcnZpY2UtQXBwLVNlcnZpY2VzLnN2ZyIsImlhdCI6MTc0NTU0MjMxNCwiZXhwIjozNTIyNjIwNjI4fQ.z_R0lDEXX1RRkULyf5IswW01jBBY_IW61zaZFBq5ajA" 
-                      size={46} 
-                    />
-                  </div>
-                  <div className="node-label">Azure App Service</div>
-                </div>
-              </div>
-
-              {/* Microservices Node */}
-              <div 
-                className="placeholder-node absolute bottom-[35%] left-[20%] transform -translate-x-1/2 -translate-y-1/2"
-                style={{ animationDuration: '26s', animationDelay: '4s' }}
-              >
-                <div className="w-20 h-20 rounded-xl bg-[#009688]/90 flex items-center justify-center shadow-sm border border-teal-300 relative">
-                  <div className="w-14 h-14 flex items-center justify-center">
-                    <RemoteSvgIcon 
-                      url="https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/application-icons/microservice.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhcHBsaWNhdGlvbi1pY29ucy9taWNyb3NlcnZpY2Uuc3ZnIiwiaWF0IjoxNzQ1NTQ0OTc2LCJleHAiOjM1MjI2MjU5NTF9.sDZ2MYj5tbc5Sp80UrXvJBoftqSeEfZZPmxYe171OOs" 
-                      size={48} 
-                    />
-                  </div>
-                  <div className="node-label">Microservice</div>
-                </div>
-              </div>
-
-              {/* GCP Cloud Run Node */}
-              <div
-                className="placeholder-node absolute top-[50%] right-[10%] transform translate-x-1/2 -translate-y-1/2"
-                style={{ animationDuration: '24s', animationDelay: '5s' }}
-              >
-                <div className="w-20 h-20 rounded-xl bg-[#1A73E8]/90 flex items-center justify-center shadow-sm border border-blue-300 relative">
-                  <div className="w-16 h-16 flex items-center justify-center">
-                    <RemoteSvgIcon 
-                      url="https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/gcp-icons/cloud_run.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJnY3AtaWNvbnMvY2xvdWRfcnVuLnN2ZyIsImlhdCI6MTc0NTU0MTA3MiwiZXhwIjozNTIyNjE4MTQ0fQ.KcxSx85pVD3efI8TXwMwV9zAaMb2Q8SMq2_5DnH5oAY" 
-                      size={60}
-                      className="gcp-icon"
-                    />
-                  </div>
-                  <div className="node-label">GCP Cloud Run</div>
-                </div>
-              </div>
-
-              {/* Client Device Node */}
-              <div 
-                className="placeholder-node absolute bottom-[15%] left-[40%] transform -translate-x-1/2 -translate-y-1/2"
-                style={{ animationDuration: '27s', animationDelay: '3.5s' }}
-              >
-                <div className="w-20 h-20 rounded-xl bg-[#9333EA]/90 flex items-center justify-center shadow-sm border border-purple-300 relative">
-                  <div className="w-14 h-14 flex items-center justify-center">
-                    <svg width="40" height="40" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                      <rect x="2" y="3" width="20" height="14" rx="2" stroke="#FFFFFF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" strokeOpacity="1"/>
-                      <path d="M8 21H16" stroke="#FFFFFF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" strokeOpacity="1"/>
-                      <path d="M12 17V21" stroke="#FFFFFF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" strokeOpacity="1"/>
-                    </svg>
-                  </div>
-                  <div className="node-label">Client Device</div>
-                </div>
-              </div>
-
-              {/* Gateway API Node */}
-              <div 
-                className="placeholder-node absolute top-[35%] left-[45%] transform -translate-x-1/2 -translate-y-1/2"
-                style={{ animationDuration: '26s', animationDelay: '2.5s' }}
-              >
-                <div className="w-20 h-20 rounded-xl bg-[#0078D7]/90 flex items-center justify-center shadow-sm border border-blue-300 relative">
-                  <div className="w-14 h-14 flex items-center justify-center">
-                    <RemoteSvgIcon 
-                      url="https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/network-icons/network_api_management.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJuZXR3b3JrLWljb25zL25ldHdvcmtfYXBpX21hbmFnZW1lbnQuc3ZnIiwiaWF0IjoxNzQ1NjE3NzEwLCJleHAiOjM1MjI3NzE0MTl9.jEu2IYOYofqxhBlcQ0fYBhDXD3hnfwQF9oSXNi-KcKY" 
-                      size={40}
-                      className="network-icon" 
-                    />
-                  </div>
-                  <div className="node-label">API Gateway</div>
-                </div>
-              </div>
-
-              {/* Message near the bottom */}
-              <div className="absolute bottom-[5%] left-1/2 transform -translate-x-1/2 text-center">
-                <div className="text-gray-700 font-medium text-sm animate-pulse">
+            {/* Center welcome message with animation */}
+            <div className="w-full h-full flex items-center justify-center">
+              <div className="welcome-message px-10 py-8 animate-float-slow" style={{
+                background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.4) 0%, rgba(230, 240, 255, 0.3) 100%)',
+                backdropFilter: 'blur(12px)',
+                border: '1px solid rgba(255, 255, 255, 0.4)',
+                borderRadius: '20px',
+                boxShadow: '0 15px 35px rgba(124, 101, 246, 0.15), 0 5px 15px rgba(124, 101, 246, 0.1), 0 0 0 1px rgba(124, 101, 246, 0.05)',
+                maxWidth: '650px',
+                transform: 'translateZ(0)',
+                overflow: 'hidden',
+                position: 'relative'
+              }}>
+                {/* Decorative gradient overlay */}
+                <div style={{
+                  position: 'absolute',
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                  height: '5px',
+                  background: 'linear-gradient(90deg, #7C65F6 0%, #FF9900 50%, #4CAF50 100%)',
+                  boxShadow: '0 1px 10px rgba(124, 101, 246, 0.3)'
+                }}></div>
+                
+                <div className="welcome-text" style={{
+                  color: '#2d3748',
+                  fontSize: '24px',
+                  fontWeight: '600',
+                  letterSpacing: '-0.01em',
+                  lineHeight: '1.4',
+                  fontFamily: 'Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+                  textShadow: '0 1px 1px rgba(255, 255, 255, 0.6)'
+                }}>
                   Drag and drop components from toolbar to create your architecture diagram
                 </div>
-                <div className="text-gray-500 text-xs mt-1 opacity-80">
+                <div style={{
+                  marginTop: '16px',
+                  color: '#4a5568',
+                  fontSize: '16px',
+                  lineHeight: '1.5',
+                  fontFamily: 'Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+                  opacity: 0.85
+                }}>
                   Or start with AI-generated diagram based on requirements
                 </div>
+                
+                {/* Additional subtle decorative element */}
+                <div style={{
+                  position: 'absolute',
+                  bottom: '-30px',
+                  right: '-30px',
+                  width: '100px',
+                  height: '100px',
+                  borderRadius: '50%',
+                  background: 'radial-gradient(circle, rgba(124, 101, 246, 0.15) 0%, rgba(124, 101, 246, 0) 70%)',
+                  zIndex: -1
+                }}></div>
               </div>
             </div>
           </div>
@@ -860,6 +838,7 @@ const AIFlowDiagram: React.FC<AIFlowDiagramProps> = ({
           nodesConnectable={viewMode === 'AD'} // Only allow connections in AD mode
           elementsSelectable={viewMode === 'AD'} // Only allow selection in AD mode
           proOptions={{ hideAttribution: true }} // This removes the React Flow watermark
+          style={{ position: 'relative', zIndex: 20 }} // Ensure ReactFlow has higher z-index
         >
           {showMinimap && (
             <MiniMap

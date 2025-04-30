@@ -452,7 +452,7 @@
   animation-delay: 0.5s;
 }
 
-/* Node label styles */
+/* Node label styles - enhance for better visibility with no node background */
 .node-label {
   position: absolute;
   bottom: -25px;
@@ -470,6 +470,7 @@
   backdrop-filter: blur(4px);
   box-shadow: 0 1px 3px rgba(0,0,0,0.1);
   border: 1px solid rgba(255, 255, 255, 0.6);
+  z-index: 2;
 }
 
 /* Placeholder node label specific styles */
@@ -533,11 +534,6 @@
   filter: drop-shadow(0 1px 2px rgba(0,0,0,0.1));
 }
 
-/* Add subtle glow effect to node icons */
-.aws-icon svg, .gcp-icon svg, .network-icon svg {
-  filter: drop-shadow(0 0 5px rgba(255, 255, 255, 0.5));
-}
-
 /* Enhance box shadow for all nodes */
 [class*="rounded-xl"] {
   box-shadow: 0 8px 16px -4px rgba(0, 0, 0, 0.1), 0 4px 8px -2px rgba(0, 0, 0, 0.06) !important;
@@ -546,8 +542,154 @@
 /* Ensure elements remain visible even when they animate far away */
 .empty-canvas-container {
   overflow: visible !important;
+  z-index: 5;
+  transition: opacity 0.3s ease-out;
 }
 
 .empty-canvas {
   overflow: visible !important;
+}
+
+/* Add smooth drag transition for nodes */
+.react-flow__node {
+  transition: transform 0.1s ease-out;
+  z-index: 10 !important;
+}
+
+/* Override default React Flow selection styling */
+.react-flow__node.react-flow__node-default.selected {
+  box-shadow: none !important;
+  outline: none !important;
+  border: none !important;
+}
+
+/* Override purple outline when dragging */
+.react-flow__node.react-flow__node-default.dragging {
+  box-shadow: none !important;
+  outline: none !important;
+  border: none !important;
+}
+
+/* Hide resize handles by default and show subtle ones only on hover */
+.react-flow__nodesselection-rect {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+/* Make node selection completely invisible */
+.react-flow__node.selected::before {
+  display: none !important;
+}
+
+.react-flow__node.selected::after {
+  display: none !important;
+}
+
+/* Override any possible box shadows on selected nodes */
+.react-flow__node.selected [class*="rounded-xl"] {
+  box-shadow: none !important;
+}
+
+/* Make node icons more prominent since they won't have a background */
+.node-icon-container {
+  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2));
+  transition: transform 0.2s ease-out, filter 0.2s ease-out;
+}
+
+.node-icon-container:hover {
+  transform: scale(1.1);
+  filter: drop-shadow(0 4px 8px rgba(0,0,0,0.3));
+}
+
+/* Enhance handle visibility since nodes have no background */
+.react-flow__handle {
+  width: 6px !important;
+  height: 6px !important;
+  background-color: white !important;
+  border: 2px solid #7C65F6 !important;
+  transition: opacity 0.2s ease-out, transform 0.2s ease-out;
+  opacity: 0.8;
+  z-index: 11 !important;
+}
+
+.react-flow__handle:hover {
+  opacity: 1;
+  transform: scale(1.3);
+}
+
+/* Custom node styling for icon-only display */
+.custom-node {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  width: auto !important;
+  height: auto !important;
+}
+
+/* Override any hover/selection styles that might add backgrounds */
+.react-flow__node:hover,
+.react-flow__node.selected {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+/* Welcome message styling */
+.welcome-message {
+  animation: fadeInUp 0.8s ease-out forwards;
+  max-width: 500px;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(248, 249, 251, 0.85) 100%);
+  backdrop-filter: blur(8px);
+  border-radius: 10px;
+  box-shadow: 0 4px 15px rgba(124, 101, 246, 0.2);
+  max-width: 600px;
+  z-index: 5;
+  animation: fadeInUp 0.5s ease-out;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translate(-50%, 20px);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+}
+
+.welcome-text {
+  animation: pulse 2s infinite;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+@keyframes pulse {
+  0% {
+    opacity: 0.8;
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0.8;
+  }
+}
+
+/* Ensure React Flow components have higher z-index */
+.react-flow__node {
+  z-index: 10 !important;
+}
+
+.react-flow__edge {
+  z-index: 9 !important;
+}
+
+.react-flow__handle {
+  z-index: 11 !important;
+}
+
+/* Ensure React Flow pane has higher z-index than empty canvas */
+.react-flow__pane {
+  z-index: 8 !important;
 }
