@@ -1,13 +1,14 @@
 import { useState, useCallback, useMemo } from 'react';
 import { useToast } from '@/hooks/use-toast';
-import { addEdge, MarkerType } from '@xyflow/react';
+import { addEdge, MarkerType, Node, Edge, XYPosition } from '@xyflow/react';
 import { getNodeShapeStyle, nodeDefaults } from '../utils/nodeStyles';
 import { edgeStyles } from '../utils/edgeStyles';
 import { mapNodeTypeToIcon } from '../utils/mapNodeTypeToIcon';
 import RemoteSvgIcon from '../icons/RemoteSvgIcon';
+import { CustomNodeData } from '../types/diagramTypes';
 
 
-const determineEdgeType = (sourceId, targetId, nodes = []) => {
+const determineEdgeType = (sourceId, targetId, nodes: Node[] = []) => {
   // Find the source and target nodes
   const sourceNode = nodes.find(n => n.id === sourceId);
   const targetNode = nodes.find(n => n.id === targetId);
@@ -18,8 +19,8 @@ const determineEdgeType = (sourceId, targetId, nodes = []) => {
   }
   
   // Extract node types, defaulting to empty string if not present
-  const sourceType = (sourceNode.data?.nodeType || sourceNode.type || '').toLowerCase();
-  const targetType = (targetNode.data?.nodeType || targetNode.type || '').toLowerCase();
+  const sourceType = ((sourceNode.data?.nodeType || sourceNode.type || '') as string).toLowerCase();
+  const targetType = ((targetNode.data?.nodeType || targetNode.type || '') as string).toLowerCase();
   
   // Create arrays of type keywords for easier checking
   const sourceTypeKeywords = sourceType.split(/[-_\s]+/);
@@ -76,8 +77,8 @@ const determineEdgeType = (sourceId, targetId, nodes = []) => {
 };
 
 export function useDiagramNodes(
-  initialNodes = [],
-  initialEdges = [],
+  initialNodes: Node<CustomNodeData>[] = [],
+  initialEdges: Edge[] = [],
   externalSetNodes = null,
   externalSetEdges = null
 ) {
@@ -134,11 +135,15 @@ export function useDiagramNodes(
   }, [initialNodes, externalSetNodes, externalSetEdges, toast]);
 
   // Apply style defaults to all nodes and add callbacks
-  const prepareNodes = useCallback((nodes) => {
+  const prepareNodes = useCallback((nodes: Node<CustomNodeData>[], edges: Edge[] = []): Node<CustomNodeData>[] => {
     if (!nodes || !Array.isArray(nodes) || nodes.length === 0) {
       console.warn("prepareNodes received invalid or empty nodes:", nodes);
       return [];
     }
+    
+    // Create sets for quick lookup of connected node IDs
+    const sourceIds = new Set(edges.map(edge => edge.source));
+    const targetIds = new Set(edges.map(edge => edge.target));
     
     return nodes.map(node => {
       if (!node) {
@@ -147,8 +152,7 @@ export function useDiagramNodes(
       }
       
       // Extract node type and ensure it exists
-      // First look for it in node.data.nodeType, then node.type, then default to 'default'
-      const nodeType = node.data?.nodeType || node.type || 'default';
+      const nodeType = (node.data?.nodeType || node.type || 'default') as string;
       console.log('Processing node with type:', nodeType);
       
       // Check if the node already has an iconRenderer from toolbar
@@ -192,40 +196,44 @@ export function useDiagramNodes(
       // Ensure position is not undefined
       const position = node.position || { x: Math.random() * 500, y: Math.random() * 300 };
       
-      // Ensure data object exists
-      const data = node.data || {};
+      // Ensure data object exists and type it
+      const data: Partial<CustomNodeData> = node.data || {};
       
-      // Extract label from node data or generate from component part of nodeType
+      // Extract label from node data or generate from component part of nodeType, ensure it's a string
       const [section = '', component = ''] = nodeType.split('_');
-      const label = data.label || 
-                   (component ? component.charAt(0).toUpperCase() + component.slice(1) : 'Node');
+      const label: string = (data.label || 
+                   (component ? component.charAt(0).toUpperCase() + component.slice(1) : 'Node')) as string;
       
       // Check if this is an application or microservice node
       const isApplicationNode = section === 'application';
       const isMicroserviceNode = nodeType.includes('microservice') || component === 'microservice';
       
+      // Check if this node has connections
+      const hasSourceConnection = sourceIds.has(node.id);
+      const hasTargetConnection = targetIds.has(node.id);
+      
       return {
         ...node,
         type: 'default', // Always use our custom node
-        position: position,
+        position: position as XYPosition, // Assert position type
         // Preserve dragging state if it exists
         dragging: node.dragging || false,
-        data: {
-          ...data,
-          label: label,
+        data: { // Ensure data matches CustomNodeData structure
+          label: label, // Use the typed label
           onEdit: handleEditNode,
           onDelete: handleDeleteNode,
           description: data.description || '',
           nodeType: nodeType,
           section: section,
           isMicroservice: isMicroserviceNode,
-          // Assign the iconRenderer
           iconRenderer: iconRenderer,
-        },
+          hasSourceConnection: hasSourceConnection,
+          hasTargetConnection: hasTargetConnection,
+        } as CustomNodeData, // Assert the final data structure
         draggable: node.draggable !== false,
         className: node.dragging ? 'dragging' : '',
-      };
-    }).filter(Boolean);
+      } as Node<CustomNodeData>; // Assert the final node structure
+    }).filter((node): node is Node<CustomNodeData> => node !== null); // Type guard for filter
   }, [handleEditNode, handleDeleteNode]);
 
   // Memoized function for determining edge type
@@ -272,7 +280,8 @@ export function useDiagramNodes(
         type: MarkerType.ArrowClosed,
         width: 15,
         height: 15,
-        color: strokeColor
+        color: strokeColor,
+        markerEndOffset: -70
       },
       // Include styling based on edge type
       style: {

@@ -32,9 +32,10 @@ import { mapNodeTypeToIcon } from '../AI/utils/mapNodeTypeToIcon';
 
 
 // Layout algorithm function - uses dagre to calculate node positions
-export const getLayoutedElements = (nodes, edges, direction = 'TB', nodeWidth = 172, nodeHeight = 36) => {
+export const getLayoutedElements = (nodes, edges, direction = 'TB', nodeWidth = 172, nodeHeight = 36, forceLayout = false) => {
+  console.log(`[getLayoutedElements] Called with ${nodes?.length} nodes, ${edges?.length} edges. forceLayout: ${forceLayout}`); // Log function call
   if (!nodes || nodes.length === 0) {
-    console.warn('No nodes provided for layout');
+    console.warn('[getLayoutedElements] No nodes provided');
     return { nodes: [], edges: [] };
   }
 
@@ -42,10 +43,16 @@ export const getLayoutedElements = (nodes, edges, direction = 'TB', nodeWidth = 
     // Create a new graph
     const dagreGraph = new dagre.graphlib.Graph();
     dagreGraph.setDefaultEdgeLabel(() => ({}));
-    dagreGraph.setGraph({ rankdir: direction });
+    // Default spacing for TB layout
+    dagreGraph.setGraph({ 
+      rankdir: direction,
+      ranksep: 80, // Vertical separation
+      nodesep: 60  // Horizontal separation
+    });
 
     // Add nodes to the graph with dimensions
     nodes.forEach((node) => {
+      // Use explicit dimensions if provided in node data, otherwise use defaults
       const width = node.data?.width || nodeWidth; 
       const height = node.data?.height || nodeHeight;
       dagreGraph.setNode(node.id, { 
@@ -65,35 +72,36 @@ export const getLayoutedElements = (nodes, edges, direction = 'TB', nodeWidth = 
 
     // Run the layout algorithm
     dagre.layout(dagreGraph);
+    console.log('[getLayoutedElements] Dagre layout complete');
 
     // Get the positions from the layout algorithm
     const layoutedNodes = nodes.map((node) => {
       const nodeWithPosition = dagreGraph.node(node.id);
       
       if (!nodeWithPosition) {
-        console.warn(`Node ${node.id} not found in layout results`);
+        console.warn(`[getLayoutedElements] Node ${node.id} not found in layout results`);
         return node;
       }
 
-      const useExistingPosition = node.position && node.position.x !== 0 && node.position.y !== 0;
+      const useExistingPosition = node.position && 
+                                  node.position.x !== 0 && 
+                                  node.position.y !== 0 &&
+                                  !forceLayout; // Consider forceLayout flag
       
+      // Apply new position, adjusting for the center based on the default node dimensions passed as args
       return {
         ...node,
-        // Only set position if the node doesn't already have one or is a new node
-        position: node.position && 
-                 node.position.x !== undefined && 
-                 node.position.y !== undefined && 
-                 node.position.x !== 0 && 
-                 node.position.y !== 0
+        position: useExistingPosition 
           ? node.position 
           : {
-              x: nodeWithPosition.x - nodeWidth / 2,
-              y: nodeWithPosition.y - nodeHeight / 2,
+              x: nodeWithPosition.x - nodeWidth / 2, // Use function arg width
+              y: nodeWithPosition.y - nodeHeight / 2, // Use function arg height
             },
       };
     });
 
-    return { nodes: layoutedNodes, edges };
+    // Return the original edges passed in
+    return { nodes: layoutedNodes, edges }; 
   } catch (error) {
     console.error('Error in layout algorithm:', error);
     return { nodes, edges }; // Return original nodes and edges on error
@@ -164,6 +172,7 @@ const AIFlowDiagram: React.FC<AIFlowDiagramProps> = ({
       width: 20,
       height: 20,
       color: '#555',
+      markerEndOffset: -70,
     },
     style: {
       strokeWidth: 2,
@@ -182,6 +191,24 @@ const AIFlowDiagram: React.FC<AIFlowDiagramProps> = ({
   const [edges, setEdges, onEdgesChange] = useEdgesState(
     initialEdges && initialEdges.length > 0 ? initialEdges : []
   );
+
+  // *** ADDED: Log when the initialNodes prop changes ***
+  useEffect(() => {
+    console.log('[AIFlowDiagram] initialNodes prop received: ', initialNodes?.length, 'nodes');
+    // Optionally log the position of the first node to see if it updates
+    if (initialNodes && initialNodes.length > 0) {
+      console.log(`[AIFlowDiagram] First node position in prop: (${initialNodes[0]?.position?.x?.toFixed(1)}, ${initialNodes[0]?.position?.y?.toFixed(1)})`);
+    }
+    // Update internal state when the prop changes
+    setNodes(initialNodes || []); 
+  }, [initialNodes, setNodes]); // Depend on initialNodes prop and setNodes
+
+  // *** ADDED: Log when the initialEdges prop changes ***
+  useEffect(() => {
+    console.log('[AIFlowDiagram] initialEdges prop received: ', initialEdges?.length, 'edges');
+    // Update internal state when the prop changes
+    setEdges(initialEdges || []);
+  }, [initialEdges, setEdges]); // Depend on initialEdges prop and setEdges
 
   // Threat analysis state
   const { toast } = useToast();
@@ -251,7 +278,8 @@ const AIFlowDiagram: React.FC<AIFlowDiagramProps> = ({
           type: MarkerType.ArrowClosed,
           width: 15,
           height: 15,
-          color: typeStyle.stroke || '#555'
+          color: typeStyle.stroke || '#555',
+          markerEndOffset: -70,
         },
         style: {
           strokeWidth: 2,
@@ -266,8 +294,8 @@ const AIFlowDiagram: React.FC<AIFlowDiagramProps> = ({
   useEffect(() => {
     if (initialRenderRef.current && initialNodes && initialNodes.length > 0) {
       console.log('Initial sync of nodes and edges');
-      // First process nodes
-      const preparedNodes = prepareNodes(initialNodes);
+      // First process nodes, passing the initial edges
+      const preparedNodes = prepareNodes(initialNodes, initialEdges);
       
       // Then process edges
       const processedEdges = initialEdges && initialEdges.length > 0 
@@ -327,8 +355,8 @@ const AIFlowDiagram: React.FC<AIFlowDiagramProps> = ({
       
       // Apply layout with a slight delay to batch changes
       layoutTimeoutRef.current = setTimeout(() => {
-        // First prepare nodes with proper styles
-        const preparedNodes = prepareNodes(initialNodes);
+        // First prepare nodes with proper styles, passing current edges
+        const preparedNodes = prepareNodes(initialNodes, initialEdges);
         // Then process edges with proper styling
         const processedEdges = processEdges(initialEdges);
         
@@ -426,37 +454,62 @@ const AIFlowDiagram: React.FC<AIFlowDiagramProps> = ({
 
   // Internal layout function if no external one is provided
   const internalOnLayout = useCallback(() => {
-    console.log('Applying internal layout, nodes:', nodes.length);
-    if (effectiveIsLayouting || nodes.length === 0) return;
+    console.log('[internalOnLayout] Triggered'); // Log start
     
-    if (setInternalIsLayouting) setInternalIsLayouting(true);
-    
-    // Get current nodes and edges
-    const currentNodes = nodes;
-    const currentEdges = edges;
-    
-    // Apply layout
-    const { nodes: layoutedNodes, edges: layoutedEdges } = getLayoutedElements(
-      currentNodes,
-      currentEdges,
-      'TB',  // Top to Bottom direction
-      172,   // Node width
-      36     // Node height
-    );
-    
-    // Update state
-    console.log('Setting layouted nodes:', layoutedNodes.length);
-    setNodes(layoutedNodes);
-    setEdges(layoutedEdges);
-    
-    // Fit view and reset layout flag
-    setTimeout(() => {
-      if (reactFlowInstance.current) {
-        reactFlowInstance.current.fitView({ padding: 0.2 });
-      }
-      if (setInternalIsLayouting) setInternalIsLayouting(false);
-    }, 300);
-  }, [nodes, edges, setNodes, setEdges, effectiveIsLayouting, setInternalIsLayouting]);
+    // Use functional update to get the latest state
+    setNodes((currentNodes) => {
+      console.log(`[internalOnLayout] setNodes callback. Nodes count: ${currentNodes.length}`); // Log inside setNodes
+      setEdges((currentEdges) => {
+        console.log(`[internalOnLayout] setEdges callback. Edges count: ${currentEdges.length}`); // Log inside setEdges
+        // Prevent layout if already layouting or no nodes exist
+        if (effectiveIsLayouting || currentNodes.length === 0) {
+          console.log(`[internalOnLayout] Layout skipped (effectiveIsLayouting: ${effectiveIsLayouting}, nodes: ${currentNodes.length})`);
+          return currentEdges; // Return unchanged edges
+        }
+        
+        console.log(`[internalOnLayout] Proceeding with layout for ${currentNodes.length} nodes`);
+        if (setInternalIsLayouting) {
+          console.log('[internalOnLayout] Setting isLayouting = true');
+          setInternalIsLayouting(true);
+        }
+        
+        // Apply layout (Reverted to TB direction and original dimensions)
+        console.log('[internalOnLayout] Calling getLayoutedElements for TB layout');
+        const { nodes: layoutedNodes, edges: layoutedEdges } = getLayoutedElements(
+          currentNodes,
+          currentEdges,
+          'TB',  // Reverted direction back to 'TB'
+          172,   // Reverted Node width
+          36,    // Reverted Node height
+          true   // Force layout to override existing positions
+        );
+        
+        // Update state
+        console.log(`[internalOnLayout] Setting ${layoutedNodes.length} layouted nodes`);
+        setNodes(layoutedNodes); // Update nodes immediately
+        
+        // Fit view and reset layout flag after a delay
+        setTimeout(() => {
+          if (reactFlowInstance.current) {
+            console.log('[internalOnLayout] Fitting view');
+            reactFlowInstance.current.fitView({ padding: 0.2 });
+          }
+          if (setInternalIsLayouting) {
+            console.log('[internalOnLayout] Setting isLayouting = false');
+            setInternalIsLayouting(false);
+          }
+          console.log('[internalOnLayout] Layout finished');
+        }, 300);
+        
+        console.log(`[internalOnLayout] Returning ${layoutedEdges.length} layouted edges`);
+        return layoutedEdges; // Return the layouted edges for the setEdges update
+      });
+      // Note: This might log before the inner setNodes call completes
+      console.log('[internalOnLayout] Returning from outer setNodes callback'); 
+      return currentNodes; // Return unchanged nodes initially, update happens inside
+    });
+
+  }, [effectiveIsLayouting, setInternalIsLayouting, setNodes, setEdges]); // Removed getLayoutedElements dependency as it's defined outside
 
   // Add this effect to handle switching between viewModes
   useEffect(() => {
@@ -471,10 +524,12 @@ const AIFlowDiagram: React.FC<AIFlowDiagramProps> = ({
 
   // Use external layout function if provided, otherwise use internal
   const handleLayout = useCallback(() => {
-    console.log('Layout triggered, using:', onLayout ? 'external' : 'internal');
+    console.log(`[handleLayout] Layout button clicked. Using: ${onLayout ? 'external' : 'internal'} function.`); // Log button click
     if (onLayout) {
+      console.log('[handleLayout] Calling external onLayout');
       onLayout();
     } else {
+      console.log('[handleLayout] Calling internalOnLayout');
       internalOnLayout();
     }
   }, [onLayout, internalOnLayout]);
