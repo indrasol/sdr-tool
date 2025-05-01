@@ -88,8 +88,6 @@ export function useDiagramNodes(
 
   // Handle editing a node
   const handleEditNode = useCallback((id, label) => {
-    console.log(`Editing node: ${id} (${label})`);
-    
     // Find the node from initialNodes
     const targetNode = initialNodes.find(node => node.id === id);
     
@@ -107,8 +105,6 @@ export function useDiagramNodes(
 
   // Handle deleting a node
   const handleDeleteNode = useCallback((id) => {
-    console.log(`Deleting node: ${id}`);
-    
     if (!externalSetNodes || !externalSetEdges) {
       console.warn("External setters not available for handleDeleteNode");
       return;
@@ -137,7 +133,6 @@ export function useDiagramNodes(
   // Apply style defaults to all nodes and add callbacks
   const prepareNodes = useCallback((nodes: Node<CustomNodeData>[], edges: Edge[] = []): Node<CustomNodeData>[] => {
     if (!nodes || !Array.isArray(nodes) || nodes.length === 0) {
-      console.warn("prepareNodes received invalid or empty nodes:", nodes);
       return [];
     }
     
@@ -147,13 +142,11 @@ export function useDiagramNodes(
     
     return nodes.map(node => {
       if (!node) {
-        console.warn("Encountered null or undefined node in prepareNodes");
         return null;
       }
       
       // Extract node type and ensure it exists
       const nodeType = (node.data?.nodeType || node.type || 'default') as string;
-      console.log('Processing node with type:', nodeType);
       
       // Check if the node already has an iconRenderer from toolbar
       const existingIconRenderer = node.data?.iconRenderer;
@@ -164,7 +157,6 @@ export function useDiagramNodes(
       if (!existingIconRenderer) {
         // Get icon URL based on node type
         const iconUrl = mapNodeTypeToIcon(nodeType);
-        console.log('Icon URL for node type:', nodeType, iconUrl);
         
         // Extract section from node type (e.g., 'network' from 'network_internet')
         const [section = '', component = ''] = nodeType.split('_');
@@ -174,24 +166,17 @@ export function useDiagramNodes(
         
         // Create iconRenderer if we have an icon URL
         if (iconUrl) {
-          iconRenderer = () => {
-            console.log('Rendering icon for node:', nodeType, 'URL:', iconUrl);
-            return {
-              component: RemoteSvgIcon,
-              props: { 
-                url: iconUrl, 
-                size: 48, // Maintain icon size from 48
-                className: `${section}-icon${isMicroserviceNode ? ' microservice-icon' : ''} node-icon-container` // Add special class for microservices and animation
-              },
-              bgColor: 'transparent' // Make background transparent to show just the icon
-            };
-          };
+          iconRenderer = () => ({
+            component: RemoteSvgIcon,
+            props: { 
+              url: iconUrl, 
+              size: 48,
+              className: `${section}-icon${isMicroserviceNode ? ' microservice-icon' : ''} node-icon-container`
+            },
+            bgColor: 'transparent'
+          });
         }
-      } else {
-        console.log('Node already has iconRenderer:', nodeType);
       }
-      
-      console.log('Using iconRenderer:', iconRenderer ? 'Yes' : 'No');
       
       // Ensure position is not undefined
       const position = node.position || { x: Math.random() * 500, y: Math.random() * 300 };
@@ -212,12 +197,13 @@ export function useDiagramNodes(
       const hasSourceConnection = sourceIds.has(node.id);
       const hasTargetConnection = targetIds.has(node.id);
       
+      // Always force draggable to be true, never override with false
       return {
         ...node,
         type: 'default', // Always use our custom node
         position: position as XYPosition, // Assert position type
-        // Preserve dragging state if it exists
-        dragging: node.dragging || false,
+        dragging: node.dragging || false, // Preserve dragging state if it exists
+        draggable: true, // Always draggable
         data: { // Ensure data matches CustomNodeData structure
           label: label, // Use the typed label
           onEdit: handleEditNode,
@@ -227,14 +213,18 @@ export function useDiagramNodes(
           section: section,
           isMicroservice: isMicroserviceNode,
           iconRenderer: iconRenderer,
-          hasSourceConnection: hasSourceConnection,
+          hasSourceConnection: hasSourceConnection, 
           hasTargetConnection: hasTargetConnection,
         } as CustomNodeData, // Assert the final data structure
-        draggable: node.draggable !== false,
         className: node.dragging ? 'dragging' : '',
       } as Node<CustomNodeData>; // Assert the final node structure
     }).filter((node): node is Node<CustomNodeData> => node !== null); // Type guard for filter
   }, [handleEditNode, handleDeleteNode]);
+
+  // Memoize the results of prepareNodes to prevent recreating nodes on every render
+  const preparedNodes = useMemo(() => {
+    return prepareNodes(initialNodes, initialEdges);
+  }, [initialNodes, initialEdges, prepareNodes]);
 
   // Memoized function for determining edge type
   const getEdgeType = useCallback((sourceId, targetId) => {
@@ -243,8 +233,6 @@ export function useDiagramNodes(
 
   // Enhanced handle connect with improved arrowhead handling
   const handleConnect = useCallback((params) => {
-    console.log("Creating new connection:", params);
-    
     if (!externalSetEdges) {
       console.warn("externalSetEdges is not available for handleConnect");
       return;
@@ -304,7 +292,6 @@ export function useDiagramNodes(
       );
       
       if (existingEdge) {
-        console.log("Edge already exists, not adding duplicate");
         return eds;
       }
       
@@ -320,8 +307,6 @@ export function useDiagramNodes(
 
   // Handle adding new nodes
   const handleAddNode = useCallback((nodeType, position, iconRenderer) => {
-    console.log(`Adding new node of type: ${nodeType} at position:`, position);
-    
     if (!externalSetNodes) {
       console.warn("externalSetNodes is not available for handleAddNode");
       return;
@@ -333,9 +318,6 @@ export function useDiagramNodes(
     // Convert nodeType from display label (e.g., "Network Firewall") to normalized format (e.g., "network_firewall")
     // This ensures consistency with how backend nodes are processed
     const normalizedNodeType = nodeType.toLowerCase().replace(/\s+/g, '_');
-    
-    // Log the conversion to help with debugging
-    console.log(`Converting nodeType from "${nodeType}" to normalized format: "${normalizedNodeType}"`);
     
     // Determine category based on node type
     const nodeCategory = 
@@ -383,8 +365,6 @@ export function useDiagramNodes(
 
   // Handle saving edited node data
   const handleSaveNodeEdit = useCallback((id, updatedData) => {
-    console.log(`Saving edits for node: ${id}`, updatedData);
-    
     if (!externalSetNodes) {
       console.warn("externalSetNodes is not available for handleSaveNodeEdit");
       return;
@@ -439,20 +419,39 @@ export function useDiagramNodes(
     }).filter(Boolean);
   }, [getEdgeType]);
 
+  // Memoize processed edges
+  const processedEdges = useMemo(() => {
+    return processEdges(initialEdges);
+  }, [initialEdges, processEdges]);
+
   return {
     editNodeDialogOpen,
     setEditNodeDialogOpen,
     currentEditNode,
     setCurrentEditNode,
-    prepareNodes,
+    // Return the original functions but utilize the memoized values when the inputs match
+    prepareNodes: useCallback((nodes, edges) => {
+      // If inputs match the memoized inputs, return the memoized result
+      if (nodes === initialNodes && edges === initialEdges) {
+        return preparedNodes;
+      }
+      // Otherwise, run the calculation with the new inputs
+      return prepareNodes(nodes, edges);
+    }, [initialNodes, initialEdges, preparedNodes, prepareNodes]),
     handleConnect,
     handleAddNode,
     handleSaveNodeEdit,
     getEdgeType,
-    processEdges
+    processEdges: useCallback((edges) => {
+      // If inputs match the memoized inputs, return the memoized result
+      if (edges === initialEdges) {
+        return processedEdges;
+      }
+      // Otherwise, run the calculation with the new inputs
+      return processEdges(edges);
+    }, [initialEdges, processedEdges, processEdges])
   };
 }
-
 
 
 // import { useState, useCallback } from 'react';
@@ -692,3 +691,4 @@ export function useDiagramNodes(
 //     handleSaveNodeEdit
 //   };
 // }
+

@@ -757,3 +757,28 @@
     border-color: #888 !important; /* Make handles grey, not implying a node border */
 }
 /* --- End Node Selection Overrides --- */
+
+/* Add styles to ensure edges remain visible during dragging */
+.react-flow__edge {
+  pointer-events: all;
+  z-index: 5;
+}
+
+/* Style for edges during node dragging */
+.react-flow__node.dragging + .react-flow__edge {
+  opacity: 0.8;
+}
+
+/* Make sure dragged nodes stay on top */
+.react-flow__node.dragging {
+  z-index: 10;
+}
+
+/* Ensure nodes are interactive */
+.react-flow__node {
+  cursor: grab;
+}
+
+.react-flow__node:active {
+  cursor: grabbing;
+}

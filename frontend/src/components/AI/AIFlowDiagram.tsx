@@ -30,6 +30,41 @@ import ThreatPanel from './ThreatPanel';
 import RemoteSvgIcon from './icons/RemoteSvgIcon';
 import { mapNodeTypeToIcon } from '../AI/utils/mapNodeTypeToIcon';
 
+// Helper function to check if two arrays of nodes or edges are deeply equal by comparing their essential properties
+const areArraysEqual = (arr1: any[], arr2: any[], isNodes = true) => {
+  if (!arr1 || !arr2) return arr1 === arr2;
+  if (arr1.length !== arr2.length) return false;
+  
+  // Create a map of IDs to array indices for faster lookups
+  const map2 = new Map(arr2.map((item, index) => [item.id, index]));
+  
+  // Check each item in arr1 exists in arr2 with the same essential properties
+  return arr1.every(item1 => {
+    // Get the corresponding item from arr2
+    const index2 = map2.get(item1.id);
+    if (index2 === undefined) return false;
+    
+    const item2 = arr2[index2];
+    
+    if (isNodes) {
+      // For nodes, check position and essential data properties
+      return (
+        item1.position?.x === item2.position?.x &&
+        item1.position?.y === item2.position?.y &&
+        item1.data?.label === item2.data?.label &&
+        item1.data?.nodeType === item2.data?.nodeType &&
+        item1.data?.description === item2.data?.description
+      );
+    } else {
+      // For edges, check source, target, and type
+      return (
+        item1.source === item2.source &&
+        item1.target === item2.target &&
+        item1.type === item2.type
+      );
+    }
+  });
+};
 
 // Layout algorithm function - uses dagre to calculate node positions
 export const getLayoutedElements = (nodes, edges, direction = 'TB', nodeWidth = 172, nodeHeight = 36, forceLayout = false) => {
@@ -192,23 +227,59 @@ const AIFlowDiagram: React.FC<AIFlowDiagramProps> = ({
     initialEdges && initialEdges.length > 0 ? initialEdges : []
   );
 
-  // *** ADDED: Log when the initialNodes prop changes ***
-  useEffect(() => {
-    console.log('[AIFlowDiagram] initialNodes prop received: ', initialNodes?.length, 'nodes');
-    // Optionally log the position of the first node to see if it updates
-    if (initialNodes && initialNodes.length > 0) {
-      console.log(`[AIFlowDiagram] First node position in prop: (${initialNodes[0]?.position?.x?.toFixed(1)}, ${initialNodes[0]?.position?.y?.toFixed(1)})`);
-    }
-    // Update internal state when the prop changes
-    setNodes(initialNodes || []); 
-  }, [initialNodes, setNodes]); // Depend on initialNodes prop and setNodes
+  // Add refs to track update state
+  const isUpdatingNodesRef = useRef(false);
+  const isUpdatingEdgesRef = useRef(false);
 
-  // *** ADDED: Log when the initialEdges prop changes ***
+  // *** OPTIMIZE: Log when the initialNodes prop changes ***
   useEffect(() => {
-    console.log('[AIFlowDiagram] initialEdges prop received: ', initialEdges?.length, 'edges');
-    // Update internal state when the prop changes
-    setEdges(initialEdges || []);
-  }, [initialEdges, setEdges]); // Depend on initialEdges prop and setEdges
+    // Skip if we're currently updating nodes from this effect already
+    if (isUpdatingNodesRef.current) return;
+    
+    // Skip updates if we're currently dragging nodes
+    if (isDragging.current) return;
+    
+    // Only log during development and with fewer details
+    if (process.env.NODE_ENV === 'development') {
+      console.log('[AIFlowDiagram] initialNodes received:', initialNodes?.length);
+    }
+    
+    // CRITICAL FIX: Only update internal state when the prop changes and differs from current state
+    // Compare lengths first for performance, then do a deep check only if needed
+    if (initialNodes?.length !== nodes.length || !areArraysEqual(initialNodes || [], nodes, true)) {
+      // Set flag to prevent re-entry
+      isUpdatingNodesRef.current = true;
+      setNodes(initialNodes || []);
+      // Reset flag after a small delay
+      setTimeout(() => {
+        isUpdatingNodesRef.current = false;
+      }, 0);
+    }
+    // Don't update if just references changed but content is the same
+  }, [initialNodes, nodes]); // Added nodes as dependency for comparison
+
+  // *** OPTIMIZE: Log when the initialEdges prop changes ***
+  useEffect(() => {
+    // Skip if we're currently updating edges from this effect already
+    if (isUpdatingEdgesRef.current) return;
+    
+    // Only log during development 
+    if (process.env.NODE_ENV === 'development') {
+      console.log('[AIFlowDiagram] initialEdges received:', initialEdges?.length);
+    }
+    
+    // CRITICAL FIX: Only update internal state when the prop changes and differs from current state
+    if (initialEdges?.length !== edges.length || !areArraysEqual(initialEdges || [], edges, false)) {
+      // Set flag to prevent re-entry
+      isUpdatingEdgesRef.current = true;
+      setEdges(initialEdges || []);
+      // Reset flag after a small delay
+      setTimeout(() => {
+        isUpdatingEdgesRef.current = false;
+      }, 0);
+    }
+    // Don't update if just references changed but content is the same
+  }, [initialEdges, edges]); // Added edges as dependency for comparison
 
   // Threat analysis state
   const { toast } = useToast();
@@ -224,20 +295,83 @@ const AIFlowDiagram: React.FC<AIFlowDiagramProps> = ({
   const isDragging = useRef(false);
   const hasSyncedInitialData = useRef(false);
 
-  // Optimized node change handler to prevent unnecessary updates
+  // Handle node position changes more efficiently to prevent flickering
+  useEffect(() => {
+    // Skip on initial mount
+    if (isInitialMount.current) {
+      isInitialMount.current = false;
+      return;
+    }
+    
+    // Skip if we're updating from props to internal state (controlled by refs)
+    if (isUpdatingNodesRef.current) {
+      return;
+    }
+    
+    // Don't do immediate state updates when we're dragging or layouting
+    if (isDragging.current || effectiveIsLayouting) {
+      // Clear any existing timeout
+      if (dragTimeoutRef.current) {
+        clearTimeout(dragTimeoutRef.current);
+      }
+      
+      // Set a new timeout to sync state after dragging stops
+      dragTimeoutRef.current = setTimeout(() => {
+        if (nodes.length > 0 && setNodesExternal && !isUpdatingNodesRef.current) {
+          // Only sync if the external nodes are different (prevents loop)
+          if (initialNodes?.length !== nodes.length || !areArraysEqual(initialNodes || [], nodes, true)) {
+            setNodesExternal(nodes);
+          }
+        }
+      }, 200);
+    } else if (nodes.length > 0 && setNodesExternal && !isUpdatingNodesRef.current) {
+      // Not dragging - sync immediately for other updates
+      // Only sync if the external nodes are different (prevents loop)
+      if (initialNodes?.length !== nodes.length || !areArraysEqual(initialNodes || [], nodes, true)) {
+        setNodesExternal(nodes);
+      }
+    }
+    
+    // Cleanup timeout on unmount
+    return () => {
+      if (dragTimeoutRef.current) {
+        clearTimeout(dragTimeoutRef.current);
+      }
+    };
+  }, [nodes, setNodesExternal, effectiveIsLayouting, initialNodes]);
+
+  // Improved node change handler for better dragging performance
   const handleNodesChange = useCallback((changes) => {
-    // Track if we're currently dragging nodes
-    const isDraggingNow = changes.some(change => 
-      change.type === 'position' && change.dragging === true
+    // First, directly apply changes to update node positions immediately for smooth UI
+    onNodesChange(changes);
+    
+    // Find drag-related change by inspecting the changes array
+    const positionChanges = changes.filter(change => change.type === 'position');
+    const dragStartChange = positionChanges.find(change => change.dragging === true);
+    const dragEndChange = positionChanges.find(change => 
+      change.dragging === false || change.dragging === undefined
     );
     
-    // Update dragging state for our debounced state sync
-    if (isDraggingNow) {
+    if (dragStartChange && !isDragging.current) {
+      // Drag just started
+      console.log('Node dragging started');
       isDragging.current = true;
+    } else if (dragEndChange && isDragging.current) {
+      // Drag just ended
+      console.log('Node dragging ended');
+      
+      // Use a timeout to ensure React Flow internal state is updated first
+      setTimeout(() => {
+        isDragging.current = false;
+        
+        // Only sync back to parent after drag is completely done
+        if (setNodesExternal && nodes.length > 0 && !isUpdatingNodesRef.current) {
+          console.log('Syncing node positions after drag ended');
+          setNodesExternal(nodes);
+        }
+      }, 100);
     }
-  
-    onNodesChange(changes);
-  }, [onNodesChange]);
+  }, [onNodesChange, nodes, setNodesExternal]);
 
   // Use custom hook to manage nodes and their interactions
   const {
@@ -387,52 +521,85 @@ const AIFlowDiagram: React.FC<AIFlowDiagramProps> = ({
     };
   }, [initialNodes, initialEdges, effectiveIsLayouting, prepareNodes, processEdges, setNodes, setEdges]);
 
-  // Handle node position changes more efficiently to prevent flickering
+  // Edge sync - don't update during layouting or dragging
   useEffect(() => {
-    // Skip on initial mount
-    if (isInitialMount.current) {
-      isInitialMount.current = false;
+    // Skip if we're updating from props to internal state
+    if (isUpdatingEdgesRef.current) {
       return;
     }
     
-    // Don't do immediate state updates when we're dragging or layouting
-    if (isDragging.current || effectiveIsLayouting) {
-      // Clear any existing timeout
-      if (dragTimeoutRef.current) {
-        clearTimeout(dragTimeoutRef.current);
-      }
-      
-      // Set a new timeout to sync state after dragging stops
-      dragTimeoutRef.current = setTimeout(() => {
-        if (nodes.length > 0 && setNodesExternal) {
-          setNodesExternal(nodes);
-        }
-        isDragging.current = false;
-      }, 100);
-    } else if (nodes.length > 0 && setNodesExternal) {
-      // Not dragging - sync immediately for other updates
-      setNodesExternal(nodes);
+    // Skip edge updates during dragging to prevent issues
+    if (isDragging.current) {
+      return;
     }
     
-    // Cleanup timeout on unmount
-    return () => {
-      if (dragTimeoutRef.current) {
-        clearTimeout(dragTimeoutRef.current);
-      }
-    };
-  }, [nodes, setNodesExternal, effectiveIsLayouting]);
-
-  // Edge sync - don't update during layouting
-  useEffect(() => {
     if (!effectiveIsLayouting && edges.length > 0 && setEdgesExternal) {
-      setEdgesExternal(edges);
+      // Only sync if the external edges are different (prevents loop)
+      if (initialEdges?.length !== edges.length || !areArraysEqual(initialEdges || [], edges, false)) {
+        setEdgesExternal(edges);
+      }
     }
-  }, [edges, setEdgesExternal, effectiveIsLayouting]);
+  }, [edges, setEdgesExternal, effectiveIsLayouting, initialEdges, isDragging]);
+
+  // Internal layout function if no external one is provided
+  const internalOnLayout = useCallback(() => {
+    // Prevent unnecessary processing if no nodes
+    if (nodes.length === 0) return;
+    
+    // Use functional update to get the latest state
+    setNodes((currentNodes) => {
+      setEdges((currentEdges) => {
+        // Prevent layout if already layouting or no nodes exist
+        if (effectiveIsLayouting || currentNodes.length === 0) {
+          return currentEdges; // Return unchanged edges
+        }
+        
+        if (setInternalIsLayouting) {
+          setInternalIsLayouting(true);
+        }
+        
+        // Apply layout
+        const { nodes: layoutedNodes, edges: layoutedEdges } = getLayoutedElements(
+          currentNodes,
+          currentEdges,
+          'TB',  // Direction
+          172,   // Node width
+          36,    // Node height
+          true   // Force layout to override existing positions
+        );
+        
+        // Update state
+        setNodes(layoutedNodes); // Update nodes immediately
+        
+        // Fit view and reset layout flag after a delay
+        setTimeout(() => {
+          if (reactFlowInstance.current) {
+            reactFlowInstance.current.fitView({ padding: 0.2 });
+          }
+          if (setInternalIsLayouting) {
+            setInternalIsLayouting(false);
+          }
+        }, 300);
+        
+        return layoutedEdges; // Return the layouted edges for the setEdges update
+      });
+      return currentNodes; // Return unchanged nodes initially, update happens inside
+    });
+  }, [effectiveIsLayouting, setInternalIsLayouting, setNodes, setEdges, nodes.length]);
+
+  // Handle external layout function if provided, otherwise use internal
+  const handleLayout = useCallback(() => {
+    if (onLayout) {
+      onLayout();
+    } else {
+      internalOnLayout();
+    }
+  }, [onLayout, internalOnLayout]);
 
   // Handle connect event
   const handleConnect = useCallback(
     (params) => {
-      console.log('Connection created:', params);
+      // Create the new edge with proper styling
       const newEdge = {
         ...params,
         type: 'smoothstep',
@@ -447,126 +614,18 @@ const AIFlowDiagram: React.FC<AIFlowDiagramProps> = ({
           stroke: '#555',
         }
       };
+      
+      // First add the edge to the local state immediately for visual feedback
+      setEdges(prev => [...prev, newEdge]);
+      
+      // Then use the hook's method to properly handle the connection with proper typing
       hookHandleConnect(newEdge);
     },
-    [hookHandleConnect]
+    [hookHandleConnect, setEdges]
   );
-
-  // Internal layout function if no external one is provided
-  const internalOnLayout = useCallback(() => {
-    console.log('[internalOnLayout] Triggered'); // Log start
-    
-    // Use functional update to get the latest state
-    setNodes((currentNodes) => {
-      console.log(`[internalOnLayout] setNodes callback. Nodes count: ${currentNodes.length}`); // Log inside setNodes
-      setEdges((currentEdges) => {
-        console.log(`[internalOnLayout] setEdges callback. Edges count: ${currentEdges.length}`); // Log inside setEdges
-        // Prevent layout if already layouting or no nodes exist
-        if (effectiveIsLayouting || currentNodes.length === 0) {
-          console.log(`[internalOnLayout] Layout skipped (effectiveIsLayouting: ${effectiveIsLayouting}, nodes: ${currentNodes.length})`);
-          return currentEdges; // Return unchanged edges
-        }
-        
-        console.log(`[internalOnLayout] Proceeding with layout for ${currentNodes.length} nodes`);
-        if (setInternalIsLayouting) {
-          console.log('[internalOnLayout] Setting isLayouting = true');
-          setInternalIsLayouting(true);
-        }
-        
-        // Apply layout (Reverted to TB direction and original dimensions)
-        console.log('[internalOnLayout] Calling getLayoutedElements for TB layout');
-        const { nodes: layoutedNodes, edges: layoutedEdges } = getLayoutedElements(
-          currentNodes,
-          currentEdges,
-          'TB',  // Reverted direction back to 'TB'
-          172,   // Reverted Node width
-          36,    // Reverted Node height
-          true   // Force layout to override existing positions
-        );
-        
-        // Update state
-        console.log(`[internalOnLayout] Setting ${layoutedNodes.length} layouted nodes`);
-        setNodes(layoutedNodes); // Update nodes immediately
-        
-        // Fit view and reset layout flag after a delay
-        setTimeout(() => {
-          if (reactFlowInstance.current) {
-            console.log('[internalOnLayout] Fitting view');
-            reactFlowInstance.current.fitView({ padding: 0.2 });
-          }
-          if (setInternalIsLayouting) {
-            console.log('[internalOnLayout] Setting isLayouting = false');
-            setInternalIsLayouting(false);
-          }
-          console.log('[internalOnLayout] Layout finished');
-        }, 300);
-        
-        console.log(`[internalOnLayout] Returning ${layoutedEdges.length} layouted edges`);
-        return layoutedEdges; // Return the layouted edges for the setEdges update
-      });
-      // Note: This might log before the inner setNodes call completes
-      console.log('[internalOnLayout] Returning from outer setNodes callback'); 
-      return currentNodes; // Return unchanged nodes initially, update happens inside
-    });
-
-  }, [effectiveIsLayouting, setInternalIsLayouting, setNodes, setEdges]); // Removed getLayoutedElements dependency as it's defined outside
-
-  // Add this effect to handle switching between viewModes
-  useEffect(() => {
-    // When switching to DFD mode, we need to handle the DFD visualization
-    if (viewMode === 'DFD') {
-      // We'll let ModelWithAI handle fetching and setting the data
-      // console.log('AIFlowDiagram: DFD mode active');
-    } else {
-      // console.log('AIFlowDiagram: AD mode active');
-    }
-  }, [viewMode]);
-
-  // Use external layout function if provided, otherwise use internal
-  const handleLayout = useCallback(() => {
-    console.log(`[handleLayout] Layout button clicked. Using: ${onLayout ? 'external' : 'internal'} function.`); // Log button click
-    if (onLayout) {
-      console.log('[handleLayout] Calling external onLayout');
-      onLayout();
-    } else {
-      console.log('[handleLayout] Calling internalOnLayout');
-      internalOnLayout();
-    }
-  }, [onLayout, internalOnLayout]);
-
-  // Handle zoom in action
-  const handleZoomIn = () => {
-    if (reactFlowInstance.current) {
-      reactFlowInstance.current.zoomIn();
-    }
-    if (onZoomIn) {
-      onZoomIn();
-    }
-  };
-
-  // Handle zoom out action
-  const handleZoomOut = () => {
-    if (reactFlowInstance.current) {
-      reactFlowInstance.current.zoomOut();
-    }
-    if (onZoomOut) {
-      onZoomOut();
-    }
-  };
-
-  // Handle fit view action
-  const handleFitView = () => {
-    if (reactFlowInstance.current) {
-      reactFlowInstance.current.fitView({ padding: 0.2 });
-    }
-    if (onFitView) {
-      onFitView();
-    }
-  };
 
   // Handle save action
   const handleSave = () => {
-    console.log('Saving diagram...', nodes?.length, 'nodes and', edges?.length, 'edges');
     if (onSave) {
       onSave();
     }
@@ -574,7 +633,6 @@ const AIFlowDiagram: React.FC<AIFlowDiagramProps> = ({
 
   // Handle generate report action
   const handleGenerateReport = () => {
-    console.log('Generating report...');
     if (onGenerateReport) {
       return onGenerateReport();
     }
@@ -763,6 +821,57 @@ const AIFlowDiagram: React.FC<AIFlowDiagramProps> = ({
     return () => clearTimeout(timer);
   }, [nodes, showWelcomeMessage]);
 
+  // Add this effect to handle switching between viewModes
+  useEffect(() => {
+    // When switching to DFD mode, we need to handle the DFD visualization
+    if (viewMode === 'DFD') {
+      // We'll let ModelWithAI handle fetching and setting the data
+    }
+  }, [viewMode]);
+
+  // Handle zoom in action
+  const handleZoomIn = () => {
+    if (reactFlowInstance.current) {
+      reactFlowInstance.current.zoomIn();
+    }
+    if (onZoomIn) {
+      onZoomIn();
+    }
+  };
+
+  // Handle zoom out action
+  const handleZoomOut = () => {
+    if (reactFlowInstance.current) {
+      reactFlowInstance.current.zoomOut();
+    }
+    if (onZoomOut) {
+      onZoomOut();
+    }
+  };
+
+  // Handle fit view action
+  const handleFitView = () => {
+    if (reactFlowInstance.current) {
+      reactFlowInstance.current.fitView({ padding: 0.2 });
+    }
+    if (onFitView) {
+      onFitView();
+    }
+  };
+
+  // Add safety mechanism to reset drag state if stuck
+  useEffect(() => {
+    // Safety timeout to reset dragging state if it gets stuck
+    const safetyTimeout = setTimeout(() => {
+      if (isDragging.current) {
+        console.log('Safety: Resetting stuck drag state');
+        isDragging.current = false;
+      }
+    }, 3000); // 3 seconds timeout - should be longer than any reasonable drag operation
+    
+    return () => clearTimeout(safetyTimeout);
+  }, [nodes]); // Run this check whenever nodes change
+
   // AIFlowDiagram.tsx
   return (
     <div className="h-full w-full flex flex-col">
@@ -888,12 +997,14 @@ const AIFlowDiagram: React.FC<AIFlowDiagramProps> = ({
           attributionPosition="bottom-right"
           panOnScroll
           zoomOnScroll
-          selectionOnDrag={viewMode === 'AD'} // Only allow selection in AD mode
-          nodesDraggable={viewMode === 'AD'} // Only allow dragging in AD mode
-          nodesConnectable={viewMode === 'AD'} // Only allow connections in AD mode
-          elementsSelectable={viewMode === 'AD'} // Only allow selection in AD mode
-          proOptions={{ hideAttribution: true }} // This removes the React Flow watermark
-          style={{ position: 'relative', zIndex: 20 }} // Ensure ReactFlow has higher z-index
+          selectionOnDrag={viewMode === 'AD'}
+          nodesDraggable={true}
+          nodesConnectable={viewMode === 'AD'}
+          elementsSelectable={viewMode === 'AD'}
+          proOptions={{ hideAttribution: true }}
+          style={{ position: 'relative', zIndex: 20 }}
+          onNodeClick={viewMode === 'AD' ? onNodeClick : undefined}
+          onPaneClick={viewMode === 'AD' ? onPaneClick : undefined}
         >
           {showMinimap && (
             <MiniMap
