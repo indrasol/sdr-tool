@@ -4,7 +4,7 @@ from models.response_models import ResponseType
 import re
 from utils.logger import log_info
 import json
-
+from core.prompt_engineering.node_types import node_types
 
 class PromptBuilder:
     """
@@ -13,6 +13,18 @@ class PromptBuilder:
     Creates specialized prompts for different types of user queries, incorporating
     conversation history and diagram state. Optimized for working with extended thinking.
     """
+
+    async def detect_cloud_provider(self, query):
+        providers = {
+            "aws": ["aws", "amazon web services"],
+            "gcp": ["gcp", "google cloud platform"],
+            "azure": ["azure", "microsoft azure"]
+        }
+        query_lower = query.lower()
+        for provider, keywords in providers.items():
+            if any(keyword in query_lower for keyword in keywords):
+                return provider
+        return None
     
     async def build_architecture_prompt(
         self, 
@@ -32,17 +44,28 @@ class PromptBuilder:
             A formatted prompt string
         """
 
-        try:
-            with open('node_types.json', 'r') as f:
-                node_types = json.load(f)
-            NODE_TYPES_STR = json.dumps(node_types, indent=2)
-        except FileNotFoundError:
-            NODE_TYPES_STR = "{}"  # Default to empty dictionary if file is missing
-            log_info("Warning: node_types.json not found. Using empty node types.")
-        except json.JSONDecodeError:
-            NODE_TYPES_STR = "{}"  # Default to empty dictionary if file is invalid
-            log_info("Warning: node_types.json is invalid. Using empty node types.")
+        # Detect cloud provider from the query
+        provider = await self.detect_cloud_provider(query)
 
+        # Filter node types based on context
+        if provider:
+            relevant_node_types = {
+                "application": node_types["application"],
+                "client": node_types["client"],
+                "network": node_types["network"],
+                provider: node_types[provider],
+                "default": node_types["default"]  # Include defaults for fallback
+            }
+        else:
+            relevant_node_types = {
+                "application": node_types["application"],
+                "client": node_types["client"],
+                "network": node_types["network"],
+                "default": node_types["default"]  # Include defaults for fallback
+            }
+
+        nodes_types_str = json.dumps(relevant_node_types)
+        log_info(f"Node Types : {relevant_node_types}")
         # Convert diagram state to a readable format
         diagram_description = await self._format_diagram_state(diagram_state)
         
@@ -63,21 +86,23 @@ class PromptBuilder:
         {query}
 
         # Available Node Types:
-        {NODE_TYPES_STR}
+        {nodes_types_str}
         
         # Instructions:
         Analyze the user’s request carefully, considering security best practices, scalability, and architectural patterns.
 
-        - Use **only the node types listed in the "generic", "aws", "gcp", or "azure" sections** of the Available Node Types.
+        - Use **only the node types listed in the "application", "aws", "gcp", or "azure" sections** of the Available Node Types.
         - Refer to the `description` field for each node type to select the most appropriate one (e.g., "web_server" for hosting web apps).
         - If the user specifies a cloud provider (e.g., "AWS", "GCP", "Azure"), use node types from that provider’s section.
-        - If no cloud provider is specified, default to node types from the "generic" section.
+        - If no cloud provider is specified, default to node types from the "application" section.
         - For specific services mentioned (e.g., "use S3 for storage"), map to the closest node type (e.g., "aws_s3_bucket" for AWS).
         - If no exact match exists, use the default node type for the context:
-        - Generic: {node_types['default']['generic']}
-        - AWS: {node_types['default']['aws']}
-        - GCP: {node_types['default']['gcp']}
-        - Azure: {node_types['default']['azure']}
+        - application: {node_types['default']['application']}
+        - aws: {node_types['default']['aws']}
+        - gcp: {node_types['default']['gcp']}
+        - azure: {node_types['default']['azure']}
+        - network: {node_types['default']['network']}
+        - client: {node_types['default']['client']}
         - Assign unique IDs to new nodes (e.g., "node1") and edges (e.g., "edge1").
 
         Respond with this JSON structure:
@@ -441,7 +466,7 @@ class PromptBuilder:
         formatted_conversation_history = await self._format_conversation_history(conversation_history)
         
         prompt = f"""
-            You are Guardian AI, an expert in cybersecurity threat modeling and secure software design. Your goal is to map a system’s data flow into a structured Threat Model Data Flow Diagram (DFD).
+            You are Guardian AI, an expert in cybersecurity threat modeling and secure software design. Your goal is to map a system's data flow into a structured Threat Model Data Flow Diagram (DFD).
 
             You will receive:
             1. A natural language **data_flow_description** derived from a system design.

@@ -8,7 +8,7 @@ interface RemoteSvgIconProps {
 
 const RemoteSvgIcon: React.FC<RemoteSvgIconProps> = ({ 
   url, 
-  size = 46,
+  size = 48,
   className = ""
 }) => {
   const [svgContent, setSvgContent] = useState<string | null>(null);
@@ -22,16 +22,22 @@ const RemoteSvgIcon: React.FC<RemoteSvgIconProps> = ({
     if (className?.includes('aws')) return 'aws';
     if (className?.includes('gcp')) return 'gcp';
     if (className?.includes('network')) return 'network';
+    if (className?.includes('azure')) return 'azure';
+    if (className?.includes('client')) return 'client';
+    if (className?.includes('application')) return 'application';
     
     if (url.includes('aws-icons')) return 'aws';
     if (url.includes('gcp-icons')) return 'gcp';
+    if (url.includes('azure-icons')) return 'azure';
+    if (url.includes('client-icons')) return 'client';
     if (url.includes('network-icons')) return 'network';
+    if (url.includes('application-icons')) return 'application';
     
     return 'generic';
   };
 
-  // Check if this is the firewall icon
-  const isFirewallIcon = className?.includes('firewall') || url.includes('firewall');
+  // Check if this is a special icon type
+  const isMicroserviceIcon = className?.includes('microservice') || url.includes('microservice');
 
   useEffect(() => {
     // Check if the URL is a data URL for SVG
@@ -63,6 +69,18 @@ const RemoteSvgIcon: React.FC<RemoteSvgIconProps> = ({
         const provider = getProvider();
         let processedSvg = svgText;
 
+        // Remove any unwanted background or container elements from SVG
+        // Look for rect or circle elements that might be backgrounds
+        if (isMicroserviceIcon || provider === 'application') {
+          // Replace any background rect with transparent fill
+          processedSvg = processedSvg.replace(/<rect[^>]*fill=["'][^"']*["']/g, match => 
+            match.replace(/fill=["'][^"']*["']/, 'fill="transparent"')
+          );
+          
+          // Remove any container groups that might cause appearance issues
+          processedSvg = processedSvg.replace(/<g[^>]*>(\s*)<rect[^>]*\/>/g, '$1');
+        }
+
         // Ensure SVG has width and height attributes
         if (!svgText.includes('width=') && !svgText.includes('height=')) {
           processedSvg = processedSvg.replace(/<svg/, '<svg width="100%" height="100%"');
@@ -90,7 +108,13 @@ const RemoteSvgIcon: React.FC<RemoteSvgIconProps> = ({
         } else if (provider === 'gcp') {
           processedSvg = processedSvg.replace(/<svg/, '<svg fill="#4285F4"');
         }
-        // Removing forced red coloring for network icons to preserve original colors
+        // Apply coloring for application icons to ensure visibility
+        else if (provider === 'application' && (!svgText.includes('fill=') || isMicroserviceIcon)) {
+          processedSvg = processedSvg.replace(/<svg/, '<svg fill="currentColor"');
+          // Make sure paths have proper fill too
+          processedSvg = processedSvg.replace(/<path(?![^>]*fill=)/g, '<path fill="currentColor"');
+        }
+        // Removing forced coloring for network icons to preserve original colors
         else if (!svgText.includes('fill=') && !svgText.includes('style=')) {
           processedSvg = processedSvg.replace(/<svg/, '<svg fill="currentColor"');
         }
@@ -108,13 +132,13 @@ const RemoteSvgIcon: React.FC<RemoteSvgIconProps> = ({
     if (url && !isPngImage && !isDataUrl) {
       fetchSvg();
     }
-  }, [url, isPngImage, isDataUrl, className, isFirewallIcon]);
+  }, [url, isPngImage, isDataUrl, className, isMicroserviceIcon]);
 
   if (isLoading) {
     return (
       <div 
         style={{ width: size, height: size }} 
-        className={`inline-block animate-pulse bg-gray-100 rounded-md ${className}`} 
+        className={`inline-block animate-pulse bg-transparent ${className}`} 
       />
     );
   }
@@ -122,7 +146,12 @@ const RemoteSvgIcon: React.FC<RemoteSvgIconProps> = ({
   if (isDataUrl) {
     // For all icons, preserve original colors without applying text color classes
     return (
-      <div className={`inline-block ${className}`} style={{ width: size, height: size }}>
+      <div className={`inline-block ${className}`} style={{ 
+        width: size, 
+        height: size,
+        background: 'transparent',
+        border: 'none'
+      }}>
         <img
           src={url}
           alt="Icon"
@@ -137,7 +166,12 @@ const RemoteSvgIcon: React.FC<RemoteSvgIconProps> = ({
       <img
         src={url}
         alt="Icon"
-        style={{ width: size, height: size, objectFit: 'contain' }}
+        style={{ 
+          width: size, 
+          height: size, 
+          objectFit: 'contain',
+          background: 'transparent' 
+        }}
         className={`inline-block ${className}`}
       />
     );
@@ -148,14 +182,20 @@ const RemoteSvgIcon: React.FC<RemoteSvgIconProps> = ({
     return (
       <div 
         style={{ width: size, height: size }}
-        className={`inline-block bg-gray-200 rounded-md ${className}`}
+        className={`inline-block bg-transparent ${className}`}
       />
     );
   }
 
   return (
     <div
-      style={{ width: size, height: size }}
+      style={{ 
+        width: size, 
+        height: size,
+        background: 'transparent',
+        border: 'none',
+        boxShadow: 'none'
+      }}
       className={`inline-block ${className}`}
       dangerouslySetInnerHTML={{ __html: svgContent }}
     />

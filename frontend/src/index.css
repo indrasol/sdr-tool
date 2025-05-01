@@ -1,13 +1,9 @@
-/* stylelint-disable at-rule-no-unknown */
-/* Import fonts */
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap');
 
-/* Tailwind directives */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/* Root variables and base styles */
 @layer base {
   :root {
     --background: 220 33% 98%;
@@ -59,18 +55,16 @@
 
 @layer base {
   * {
-    border: 1px solid var(--border);
+    @apply border-border;
   }
   body {
     @apply bg-background text-foreground font-sans;
-    font-family: Geneva, Tahoma, Verdana, sans-serif;
-    
+    font-family: 'Inter', sans-serif;
   }
 }
 
-/* Utility classes */
 .glass-card {
-  @apply bg-white bg-opacity-50 backdrop-blur-lg border border-white border-opacity-20 shadow-none;
+  @apply bg-white bg-opacity-50 backdrop-blur-lg border border-white border-opacity-20 shadow-lg;
 }
 
 .shimmer {
@@ -87,81 +81,23 @@
 
 /* React Flow Customization */
 .react-flow__node {
-  box-shadow: var(--xy-node-boxshadow-default)!important;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  text-align: center;
-  padding: 0px !important;
-  width: 80px !important;
-  height: 80px !important;
-  aspect-ratio: 1 / 1 !important;
-  
-  @apply glass-card; 
+  /* @apply glass-card; */ /* Removed to prevent default white card */
+  border: none !important; /* Explicitly remove any border */
+  outline: none !important; /* Explicitly remove any outline */
+  box-shadow: none !important; /* Explicitly remove any shadow */
+  background: transparent !important; /* Ensure background is transparent */
 }
 
 .react-flow__node-input {
   @apply border-2 border-primary;
-} 
+}
 
 .react-flow__controls {
   @apply glass-card !important;
-} 
+}
 
 .react-flow__minimap {
   @apply glass-card !important;
-   
-}
-
-.react-flow__attribution {
-  display: none;
-}
-
-
-/* AIFlowDiagram.css */
-
-.react-flow__edge-path {
-  stroke: #888 !important; /* Light gray */
-  stroke-width: 1px !important; /* Thinner line */
-  visibility: visible !important;
-  /* Removed stroke-dasharray to eliminate dotted lines */
-}
-
-/* Edge handling for better visibility when overlapping */
-.react-flow__edge {
-  z-index: 1;
-  pointer-events: all;
-}
-
-.react-flow__edge:hover {
-  z-index: 2;
-}
-
-.react-flow__edge.selected {
-  z-index: 3;
-}
-
-/* Make the edge path wider on hover for easier selection */
-.react-flow__edge:hover .react-flow__edge-path {
-  stroke-width: 2px !important;
-  stroke: #888 !important;
-  cursor: pointer;
-}
-
-/* When selected, make edge even more visible */
-.react-flow__edge.selected .react-flow__edge-path {
-  stroke-width: 2px !important;
-  stroke: #888 !important;
-}
-
-/* Enhanced arrow markers */
-.react-flow__edge .react-flow__edge-path {
-  stroke-width: 1.5px !important; 
-}
-
-.react-flow__edge-marker {
-  transform-origin: center;
-  transform-box: fill-box;
 }
 
 .glass-effect {
@@ -177,12 +113,13 @@
   animation: gradient-animation 5s ease infinite;
 }
 
-/* Override margin between icon and label in custom nodes */
-.custom-node .flex.justify-center.items-center.mb-3 {
-  margin-bottom: 0 !important;
+.react-flow__edge-path {
+  stroke: #888888 !important;
+  stroke-width: 1.5px !important;
+  visibility: visible !important;
+  filter: drop-shadow(0 0 1px rgba(170, 170, 170, 0.2)) !important;
 }
 
-/* Animations */
 @keyframes gradient-animation {
   0% { background-position: 0% 50%; }
   50% { background-position: 100% 50%; }
@@ -336,4 +273,140 @@
   color: #6B7280;
   opacity: 0.9;
   font-style: normal;
+}
+
+/* Edge animation effect for a subtle glow */
+.react-flow__edge {
+  transition: all 0.3s ease;
+}
+
+.react-flow__edge:hover .react-flow__edge-path {
+  stroke-width: 2.5px !important;
+  filter: drop-shadow(0 1px 3px rgba(170, 170, 170, 0.3)) !important;
+}
+
+/* Edge animation for data flow visualization */
+.react-flow__edge.animated .react-flow__edge-path {
+  stroke-dasharray: 5, 5 !important;
+  animation: flowAnimation 20s linear infinite !important;
+}
+
+@keyframes flowAnimation {
+  to {
+    stroke-dashoffset: -1000;
+  }
+}
+
+/* 3D-style rendering for the flow */
+.react-flow__renderer {
+  background: linear-gradient(135deg, 
+    #ffffff 0%, 
+    #fcfdff 25%, 
+    #fafbfd 50%, 
+    #f8f9fc 75%, 
+    #f5f7fa 100%
+  );
+}
+
+.react-flow__edge-interaction {
+  stroke: #666 !important;
+  stroke-width: 10px !important;
+  opacity: 0 !important;
+  transition: opacity 0.2s !important;
+}
+
+.react-flow__edge:hover .react-flow__edge-interaction {
+  opacity: 0.05 !important;
+}
+
+/* Reset the node-related animations */
+@keyframes node-float {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-4px);
+  }
+}
+
+/* Enhanced edge animations */
+@keyframes edge-pulse {
+  0%, 100% {
+    stroke-width: 1.5px;
+    filter: drop-shadow(0 0 1px rgba(170, 170, 170, 0.1));
+  }
+  50% {
+    stroke-width: 2px;
+    filter: drop-shadow(0 1px 2px rgba(170, 170, 170, 0.15));
+  }
+}
+
+/* Style and animate the connection handles */
+.handle-left, .handle-right {
+  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
+  opacity: 0.6 !important;
+}
+
+.handle-left:hover, .handle-right:hover,
+.react-flow__handle-connecting {
+  opacity: 1 !important;
+  transform: scale(1.5) !important;
+  background-color: rgba(255, 255, 255, 0.95) !important;
+  border-color: rgba(124, 101, 246, 0.6) !important;
+  box-shadow: 0 0 0 3px rgba(124, 101, 246, 0.2), 0 0 10px rgba(124, 101, 246, 0.4) !important;
+  z-index: 10 !important;
+}
+
+/* Add a small pulse to all edges for subtle movement */
+.react-flow__edge .react-flow__edge-path {
+  animation: edge-pulse 4s ease-in-out infinite !important;
+}
+
+/* Special animated edge for data flow */
+.react-flow__edge.animated .react-flow__edge-path {
+  stroke-dasharray: 8, 4 !important;
+  animation: 
+    flowAnimation 30s linear infinite,
+    edge-pulse 4s ease-in-out infinite !important;
+}
+
+/* Improved edge interaction */
+.react-flow__edge {
+  cursor: pointer;
+}
+
+.react-flow__edge:hover .react-flow__edge-path {
+  stroke-width: 2.5px !important;
+  filter: drop-shadow(0 1px 3px rgba(170, 170, 170, 0.3)) !important;
+}
+
+/* Add entrance animation for nodes */
+.node-container {
+  opacity: 0;
+  transform: translateY(10px) scale(0.95);
+}
+
+.node-container.node-loaded {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+}
+
+/* Selection style enhancement */
+.react-flow__node.selected {
+  outline: none !important;
+  filter: drop-shadow(0 0 8px rgba(124, 101, 246, 0.3)) !important;
+}
+
+.react-flow__node.selected .node-icon-container {
+  box-shadow: 
+    0 12px 24px rgba(124, 101, 246, 0.2), 
+    0 6px 12px rgba(124, 101, 246, 0.15), 
+    0 0 0 3px rgba(124, 101, 246, 0.3),
+    inset 0 -2px 5px rgba(255, 255, 255, 0.6), 
+    inset 0 2px 2px rgba(255, 255, 255, 0.7) !important;
+}
+
+/* Remove dot pattern from background */
+.react-flow__pane {
+  background-image: none;
 }

@@ -2,10 +2,12 @@ import React, { useState, useRef, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { ToolbarItemProps } from './ToolbarTypes';
 import { getCategoryStyle } from '../utils/nodeStyles';
-import gcpStyles from '../icons/GCPIcons.module.css';
 import awsStyles from '../icons/AWSIcons.module.css';
 import azureStyles from '../icons/AzureIcons.module.css';
+import gcpStyles from '../icons/GCPIcons.module.css';
 import applicationStyles from '../icons/ApplicationIcons.module.css';
+import clientStyles from '../icons/ClientIcons.module.css';
+import networkStyles from '../icons/NetworkIcons.module.css';
 import ReactDOM from 'react-dom';
 
 const ToolbarItem: React.FC<ToolbarItemProps> = ({ tool, onClick }) => {
@@ -24,13 +26,17 @@ const ToolbarItem: React.FC<ToolbarItemProps> = ({ tool, onClick }) => {
   const isGCPIcon = tool.provider === 'GCP' && isRemoteIcon;
   const isAWSIcon = tool.provider === 'AWS' && isRemoteIcon;
   const isAzureIcon = tool.provider === 'Azure' && isRemoteIcon;
-  const isApplicationIcon = tool.provider === 'Generic' && isRemoteIcon;
+  const isApplicationIcon = tool.provider === 'Generic' && tool.category === 'Application' && isRemoteIcon;
+  const isClientIcon = tool.provider === 'Generic' && tool.category === 'Client' && isRemoteIcon;
+  const isNetworkIcon = tool.provider === 'Generic' && tool.category === 'Network' && isRemoteIcon;
   
   // Get the appropriate styles based on provider
   const getTooltipStyles = () => {
     if (isAWSIcon) return awsStyles;
     if (isAzureIcon) return azureStyles;
     if (isApplicationIcon) return applicationStyles;
+    if (isClientIcon) return clientStyles;
+    if (isNetworkIcon) return networkStyles;
     return gcpStyles; // Default to GCP styles
   };
   
@@ -113,12 +119,12 @@ const ToolbarItem: React.FC<ToolbarItemProps> = ({ tool, onClick }) => {
       <div 
         className={`
           w-16 h-16 flex items-center justify-center rounded-lg shrink-0 mb-2 
-          ${isGCPIcon || isAWSIcon || isAzureIcon || isApplicationIcon ? 'bg-white shadow-sm border border-gray-100' : ''} 
+          ${isGCPIcon || isAWSIcon || isAzureIcon || isApplicationIcon || isClientIcon || isNetworkIcon ? 'bg-white shadow-sm border border-gray-100' : ''} 
           transition-all duration-200 overflow-hidden
         `} 
         style={{ 
-          backgroundColor: (isGCPIcon || isAWSIcon || isAzureIcon || isApplicationIcon) ? 'white' : (backgroundColorToUse !== 'transparent' ? backgroundColorToUse : undefined),
-          boxShadow: (isGCPIcon || isAWSIcon || isAzureIcon || isApplicationIcon) ? '0 2px 5px rgba(0,0,0,0.08)' : undefined
+          backgroundColor: (isGCPIcon || isAWSIcon || isAzureIcon || isApplicationIcon || isClientIcon || isNetworkIcon) ? 'white' : (backgroundColorToUse !== 'transparent' ? backgroundColorToUse : undefined),
+          boxShadow: (isGCPIcon || isAWSIcon || isAzureIcon || isApplicationIcon || isClientIcon || isNetworkIcon) ? '0 2px 5px rgba(0,0,0,0.08)' : undefined
         }}
       >
         {isRemoteIcon ? (

@@ -1,19 +1,18 @@
-{
+node_types = {
     "application": [
-      {"name": "web_server", "description": "Hosts web applications, serving HTTP requests (e.g., Nginx, Apache)."},
-      {"name": "database", "description": "Stores and manages structured or unstructured data (e.g., SQL, NoSQL)."},
-      {"name": "api_gateway", "description": "Centralizes and routes API requests, often with rate limiting and authentication."},
-      {"name": "load_balancer", "description": "Distributes incoming traffic across multiple servers for scalability and reliability."},
-      {"name": "cache", "description": "Stores frequently accessed data for low-latency retrieval (e.g., Redis, Memcached)."},
-      {"name": "message_queue", "description": "Facilitates asynchronous communication between services (e.g., RabbitMQ, Kafka)."},
-      {"name": "authentication", "description": "Handles user identity verification and access control (e.g., OAuth, LDAP)."},
-      {"name": "firewall", "description": "Filters and monitors network traffic to enforce security policies."},
-      {"name": "proxy", "description": "Intercepts and forwards requests, often for caching or security (e.g., reverse proxy)."},
-      {"name": "container", "description": "Runs isolated application instances with dependencies (e.g., Docker)."},
-      {"name": "microservice", "description": "A small, independent service that performs a specific function within a larger application."},
-      {"name": "faas", "description": "A serverless computing service that executes code in response to events without managing servers."},
-      {"name": "monitoring", "description": "Collects and analyzes metrics and logs to monitor application performance and health."},
-      {"name": "logging", "description": "Centralizes and manages log data from various sources for analysis and troubleshooting."}
+      {"name": "application_web_server", "description": "Hosts web applications, serving HTTP requests (e.g., Nginx, Apache)."},
+      {"name": "application_database", "description": "Stores and manages structured or unstructured data (e.g., SQL, NoSQL)."},
+      {"name": "application_api_gateway", "description": "Centralizes and routes API requests, often with rate limiting and authentication."},
+      {"name": "application_load_balancer", "description": "Distributes incoming traffic across multiple servers for scalability and reliability."},
+      {"name": "application_cache", "description": "Stores frequently accessed data for low-latency retrieval (e.g., Redis, Memcached)."},
+      {"name": "application_message_queue", "description": "Facilitates asynchronous communication between services (e.g., RabbitMQ, Kafka)."},
+      {"name": "application_authentication", "description": "Handles user identity verification and access control (e.g., OAuth, LDAP)."},
+      {"name": "application_proxy", "description": "Intercepts and forwards requests, often for caching or security (e.g., reverse proxy)."},
+      {"name": "application_container", "description": "Runs isolated application instances with dependencies (e.g., Docker)."},
+      {"name": "application_microservice", "description": "A small, independent service that performs a specific function within a larger application."},
+      {"name": "application_faas", "description": "A serverless computing service that executes code in response to events without managing servers."},
+      {"name": "application_monitoring", "description": "Collects and analyzes metrics and logs to monitor application performance and health."},
+      {"name": "application_logging", "description": "Centralizes and manages log data from various sources for analysis and troubleshooting."}
     ],
     "client": [
     {
@@ -4534,10 +4533,78 @@
       "description": "Azure Ebooks service."
     }
   ],
+  "network": [
+      {
+        "name": "network_traffic_manager",
+        "description": "Ork Network Traffic Manager Network."
+      },
+      {
+        "name": "network_firewall",
+        "description": "Network firewall for filtering and monitoring network traffic and enforcing security policies."
+      },
+      {
+        "name": "network_ddos_protection",
+        "description": "Ork Network Ddos Protection Network."
+      },
+      {
+        "name": "network_router",
+        "description": "Ork Network Router Network."
+      },
+      {
+        "name": "network_security_svgrepo_com",
+        "description": "Ork Network Security Svgrepo Com Network."
+      },
+      {
+        "name": "network_switch",
+        "description": "Ork Network Switch Network."
+      },
+      {
+        "name": "network_load_testing",
+        "description": "Ork Network Load Testing Network."
+      },
+      {
+        "name": "network_api_management",
+        "description": "Ork Network Api Management Network."
+      },
+      {
+        "name": "network_dns",
+        "description": "Ork Network Dns Network."
+      },
+      {
+        "name": "network_subnet",
+        "description": "Ork Network Subnet Network."
+      },
+      {
+        "name": "network_waf",
+        "description": "Ork Network Waf Network."
+      },
+      {
+        "name": "network_internet",
+        "description": "Ork Network Internet Network."
+      },
+      {
+        "name": "network_vpn",
+        "description": "Ork Network Vpn Network."
+      },
+      {
+        "name": "network_virtual_network",
+        "description": "Ork Network Virtual Network Network."
+      },
+      {
+        "name": "network_cdn",
+        "description": "Ork Network Cdn Network."
+      },
+      {
+        "name": "network_service_mesh",
+        "description": "Ork Network Service Mesh Network."
+      }
+    ],
     "default": {
-      "generic": "app_service",
+      "application": "application_service",
       "aws": "aws_service",
       "gcp": "gcp_service",
-      "azure": "azure_service"
+      "azure": "azure_service",
+      "network": "network",
+      "client": "client"
     }
   }

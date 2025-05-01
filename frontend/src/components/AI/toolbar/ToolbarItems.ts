@@ -62,41 +62,27 @@ import {
   CloudDrizzle
 } from 'lucide-react';
 
-// Import the GCP icons
+// Import AWS and GCP icons from their individual loader files
 import { convertGCPIconsToToolbarItems } from '../icons/GCPIconsLoader';
-
-// Import the AWS icons
 import { convertAWSIconsToToolbarItems } from '../icons/AWSIconsLoader';
 
-// Import the Azure icons
-import { convertAzureIconsToToolbarItems } from '../icons/AzureIconsLoader';
+// Import the icon functions from the centralized IconsLoader.tsx
+import {
+  getAzureIcons,
+  getApplicationIcons,
+  getClientIcons,
+  getNetworkIcons
+} from '../icons/IconsLoader';
 
-// Import the Application icons
-import { convertApplicationIconsToToolbarItems } from '../icons/ApplicationIconsLoader';
-
-// Import the Client icons
-import { convertClientIconsToToolbarItems } from '../icons/ClientIconsLoader';
-
-// Import the Network icons
-import { convertNetworkIconsToToolbarItems } from '../icons/NetworkIconsLoader';
-
-// Get GCP icons from JSON
+// Get icons from individual loader files for AWS and GCP
 const gcpToolbarItems: ToolbarItem[] = convertGCPIconsToToolbarItems();
-
-// Get AWS icons from JSON
 const awsToolbarItems: ToolbarItem[] = convertAWSIconsToToolbarItems();
 
-// Get Azure icons from JSON
-const azureToolbarItems: ToolbarItem[] = convertAzureIconsToToolbarItems();
-
-// Get Application icons from JSON
-const applicationToolbarItems: ToolbarItem[] = convertApplicationIconsToToolbarItems();
-
-// Get Client icons from JSON
-const clientToolbarItems: ToolbarItem[] = convertClientIconsToToolbarItems();
-
-// Get Network icons from JSON
-const networkToolbarItems: ToolbarItem[] = convertNetworkIconsToToolbarItems();
+// Get icons from the centralized functions for the rest
+const azureToolbarItems: ToolbarItem[] = getAzureIcons();
+const applicationToolbarItems: ToolbarItem[] = getApplicationIcons();
+const clientToolbarItems: ToolbarItem[] = getClientIcons();
+const networkToolbarItems: ToolbarItem[] = getNetworkIcons();
 
 // Original toolbar items
 const originalToolbarItems: ToolbarItem[] = [
