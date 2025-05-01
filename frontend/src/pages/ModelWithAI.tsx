@@ -237,42 +237,62 @@ const ModelWithAI = () => {
 
   // Apply layout function
   const applyLayout = useCallback(() => {
-    console.log('ModelWithAI: Applying layout, nodes:', nodes.length);
-    if (isLayouting || nodes.length === 0) return;
-    
+    console.log('[ModelWithAI] applyLayout triggered.');
+    // Get current state directly from refs to avoid stale closures
+    const currentNodes = nodesRef.current;
+    const currentEdges = edgesRef.current;
+
+    // Use the isLayouting state directly
+    if (isLayouting || currentNodes.length === 0) {
+      console.log(`[ModelWithAI] Layout skipped (isLayouting: ${isLayouting}, nodes: ${currentNodes.length})`);
+      return;
+    }
+
+    console.log('[ModelWithAI] Setting isLayouting = true');
     setIsLayouting(true);
-    
+
     try {
-      // Process nodes and edges first
-      const preparedNodes = prepareNodes(nodes);
-      const processedEdges = processEdges(edges, preparedNodes);
-      
-      // Apply layout
+      console.log(`[ModelWithAI] Preparing ${currentNodes.length} nodes.`);
+      // Call prepareNodes with the correct parameters - it expects (nodes, edges)
+      const preparedNodes = prepareNodes(currentNodes, currentEdges);
+      console.log(`[ModelWithAI] Processing ${currentEdges.length} edges.`);
+      const processedEdges = processEdges(currentEdges, preparedNodes);
+
+      console.log('[ModelWithAI] Calling getLayoutedElements with forceLayout: true');
       const { nodes: layoutedNodes, edges: layoutedEdges } = getLayoutedElements(
         preparedNodes,
         processedEdges,
-        'TB',  // Top to Bottom layout
-        172,   // Node width
-        36     // Node height
+        'TB', 172, 36, true
       );
-      
-      // Update state with new layout - must use function form to avoid state sync issues
+
       if (layoutedNodes && layoutedNodes.length > 0) {
-        setNodes(() => layoutedNodes);
-        
-        // Delay edge updates to prevent glitching
+        console.log(`[ModelWithAI] Calculated ${layoutedNodes.length} layouted nodes. Updating state.`);
+        // Set nodes first
+        setNodes(layoutedNodes);
+        console.log('[ModelWithAI] setNodes called.');
+
+        // Set edges immediately after nodes (React batches these)
+        if (layoutedEdges) {
+          setEdges(layoutedEdges);
+          console.log('[ModelWithAI] setEdges called.');
+        }
+
+        // Reset layouting flag slightly later using timeout
+        // This allows React Flow time to potentially re-render with new node positions
         setTimeout(() => {
-          if (layoutedEdges) setEdges(() => layoutedEdges);
+          console.log('[ModelWithAI] Resetting isLayouting = false after timeout.');
           setIsLayouting(false);
-        }, 200);
+        }, 50); // Short delay
+
       } else {
+        console.log('[ModelWithAI] No layouted nodes returned. Resetting layouting flag immediately.');
         setIsLayouting(false);
       }
     } catch (error) {
-      console.error('Error applying layout:', error);
-      setIsLayouting(false);
+      console.error('[ModelWithAI] Error applying layout:', error);
+      setIsLayouting(false); // Ensure flag is reset on error
     }
-  }, [nodes, edges, isLayouting, prepareNodes, setNodes, setEdges]);
+  }, [isLayouting, prepareNodes, processEdges, setNodes, setEdges, setIsLayouting]); // Dependencies for the applyLayout function
 
   // Check for significant changes to trigger auto-layout
   useEffect(() => {
@@ -319,6 +339,16 @@ const ModelWithAI = () => {
       
       console.log(`Saving project with session ID: ${sessionIdRef.current}`);
       const currentDiagramState = { nodes: nodesRef.current, edges: edgesRef.current };
+      console.log('Saving Diagram State Nodes:');
+      
+      // Also log a nodes summary for better readability
+      console.log('Nodes Summary:', currentDiagramState.nodes.map(node => ({
+        id: node.id,
+        type: node.type,
+        nodeType: node.data?.nodeType,
+        label: node.data?.label,
+        hasIconRenderer: !!node.data?.iconRenderer
+      })));
       
       try {
         const result = await projectService.saveProject(sessionIdRef.current, currentDiagramState, projectId);
@@ -378,6 +408,62 @@ const ModelWithAI = () => {
     };
   }, [toast, location.state, params, projectId, projectLoaded, saveCurrentState]);
 
+  // Add this function before the handleSwitchView function
+  const processAndDisplayThreatModel = useCallback((threatModelResponse) => {
+    if (!threatModelResponse) {
+      console.error('Invalid threat model response');
+      setDfdGenerationStatus('failed');
+      return;
+    }
+    
+    try {
+      // Transform FullThreatModelResponse to DFDData format for visualization
+      const dfdData = {
+        threat_model_id: threatModelResponse.threat_model_id || '',
+        nodes: threatModelResponse.dfd_model.elements,
+        edges: threatModelResponse.dfd_model.edges.map(edge => ({
+          id: edge.id,
+          source: edge.source,
+          target: edge.target,
+          label: edge.label || '',
+          properties: edge.properties || {}
+        })),
+        boundaries: threatModelResponse.dfd_model.boundaries,
+        threats: threatModelResponse.threats.threats.map(threat => ({
+          id: threat.id,
+          description: threat.description,
+          severity: threat.severity,
+          mitigation: threat.mitigation || 'No mitigation specified',
+          target_elements: threat.target_elements || [],
+          properties: threat.properties || {
+            threat_type: 'UNKNOWN',
+            impact: 'Unknown impact'
+          }
+        })),
+        generated_at: threatModelResponse.generated_at || new Date().toISOString()
+      };
+      
+      setDfdData(dfdData);
+      setDfdGenerationStatus('complete');
+      
+      // Show a success toast
+      toast({
+        title: 'Threat Analysis Complete',
+        description: `Generated ${dfdData.threats.length} threats for your architecture.`,
+        variant: 'default',
+      });
+    } catch (error) {
+      console.error('Error processing threat model response:', error);
+      setDfdGenerationStatus('failed');
+      
+      toast({
+        title: 'Error Processing Threat Model',
+        description: error.message || 'Failed to process threat model data',
+        variant: 'destructive',
+      });
+    }
+  }, [toast]);
+
   const handleSwitchView = useCallback(async (mode: 'AD' | 'DFD') => {
     console.log(`Switching view mode to: ${mode}`);
     
@@ -392,7 +478,6 @@ const ModelWithAI = () => {
       
       try {
         // Clean up the diagram state to ensure only essential properties are included
-        // This helps ensure the hash comparison works correctly for caching
         const cleanNodes = nodes.map(node => ({
           id: node.id,
           type: node.type,
@@ -412,8 +497,8 @@ const ModelWithAI = () => {
           label: edge.label
         }));
         
-        // Prepare the request with cleaned diagram state using the DFDSwitchRequest interface
-        const request: DFDSwitchRequest = {
+        // Prepare the request
+        const request = {
           diagram_state: { 
             nodes: cleanNodes, 
             edges: cleanEdges 
@@ -428,52 +513,21 @@ const ModelWithAI = () => {
          
         console.log('Threat Model Response:', threatModelResponse);
         
-        // Transform FullThreatModelResponse to DFDData format for visualization
-        const dfdData: DFDData = {
-          threat_model_id: threatModelResponse.threat_model_id || '',
-          nodes: threatModelResponse.dfd_model.elements,
-          edges: threatModelResponse.dfd_model.edges.map(edge => ({
-            id: edge.id,
-            source: edge.source,
-            target: edge.target,
-            label: edge.label || '',
-            properties: edge.properties || {}
-          })),
-          boundaries: threatModelResponse.dfd_model.boundaries,
-          threats: threatModelResponse.threats.threats.map(threat => ({
-            id: threat.id,
-            description: threat.description,
-            severity: threat.severity,
-            mitigation: threat.mitigation || 'No mitigation specified',
-            target_elements: threat.target_elements || [],
-            properties: threat.properties || {
-              threat_type: 'UNKNOWN',
-              impact: 'Unknown impact'
-            }
-          })),
-          generated_at: threatModelResponse.generated_at || new Date().toISOString()
-        };
+        // Use our new utility function to process and display the threat model
+        processAndDisplayThreatModel(threatModelResponse);
         
-        setDfdData(dfdData);
-        setDfdGenerationStatus('complete');
-
-        // Show a success toast
-        const threatCount = dfdData.threats.length;
-        toast({
-          title: 'Threat Model Generated',
-          description: `${threatCount} potential threats identified in your architecture.`,
-          variant: 'default',
-        });
       } catch (error) {
         console.error('Error generating threat model:', error);
         setDfdGenerationStatus('failed');
         
-        // Toast is already handled in the service function
+        toast({
+          title: 'Error Generating Threat Model',
+          description: error.message || 'Failed to generate threat model',
+          variant: 'destructive',
+        });
       }
-    } else {
-      // No polling to clear in the simplified implementation
     }
-  }, [viewMode, projectId, toast, nodes, edges, sessionId]);
+  }, [viewMode, nodes, edges, sessionId, projectId, processAndDisplayThreatModel, toast]);
 
   // Helper functions for node editing
   const handleEditNode = (id, label) => {
@@ -541,7 +595,7 @@ const ModelWithAI = () => {
             type: 'default', // Normalize to 'default' for React Flow
             data: {
               ...node.data,
-              nodeType: node.type || 'default', // Preserve original type
+              nodeType: node.data?.nodeType || 'default',
               label: node.data?.label || node.id || 'Node',
               onEdit: handleEditNode,
               onDelete: handleDeleteNode,
@@ -557,7 +611,7 @@ const ModelWithAI = () => {
           setEdges([]);
 
           // Process and set nodes and edges
-          const preparedNodes = prepareNodes(loadedNodes);
+          const preparedNodes = prepareNodes(loadedNodes, []);
           const validEdges = loadedEdges.filter((edge) => {
             if (!edge.source || !edge.target) {
               console.warn('Invalid edge found - missing source or target:', edge);
@@ -766,7 +820,7 @@ const ModelWithAI = () => {
         // Try to generate the threat model immediately using direct API
         try {
           // Prepare the request with current diagram state
-          const request: DFDSwitchRequest = {
+          const request = {
             diagram_state: { nodes, edges },
             session_id: sessionId || undefined,
           };
@@ -774,7 +828,7 @@ const ModelWithAI = () => {
           // Call the generate threat model API directly
           const threatModelResponse = await generateThreatModel(projectId, request, toast);
           
-          // Transform response to DFDData format and update state
+          // Use our utility function for consistency
           processAndDisplayThreatModel(threatModelResponse);
         } catch (error) {
           console.error('Error generating threat model:', error);
@@ -830,7 +884,7 @@ const ModelWithAI = () => {
     }
   };
 
-  const handleResponseByType = async (response) => {
+  const handleResponseByType = useCallback(async (response) => {
     console.log("Processing response in handleResponseByType:", response);
 
     try {
@@ -849,7 +903,7 @@ const ModelWithAI = () => {
         // Try to generate the threat model immediately using direct API
         try {
           // Prepare the request with current diagram state
-          const request: DFDSwitchRequest = {
+          const request = {
             diagram_state: { nodes, edges },
             session_id: sessionId || undefined,
           };
@@ -857,11 +911,17 @@ const ModelWithAI = () => {
           // Call the generate threat model API directly
           const threatModelResponse = await generateThreatModel(projectId, request, toast);
           
-          // Transform response to DFDData format and update state
+          // Use our utility function for consistency
           processAndDisplayThreatModel(threatModelResponse);
         } catch (error) {
           console.error('Error generating threat model:', error);
           setDfdGenerationStatus('failed');
+          
+          toast({
+            title: 'Error Generating Threat Model',
+            description: error.message || 'Failed to generate threat model',
+            variant: 'destructive',
+          });
         }
         return;
       }
@@ -886,106 +946,130 @@ const ModelWithAI = () => {
       console.error("Error handling response:", error);
       setError(`Error processing response: ${error.message}`);
     }
-  };
+  }, [
+    nodes, edges, sessionId, projectId, toast,
+    generateThreatModel, processAndDisplayThreatModel, setDfdGenerationStatus,
+    setResponseMetadata, setError
+  ]);
 
   // Handle architecture response from AI
   const handleArchitectureResponse = useCallback(
     (response) => {
       console.log('Handling Architecture Response');
-      setIsLayouting(true);
+      setIsLayouting(true); // Indicate layout process starts
 
       const diagramUpdates = response.diagram_updates || {};
       const nodesToAdd = response.nodes_to_add || [];
       const edgesToAdd = response.edges_to_add || [];
       const elementsToRemove = response.elements_to_remove || [];
 
-      let updatedNodes = [...nodes];
-      let updatedEdges = [...edges];
+      // --- Use current state directly ---
+      // Note: We rely on the state being reasonably up-to-date here.
+      let currentNodes = [...nodes]; // Create a copy to prevent reference issues
+      let currentEdges = [...edges]; // Create a copy to prevent reference issues
 
-      // Remove elements
+      // --- Start Calculation Phase ---
+      let nextNodes = [...currentNodes];
+      let nextEdges = [...currentEdges];
+
+      // 1. Apply removals first
       if (elementsToRemove.length > 0) {
-        console.log('Removing elements:', elementsToRemove);
+        console.log('Calculating removals:', elementsToRemove);
         const elementsToRemoveSet = new Set(elementsToRemove);
-        updatedNodes = updatedNodes.filter((node) => !elementsToRemoveSet.has(node.id));
-        updatedEdges = updatedEdges.filter(
+        const removedNodeIds = new Set(nextNodes.filter(n => elementsToRemoveSet.has(n.id)).map(n => n.id));
+
+        nextNodes = nextNodes.filter((node) => !elementsToRemoveSet.has(node.id));
+        nextEdges = nextEdges.filter(
           (edge) =>
             !elementsToRemoveSet.has(edge.id) &&
-            !elementsToRemoveSet.has(edge.source) &&
-            !elementsToRemoveSet.has(edge.target)
+            !removedNodeIds.has(edge.source) && // Also remove edges connected to removed nodes
+            !removedNodeIds.has(edge.target)
         );
       }
 
-      // Add new nodes
-      if (nodesToAdd.length > 0) {
-        console.log('Adding nodes:', nodesToAdd);
-        const processedNodesToAdd = nodesToAdd.map((node) => ({
-          ...node,
-          type: 'default', // Normalize to 'default'
-          position: node.position || { x: Math.random() * 500, y: Math.random() * 300 },
-          data: {
-            ...(node.data || {}),
-            nodeType: node.type || 'default', // Preserve original type
-            label: node.data?.label || node.id || 'Node',
-            onEdit: handleEditNode,
-            onDelete: handleDeleteNode,
-          },
-        }));
-        const preparedNewNodes = prepareNodes(processedNodesToAdd);
-        updatedNodes = [...updatedNodes, ...preparedNewNodes];
-      }
-
-      // Add new edges
-      if (edgesToAdd.length > 0) {
-        const validEdgesToAdd = edgesToAdd.filter((edge) => {
-          if (!edge.source || !edge.target) {
-            console.warn('Skipping edge with missing source or target:', edge);
-            return false;
-          }
-          const sourceExists = updatedNodes.some((node) => node.id === edge.source);
-          const targetExists = updatedNodes.some((node) => node.id === edge.target);
-          if (!sourceExists || !targetExists) {
-            console.warn(`Skipping edge with missing ${!sourceExists ? 'source' : 'target'} node:`, edge);
-            return false;
-          }
-          return true;
-        });
-        const processedEdgesToAdd = processEdges(validEdgesToAdd);
-        updatedEdges = [...updatedEdges, ...processedEdgesToAdd];
-      }
-
-      // Apply updates to existing nodes
+      // 2. Apply updates to remaining nodes
       if (Object.keys(diagramUpdates).length > 0) {
-        updatedNodes = updatedNodes.map((node) => {
+        console.log('Calculating updates:', diagramUpdates);
+        nextNodes = nextNodes.map((node) => {
           const updates = diagramUpdates[node.id];
           if (updates) {
-            console.log(`Updating node ${node.id}:`, updates);
+            // Merge updates intelligently
             return {
               ...node,
-              ...updates,
-              type: 'default', // Ensure updated nodes use 'default'
+              ...(updates.position && { position: updates.position }),
               data: {
                 ...node.data,
                 ...(updates.data || {}),
-                nodeType: node.type || 'default',
-                label: updates.data?.label || node.data.label,
-                onEdit: handleEditNode,
-                onDelete: handleDeleteNode,
+                ...(updates.type && { nodeType: updates.type }),
+                // Ensure essential callbacks are preserved if not explicitly updated
+                onEdit: node.data.onEdit || handleEditNode,
+                onDelete: node.data.onDelete || handleDeleteNode,
               },
+              ...(updates.type && { type: 'default' }), // Use 'default' type for rendering
             };
           }
           return node;
         });
       }
 
-      // Apply layout and update state
-      const { nodes: layoutedNodes, edges: layoutedEdges } = getLayoutedElements(updatedNodes, updatedEdges);
-      setNodes(layoutedNodes);
+      // 3. Prepare the basic structure of nodes to add
+      const basicNodesToAdd = nodesToAdd.map((node) => ({
+          id: node.id,
+          type: 'default', // Use 'default' for our custom node rendering
+          position: node.position || { x: Math.random() * 500, y: Math.random() * 300 }, // Ensure position
+          data: {
+            label: node.data?.label || node.id || 'Node',
+            description: node.data?.description || '',
+            nodeType: node.type || 'default', // Store original type in data
+            // onEdit/onDelete will be added during the final prepareNodes call
+          },
+      }));
+      let finalNodesListUnprepared = [...nextNodes, ...basicNodesToAdd];
+
+      // 4. Prepare the final list of edges *using the final UNPREPARED node list for validation*
+      let finalEdgesList = [...nextEdges];
+      if (edgesToAdd.length > 0) {
+          const validEdgesToAdd = edgesToAdd.filter(edge => {
+              if (!edge.source || !edge.target) {
+                  console.warn(`Skipping edge ${edge.id || 'new'}: Missing source or target.`);
+                  return false;
+              }
+              const sourceExists = finalNodesListUnprepared.some(n => n.id === edge.source);
+              const targetExists = finalNodesListUnprepared.some(n => n.id === edge.target);
+              if (!sourceExists || !targetExists) {
+                  console.warn(`Skipping edge ${edge.id || 'new'}: ${!sourceExists ? 'source' : 'target'} node ${!sourceExists ? edge.source : edge.target} not found in final list.`);
+                  return false;
+              }
+              return true;
+          });
+          // Process edges with the finalNodesListUnprepared for proper edge type determination
+          const processedEdgesToAdd = processEdges(validEdgesToAdd, finalNodesListUnprepared);
+          finalEdgesList = [...finalEdgesList, ...processedEdgesToAdd];
+      }
+
+      // --- Final Preparation & Layout ---
+
+      // 5. *Crucially*, prepare ALL nodes using the FINAL nodes and FINAL edges list
+      // Make sure to pass both parameters as prepareNodes now expects both
+      console.log('Preparing final node list with final edges...');
+      let finalNodesListPrepared = prepareNodes(finalNodesListUnprepared, finalEdgesList);
+
+      // 6. Apply layout to the fully prepared final nodes and edges
+      console.log('Applying layout...');
+      const { nodes: layoutedNodes, edges: layoutedEdges } = getLayoutedElements(finalNodesListPrepared, finalEdgesList);
+
+      // --- State Update ---
+      // 7. Set state directly with the final calculated lists
+      console.log('Setting final state...');
+      // Update both in the correct order
       setEdges(layoutedEdges);
+      setNodes(layoutedNodes);
 
       setArchitectureUpdated(true);
-      setIsLayouting(false);
+      setIsLayouting(false); // Indicate layout process ends
     },
-    [nodes, edges, setNodes, setEdges, prepareNodes, processEdges]
+    // Include nodes and edges for correct reference but make sure useDiagramNodes is properly memoized
+    [setNodes, setEdges, prepareNodes, processEdges, getLayoutedElements, handleEditNode, handleDeleteNode, setIsLayouting, nodes, edges]
   );
 
   const handleExpertResponse = (fullResponse) => {
@@ -1291,45 +1375,28 @@ const ModelWithAI = () => {
     }
   }, []);
 
-  // Add this function before the return statement in ModelWithAI
-  const processAndDisplayThreatModel = useCallback((threatModelResponse: FullThreatModelResponse) => {
-    // Transform FullThreatModelResponse to DFDData format for visualization
-    const processedDfdData: DFDData = {
-      threat_model_id: threatModelResponse.threat_model_id || '',
-      nodes: threatModelResponse.dfd_model.elements,
-      edges: threatModelResponse.dfd_model.edges.map(edge => ({
-        id: edge.id,
-        source: edge.source,
-        target: edge.target,
-        label: edge.label || '',
-        properties: edge.properties || {}
-      })),
-      boundaries: threatModelResponse.dfd_model.boundaries,
-      threats: threatModelResponse.threats.threats.map(threat => ({
-        id: threat.id,
-        description: threat.description,
-        severity: threat.severity,
-        mitigation: threat.mitigation || 'No mitigation specified',
-        target_elements: threat.target_elements || [],
-        properties: threat.properties || {
-          threat_type: 'UNKNOWN',
-          impact: 'Unknown impact'
-        }
-      })),
-      generated_at: threatModelResponse.generated_at || new Date().toISOString()
-    };
+  // Add this to the main component to pass correct data to AIFlowDiagram
+  // This ensures that AIFlowDiagram's equality check will work correctly
+  const viewModeChange = useCallback((mode: 'AD' | 'DFD') => {
+    // First set the mode
+    setViewMode(mode);
     
-    setDfdData(processedDfdData);
-    setDfdGenerationStatus('complete');
+    // Then call the handler with proper switch logic
+    handleSwitchView(mode);
+  }, [handleSwitchView]);
 
-    // Show a success toast
-    const threatCount = processedDfdData.threats.length;
-    toast({
-      title: 'Threat Model Generated',
-      description: `${threatCount} potential threats identified in your architecture.`,
-      variant: 'default',
-    });
-  }, [toast]);
+  // Add handlers for drag state tracking (but don't pass to AIFlowDiagram)
+  const handleNodeDragStart = useCallback(() => {
+    if (!isNodeDragging) {
+      setIsNodeDragging(true);
+    }
+  }, [isNodeDragging]);
+
+  const handleNodeDragStop = useCallback(() => {
+    if (isNodeDragging) {
+      setIsNodeDragging(false);
+    }
+  }, [isNodeDragging]);
 
   return (
     <Layout>
@@ -1388,7 +1455,7 @@ const ModelWithAI = () => {
                   setNodes={setNodes}
                   setEdges={setEdges}
                   viewMode={viewMode}
-                  onSwitchView={handleSwitchView}
+                  onSwitchView={viewModeChange}
                   onZoomIn={handleZoomIn}
                   onZoomOut={handleZoomOut}
                   onFitView={handleFitView}
@@ -1406,7 +1473,7 @@ const ModelWithAI = () => {
                 <div className="h-full w-full flex flex-col">
                   <DiagramActions
                     viewMode={viewMode}
-                    onSwitchView={handleSwitchView}
+                    onSwitchView={viewModeChange}
                     onZoomIn={handleDFDZoomIn}
                     onZoomOut={handleDFDZoomOut}
                     onFitView={handleDFDFitView}
@@ -1434,7 +1501,7 @@ const ModelWithAI = () => {
                           </CardHeader>
                           <CardContent>
                             <p>Unable to generate the threat model. Please try again.</p>
-                            <Button onClick={() => handleSwitchView('DFD')} className="mt-4">
+                            <Button onClick={() => viewModeChange('DFD')} className="mt-4">
                               Retry
                             </Button>
                           </CardContent>

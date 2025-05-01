@@ -3,10 +3,12 @@ import { ToolbarContentProps } from './ToolbarTypes';
 import ToolbarItem from './ToolbarItem';
 import { GCPSection } from '../icons/GCPIconsLoader';
 import { AWSSection } from '../icons/AWSIconsLoader';
-import { AzureSection } from '../icons/AzureIconsLoader';
-import { ApplicationSection } from '../icons/ApplicationIconsLoader';
-import { ClientSection } from '../icons/ClientIconsLoader';
-import { NetworkSection } from '../icons/NetworkIconsLoader';
+import { 
+  AzureSection, 
+  ApplicationSection, 
+  ClientSection, 
+  NetworkSection 
+} from '../icons/IconsLoader';
 
 const ToolbarContent: React.FC<ToolbarContentProps> = ({ 
   filteredTools,
