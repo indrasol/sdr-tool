@@ -237,42 +237,71 @@ const ModelWithAI = () => {
 
   // Apply layout function
   const applyLayout = useCallback(() => {
-    console.log('ModelWithAI: Applying layout, nodes:', nodes.length);
-    if (isLayouting || nodes.length === 0) return;
-    
+    console.log('[ModelWithAI] applyLayout triggered.');
+    // Get current state directly from refs to avoid stale closures
+    const currentNodes = nodesRef.current;
+    const currentEdges = edgesRef.current;
+
+    // Use the isLayouting state directly
+    if (isLayouting || currentNodes.length === 0) {
+      console.log(`[ModelWithAI] Layout skipped (isLayouting: ${isLayouting}, nodes: ${currentNodes.length})`);
+      return;
+    }
+
+    console.log('[ModelWithAI] Setting isLayouting = true');
     setIsLayouting(true);
-    
+
     try {
-      // Process nodes and edges first
-      const preparedNodes = prepareNodes(nodes);
-      const processedEdges = processEdges(edges, preparedNodes);
-      
-      // Apply layout
+      console.log(`[ModelWithAI] Preparing ${currentNodes.length} nodes.`);
+      // Ensure prepareNodes and processEdges are using the latest node/edge data if they rely on state/props
+      const preparedNodes = prepareNodes(currentNodes);
+      console.log(`[ModelWithAI] Processing ${currentEdges.length} edges.`);
+      const processedEdges = processEdges(currentEdges, preparedNodes);
+
+      console.log('[ModelWithAI] Calling getLayoutedElements with forceLayout: true');
       const { nodes: layoutedNodes, edges: layoutedEdges } = getLayoutedElements(
         preparedNodes,
         processedEdges,
-        'TB',  // Top to Bottom layout
-        172,   // Node width
-        36     // Node height
+        'TB', 172, 36, true
       );
-      
-      // Update state with new layout - must use function form to avoid state sync issues
+
       if (layoutedNodes && layoutedNodes.length > 0) {
-        setNodes(() => layoutedNodes);
-        
-        // Delay edge updates to prevent glitching
+        console.log(`[ModelWithAI] Calculated ${layoutedNodes.length} layouted nodes. Updating state.`);
+        // Log comparison for debugging
+        if (currentNodes.length > 0 && layoutedNodes.length > 0) {
+             const firstNodeId = currentNodes[0].id;
+             const oldPos = currentNodes.find(n => n.id === firstNodeId)?.position;
+             const newPos = layoutedNodes.find(n => n.id === firstNodeId)?.position;
+             console.log(`[ModelWithAI] Node ${firstNodeId} position change check: OLD (${oldPos?.x?.toFixed(1)}, ${oldPos?.y?.toFixed(1)}) -> NEW (${newPos?.x?.toFixed(1)}, ${newPos?.y?.toFixed(1)})`);
+         }
+
+        // Set nodes first
+        setNodes(layoutedNodes);
+        console.log('[ModelWithAI] setNodes called.');
+
+        // Set edges immediately after nodes (React batches these)
+        if (layoutedEdges) {
+          setEdges(layoutedEdges);
+          console.log('[ModelWithAI] setEdges called.');
+        }
+
+        // Reset layouting flag slightly later using timeout
+        // This allows React Flow time to potentially re-render with new node positions
         setTimeout(() => {
-          if (layoutedEdges) setEdges(() => layoutedEdges);
+          console.log('[ModelWithAI] Resetting isLayouting = false after timeout.');
           setIsLayouting(false);
-        }, 200);
+        }, 50); // Short delay
+
       } else {
+        console.log('[ModelWithAI] No layouted nodes returned. Resetting layouting flag immediately.');
         setIsLayouting(false);
       }
     } catch (error) {
-      console.error('Error applying layout:', error);
-      setIsLayouting(false);
+      console.error('[ModelWithAI] Error applying layout:', error);
+      setIsLayouting(false); // Ensure flag is reset on error
     }
-  }, [nodes, edges, isLayouting, prepareNodes, setNodes, setEdges]);
+    // Refined dependencies - ensure prepareNodes/processEdges are stable or included if they depend on changing props/state
+  }, [isLayouting, prepareNodes, processEdges, setNodes, setEdges, setIsLayouting]); // Removed direct nodes/edges state dependency
 
   // Check for significant changes to trigger auto-layout
   useEffect(() => {
@@ -902,100 +931,120 @@ const ModelWithAI = () => {
   const handleArchitectureResponse = useCallback(
     (response) => {
       console.log('Handling Architecture Response');
-      setIsLayouting(true);
+      setIsLayouting(true); // Indicate layout process starts
 
       const diagramUpdates = response.diagram_updates || {};
       const nodesToAdd = response.nodes_to_add || [];
       const edgesToAdd = response.edges_to_add || [];
       const elementsToRemove = response.elements_to_remove || [];
 
-      let updatedNodes = [...nodes];
-      let updatedEdges = [...edges];
+      // --- Use current state directly ---
+      // Note: We rely on the state being reasonably up-to-date here.
+      let currentNodes = nodes;
+      let currentEdges = edges;
 
-      // Remove elements
+      // --- Start Calculation Phase ---
+      let nextNodes = [...currentNodes];
+      let nextEdges = [...currentEdges];
+
+      // 1. Apply removals first
       if (elementsToRemove.length > 0) {
-        console.log('Removing elements:', elementsToRemove);
+        console.log('Calculating removals:', elementsToRemove);
         const elementsToRemoveSet = new Set(elementsToRemove);
-        updatedNodes = updatedNodes.filter((node) => !elementsToRemoveSet.has(node.id));
-        updatedEdges = updatedEdges.filter(
+        const removedNodeIds = new Set(nextNodes.filter(n => elementsToRemoveSet.has(n.id)).map(n => n.id));
+
+        nextNodes = nextNodes.filter((node) => !elementsToRemoveSet.has(node.id));
+        nextEdges = nextEdges.filter(
           (edge) =>
             !elementsToRemoveSet.has(edge.id) &&
-            !elementsToRemoveSet.has(edge.source) &&
-            !elementsToRemoveSet.has(edge.target)
+            !removedNodeIds.has(edge.source) && // Also remove edges connected to removed nodes
+            !removedNodeIds.has(edge.target)
         );
       }
 
-      // Add new nodes
-      if (nodesToAdd.length > 0) {
-        console.log('Adding nodes:', nodesToAdd);
-        const processedNodesToAdd = nodesToAdd.map((node) => ({
-          ...node,
-          type: 'default', // Normalize to 'default'
-          position: node.position || { x: Math.random() * 500, y: Math.random() * 300 },
-          data: {
-            ...(node.data || {}),
-            nodeType: node.type || 'default', // Preserve original type
-            label: node.data?.label || node.id || 'Node',
-            onEdit: handleEditNode,
-            onDelete: handleDeleteNode,
-          },
-        }));
-        const preparedNewNodes = prepareNodes(processedNodesToAdd);
-        updatedNodes = [...updatedNodes, ...preparedNewNodes];
-      }
-
-      // Add new edges
-      if (edgesToAdd.length > 0) {
-        const validEdgesToAdd = edgesToAdd.filter((edge) => {
-          if (!edge.source || !edge.target) {
-            console.warn('Skipping edge with missing source or target:', edge);
-            return false;
-          }
-          const sourceExists = updatedNodes.some((node) => node.id === edge.source);
-          const targetExists = updatedNodes.some((node) => node.id === edge.target);
-          if (!sourceExists || !targetExists) {
-            console.warn(`Skipping edge with missing ${!sourceExists ? 'source' : 'target'} node:`, edge);
-            return false;
-          }
-          return true;
-        });
-        const processedEdgesToAdd = processEdges(validEdgesToAdd);
-        updatedEdges = [...updatedEdges, ...processedEdgesToAdd];
-      }
-
-      // Apply updates to existing nodes
+      // 2. Apply updates to remaining nodes
       if (Object.keys(diagramUpdates).length > 0) {
-        updatedNodes = updatedNodes.map((node) => {
+        console.log('Calculating updates:', diagramUpdates);
+        nextNodes = nextNodes.map((node) => {
           const updates = diagramUpdates[node.id];
           if (updates) {
-            console.log(`Updating node ${node.id}:`, updates);
+            // Merge updates intelligently
             return {
               ...node,
-              ...updates,
-              type: 'default', // Ensure updated nodes use 'default'
+              ...(updates.position && { position: updates.position }),
               data: {
                 ...node.data,
                 ...(updates.data || {}),
-                nodeType: node.type || 'default',
-                label: updates.data?.label || node.data.label,
-                onEdit: handleEditNode,
-                onDelete: handleDeleteNode,
+                ...(updates.type && { nodeType: updates.type }),
+                // Ensure essential callbacks are preserved if not explicitly updated
+                onEdit: node.data.onEdit || handleEditNode,
+                onDelete: node.data.onDelete || handleDeleteNode,
               },
+              ...(updates.type && { type: 'default' }), // Use 'default' type for rendering
             };
           }
           return node;
         });
       }
 
-      // Apply layout and update state
-      const { nodes: layoutedNodes, edges: layoutedEdges } = getLayoutedElements(updatedNodes, updatedEdges);
-      setNodes(layoutedNodes);
+      // 3. Prepare the basic structure of nodes to add
+      const basicNodesToAdd = nodesToAdd.map((node) => ({
+          id: node.id,
+          type: 'default', // Use 'default' for our custom node rendering
+          position: node.position || { x: Math.random() * 500, y: Math.random() * 300 }, // Ensure position
+          data: {
+            label: node.data?.label || node.id || 'Node',
+            description: node.data?.description || '',
+            nodeType: node.type || 'default', // Store original type in data
+            // onEdit/onDelete will be added during the final prepareNodes call
+          },
+      }));
+      let finalNodesListUnprepared = [...nextNodes, ...basicNodesToAdd];
+
+      // 4. Prepare the final list of edges *using the final UNPREPARED node list for validation*
+      let finalEdgesList = [...nextEdges];
+      if (edgesToAdd.length > 0) {
+          const validEdgesToAdd = edgesToAdd.filter(edge => {
+              if (!edge.source || !edge.target) {
+                  console.warn(`Skipping edge ${edge.id || 'new'}: Missing source or target.`);
+                  return false;
+              }
+              const sourceExists = finalNodesListUnprepared.some(n => n.id === edge.source);
+              const targetExists = finalNodesListUnprepared.some(n => n.id === edge.target);
+              if (!sourceExists || !targetExists) {
+                  console.warn(`Skipping edge ${edge.id || 'new'}: ${!sourceExists ? 'source' : 'target'} node ${!sourceExists ? edge.source : edge.target} not found in final list.`);
+                  return false;
+              }
+              return true;
+          });
+          // Pass finalNodesListUnprepared so determineEdgeType can access nodeType
+          const processedEdgesToAdd = processEdges(validEdgesToAdd, finalNodesListUnprepared);
+          finalEdgesList = [...finalEdgesList, ...processedEdgesToAdd];
+      }
+
+      // --- Final Preparation & Layout ---
+
+      // 5. *Crucially*, prepare ALL nodes using the FINAL nodes and FINAL edges list
+      console.log('Preparing final node list with final edges...');
+      let finalNodesListPrepared = prepareNodes(finalNodesListUnprepared, finalEdgesList);
+
+      // 6. Apply layout to the fully prepared final nodes and edges
+      console.log('Applying layout...');
+      const { nodes: layoutedNodes, edges: layoutedEdges } = getLayoutedElements(finalNodesListPrepared, finalEdgesList);
+
+      // --- State Update ---
+      // 7. Set state directly with the final calculated lists
+      console.log('Setting final state...');
+      // It's generally safer to update edges slightly before nodes if they depend on each other,
+      // but React might batch them anyway.
       setEdges(layoutedEdges);
+      setNodes(layoutedNodes);
 
       setArchitectureUpdated(true);
-      setIsLayouting(false);
+      setIsLayouting(false); // Indicate layout process ends
     },
-    [nodes, edges, setNodes, setEdges, prepareNodes, processEdges]
+    // REMOVED nodes and edges from dependencies to prevent infinite loop
+    [setNodes, setEdges, prepareNodes, processEdges, getLayoutedElements, handleEditNode, handleDeleteNode, setIsLayouting]
   );
 
   const handleExpertResponse = (fullResponse) => {

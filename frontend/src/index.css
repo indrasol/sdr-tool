@@ -81,7 +81,11 @@
 
 /* React Flow Customization */
 .react-flow__node {
-  @apply glass-card;
+  /* @apply glass-card; */ /* Removed to prevent default white card */
+  border: none !important; /* Explicitly remove any border */
+  outline: none !important; /* Explicitly remove any outline */
+  box-shadow: none !important; /* Explicitly remove any shadow */
+  background: transparent !important; /* Ensure background is transparent */
 }
 
 .react-flow__node-input {

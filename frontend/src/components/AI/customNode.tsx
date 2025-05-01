@@ -1,7 +1,7 @@
 import React from 'react';
-import { Handle, Position, NodeResizer } from '@xyflow/react';
+import { Handle, Position, NodeResizer, NodeProps } from '@xyflow/react';
 import NodeContextToolbar from './NodeContextToolbar';
-import { NodeProps } from './types/diagramTypes';
+import { CustomNodeData } from './types/diagramTypes';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { getCategoryStyle } from './utils/nodeStyles';
 
@@ -9,26 +9,21 @@ const CustomNode = ({
   id, 
   data, 
   selected,
-  style
 }: NodeProps) => {
   // Ensure data is always defined with default values
-  const nodeData = data || { label: 'Node' };
+  const nodeData: Partial<CustomNodeData> = data || { label: 'Node', nodeType: 'default' };
   
-  // Type assertion to work with the data
-  const safeData = nodeData as {
-    label: string;
-    description?: string;
-    nodeType?: string;
-    iconRenderer?: () => { component: React.ElementType; props: any; bgColor: string };
-    onEdit?: (id: string, label: string) => void;
-    onDelete?: (id: string) => void;
-  };
+  // No need for explicit type assertion, data is implicitly typed by NodeProps
+  const safeData = nodeData as CustomNodeData; // Assert here for easier access below
   
-  // Extract values with fallbacks
+  // Extract values with fallbacks, using the asserted safeData
   const label = safeData.label || 'Node';
   const description = safeData.description || '';
-  const nodeType = safeData.nodeType || 'Component';
+  const nodeType = safeData.nodeType || 'default';
   const iconRenderer = safeData.iconRenderer;
+  // Access connection flags safely, defaulting to false if undefined
+  const hasSourceConnection = safeData.hasSourceConnection ?? false;
+  const hasTargetConnection = safeData.hasTargetConnection ?? false;
 
   const handleEdit = (nodeId: string) => {
     if (safeData.onEdit) {
@@ -102,8 +97,8 @@ const CustomNode = ({
         section === 'network') {
       return { 
         bg: 'bg-[#DC3545]/90', 
-        border: 'border-red-300',
-        iconClass: 'filter invert brightness-0'
+        border: 'border-red-600',
+        iconClass: null
       };
     }
     
@@ -195,9 +190,12 @@ const CustomNode = ({
     if (iconRenderer) {
       const iconData = iconRenderer();
       const IconComponent = iconData.component;
+      // Determine icon size based on node type
+      const iconSize = isClientNode() ? 60 : 45; // Increase size for client nodes
+
       return (
         <div className={`flex items-center justify-center ${nodeColors.iconClass || ''}`}>
-          <IconComponent {...iconData.props} size={48} />
+          <IconComponent {...iconData.props} size={iconSize} />
         </div>
       );
     }
@@ -209,18 +207,6 @@ const CustomNode = ({
 
   return (
     <>
-      {/* Add the NodeResizer component that appears when the node is selected */}
-      {selected && (
-        <NodeResizer 
-          minWidth={60}
-          minHeight={60}
-          isVisible={!!selected}
-          lineClassName="border-securetrack-purple"
-          handleClassName="h-2 w-2 bg-white border-2 border-securetrack-purple rounded"
-          handleStyle={{ borderWidth: 2 }}
-        />
-      )}
-      
       <NodeContextToolbar
         id={id}
         selected={!!selected}
@@ -234,44 +220,72 @@ const CustomNode = ({
         onInfoToggle={handleInfoToggle}
       />
 
-      {/* Node container with modern styling or icon-only for client category */}
-      <TooltipProvider>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <div className={`node-fade-in custom-node flex flex-col items-center justify-center ${selected ? 'scale-110' : ''}`}>
+      {/* Main node container - defines the boundary */}
+      <div className={`node-fade-in custom-node w-16 h-16 relative`}>
+        {/* NodeResizer MOVED INSIDE */}
+        {selected && (
+          <NodeResizer 
+            minWidth={60}
+            minHeight={60}
+            isVisible={!!selected}
+            lineClassName="border-transparent" /* Hide the default resizer border */
+            handleClassName="h-2 w-2 bg-white border-2 border-gray-400 rounded"
+            handleStyle={{ borderWidth: 2 }}
+          />
+        )}
+
+        {/* Tooltip wrapping the visual content */}
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
               {renderClientIconOnly ? (
                 // Icon-only for Client category
-                <div className="w-16 h-16 flex items-center justify-center">
+                <div className={`w-full h-full flex items-center justify-center`} style={{background:'transparent', boxShadow:'none'}}>
                   {renderIcon()}
                 </div>
               ) : (
-                // Styled container for other categories - no white container
-                <div className={`w-20 h-20 rounded-xl ${nodeColors.bg} flex items-center justify-center shadow-sm border ${nodeColors.border} relative`}>
+                // Styled container for other categories
+                <div className={`w-full h-full rounded-xl ${nodeColors.bg} flex items-center justify-center shadow-sm border ${nodeColors.border}`}>
                   {renderIcon()}
-                  <div className="node-label">
-                    {label}
-                  </div>
                 </div>
               )}
-            </div>
-          </TooltipTrigger>
-          <TooltipContent className="max-w-xs bg-white/90 backdrop-blur-sm p-3 shadow-lg rounded-lg border border-gray-200">
-            <h4 className="font-semibold text-gray-900 mb-1">{label}</h4>
-            {description && <p className="text-sm text-gray-600">{description}</p>}
-          </TooltipContent>
-        </Tooltip>
-      </TooltipProvider>
+            </TooltipTrigger>
+            <TooltipContent 
+              className="max-w-xs bg-white/90 backdrop-blur-sm p-3 shadow-lg rounded-lg border border-gray-200"
+            >
+              <h4 className="font-semibold text-gray-900 mb-1">{label}</h4>
+              {description && <p className="text-sm text-gray-600">{description}</p>}
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+      </div>
 
-      <Handle 
-        type="target" 
-        position={Position.Left} 
-        className="w-1.5 h-1.5 border-2 border-securetrack-purple bg-white/90"
-      />
-      <Handle 
-        type="source" 
-        position={Position.Right} 
-        className="w-1.5 h-1.5 border-2 border-securetrack-purple bg-white/90"
-      />
+      {/* Node Label - Still outside the main w-16 h-16 container */}
+      <div 
+        className="node-label absolute bottom-[-25px] left-1/4 transform -translate-x-1/2 text-center w-auto whitespace-nowrap bg-white/90 text-xs px-2 py-0.5 rounded-md border border-gray-100 shadow-sm"
+        style={{ zIndex: 1 }} /* Ensure label is above edges if necessary */
+      >
+        {label}
+      </div>
+
+      {/* Conditionally render Target Handle */}
+      {hasTargetConnection && (
+        <Handle 
+          type="target" 
+          position={Position.Left} 
+          className="w-1.5 h-1.5 border-2 border-securetrack-purple bg-white/90 handle-fade-in"
+          style={{ top: '50%', transform: 'translateY(-50%) ', left: '8px' }}
+        />
+      )}
+      {/* Conditionally render Source Handle */}
+      {hasSourceConnection && (
+        <Handle 
+          type="source" 
+          position={Position.Right} 
+          className="w-1.5 h-1.5 border-2 border-securetrack-purple bg-white/90 handle-fade-in"
+          style={{ top: '50%', transform: 'translateY(-50%)', right: '70px' }}
+        />
+      )}
     </>
   );
 };

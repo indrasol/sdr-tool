@@ -1,7 +1,8 @@
 .react-flow__edge-path {
-    stroke: #9333ea; /* Match dataFlow color */
-    stroke-width: 2px;
-    visibility: visible !important;
+    stroke: #a1a1aa; /* Default subtle grey */
+    stroke-width: 2.5px !important; /* Visible stroke width */
+    transition: stroke 0.2s ease-out, stroke-width 0.2s ease-out;
+    pointer-events: none; /* Disable direct pointer events on the visible path */
   }
   .react-flow__edges {
     pointer-events: all !important;
@@ -618,13 +619,16 @@
   transform: scale(1.3);
 }
 
-/* Custom node styling for icon-only display */
-.custom-node {
+/* Custom node styling - override base node styles */
+.react-flow__node.custom-node {
   background: transparent !important;
   border: none !important;
   box-shadow: none !important;
-  width: auto !important;
-  height: auto !important;
+  /* width: auto !important; */ /* Size handled by component */
+  /* height: auto !important; */ /* Size handled by component */
+  padding: 0 !important; 
+  backdrop-filter: none !important; 
+  overflow: visible !important; 
 }
 
 /* Override any hover/selection styles that might add backgrounds */
@@ -682,7 +686,7 @@
 }
 
 .react-flow__edge {
-  z-index: 9 !important;
+  z-index: 10 !important;
 }
 
 .react-flow__handle {
@@ -693,3 +697,63 @@
 .react-flow__pane {
   z-index: 8 !important;
 }
+
+/* Edge Hover Effects */
+@keyframes edgeFlow {
+  to {
+    stroke-dashoffset: -16; /* Animate the dash offset */
+  }
+}
+
+/* Add an invisible wider stroke for easier hover detection */
+.react-flow__edge .react-flow__edge-interaction {
+  stroke-width: 30px !important; /* INCREASED - Much wider invisible line for hovering */
+  stroke: transparent;
+  pointer-events: stroke;
+  cursor: pointer;
+  z-index: 11 !important; /* Ensure interaction layer is above the visible path */
+}
+
+/* Edge Hover Effects - Applied when hovering the interaction layer */
+.react-flow__edge:hover .react-flow__edge-path {
+  stroke-width: 4.5px !important; /* Make VISIBLE edge noticeably thicker on hover */
+  stroke: #00529B !important; /* Change VISIBLE edge color to dark blue on hover */
+  /* stroke-dasharray: 8 8; */ /* Dashes for animation - REMOVED */
+  /* animation: edgeFlow 0.7s linear infinite; */ /* Apply the flow animation - REMOVED */
+  /* cursor: pointer; */ /* Cursor is handled by interaction layer */
+}
+
+/* Keep arrowhead color matching */
+.react-flow__edge:hover .react-flow__arrowhead path {
+  fill: #00529B !important; /* Match arrowhead color */
+  stroke: #00529B !important;
+  transition: fill 0.2s ease-out, stroke 0.2s ease-out;
+}
+
+/* --- Node Selection Overrides --- */
+/* Ensure no background/border on the main node element itself when selected */
+.react-flow__node.selected,
+.react-flow__node.dragging {
+  border: none !important;
+  outline: none !important;
+  box-shadow: none !important;
+  background: transparent !important; /* Force transparent background */
+}
+
+/* Target the specific custom node class to be extra sure */
+.react-flow__node.custom-node.selected > div {
+  border: none !important;
+  box-shadow: none !important;
+}
+
+/* Target the inner container of the custom node when selected */
+.react-flow__node.custom-node.selected .rounded-xl {
+    border-color: transparent !important; /* Override any border color */
+    box-shadow: none !important; /* Remove any potential shadow */
+}
+
+/* Ensure NodeResizer handles don't imply a border on the node */
+.react-flow__node.selected .react-flow__handle {
+    border-color: #888 !important; /* Make handles grey, not implying a node border */
+}
+/* --- End Node Selection Overrides --- */
