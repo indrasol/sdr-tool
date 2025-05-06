@@ -18,12 +18,13 @@ app = FastAPI()
 ALGORITHM = "HS256"
 
 
-async def verify_token(authorization: str = Header(None)):
+async def verify_token(authorization: str = Header(None), is_registration: bool = False):
     """
     Get authenticated user based on JWT token.
     
     Args:
-        Authorization header with token
+        authorization: Authorization header with token
+        is_registration: Whether this token verification is for registration endpoint
         
     Returns:
         User data dictionary
@@ -69,7 +70,7 @@ async def verify_token(authorization: str = Header(None)):
 
         # Use Supabase client to fetch the user data from your 'users' table
         supabase = get_supabase_client()
-        log_info(f"Supabase: {supabase}")
+        # log_info(f"Supabase: {supabase}")
 
         def user_operation():
             return supabase.from_("users").select("*").eq("id", user_id).execute()
@@ -78,7 +79,13 @@ async def verify_token(authorization: str = Header(None)):
             user_operation,
             "Failed to fetch user data"
         )
-        log_info(f"User response: {user_response}")
+        # log_info(f"User response: {user_response}")
+
+        # For registration endpoint, we allow users that exist in Auth but not in our database
+        if is_registration and not user_response.data:
+            log_info(f"User not found in database, but allowed for registration endpoint: {user_id}")
+            # Return minimal user data for registration process
+            return {"id": user_id}
 
         if not user_response.data:
             log_info(f"User not found in database for Supabase ID: {user_id}")

@@ -131,7 +131,7 @@ async def get_projects(
     """
     try:
         supabase = get_supabase_client()
-        log_info("entered projects try block")
+        # log_info("entered projects try block")
         projects = await supabase_manager.get_user_projects(
             user_id=current_user["id"],
             tenant_id=tenant_id,
@@ -142,7 +142,7 @@ async def get_projects(
             limit=limit,
             offset=offset
         )
-        log_info("projects : {projects}")
+        # log_info("projects : {projects}")
         # Fetch user roles for the tenant
         # def fetch_roles():
         #     return supabase.from_("roles").select("*").eq("user_id", current_user["id"]).eq("tenant_id", tenant_id).execute()
