@@ -242,7 +242,7 @@ class SupabaseManager:
         Fetch projects for a user with optional filters, using enums for status and priority.
         """
         
-        log_info(f"user_id inside fetch_projects : {user_id}")
+        # log_info(f"user_id inside fetch_projects : {user_id}")
         query = self.supabase.from_("projects").select("*").eq("user_id", user_id)
 
 

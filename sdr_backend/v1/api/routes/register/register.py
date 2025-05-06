@@ -11,10 +11,12 @@ from utils.logger import log_info
 from services.auth_handler import verify_token, verify_api_key
 from config.settings import SUPABASE_SECRET_KEY
 from fastapi.security import APIKeyHeader
+from functools import partial
 
 router = APIRouter()
 
-
+# Create a custom verify function specifically for registration
+registration_verify_token = partial(verify_token, is_registration=True)
 
 
 supabase = get_supabase_client()
@@ -54,7 +56,7 @@ async def get_or_create_tenant(tenant_name):
 @router.post("/register")
 async def register(
     request_data: RegisterRequest,
-    current_user: dict = Depends(verify_token)
+    current_user: dict = Depends(registration_verify_token)
 ):
     """
     Register a new user after Supabase authentication and associate with tenant.
@@ -68,6 +70,8 @@ async def register(
     """
     try :
         
+        log_info(f"Entered register try block")
+        log_info(f"request_data : {request_data}")
        # Check if user already exists - checking both user and email in one query
         def check_user_exists():
             return supabase.from_("users") \
