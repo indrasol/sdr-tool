@@ -1,5 +1,5 @@
-
 import { Node, Edge, NodeProps as ReactFlowNodeProps } from '@xyflow/react';
+import { ThreatItem } from '@/interfaces/aiassistedinterfaces'; // Import ThreatItem type
 
 // Define the data structure for node data
 export interface CustomNodeData {
@@ -10,6 +10,9 @@ export interface CustomNodeData {
   onEdit?: (id: string, label: string) => void;
   onDelete?: (id: string) => void;
   isComment?: boolean;
+  threats?: ThreatItem[]; // Added to support node-specific threats
+  hasSourceConnection?: boolean; // For connection handles
+  hasTargetConnection?: boolean; // For connection handles
   [key: string]: unknown; // Add index signature to satisfy Record<string, unknown>
 }
 
@@ -46,6 +49,7 @@ export interface AIFlowDiagramProps {
   onSave?: () => void;
   onLayout?: () => void; // New prop for layout functionality
   isLayouting?: boolean; // New prop for tracking layout state
+  threats?: ThreatItem[]; // Added to support threat analysis data
 }
 
 // Additional types that might be useful

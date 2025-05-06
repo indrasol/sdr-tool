@@ -270,6 +270,7 @@ export const runThreatAnalysis = async (
   toast?: any
 ): Promise<ThreatsResponse> => {
   try {
+    console.log(`Project code ${projectCode}`)
     console.log(`Running threat analysis for project ${projectCode}`, request);
     
     const response = await fetchWithTimeout(

@@ -17,26 +17,179 @@ import {
   ResponseType,
   DFDSwitchRequest,
   FullThreatModelResponse, 
-  DFDData
+  DFDData,
+  ThreatItem
 } from '@/interfaces/aiassistedinterfaces';
-import { sendDesignRequest, generateThreatModel } from '@/services/designService';
+import { sendDesignRequest, generateThreatModel, runThreatAnalysis } from '@/services/designService';
 import projectService from '@/services/projectService';
 import { useDiagramNodes } from '@/components/AI/hooks/useDiagramNodes';
 import { edgeStyles, determineEdgeType } from '@/components/AI/utils/edgeStyles';
 // Import getLayoutedElements directly from AIFlowDiagram to ensure consistency
 import AIFlowDiagram, { getLayoutedElements } from '@/components/AI/AIFlowDiagram';
-import dagre, { layout } from 'dagre';
-import axios from 'axios';
+import dagre from 'dagre';
 import { Button } from '@/components/ui/button';
 import DFDVisualization from '@/components/AI/DFDVisualization';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { getAuthHeaders, BASE_API_URL, fetchWithTimeout, DEFAULT_TIMEOUT } from '../services/apiService'
+import { DEFAULT_TIMEOUT } from '../services/apiService';
 import { debounce } from 'lodash';
+
+// Import the LayerGroupNode component
+import LayerGroupNode from '@/components/AI/LayerGroupNode';
 
 // Interface for proper TypeScript support
 interface DiagramPanelEdgesProps {
   setEdges: (edges: any[] | ((prev: any[]) => any[])) => void;
 }
+
+// Function to determine which layer a node belongs to based on its type
+const determineNodeLayer = (nodeType: string | undefined): string => {
+  if (!nodeType) return 'default';
+  
+  const nodeTypeStr = (nodeType || '').toLowerCase();
+  
+  // Security layer (red)
+  if (nodeTypeStr.includes('security') || 
+      nodeTypeStr.includes('firewall') || 
+      nodeTypeStr.includes('waf') ||
+      nodeTypeStr.includes('iam')) {
+    return 'security';
+  }
+  
+  // Application layer (purple)
+  if (nodeTypeStr.includes('service') || 
+      nodeTypeStr.includes('microservice') ||
+      nodeTypeStr.includes('application') ||
+      nodeTypeStr.includes('function')) {
+    return 'application';
+  }
+  
+  // Cloud infrastructure layer (orange)
+  if (nodeTypeStr.includes('aws') || 
+      nodeTypeStr.includes('azure') || 
+      nodeTypeStr.includes('gcp') ||
+      nodeTypeStr.includes('cloud')) {
+    return 'cloud';
+  }
+  
+  // Network layer (yellow)
+  if (nodeTypeStr.includes('network') ||
+      nodeTypeStr.includes('router') ||
+      nodeTypeStr.includes('load_balancer')) {
+    return 'network';
+  }
+  
+  return 'default';
+};
+
+// Interface for layer style
+interface LayerStyle {
+  bgColor: string;
+  borderColor: string;
+  color: string;
+  label: string;
+}
+
+// Function to get styling for different layer types
+const getLayerStyle = (layer: string): LayerStyle => {
+  const styles: Record<string, LayerStyle> = {
+    security: { 
+      bgColor: 'rgba(255, 59, 48, 0.15)', 
+      borderColor: 'rgba(255, 59, 48, 0.5)',
+      color: '#990000',
+      label: 'Security Layer'
+    },
+    application: { 
+      bgColor: 'rgba(52, 199, 89, 0.15)', 
+      borderColor: 'rgba(52, 199, 89, 0.5)',
+      color: '#006600',
+      label: 'Application Layer'
+    },
+    cloud: { 
+      bgColor: 'rgba(255, 149, 0, 0.15)', 
+      borderColor: 'rgba(255, 149, 0, 0.5)',
+      color: '#cc6600',
+      label: 'Cloud Infrastructure'
+    },
+    network: { 
+      bgColor: 'rgba(255, 204, 0, 0.15)', 
+      borderColor: 'rgba(255, 204, 0, 0.5)',
+      color: '#8B8000',
+      label: 'Network Layer'
+    },  
+    default: { 
+      bgColor: '', // white with 15% opacity
+      borderColor: '', // white with 50% opacity
+      color: '',
+      label: 'Client Layer' // Added missing label property
+    }
+  };
+  
+  return styles[layer] || styles.default;
+};
+
+// Function to create layer container nodes
+const createLayerContainers = (nodes: Node[]): Node[] => {
+  if (!nodes || nodes.length === 0) return [];
+  
+  // Group nodes by layer
+  const nodesByLayer: Record<string, Node[]> = {};
+  nodes.forEach(node => {
+    // Skip layer containers to avoid recursion
+    if (node.type === 'layerGroup') return;
+    
+    const nodeType = node.data?.nodeType || 'default';
+    const layer = determineNodeLayer(nodeType as string);
+    
+    if (!nodesByLayer[layer]) nodesByLayer[layer] = [];
+    nodesByLayer[layer].push(node);
+  });
+  
+  // Create container nodes for each layer with nodes
+  const layerContainers = Object.entries(nodesByLayer)
+    .filter(([_, layerNodes]) => layerNodes.length > 0)
+    .map(([layer, layerNodes]) => {
+      // Find boundaries of all nodes in this layer
+      const positions = layerNodes.map(n => n.position);
+      
+      // Calculate container boundaries with padding
+      const minX = Math.min(...positions.map(p => p.x)) - 40;
+      const minY = Math.min(...positions.map(p => p.y)) - 40;
+      const maxX = Math.max(...positions.map(p => p.x + 100)) + 40;
+      const maxY = Math.max(...positions.map(p => p.y + 100)) + 40;
+      
+      const width = maxX - minX;
+      const height = maxY - minY;
+      
+      // Get style for this layer
+      const layerStyle = getLayerStyle(layer);
+      
+      return {
+        id: `layer-${layer}`,
+        type: 'layerGroup',
+        position: { x: minX, y: minY },
+        style: {
+          width: width,
+          height: height,
+          backgroundColor: layerStyle.bgColor,
+          borderColor: layerStyle.borderColor,
+          color: layerStyle.color,
+          borderWidth: 2, // Increased for better visibility
+          borderStyle: 'dashed', // Changed from dotted for better visibility
+          borderRadius: 10,
+          zIndex: -5, // Ensure it's behind nodes but visible
+          boxShadow: '0 0 10px rgba(0,0,0,0.05)', // Subtle shadow for better visibility
+        },
+        data: { 
+          label: layerStyle.label,
+          nodeType: 'layerGroup',
+          layer,
+          childNodeIds: layerNodes.map(n => n.id),
+        },
+      } as Node;
+    });
+  
+  return layerContainers;
+};
 
 // Edge processing function
 const processEdges = (edges = [], nodes = []) => {
@@ -154,6 +307,17 @@ const ModelWithAI = () => {
   const [dfdPollingInterval, setDfdPollingInterval] = useState<NodeJS.Timeout | null>(null);
   const dfdReactFlowInstance = useRef(null);
 
+  // Threat state for node indicators and panel
+  const [threats, setThreats] = useState<ThreatItem[]>([]);
+  const [threatAnalysisResults, setThreatAnalysisResults] = useState(null);
+  const [selectedThreat, setSelectedThreat] = useState<ThreatItem | null>(null);
+  const [selectedNode, setSelectedNode] = useState<Node | null>(null);
+  const [runningThreatAnalysis, setRunningThreatAnalysis] = useState(false);
+
+  // Refs for drag handling with layer containers
+  const isDraggingRef = useRef(false);
+  const dragTimeoutRef = useRef(null);
+
   // Diagram state from useDiagramWithAI hook
   const {
     nodes,
@@ -209,7 +373,7 @@ const ModelWithAI = () => {
 
   // Track thinking time with elapsed seconds counter
   useEffect(() => {
-    let intervalId = null;
+    let intervalId: NodeJS.Timeout | null = null;
 
     if (isLoading) {
       if (!thinkingStartTime) {
@@ -217,7 +381,7 @@ const ModelWithAI = () => {
         setElapsedSeconds(0);
       }
 
-      intervalId = window.setInterval(() => {
+      intervalId = setInterval(() => {
         if (thinkingStartTime) {
           const elapsed = Math.floor((Date.now() - thinkingStartTime) / 1000);
           setElapsedSeconds(elapsed);
@@ -235,7 +399,38 @@ const ModelWithAI = () => {
     };
   }, [isLoading, thinkingStartTime]);
 
-  // Apply layout function
+  // Function to update layer containers when nodes move
+  const updateLayerContainers = useCallback((updatedNodes: Node[]) => {
+    // Filter out existing layer containers - we'll recreate them
+    const regularNodes = updatedNodes.filter(node => node.type !== 'layerGroup');
+    
+    // Create layer containers based on the nodes
+    const layerContainers = createLayerContainers(regularNodes);
+    
+    // Combine layer containers with regular nodes
+    // Layer containers come first so they render underneath
+    return [...layerContainers, ...regularNodes];
+  }, []);
+
+  // Node drag handlers
+  const handleNodeDragStart = useCallback(() => {
+    isDraggingRef.current = true;
+  }, []);
+
+  const handleNodeDragStop = useCallback(() => {
+    isDraggingRef.current = false;
+    
+    // Update layer containers after a short delay
+    if (dragTimeoutRef.current) {
+      clearTimeout(dragTimeoutRef.current);
+    }
+    
+    dragTimeoutRef.current = setTimeout(() => {
+      setNodes((nodes) => updateLayerContainers(nodes));
+    }, 100);
+  }, [updateLayerContainers, setNodes]);
+
+  // Apply layout function - now includes layer containers
   const applyLayout = useCallback(() => {
     console.log('[ModelWithAI] applyLayout triggered.');
     // Get current state directly from refs to avoid stale closures
@@ -252,9 +447,12 @@ const ModelWithAI = () => {
     setIsLayouting(true);
 
     try {
-      console.log(`[ModelWithAI] Preparing ${currentNodes.length} nodes.`);
+      // Filter out any existing layer group nodes first
+      const regularNodes = currentNodes.filter(node => node.type !== 'layerGroup');
+      
+      console.log(`[ModelWithAI] Preparing ${regularNodes.length} nodes.`);
       // Call prepareNodes with the correct parameters - it expects (nodes, edges)
-      const preparedNodes = prepareNodes(currentNodes, currentEdges);
+      const preparedNodes = prepareNodes(regularNodes, currentEdges);
       console.log(`[ModelWithAI] Processing ${currentEdges.length} edges.`);
       const processedEdges = processEdges(currentEdges, preparedNodes);
 
@@ -262,14 +460,23 @@ const ModelWithAI = () => {
       const { nodes: layoutedNodes, edges: layoutedEdges } = getLayoutedElements(
         preparedNodes,
         processedEdges,
-        'TB', 172, 36, true
+        'LR', 172, 36, true
       );
 
       if (layoutedNodes && layoutedNodes.length > 0) {
-        console.log(`[ModelWithAI] Calculated ${layoutedNodes.length} layouted nodes. Updating state.`);
-        // Set nodes first
-        setNodes(layoutedNodes);
-        console.log('[ModelWithAI] setNodes called.');
+        console.log(`[ModelWithAI] Calculated ${layoutedNodes.length} layouted nodes.`);
+        
+        // Generate layer containers based on layouted nodes
+        const layerContainers = createLayerContainers(layoutedNodes);
+        console.log(`[ModelWithAI] Created ${layerContainers.length} layer containers.`);
+        
+        // Combine layer containers with regular nodes
+        // Layer containers come first so they render underneath
+        const finalNodes = [...layerContainers, ...layoutedNodes];
+        
+        // Set nodes first - include both layer containers and regular nodes
+        setNodes(finalNodes);
+        console.log('[ModelWithAI] setNodes called with layer containers.');
 
         // Set edges immediately after nodes (React batches these)
         if (layoutedEdges) {
@@ -292,7 +499,7 @@ const ModelWithAI = () => {
       console.error('[ModelWithAI] Error applying layout:', error);
       setIsLayouting(false); // Ensure flag is reset on error
     }
-  }, [isLayouting, prepareNodes, processEdges, setNodes, setEdges, setIsLayouting]); // Dependencies for the applyLayout function
+  }, [isLayouting, prepareNodes, processEdges, setNodes, setEdges]);
 
   // Check for significant changes to trigger auto-layout
   useEffect(() => {
@@ -405,8 +612,13 @@ const ModelWithAI = () => {
           console.warn("saveCurrentState is not available during cleanup");
         }
       }
+      
+      // Clean up timeouts for layer containers
+      if (dragTimeoutRef.current) {
+        clearTimeout(dragTimeoutRef.current);
+      }
     };
-  }, [toast, location.state, params, projectId, projectLoaded, saveCurrentState]);
+  }, [toast, location.state, params, projectId, projectLoaded, saveCurrentState, messages.length]);
 
   // Add this function before the handleSwitchView function
   const processAndDisplayThreatModel = useCallback((threatModelResponse) => {
@@ -442,6 +654,9 @@ const ModelWithAI = () => {
         })),
         generated_at: threatModelResponse.generated_at || new Date().toISOString()
       };
+      
+      // Store threats in state for use in node badges
+      setThreats(dfdData.threats || []);
       
       setDfdData(dfdData);
       setDfdGenerationStatus('complete');
@@ -529,6 +744,73 @@ const ModelWithAI = () => {
     }
   }, [viewMode, nodes, edges, sessionId, projectId, processAndDisplayThreatModel, toast]);
 
+  // Run threat analysis function
+  const handleRunThreatAnalysis = useCallback(async () => {
+    try {
+      setRunningThreatAnalysis(true);
+      
+      // Clean up the diagram state to ensure only essential properties
+      const cleanNodes = nodes.map(node => ({
+        id: node.id,
+        type: node.type,
+        position: node.position,
+        data: {
+          label: node.data?.label,
+          description: node.data?.description,
+          nodeType: node.data?.nodeType
+        }
+      }));
+      
+      const cleanEdges = edges.map(edge => ({
+        id: edge.id,
+        source: edge.source,
+        target: edge.target,
+        type: edge.type,
+        label: edge.label
+      }));
+      
+      // Prepare request
+      const request = {
+        diagram_state: { 
+          nodes: cleanNodes, 
+          edges: cleanEdges 
+        }
+      };
+      
+      // Get project ID from URL
+      const projectId = window.location.pathname.split('/').pop();
+      if (!projectId) {
+        throw new Error('Project ID not found');
+      }
+      
+      // Call threat analysis API
+      const response = await runThreatAnalysis(projectId, request, toast);
+      console.log('Threat analysis response:', response);
+      
+      // Process response
+      setThreatAnalysisResults(response);
+      
+      // Set threats for visualization on nodes
+      if (response && response.threats) {
+        setThreats(response.threats);
+      }
+      
+      // Show success toast
+      const threatCount = response.threats?.length || 0;
+      toast({
+        title: 'Threat Analysis Complete',
+        description: `${threatCount} potential threats identified in your architecture.`,
+        variant: 'default',
+      });
+      
+    } catch (error) {
+      console.error('Error running threat analysis:', error);
+      // Toast is already handled in the service function
+    } finally {
+      setRunningThreatAnalysis(false);
+    }
+  }, [nodes, edges, toast]);
+
   // Helper functions for node editing
   const handleEditNode = (id, label) => {
     console.log(`Editing node: ${id} (${label})`);
@@ -569,7 +851,6 @@ const ModelWithAI = () => {
     }
   };
   
-
   // Load project data
   const load = useCallback(
     async (projectIdToLoad) => {
@@ -592,7 +873,7 @@ const ModelWithAI = () => {
         if (projectData.diagram_state) {
           const loadedNodes = (projectData.diagram_state.nodes || []).map((node) => ({
             ...node,
-            type: 'default', // Normalize to 'default' for React Flow
+            type: node.type === 'layerGroup' ? 'layerGroup' : 'default', // Preserve layerGroup type
             data: {
               ...node.data,
               nodeType: node.data?.nodeType || 'default',
@@ -611,7 +892,10 @@ const ModelWithAI = () => {
           setEdges([]);
 
           // Process and set nodes and edges
-          const preparedNodes = prepareNodes(loadedNodes, []);
+          // Filter out any existing layer containers - we'll recreate them
+          const regularNodes = loadedNodes.filter(node => node.type !== 'layerGroup');
+          const preparedNodes = prepareNodes(regularNodes, []);
+          
           const validEdges = loadedEdges.filter((edge) => {
             if (!edge.source || !edge.target) {
               console.warn('Invalid edge found - missing source or target:', edge);
@@ -627,7 +911,13 @@ const ModelWithAI = () => {
           });
           const processedEdges = processEdges(validEdges, preparedNodes);
 
-          setNodes(preparedNodes);
+          // Create layer containers based on the prepared nodes
+          const layerContainers = createLayerContainers(preparedNodes);
+          
+          // Combine layer containers with regular nodes
+          const combinedNodes = [...layerContainers, ...preparedNodes];
+          
+          setNodes(combinedNodes);
           setEdges(processedEdges);
 
           hasLoadedDiagramData.current = true;
@@ -637,6 +927,12 @@ const ModelWithAI = () => {
           if (projectData.dfd_data) {
             console.log('Project has existing threat model data:', projectData.dfd_data);
             setDfdData(projectData.dfd_data);
+            
+            // Set threats for node indicators if available
+            if (projectData.dfd_data.threats) {
+              setThreats(projectData.dfd_data.threats);
+            }
+            
             // Pre-cache the threat model for immediate viewing if user switches to DFD view
             setDfdGenerationStatus('complete');
           }
@@ -688,7 +984,7 @@ const ModelWithAI = () => {
         setIsProjectLoading(false);
       }
     },
-    [toast, prepareNodes, handleEditNode, handleDeleteNode, processEdges]
+    [toast, prepareNodes, handleEditNode, handleDeleteNode, processEdges, setNodes, setEdges]
   );
 
   const save = async () => {
@@ -862,8 +1158,8 @@ const ModelWithAI = () => {
           setThinking(null);
         }
         console.log("Response:", response.response);
-        console.log("is loaded project",projectLoaded)
-        console.log("Messages : ",messages)
+        console.log("is loaded project", projectLoaded);
+        console.log("Messages : ", messages);
         handleResponseByType(response.response);
       }
       else {
@@ -965,7 +1261,8 @@ const ModelWithAI = () => {
 
       // --- Use current state directly ---
       // Note: We rely on the state being reasonably up-to-date here.
-      let currentNodes = [...nodes]; // Create a copy to prevent reference issues
+      // Filter out existing layer containers - we'll recreate them
+      let currentNodes = [...nodes].filter(node => node.type !== 'layerGroup');
       let currentEdges = [...edges]; // Create a copy to prevent reference issues
 
       // --- Start Calculation Phase ---
@@ -1056,14 +1353,24 @@ const ModelWithAI = () => {
 
       // 6. Apply layout to the fully prepared final nodes and edges
       console.log('Applying layout...');
-      const { nodes: layoutedNodes, edges: layoutedEdges } = getLayoutedElements(finalNodesListPrepared, finalEdgesList);
+      const { nodes: layoutedNodes, edges: layoutedEdges } = getLayoutedElements(
+        finalNodesListPrepared,
+        finalEdgesList,
+        'LR', 172, 36, true
+      );
+
+      // 7. Generate layer containers based on layouted nodes
+      const layerContainers = createLayerContainers(layoutedNodes);
+      
+      // 8. Combine layer containers with regular nodes
+      const combinedNodes = [...layerContainers, ...layoutedNodes];
 
       // --- State Update ---
-      // 7. Set state directly with the final calculated lists
+      // 9. Set state directly with the final calculated lists
       console.log('Setting final state...');
       // Update both in the correct order
       setEdges(layoutedEdges);
-      setNodes(layoutedNodes);
+      setNodes(combinedNodes);
 
       setArchitectureUpdated(true);
       setIsLayouting(false); // Indicate layout process ends
@@ -1268,7 +1575,6 @@ const ModelWithAI = () => {
   const combinedAddNode = useCallback(
     (nodeType, position, iconRenderer) => {
       handleAddNodeWithType(nodeType, position, iconRenderer);
-      // handleAddNode(nodeType, position, iconRenderer);
     },
     [handleAddNodeWithType]
   );
@@ -1312,7 +1618,14 @@ const ModelWithAI = () => {
       
       // Then set new state after a brief delay
       setTimeout(() => {
-        setNodes(diagramState.nodes);
+        // Filter out any layer container nodes - we'll recreate them
+        const regularNodes = diagramState.nodes.filter(node => node.type !== 'layerGroup');
+        
+        // Create layer containers for the reverted nodes
+        const layerContainers = createLayerContainers(regularNodes);
+        
+        // Combine layer containers with regular nodes
+        setNodes([...layerContainers, ...regularNodes]);
         
         // Set edges after nodes to ensure proper rendering
         setTimeout(() => {
@@ -1345,6 +1658,9 @@ const ModelWithAI = () => {
       }
       if (layoutTimeoutRef.current) {
         clearTimeout(layoutTimeoutRef.current);
+      }
+      if (dragTimeoutRef.current) {
+        clearTimeout(dragTimeoutRef.current);
       }
     };
   }, []);
@@ -1385,18 +1701,49 @@ const ModelWithAI = () => {
     handleSwitchView(mode);
   }, [handleSwitchView]);
 
-  // Add handlers for drag state tracking (but don't pass to AIFlowDiagram)
-  const handleNodeDragStart = useCallback(() => {
-    if (!isNodeDragging) {
-      setIsNodeDragging(true);
-    }
-  }, [isNodeDragging]);
+  // Handler for threat selection
+  const handleThreatSelect = useCallback((threat: ThreatItem | null) => {
+    setSelectedThreat(threat);
+  }, []);
 
-  const handleNodeDragStop = useCallback(() => {
-    if (isNodeDragging) {
-      setIsNodeDragging(false);
-    }
-  }, [isNodeDragging]);
+  // Handler for node selection
+  const handleNodeSelect = useCallback((node: Node | null) => {
+    setSelectedNode(node);
+  }, []);
+
+  // Create a memoized props object for AIFlowDiagram
+  const createAIFlowDiagramProps = useMemo(() => {
+    return {
+      nodes,
+      edges: stableEdges,
+      setNodes,
+      setEdges,
+      viewMode,
+      onSwitchView: viewModeChange,
+      onZoomIn: handleZoomIn,
+      onZoomOut: handleZoomOut,
+      onFitView: handleFitView,
+      onCopy: handleCopy,
+      onPaste: handlePaste,
+      onUndo: handleUndo,
+      onRedo: handleRedo,
+      onComment: handleComment,
+      onGenerateReport: handleGenerateReportWithNavigation,
+      onSave: handleActualSave,
+      onLayout: applyLayout,
+      isLayouting,
+      onNodeDragStart: handleNodeDragStart,
+      onNodeDragStop: handleNodeDragStop,
+      threats, // Pass threats to AIFlowDiagram
+    };
+  }, [
+    nodes, stableEdges, setNodes, setEdges, viewMode, viewModeChange,
+    handleZoomIn, handleZoomOut, handleFitView, 
+    handleCopy, handlePaste, handleUndo, handleRedo, handleComment,
+    handleGenerateReportWithNavigation, handleActualSave,
+    applyLayout, isLayouting, handleNodeDragStart, handleNodeDragStop,
+    threats, // Add threats as dependency
+  ]);
 
   return (
     <Layout>
@@ -1450,24 +1797,7 @@ const ModelWithAI = () => {
             <div className="flex-1 relative">
               {viewMode === 'AD' ? (
                 <AIFlowDiagram 
-                  nodes={nodes}
-                  edges={stableEdges}
-                  setNodes={setNodes}
-                  setEdges={setEdges}
-                  viewMode={viewMode}
-                  onSwitchView={viewModeChange}
-                  onZoomIn={handleZoomIn}
-                  onZoomOut={handleZoomOut}
-                  onFitView={handleFitView}
-                  onCopy={handleCopy}
-                  onPaste={handlePaste}
-                  onUndo={handleUndo}
-                  onRedo={handleRedo}
-                  onComment={handleComment}
-                  onGenerateReport={handleGenerateReportWithNavigation}
-                  onSave={handleActualSave}
-                  onLayout={applyLayout}
-                  isLayouting={isLayouting}
+                  {...createAIFlowDiagramProps}
                 />
               ) : (
                 <div className="h-full w-full flex flex-col">

@@ -29,6 +29,7 @@ import { ThreatItem } from '@/interfaces/aiassistedinterfaces';
 import ThreatPanel from './ThreatPanel';
 import RemoteSvgIcon from './icons/RemoteSvgIcon';
 import { mapNodeTypeToIcon } from '../AI/utils/mapNodeTypeToIcon';
+import LayerGroupNode from './LayerGroupNode';
 
 // Helper function to check if two arrays of nodes or edges are deeply equal by comparing their essential properties
 const areArraysEqual = (arr1: any[], arr2: any[], isNodes = true) => {
@@ -162,6 +163,7 @@ const AIFlowDiagram: React.FC<AIFlowDiagramProps> = ({
   onSave,
   onLayout,
   isLayouting: externalIsLayouting,
+  threats, // Add threats as a prop
 }): React.ReactNode => {
   // Add state for layout functionality if not provided from parent
   const [internalIsLayouting, setInternalIsLayouting] = useState(false);
@@ -192,12 +194,28 @@ const AIFlowDiagram: React.FC<AIFlowDiagramProps> = ({
   // For performance optimization and smoother interactions
   const nodesCountRef = useRef(initialNodes?.length || 0);
   const edgesCountRef = useRef(initialEdges?.length || 0);
+
+  // Add state for tracking node threat counts and active severity filter
+  const [nodeThreatCounts, setNodeThreatCounts] = useState<Record<string, { high: number, medium: number, low: number, total: number }>>({});
+  const [activeSeverityFilter, setActiveSeverityFilter] = useState<string | null>('ALL');
   
   // Register custom node types
   const nodeTypes = useMemo(() => ({
-    default: CustomNode,
+    default: (props) => {
+      // Create enhanced props with threats data and active severity filter
+      const enhancedProps = {
+        ...props,
+        data: {
+          ...props.data,
+          threats, // Add threats to data
+          activeSeverityFilter // Add active filter
+        }
+      };
+      return <CustomNode {...enhancedProps} />;
+    },
     comment: CommentNode,
-  }), []);
+    layerGroup: LayerGroupNode,
+  }), [threats, activeSeverityFilter]); // Add active filter as dependency
 
   // Default edge options
   const defaultEdgeOptions = useMemo(() => ({
@@ -285,7 +303,6 @@ const AIFlowDiagram: React.FC<AIFlowDiagramProps> = ({
   const { toast } = useToast();
   const [runningThreatAnalysis, setRunningThreatAnalysis] = useState(false);
   const [threatAnalysisResults, setThreatAnalysisResults] = useState(null);
-  const [threats, setThreats] = useState<ThreatItem[]>([]);
   const [selectedThreat, setSelectedThreat] = useState<ThreatItem | null>(null);
   const [selectedNode, setSelectedNode] = useState<Node | null>(null);
 
@@ -734,7 +751,6 @@ const AIFlowDiagram: React.FC<AIFlowDiagramProps> = ({
       
       // Process response
       setThreatAnalysisResults(response);
-      setThreats(response.threats || []);
       
       // Show success toast
       const threatCount = response.threats?.length || 0;
@@ -1091,13 +1107,21 @@ const AIFlowDiagram: React.FC<AIFlowDiagramProps> = ({
         </ReactFlow>
         
         {/* Add Threat Panel when threats are available */}
-        {threats.length > 0 && (
+        {threats && threats.length > 0 && (
           <ThreatPanel 
             threats={threats} 
             onThreatSelect={handleThreatSelect}
             selectedThreat={selectedThreat}
             selectedNode={selectedNode}
             onRunThreatAnalysis={handleRunThreatAnalysis}
+            onNodeThreatCountsChange={(counts, filter) => {
+              // Store the counts for use in nodes
+              setNodeThreatCounts(counts);
+              // Update the active filter
+              if (filter) {
+                setActiveSeverityFilter(filter);
+              }
+            }}
           />
         )}
       </div>
@@ -1116,4 +1140,3 @@ const AIFlowDiagram: React.FC<AIFlowDiagramProps> = ({
 };
 
 export default AIFlowDiagram;
-
