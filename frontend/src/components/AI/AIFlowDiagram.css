@@ -992,3 +992,12 @@
 .threat-badge {
   box-shadow: 0 0 0 2px white, 0 2px 4px rgba(0, 0, 0, 0.2);
 }
+
+/* Add this to your CSS */
+.threat-panel {
+  visibility: visible !important;
+  display: block !important;
+  opacity: 1 !important;
+  position: absolute !important;
+  z-index: 9999 !important;
+}

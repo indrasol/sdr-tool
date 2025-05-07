@@ -219,7 +219,9 @@ export const generateThreatModel = async (
     toast?: any
 ): Promise<FullThreatModelResponse> => {
     try {
+      console.log(`Project code ${projectCode}`)  
         console.log(`Generating threat model for project ${projectCode}`, request);
+        
         
         const response = await fetchWithTimeout(
             `${BASE_API_URL}/projects/${projectCode}/generate-threatmodel`,

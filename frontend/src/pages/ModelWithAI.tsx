@@ -10,13 +10,13 @@ import { Edge, Node } from '@xyflow/react';
 import { CustomNodeData } from '@/components/AI/types/diagramTypes';
 import ToolbarPanel from '@/components/AI/panels/ToolbarPanel';
 import { ChevronRight, ChevronLeft, Loader2, AlertCircle, AlertTriangle } from 'lucide-react';
-import { 
-  DesignRequest, 
-  DesignResponse, 
-  DFDGenerationStartedResponse, 
+import {
+  DesignRequest,
+  DesignResponse,
+  DFDGenerationStartedResponse,
   ResponseType,
   DFDSwitchRequest,
-  FullThreatModelResponse, 
+  FullThreatModelResponse,
   DFDData,
   ThreatItem
 } from '@/interfaces/aiassistedinterfaces';
@@ -44,40 +44,44 @@ interface DiagramPanelEdgesProps {
 // Function to determine which layer a node belongs to based on its type
 const determineNodeLayer = (nodeType: string | undefined): string => {
   if (!nodeType) return 'default';
-  
+
   const nodeTypeStr = (nodeType || '').toLowerCase();
-  
+
   // Security layer (red)
-  if (nodeTypeStr.includes('security') || 
-      nodeTypeStr.includes('firewall') || 
-      nodeTypeStr.includes('waf') ||
-      nodeTypeStr.includes('iam')) {
-    return 'security';
-  }
-  
+  // if (nodeTypeStr.includes('security') || 
+  //     nodeTypeStr.includes('firewall') || 
+  //     nodeTypeStr.includes('waf') ||
+  //     nodeTypeStr.includes('iam')) {
+  //   return 'security';
+  // }
+
   // Application layer (purple)
-  if (nodeTypeStr.includes('service') || 
-      nodeTypeStr.includes('microservice') ||
-      nodeTypeStr.includes('application') ||
-      nodeTypeStr.includes('function')) {
+  if (nodeTypeStr.includes('service') ||
+    nodeTypeStr.includes('microservice') ||
+    nodeTypeStr.includes('application') ||
+    nodeTypeStr.includes('function')) {
     return 'application';
   }
-  
+
   // Cloud infrastructure layer (orange)
-  if (nodeTypeStr.includes('aws') || 
-      nodeTypeStr.includes('azure') || 
-      nodeTypeStr.includes('gcp') ||
-      nodeTypeStr.includes('cloud')) {
+  if (nodeTypeStr.includes('aws') ||
+    nodeTypeStr.includes('azure') ||
+    nodeTypeStr.includes('gcp') ||
+    nodeTypeStr.includes('cloud')) {
     return 'cloud';
   }
-  
+
   // Network layer (yellow)
   if (nodeTypeStr.includes('network') ||
-      nodeTypeStr.includes('router') ||
-      nodeTypeStr.includes('load_balancer')) {
+    nodeTypeStr.includes('router') ||
+    nodeTypeStr.includes('load_balancer') ||
+    nodeTypeStr.includes('security') ||
+    nodeTypeStr.includes('firewall') ||
+    nodeTypeStr.includes('waf') ||
+    nodeTypeStr.includes('iam')) {
     return 'network';
   }
-  
+
   return 'default';
 };
 
@@ -92,77 +96,77 @@ interface LayerStyle {
 // Function to get styling for different layer types
 const getLayerStyle = (layer: string): LayerStyle => {
   const styles: Record<string, LayerStyle> = {
-    security: { 
-      bgColor: 'rgba(255, 59, 48, 0.15)', 
+    security: {
+      bgColor: 'rgba(255, 59, 48, 0.15)',
       borderColor: 'rgba(255, 59, 48, 0.5)',
       color: '#990000',
       label: 'Security Layer'
     },
-    application: { 
-      bgColor: 'rgba(52, 199, 89, 0.15)', 
+    application: {
+      bgColor: 'rgba(52, 199, 89, 0.15)',
       borderColor: 'rgba(52, 199, 89, 0.5)',
       color: '#006600',
       label: 'Application Layer'
     },
-    cloud: { 
-      bgColor: 'rgba(255, 149, 0, 0.15)', 
+    cloud: {
+      bgColor: 'rgba(255, 149, 0, 0.15)',
       borderColor: 'rgba(255, 149, 0, 0.5)',
       color: '#cc6600',
       label: 'Cloud Infrastructure'
     },
-    network: { 
-      bgColor: 'rgba(255, 204, 0, 0.15)', 
+    network: {
+      bgColor: 'rgba(255, 204, 0, 0.15)',
       borderColor: 'rgba(255, 204, 0, 0.5)',
       color: '#8B8000',
       label: 'Network Layer'
-    },  
-    default: { 
+    },
+    default: {
       bgColor: '', // white with 15% opacity
       borderColor: '', // white with 50% opacity
       color: '',
       label: 'Client Layer' // Added missing label property
     }
   };
-  
+
   return styles[layer] || styles.default;
 };
 
 // Function to create layer container nodes
 const createLayerContainers = (nodes: Node[]): Node[] => {
   if (!nodes || nodes.length === 0) return [];
-  
+
   // Group nodes by layer
   const nodesByLayer: Record<string, Node[]> = {};
   nodes.forEach(node => {
     // Skip layer containers to avoid recursion
     if (node.type === 'layerGroup') return;
-    
+
     const nodeType = node.data?.nodeType || 'default';
     const layer = determineNodeLayer(nodeType as string);
-    
+
     if (!nodesByLayer[layer]) nodesByLayer[layer] = [];
     nodesByLayer[layer].push(node);
   });
-  
+
   // Create container nodes for each layer with nodes
   const layerContainers = Object.entries(nodesByLayer)
     .filter(([_, layerNodes]) => layerNodes.length > 0)
     .map(([layer, layerNodes]) => {
       // Find boundaries of all nodes in this layer
       const positions = layerNodes.map(n => n.position);
-      
+
       // Calculate container boundaries with padding
       const minX = Math.min(...positions.map(p => p.x)) - 40;
       const minY = Math.min(...positions.map(p => p.y)) - 40;
       const maxX = Math.max(...positions.map(p => p.x + 100)) + 40;
       const maxY = Math.max(...positions.map(p => p.y + 100)) + 40;
-      
+
       const width = maxX - minX;
       const height = maxY - minY;
-      
+
       // Get style for this layer
       const layerStyle = getLayerStyle(layer);
-      
+
       return {
         id: `layer-${layer}`,
         type: 'layerGroup',
@@ -179,7 +183,7 @@ const createLayerContainers = (nodes: Node[]): Node[] => {
           zIndex: -5, // Ensure it's behind nodes but visible
           boxShadow: '0 0 10px rgba(0,0,0,0.05)', // Subtle shadow for better visibility
         },
-        data: { 
+        data: {
           label: layerStyle.label,
           nodeType: 'layerGroup',
           layer,
@@ -187,7 +191,7 @@ const createLayerContainers = (nodes: Node[]): Node[] => {
         },
       } as Node;
     });
-  
+
   return layerContainers;
 };
 
@@ -196,34 +200,34 @@ const processEdges = (edges = [], nodes = []) => {
   if (!Array.isArray(edges) || edges.length === 0) {
     return [];
   }
-  
+
   // Create a map of existing edge IDs to prevent duplication
   const edgeIdMap = new Map();
-  
+
   return edges.map(edge => {
     // Skip invalid edges
     if (!edge.source || !edge.target) {
       console.warn('Skipping invalid edge:', edge);
       return null;
     }
-    
+
     // Ensure edge has an ID
     const edgeId = edge.id || `edge-${edge.source}-${edge.target}`;
-    
+
     // Skip duplicate edges
     if (edgeIdMap.has(edgeId)) {
       console.warn('Skipping duplicate edge:', edgeId);
       return null;
     }
-    
+
     edgeIdMap.set(edgeId, true);
-    
+
     // Determine edge type
     const edgeType = edge.type || determineEdgeType(edge.source, edge.target, nodes);
-    
+
     // Get styling for this edge type
     const typeStyle = edgeStyles[edgeType] || edgeStyles.dataFlow || edgeStyles.default || {};
-    
+
     // Create properly formatted edge object
     return {
       ...edge,
@@ -268,6 +272,7 @@ const ModelWithAI = () => {
   const [thinkingStartTime, setThinkingStartTime] = useState(null);
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [justCompletedAnalysis, setJustCompletedAnalysis] = useState(false);
 
   // Response metadata
   const [responseMetadata, setResponseMetadata] = useState({
@@ -296,7 +301,7 @@ const ModelWithAI = () => {
   const layoutTimeoutRef = useRef(null);
   const previousNodesLengthRef = useRef(0);
   const previousEdgesLengthRef = useRef(0);
-  
+
   // Track if diagram already has loaded data
   const hasLoadedDiagramData = useRef(false);
 
@@ -403,10 +408,10 @@ const ModelWithAI = () => {
   const updateLayerContainers = useCallback((updatedNodes: Node[]) => {
     // Filter out existing layer containers - we'll recreate them
     const regularNodes = updatedNodes.filter(node => node.type !== 'layerGroup');
-    
+
     // Create layer containers based on the nodes
     const layerContainers = createLayerContainers(regularNodes);
-    
+
     // Combine layer containers with regular nodes
     // Layer containers come first so they render underneath
     return [...layerContainers, ...regularNodes];
@@ -419,12 +424,12 @@ const ModelWithAI = () => {
 
   const handleNodeDragStop = useCallback(() => {
     isDraggingRef.current = false;
-    
+
     // Update layer containers after a short delay
     if (dragTimeoutRef.current) {
       clearTimeout(dragTimeoutRef.current);
     }
-    
+
     dragTimeoutRef.current = setTimeout(() => {
       setNodes((nodes) => updateLayerContainers(nodes));
     }, 100);
@@ -449,7 +454,7 @@ const ModelWithAI = () => {
     try {
       // Filter out any existing layer group nodes first
       const regularNodes = currentNodes.filter(node => node.type !== 'layerGroup');
-      
+
       console.log(`[ModelWithAI] Preparing ${regularNodes.length} nodes.`);
       // Call prepareNodes with the correct parameters - it expects (nodes, edges)
       const preparedNodes = prepareNodes(regularNodes, currentEdges);
@@ -460,20 +465,20 @@ const ModelWithAI = () => {
       const { nodes: layoutedNodes, edges: layoutedEdges } = getLayoutedElements(
         preparedNodes,
         processedEdges,
-        'LR', 172, 36, true
+        'TB', 172, 36, true
       );
 
       if (layoutedNodes && layoutedNodes.length > 0) {
         console.log(`[ModelWithAI] Calculated ${layoutedNodes.length} layouted nodes.`);
-        
+
         // Generate layer containers based on layouted nodes
         const layerContainers = createLayerContainers(layoutedNodes);
         console.log(`[ModelWithAI] Created ${layerContainers.length} layer containers.`);
-        
+
         // Combine layer containers with regular nodes
         // Layer containers come first so they render underneath
         const finalNodes = [...layerContainers, ...layoutedNodes];
-        
+
         // Set nodes first - include both layer containers and regular nodes
         setNodes(finalNodes);
         console.log('[ModelWithAI] setNodes called with layer containers.');
@@ -505,27 +510,27 @@ const ModelWithAI = () => {
   useEffect(() => {
     // Skip initial render, when loading project, or when already layouting
     if (nodes.length === 0 || isLayouting || isProjectLoading) return;
-    
+
     // Check if nodes or edges count changed (something added or removed)
     const nodesCountChanged = nodes.length !== previousNodesLengthRef.current;
     const edgesCountChanged = edges.length !== previousEdgesLengthRef.current;
-    
+
     // Update the refs with current counts
     previousNodesLengthRef.current = nodes.length;
     previousEdgesLengthRef.current = edges.length;
-    
+
     // If something changed (and not initial load), apply layout with a delay
     if ((nodesCountChanged || edgesCountChanged) && hasLoadedDiagramData.current) {
       // Clear any existing timeout
       if (layoutTimeoutRef.current) {
         clearTimeout(layoutTimeoutRef.current);
       }
-      
+
       layoutTimeoutRef.current = setTimeout(() => {
         applyLayout();
       }, 300);
     }
-    
+
     return () => {
       if (layoutTimeoutRef.current) {
         clearTimeout(layoutTimeoutRef.current);
@@ -543,11 +548,11 @@ const ModelWithAI = () => {
         console.warn("Cannot save - no session ID available");
         return false; // Return false to indicate failure
       }
-      
+
       console.log(`Saving project with session ID: ${sessionIdRef.current}`);
       const currentDiagramState = { nodes: nodesRef.current, edges: edgesRef.current };
       console.log('Saving Diagram State Nodes:');
-      
+
       // Also log a nodes summary for better readability
       console.log('Nodes Summary:', currentDiagramState.nodes.map(node => ({
         id: node.id,
@@ -556,7 +561,7 @@ const ModelWithAI = () => {
         label: node.data?.label,
         hasIconRenderer: !!node.data?.iconRenderer
       })));
-      
+
       try {
         const result = await projectService.saveProject(sessionIdRef.current, currentDiagramState, projectId);
         console.log(`Project save result: ${result ? 'success' : 'failed'}`);
@@ -601,7 +606,7 @@ const ModelWithAI = () => {
       if (sessionIdRef.current) {
         console.log(`Saving project on unmount with session ID: ${sessionIdRef.current}`);
         console.log(`Current message count: ${messages.length}`);
-        
+
         // Safely handle the case where saveCurrentState might be undefined
         const savePromise = saveCurrentState?.();
         if (savePromise && typeof savePromise.then === 'function') {
@@ -612,7 +617,7 @@ const ModelWithAI = () => {
           console.warn("saveCurrentState is not available during cleanup");
         }
       }
-      
+
       // Clean up timeouts for layer containers
       if (dragTimeoutRef.current) {
         clearTimeout(dragTimeoutRef.current);
@@ -627,7 +632,7 @@ const ModelWithAI = () => {
       setDfdGenerationStatus('failed');
       return;
     }
-    
+
     try {
       // Transform FullThreatModelResponse to DFDData format for visualization
       const dfdData = {
@@ -654,13 +659,13 @@ const ModelWithAI = () => {
         })),
         generated_at: threatModelResponse.generated_at || new Date().toISOString()
       };
-      
+
       // Store threats in state for use in node badges
       setThreats(dfdData.threats || []);
-      
+
       setDfdData(dfdData);
       setDfdGenerationStatus('complete');
-      
+
       // Show a success toast
       toast({
         title: 'Threat Analysis Complete',
@@ -670,7 +675,7 @@ const ModelWithAI = () => {
     } catch (error) {
       console.error('Error processing threat model response:', error);
       setDfdGenerationStatus('failed');
-      
+
       toast({
         title: 'Error Processing Threat Model',
         description: error.message || 'Failed to process threat model data',
@@ -681,16 +686,16 @@ const ModelWithAI = () => {
 
   const handleSwitchView = useCallback(async (mode: 'AD' | 'DFD') => {
     console.log(`Switching view mode to: ${mode}`);
-    
+
     if (mode === viewMode) return;
-    
+
     // Update the view mode state
     setViewMode(mode);
-    
+
     if (mode === 'DFD') {
       // Set loading state
       setDfdGenerationStatus('generating');
-      
+
       try {
         // Clean up the diagram state to ensure only essential properties are included
         const cleanNodes = nodes.map(node => ({
@@ -703,7 +708,7 @@ const ModelWithAI = () => {
             nodeType: node.data?.nodeType
           }
         }));
-        
+
         const cleanEdges = edges.map(edge => ({
           id: edge.id,
           source: edge.source,
@@ -711,12 +716,12 @@ const ModelWithAI = () => {
           type: edge.type,
           label: edge.label
         }));
-        
+
         // Prepare the request
         const request = {
-          diagram_state: { 
-            nodes: cleanNodes, 
-            edges: cleanEdges 
+          diagram_state: {
+            nodes: cleanNodes,
+            edges: cleanEdges
           },
           session_id: sessionId || undefined,
         };
@@ -725,16 +730,16 @@ const ModelWithAI = () => {
 
         // Use our service function to generate the threat model
         const threatModelResponse = await generateThreatModel(projectId, request, toast);
-         
+
         console.log('Threat Model Response:', threatModelResponse);
-        
+
         // Use our new utility function to process and display the threat model
         processAndDisplayThreatModel(threatModelResponse);
-        
+
       } catch (error) {
         console.error('Error generating threat model:', error);
         setDfdGenerationStatus('failed');
-        
+
         toast({
           title: 'Error Generating Threat Model',
           description: error.message || 'Failed to generate threat model',
@@ -744,11 +749,12 @@ const ModelWithAI = () => {
     }
   }, [viewMode, nodes, edges, sessionId, projectId, processAndDisplayThreatModel, toast]);
 
-  // Run threat analysis function
+  // Run threat analysis function - UPDATED TO USE STATE APPROACH
   const handleRunThreatAnalysis = useCallback(async () => {
     try {
       setRunningThreatAnalysis(true);
-      
+      setJustCompletedAnalysis(false);
+
       // Clean up the diagram state to ensure only essential properties
       const cleanNodes = nodes.map(node => ({
         id: node.id,
@@ -760,7 +766,7 @@ const ModelWithAI = () => {
           nodeType: node.data?.nodeType
         }
       }));
-      
+
       const cleanEdges = edges.map(edge => ({
         id: edge.id,
         source: edge.source,
@@ -768,33 +774,40 @@ const ModelWithAI = () => {
         type: edge.type,
         label: edge.label
       }));
-      
+
       // Prepare request
       const request = {
-        diagram_state: { 
-          nodes: cleanNodes, 
-          edges: cleanEdges 
-        }
+        diagram_state: {
+          nodes: cleanNodes,
+          edges: cleanEdges
+        },
+        session_id: sessionId || undefined,
       };
-      
-      // Get project ID from URL
-      const projectId = window.location.pathname.split('/').pop();
+
+      // Use the state variable for projectId instead of extracting from URL
       if (!projectId) {
         throw new Error('Project ID not found');
       }
-      
+
       // Call threat analysis API
       const response = await runThreatAnalysis(projectId, request, toast);
       console.log('Threat analysis response:', response);
-      
+
       // Process response
       setThreatAnalysisResults(response);
-      
+
       // Set threats for visualization on nodes
       if (response && response.threats) {
         setThreats(response.threats);
+        // Mark that we just completed analysis
+        setJustCompletedAnalysis(true);
+
+        // Reset this flag after a delay
+        setTimeout(() => {
+          setJustCompletedAnalysis(false);
+        }, 2000);
       }
-      
+
       // Show success toast
       const threatCount = response.threats?.length || 0;
       toast({
@@ -802,22 +815,22 @@ const ModelWithAI = () => {
         description: `${threatCount} potential threats identified in your architecture.`,
         variant: 'default',
       });
-      
+
     } catch (error) {
       console.error('Error running threat analysis:', error);
       // Toast is already handled in the service function
     } finally {
       setRunningThreatAnalysis(false);
     }
-  }, [nodes, edges, toast]);
+  }, [nodes, edges, toast, projectId, sessionId]);
 
   // Helper functions for node editing
   const handleEditNode = (id, label) => {
     console.log(`Editing node: ${id} (${label})`);
-    
+
     // Find the node
     const targetNode = nodes.find(node => node.id === id);
-    
+
     if (targetNode) {
       setCurrentEditNode({
         id,
@@ -830,27 +843,27 @@ const ModelWithAI = () => {
 
   const handleDeleteNode = (id) => {
     console.log(`Deleting node: ${id}`);
-    
+
     // Find the node to be deleted to show its name in the toast
     const nodeToDelete = nodes.find(node => node.id === id);
-    
+
     // Remove the node
     setNodes(nds => nds.filter(node => node.id !== id));
-    
+
     // Remove any edges connected to this node
     setEdges(eds => eds.filter(edge => edge.source !== id && edge.target !== id));
-    
+
     // Show a toast notification
     if (nodeToDelete) {
       const nodeLabel = nodeToDelete.data?.label || 'Unnamed node';
-        
+
       toast({
         title: "Node Deleted",
         description: `Node "${nodeLabel}" has been removed`
       });
     }
   };
-  
+
   // Load project data
   const load = useCallback(
     async (projectIdToLoad) => {
@@ -895,7 +908,7 @@ const ModelWithAI = () => {
           // Filter out any existing layer containers - we'll recreate them
           const regularNodes = loadedNodes.filter(node => node.type !== 'layerGroup');
           const preparedNodes = prepareNodes(regularNodes, []);
-          
+
           const validEdges = loadedEdges.filter((edge) => {
             if (!edge.source || !edge.target) {
               console.warn('Invalid edge found - missing source or target:', edge);
@@ -913,26 +926,26 @@ const ModelWithAI = () => {
 
           // Create layer containers based on the prepared nodes
           const layerContainers = createLayerContainers(preparedNodes);
-          
+
           // Combine layer containers with regular nodes
           const combinedNodes = [...layerContainers, ...preparedNodes];
-          
+
           setNodes(combinedNodes);
           setEdges(processedEdges);
 
           hasLoadedDiagramData.current = true;
           setProjectLoaded(true);
-          
+
           // Check if project has threat model data
           if (projectData.dfd_data) {
             console.log('Project has existing threat model data:', projectData.dfd_data);
             setDfdData(projectData.dfd_data);
-            
+
             // Set threats for node indicators if available
             if (projectData.dfd_data.threats) {
               setThreats(projectData.dfd_data.threats);
             }
-            
+
             // Pre-cache the threat model for immediate viewing if user switches to DFD view
             setDfdGenerationStatus('complete');
           }
@@ -946,11 +959,11 @@ const ModelWithAI = () => {
               if (entry.role && entry.content) {
                 return {
                   role: entry.role,
-                  content: entry.content, 
+                  content: entry.content,
                   isPreExisting: true,
                   timestamp: entry.timestamp || new Date().toISOString()
                 };
-              } 
+              }
               // Handle old format with query and response fields
               else if (entry.query && entry.response) {
                 return [
@@ -1002,7 +1015,7 @@ const ModelWithAI = () => {
     try {
       console.log(`Manual save initiated for session ID: ${sessionId}`);
       const result = await saveCurrentState();
-      
+
       if (result) {
         toast({
           title: "Project Saved",
@@ -1048,12 +1061,12 @@ const ModelWithAI = () => {
 
     // Add user message with timestamp
     const timestamp = new Date().toISOString();
-    setMessages((prev) => [...prev, { 
-      role: 'user', 
+    setMessages((prev) => [...prev, {
+      role: 'user',
       content: message,
       timestamp: timestamp
     }]);
-    
+
     setShowReferences(false);
     setShowRelatedConcepts(false);
     setShowClarificationQuestions(false);
@@ -1068,13 +1081,13 @@ const ModelWithAI = () => {
       // Check if this is a DFD generation command
       const isDfdCommand = (message) => {
         const lowerCaseMessage = message.toLowerCase();
-        return lowerCaseMessage.includes('generate dfd') || 
-               lowerCaseMessage.includes('create dfd') || 
-               lowerCaseMessage.includes('show dfd') ||
-               lowerCaseMessage.includes('threat model') ||
-               lowerCaseMessage.includes('data flow diagram') ||
-               (lowerCaseMessage.includes('generate') && viewMode === 'DFD') ||
-               (lowerCaseMessage.includes('update') && viewMode === 'DFD');
+        return lowerCaseMessage.includes('generate dfd') ||
+          lowerCaseMessage.includes('create dfd') ||
+          lowerCaseMessage.includes('show dfd') ||
+          lowerCaseMessage.includes('threat model') ||
+          lowerCaseMessage.includes('data flow diagram') ||
+          (lowerCaseMessage.includes('generate') && viewMode === 'DFD') ||
+          (lowerCaseMessage.includes('update') && viewMode === 'DFD');
       };
 
       const request = {
@@ -1100,19 +1113,19 @@ const ModelWithAI = () => {
       if (isDFDGenerationResponse(response)) {
         // This is a DFD generation started response
         console.log("DFD generation started:", response.message);
-        
+
         // Add assistant message about DFD generation with timestamp
         const responseTimestamp = new Date().toISOString();
-        setMessages((prev) => [...prev, { 
-          role: 'assistant', 
+        setMessages((prev) => [...prev, {
+          role: 'assistant',
           content: response.message || "I've started generating the Data Flow Diagram. This might take a moment.",
           isAlreadyTyped: false,
           timestamp: responseTimestamp
         }]);
-        
+
         // Set DFD status - no need to start polling as we now call directly
         setDfdGenerationStatus('generating');
-        
+
         // Try to generate the threat model immediately using direct API
         try {
           // Prepare the request with current diagram state
@@ -1123,7 +1136,7 @@ const ModelWithAI = () => {
 
           // Call the generate threat model API directly
           const threatModelResponse = await generateThreatModel(projectId, request, toast);
-          
+
           // Use our utility function for consistency
           processAndDisplayThreatModel(threatModelResponse);
         } catch (error) {
@@ -1136,13 +1149,13 @@ const ModelWithAI = () => {
         if (response.response.session_id) {
           setSessionId(response.response.session_id);
         }
-        
+
         console.log("Adding AI response:", response.response.message);
-        
+
         // Add assistant message with timestamp
         const responseTimestamp = new Date().toISOString();
-        setMessages((prev) => [...prev, { 
-          role: 'assistant', 
+        setMessages((prev) => [...prev, {
+          role: 'assistant',
           content: response.response.message,
           isAlreadyTyped: false,
           timestamp: responseTimestamp
@@ -1191,11 +1204,11 @@ const ModelWithAI = () => {
       });
 
       // Check if this is a DFD generation response
-      if (response.response_type === 'SystemNotification' && 
+      if (response.response_type === 'SystemNotification' &&
         response.message.includes('generating the Data Flow Diagram')) {
         console.log('DFD generation triggered via chat');
         setDfdGenerationStatus('generating');
-        
+
         // Try to generate the threat model immediately using direct API
         try {
           // Prepare the request with current diagram state
@@ -1206,13 +1219,13 @@ const ModelWithAI = () => {
 
           // Call the generate threat model API directly
           const threatModelResponse = await generateThreatModel(projectId, request, toast);
-          
+
           // Use our utility function for consistency
           processAndDisplayThreatModel(threatModelResponse);
         } catch (error) {
           console.error('Error generating threat model:', error);
           setDfdGenerationStatus('failed');
-          
+
           toast({
             title: 'Error Generating Threat Model',
             description: error.message || 'Failed to generate threat model',
@@ -1311,37 +1324,37 @@ const ModelWithAI = () => {
 
       // 3. Prepare the basic structure of nodes to add
       const basicNodesToAdd = nodesToAdd.map((node) => ({
-          id: node.id,
-          type: 'default', // Use 'default' for our custom node rendering
-          position: node.position || { x: Math.random() * 500, y: Math.random() * 300 }, // Ensure position
-          data: {
-            label: node.data?.label || node.id || 'Node',
-            description: node.data?.description || '',
-            nodeType: node.type || 'default', // Store original type in data
-            // onEdit/onDelete will be added during the final prepareNodes call
-          },
+        id: node.id,
+        type: 'default', // Use 'default' for our custom node rendering
+        position: node.position || { x: Math.random() * 500, y: Math.random() * 300 }, // Ensure position
+        data: {
+          label: node.data?.label || node.id || 'Node',
+          description: node.data?.description || '',
+          nodeType: node.type || 'default', // Store original type in data
+          // onEdit/onDelete will be added during the final prepareNodes call
+        },
       }));
       let finalNodesListUnprepared = [...nextNodes, ...basicNodesToAdd];
 
       // 4. Prepare the final list of edges *using the final UNPREPARED node list for validation*
       let finalEdgesList = [...nextEdges];
       if (edgesToAdd.length > 0) {
-          const validEdgesToAdd = edgesToAdd.filter(edge => {
-              if (!edge.source || !edge.target) {
-                  console.warn(`Skipping edge ${edge.id || 'new'}: Missing source or target.`);
-                  return false;
-              }
-              const sourceExists = finalNodesListUnprepared.some(n => n.id === edge.source);
-              const targetExists = finalNodesListUnprepared.some(n => n.id === edge.target);
-              if (!sourceExists || !targetExists) {
-                  console.warn(`Skipping edge ${edge.id || 'new'}: ${!sourceExists ? 'source' : 'target'} node ${!sourceExists ? edge.source : edge.target} not found in final list.`);
-                  return false;
-              }
-              return true;
-          });
-          // Process edges with the finalNodesListUnprepared for proper edge type determination
-          const processedEdgesToAdd = processEdges(validEdgesToAdd, finalNodesListUnprepared);
-          finalEdgesList = [...finalEdgesList, ...processedEdgesToAdd];
+        const validEdgesToAdd = edgesToAdd.filter(edge => {
+          if (!edge.source || !edge.target) {
+            console.warn(`Skipping edge ${edge.id || 'new'}: Missing source or target.`);
+            return false;
+          }
+          const sourceExists = finalNodesListUnprepared.some(n => n.id === edge.source);
+          const targetExists = finalNodesListUnprepared.some(n => n.id === edge.target);
+          if (!sourceExists || !targetExists) {
+            console.warn(`Skipping edge ${edge.id || 'new'}: ${!sourceExists ? 'source' : 'target'} node ${!sourceExists ? edge.source : edge.target} not found in final list.`);
+            return false;
+          }
+          return true;
+        });
+        // Process edges with the finalNodesListUnprepared for proper edge type determination
+        const processedEdgesToAdd = processEdges(validEdgesToAdd, finalNodesListUnprepared);
+        finalEdgesList = [...finalEdgesList, ...processedEdgesToAdd];
       }
 
       // --- Final Preparation & Layout ---
@@ -1356,12 +1369,12 @@ const ModelWithAI = () => {
       const { nodes: layoutedNodes, edges: layoutedEdges } = getLayoutedElements(
         finalNodesListPrepared,
         finalEdgesList,
-        'LR', 172, 36, true
+        'TB', 172, 36, true
       );
 
       // 7. Generate layer containers based on layouted nodes
       const layerContainers = createLayerContainers(layoutedNodes);
-      
+
       // 8. Combine layer containers with regular nodes
       const combinedNodes = [...layerContainers, ...layoutedNodes];
 
@@ -1431,13 +1444,27 @@ const ModelWithAI = () => {
     }
   };
 
+  useEffect(() => {
+    // Check if the project is loaded and we have nodes but no threats
+    if (projectLoaded && nodes.length > 0 && (!threats || threats.length === 0) && !runningThreatAnalysis) {
+      console.log('No threats found after project load, running automatic threat analysis');
+      // Set a small timeout to ensure component is fully rendered
+      const timer = setTimeout(() => {
+        handleRunThreatAnalysis();
+      }, 1000);
+
+      return () => clearTimeout(timer);
+    }
+  }, [projectLoaded, nodes.length, threats, runningThreatAnalysis, handleRunThreatAnalysis]);
+
+
   // Create an enhanced DFD loading indicator
   const DFDLoadingIndicator = () => {
     // Use local state to simulate progress
     const [simulatedProgress, setSimulatedProgress] = useState(0);
     const [currentStep, setCurrentStep] = useState('initializing');
     const [elapsedTime, setElapsedTime] = useState(0);
-    
+
     // State to track cancellation
     const [isCancelling, setIsCancelling] = useState(false);
 
@@ -1445,12 +1472,12 @@ const ModelWithAI = () => {
     useEffect(() => {
       // Only run effect while in generating state
       if (dfdGenerationStatus !== 'generating') return;
-      
+
       // Track elapsed time
       const timeInterval = setInterval(() => {
         setElapsedTime(prev => prev + 1);
       }, 1000);
-      
+
       // Simulate progress steps
       const progressSteps = [
         { progress: 15, step: 'initializing', delay: 1500 },
@@ -1459,7 +1486,7 @@ const ModelWithAI = () => {
         { progress: 80, step: 'analyzing_threats', delay: 3000 },
         { progress: 95, step: 'finalizing_results', delay: 2000 }
       ];
-      
+
       // Create a sequence of timeouts to update progress
       let totalDelay = 0;
       const timeouts = progressSteps.map(step => {
@@ -1469,7 +1496,7 @@ const ModelWithAI = () => {
           setCurrentStep(step.step);
         }, totalDelay);
       });
-      
+
       // Clean up all timeouts and intervals on unmount or when status changes
       return () => {
         clearInterval(timeInterval);
@@ -1480,7 +1507,7 @@ const ModelWithAI = () => {
     // Function to handle cancellation
     const handleCancelGeneration = async () => {
       setIsCancelling(true);
-      
+
       try {
         // Immediately switch back to AD view
         setViewMode('AD');
@@ -1525,33 +1552,33 @@ const ModelWithAI = () => {
       <div className="absolute inset-0 bg-white bg-opacity-90 flex flex-col items-center justify-center z-10">
         <Loader2 className="h-10 w-10 animate-spin text-securetrack-purple mb-4" />
         <h3 className="text-lg font-semibold text-gray-700">Generating Threat Model</h3>
-        
+
         {/* Progress information */}
         <div className="mt-6 w-64 bg-gray-200 rounded-full h-2.5">
-          <div 
-            className="bg-securetrack-purple h-2.5 rounded-full transition-all duration-500" 
+          <div
+            className="bg-securetrack-purple h-2.5 rounded-full transition-all duration-500"
             style={{ width: `${simulatedProgress}%` }}
           ></div>
         </div>
-        
+
         <p className="text-sm text-gray-600 mt-2">
           {getStepMessage(currentStep)}
         </p>
-        
+
         {elapsedTime > 0 && (
           <p className="text-xs text-gray-500 mt-2">
             Time elapsed: {formatElapsedTime(elapsedTime)}
           </p>
         )}
-        
+
         <p className="text-xs text-gray-500 mt-4 max-w-md text-center">
           Complex diagrams with many components take longer to analyze. Please wait...
         </p>
-        
+
         {/* Cancel button */}
-        <Button 
-          variant="outline" 
-          size="sm" 
+        <Button
+          variant="outline"
+          size="sm"
           className="mt-6 bg-white border-red-500 text-red-500 hover:bg-red-50"
           onClick={handleCancelGeneration}
           disabled={isCancelling}
@@ -1593,46 +1620,46 @@ const ModelWithAI = () => {
   const handleRevertToDiagramState = (messageContent, diagramState) => {
     if (diagramState && diagramState.nodes && diagramState.edges) {
       const revertMessage = `Reverting diagram to state before: "${messageContent}" modification`;
-      
+
       // Add revert messages with timestamps
       const userTimestamp = new Date().toISOString();
       const aiTimestamp = new Date(Date.now() + 1000).toISOString(); // Slightly after user message
-      
+
       setMessages((prev) => [
         ...prev,
-        { 
-          role: 'user', 
+        {
+          role: 'user',
           content: `Revert diagram to state before: "${messageContent}" modification`,
           timestamp: userTimestamp
         },
-        { 
-          role: 'assistant', 
+        {
+          role: 'assistant',
           content: revertMessage,
-          timestamp: aiTimestamp 
+          timestamp: aiTimestamp
         },
       ]);
-      
+
       // Clear existing state first
       setNodes([]);
       setEdges([]);
-      
+
       // Then set new state after a brief delay
       setTimeout(() => {
         // Filter out any layer container nodes - we'll recreate them
         const regularNodes = diagramState.nodes.filter(node => node.type !== 'layerGroup');
-        
+
         // Create layer containers for the reverted nodes
         const layerContainers = createLayerContainers(regularNodes);
-        
+
         // Combine layer containers with regular nodes
         setNodes([...layerContainers, ...regularNodes]);
-        
+
         // Set edges after nodes to ensure proper rendering
         setTimeout(() => {
           setEdges(diagramState.edges);
         }, 100);
       }, 100);
-      
+
       toast({
         title: "Diagram Reverted",
         description: "Successfully reverted to previous diagram state",
@@ -1696,7 +1723,7 @@ const ModelWithAI = () => {
   const viewModeChange = useCallback((mode: 'AD' | 'DFD') => {
     // First set the mode
     setViewMode(mode);
-    
+
     // Then call the handler with proper switch logic
     handleSwitchView(mode);
   }, [handleSwitchView]);
@@ -1735,14 +1762,19 @@ const ModelWithAI = () => {
       onNodeDragStart: handleNodeDragStart,
       onNodeDragStop: handleNodeDragStop,
       threats, // Pass threats to AIFlowDiagram
+      onRunThreatAnalysis: handleRunThreatAnalysis, // Pass the handler
+      selectedThreat, // Pass selected threat
+      selectedNode, // Pass selected node
     };
   }, [
     nodes, stableEdges, setNodes, setEdges, viewMode, viewModeChange,
-    handleZoomIn, handleZoomOut, handleFitView, 
+    handleZoomIn, handleZoomOut, handleFitView,
     handleCopy, handlePaste, handleUndo, handleRedo, handleComment,
     handleGenerateReportWithNavigation, handleActualSave,
     applyLayout, isLayouting, handleNodeDragStart, handleNodeDragStop,
-    threats, // Add threats as dependency
+    threats,handleRunThreatAnalysis,
+    selectedThreat,
+    selectedNode, // Add threats as dependency
   ]);
 
   return (
@@ -1796,7 +1828,7 @@ const ModelWithAI = () => {
             {/* Layout with single level of nesting, simpler structure */}
             <div className="flex-1 relative">
               {viewMode === 'AD' ? (
-                <AIFlowDiagram 
+                <AIFlowDiagram
                   {...createAIFlowDiagramProps}
                 />
               ) : (

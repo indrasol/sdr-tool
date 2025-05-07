@@ -169,6 +169,9 @@ const AIFlowDiagram: React.FC<AIFlowDiagramProps> = ({
   const [internalIsLayouting, setInternalIsLayouting] = useState(false);
   const effectiveIsLayouting = externalIsLayouting !== undefined ? externalIsLayouting : internalIsLayouting;
   
+  // Add state for auto-zooming on threat selection - enabled by default
+  const [autoZoomOnThreatSelect, setAutoZoomOnThreatSelect] = useState(true);
+  
   // Add state for data flow diagram toggle
   const [isDataFlowActive, setIsDataFlowActive] = useState(false);
   // Add state to control empty canvas view visibility
@@ -768,10 +771,32 @@ const AIFlowDiagram: React.FC<AIFlowDiagramProps> = ({
     }
   }, [nodes, edges, toast]);
 
-  // Handler for threat selection
+  // Handler for threat selection (WITH AUTO-ZOOM ENABLED BY DEFAULT)
   const handleThreatSelect = useCallback((threat: ThreatItem | null) => {
     setSelectedThreat(threat);
-  }, []);
+    
+    // Auto-zoom to affected nodes if feature is enabled
+    if (autoZoomOnThreatSelect && threat && reactFlowInstance.current) {
+      // Get target nodes affected by this threat
+      const targetNodeIds = threat.target_elements || [];
+      if (targetNodeIds.length > 0) {
+        // Filter nodes to only include those targeted by the threat
+        const targetNodes = nodes.filter(node => targetNodeIds.includes(node.id));
+        
+        // If we have target nodes, zoom to fit them
+        if (targetNodes.length > 0) {
+          setTimeout(() => {
+            reactFlowInstance.current.fitView({
+              padding: 0.5,
+              minZoom: 0.5,
+              maxZoom: 2,
+              nodes: targetNodes
+            });
+          }, 50);
+        }
+      }
+    }
+  }, [autoZoomOnThreatSelect, nodes]);
 
   // Handler for node selection
   const onNodeClick = useCallback((event, node) => {
@@ -1082,7 +1107,7 @@ const AIFlowDiagram: React.FC<AIFlowDiagramProps> = ({
             </Panel>
           )}
           
-          {/* Keep the original panel but remove the threat analysis button */}
+          {/* Keep the original panel but add the auto-zoom toggle checkbox */}
           <Panel position="top-right" className="flex gap-2">
             {viewMode === 'AD' && (
               <>
@@ -1096,6 +1121,18 @@ const AIFlowDiagram: React.FC<AIFlowDiagramProps> = ({
                 >
                   {effectiveIsLayouting ? 'Arranging...' : 'Auto-arrange'}
                 </button>
+                {/* Add auto-zoom checkbox control */}
+                <div className="p-2 bg-white rounded shadow-sm text-xs flex items-center">
+                  <label className="flex items-center cursor-pointer">
+                    <input 
+                      type="checkbox" 
+                      checked={autoZoomOnThreatSelect} 
+                      onChange={e => setAutoZoomOnThreatSelect(e.target.checked)} 
+                      className="mr-1.5 h-3 w-3 accent-securetrack-purple"
+                    />
+                    <span>Auto-zoom on threat</span>
+                  </label>
+                </div>
               </>
             )}
             {viewMode === 'DFD' && (
@@ -1114,6 +1151,7 @@ const AIFlowDiagram: React.FC<AIFlowDiagramProps> = ({
             selectedThreat={selectedThreat}
             selectedNode={selectedNode}
             onRunThreatAnalysis={handleRunThreatAnalysis}
+            
             onNodeThreatCountsChange={(counts, filter) => {
               // Store the counts for use in nodes
               setNodeThreatCounts(counts);
@@ -1122,6 +1160,8 @@ const AIFlowDiagram: React.FC<AIFlowDiagramProps> = ({
                 setActiveSeverityFilter(filter);
               }
             }}
+            forceExpanded={true}
+            
           />
         )}
       </div>

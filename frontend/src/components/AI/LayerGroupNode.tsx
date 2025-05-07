@@ -11,12 +11,12 @@ const LayerGroupNode = ({ id, data, style, width, height }: ExtendedNodeProps) =
   
   // Define more visible layer styles based on layer type
   const layerStyles = {
-    security: { 
-      bgColor: 'rgba(255, 59, 48, 0.15)', 
-      borderColor: 'rgba(255, 59, 48, 0.5)',
-      color: '#990000',
-      label: 'Security Layer'
-    },
+    // security: { 
+    //   bgColor: 'rgba(255, 59, 48, 0.15)', 
+    //   borderColor: 'rgba(255, 59, 48, 0.5)',
+    //   color: '#990000',
+    //   label: 'Security Layer'
+    // },
     application: { 
       bgColor: 'rgba(52, 199, 89, 0.15)', 
       borderColor: 'rgba(52, 199, 89, 0.5)',
@@ -30,9 +30,9 @@ const LayerGroupNode = ({ id, data, style, width, height }: ExtendedNodeProps) =
       label: 'Cloud Infrastructure'
     },
     network: { 
-      bgColor: 'rgba(255, 204, 0, 0.15)', 
-      borderColor: 'rgba(255, 204, 0, 0.5)',
-      color: '#8B8000',
+      bgColor: 'rgba(255, 59, 48, 0.15)', 
+      borderColor: 'rgba(255, 59, 48, 0.5)',
+      color: '#990000',
       label: 'Network Layer'
     },
     default: { 
