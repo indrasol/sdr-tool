@@ -1,4 +1,3 @@
-
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
 import { useProjects } from '@/hooks/useProjects';
@@ -59,6 +58,9 @@ export const useProjectOperations = () => {
         navigate('/model-with-ai', { state: { projectId } });
       } else if (project.templateType === 'Import Existing' || project.importedFile) {
         navigate('/security-analysis', { state: { projectId } });
+      } else if (project.templateType === 'Solutions Hub') {
+        // Navigate to Solutions Hub page with the project ID
+        navigate('/solutions-hub', { state: { projectId } });
       } else {
         // If no specific page, show a toast and stay on the current page
         toast({

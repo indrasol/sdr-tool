@@ -242,7 +242,7 @@ class SupabaseManager:
         Fetch projects for a user with optional filters, using enums for status and priority.
         """
         
-        log_info(f"user_id inside fetch_projects : {user_id}")
+        # log_info(f"user_id inside fetch_projects : {user_id}")
         query = self.supabase.from_("projects").select("*").eq("user_id", user_id)
 
 
@@ -250,9 +250,9 @@ class SupabaseManager:
         if tenant_id is not None:
             query = query.eq("tenant_id", tenant_id)
         if status is not None:
-            query = query.eq("status", status.value)  # Use enum string value for query
+            query = query.eq("status", status.name)
         if priority is not None:
-            query = query.eq("priority", priority.value)  # Use enum string value for query
+            query = query.eq("priority", priority.name)
         if project_code_filter:
             query = query.eq("project_code", project_code_filter)
 

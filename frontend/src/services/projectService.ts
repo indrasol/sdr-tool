@@ -23,8 +23,8 @@ const mapBackendToFrontend = (backendProject: any): Project => {
     id: backendProject.id,
     name: backendProject.name,
     description: backendProject.description,
-    status: backendProject.status,
-    priority: backendProject.priority,
+    status: backendProject.status,  // No conversion needed now - backend returns enum names
+    priority: backendProject.priority,  // No conversion needed now - backend returns enum names
     createdDate: backendProject.created_date,
     dueDate: backendProject.due_date,
     creator: backendProject.creator,
@@ -43,8 +43,8 @@ const mapFrontendToBackend = (frontendProject: Partial<Project>): any => {
   
   // Only add optional fields if they exist in the payload
   if (frontendProject.description !== undefined) backendProject.description = frontendProject.description;
-  if (frontendProject.status !== undefined) backendProject.status = frontendProject.status;
-  if (frontendProject.priority !== undefined) backendProject.priority = frontendProject.priority;
+  if (frontendProject.status !== undefined) backendProject.status = frontendProject.status; // Send the enum name directly
+  if (frontendProject.priority !== undefined) backendProject.priority = frontendProject.priority; // Send the enum name directly
   if (frontendProject.dueDate !== undefined) backendProject.due_date = frontendProject.dueDate;
   if (frontendProject.creator !== undefined) backendProject.creator = frontendProject.creator;
   if (frontendProject.domain !== undefined) backendProject.domain = frontendProject.domain;

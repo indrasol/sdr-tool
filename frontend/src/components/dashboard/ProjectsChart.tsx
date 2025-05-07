@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Legend } from "recharts";
@@ -94,14 +93,14 @@ const ProjectsChart = () => {
               <Bar 
                 dataKey="projects" 
                 name="Created"
-                fill="#7C65F6" 
+                fill="#3B82F6" 
                 radius={[4, 4, 0, 0]}
                 maxBarSize={timeRange === 'yearly' ? 30 : 16}
               />
               <Bar 
                 dataKey="completed" 
                 name="Completed"
-                fill="#4CD3A5" 
+                fill="#14B8A6" 
                 radius={[4, 4, 0, 0]}
                 maxBarSize={timeRange === 'yearly' ? 30 : 16}
               />
