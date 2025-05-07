@@ -1,4 +1,3 @@
-
 export type ProjectTemplateType = 'AI Assisted' | 'Import Existing' | 'Solutions Hub';
-export type ProjectStatus = 'Not Started' | 'In Progress' | 'Completed' | 'On Hold' | 'Planned';
-export type ProjectPriority =  'Low' | 'Medium' | 'High' | 'Critical';
+export type ProjectStatus = 'NOT_STARTED' | 'IN_PROGRESS' | 'COMPLETED' | 'ON_HOLD' | 'PLANNED' | 'All';
+export type ProjectPriority = 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL' | 'All';

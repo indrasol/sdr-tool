@@ -1,16 +1,7 @@
-
-import { Download, Grid, List, PlusCircle, Shield, Search, BarChart3Icon, UserCheck, CheckCircle } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import { Project } from '@/interfaces/projectInterfaces';
+import { Briefcase } from 'lucide-react';
+import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { motion } from 'framer-motion';
+import StackedRings from '@/components/ui/stacked-rings';
 
 interface ProjectsListHeaderProps {
   onCreateProject: () => void;
@@ -34,58 +25,93 @@ const ProjectsListHeader = ({
   currentViewType = 'grid'
 }: ProjectsListHeaderProps) => {
   return (
-    <div className="space-y-6 animate-fade-in font-sans mb-8">
-      <Card className="mb-6 animate-fade-up glass-effect overflow-hidden border-none shadow-md">
-        <CardContent className="p-6">
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6">
-            <div className="flex items-center">
-              <motion.div 
-                className="h-14 w-14 rounded-full bg-securetrack-purple/10 flex items-center justify-center mr-4"
-                whileHover={{ scale: 1.1, backgroundColor: 'rgba(124, 101, 246, 0.2)' }}
-                transition={{ type: "spring", stiffness: 400, damping: 10 }}
-              >
-                <Shield className="h-7 w-7 text-securetrack-purple" />
-              </motion.div>
-              <div>
-                <h2 className="text-2xl font-bold bg-gradient-to-r from-securetrack-purple to-securetrack-darkpurple bg-clip-text text-transparent">Project Dashboard</h2>
-                <p className="text-muted-foreground">Manage and track your security projects</p>
-              </div>
-            </div>
-            
-            <div className="flex gap-3 self-end">             
-              <div className="flex rounded-md border border-input overflow-hidden">
-                <Button 
-                  variant={currentViewType === 'grid' ? "default" : "ghost"}
-                  size="sm"
-                  onClick={() => onViewTypeChange('grid')}
-                  className={`rounded-none ${currentViewType === 'grid' ? 'bg-securetrack-purple text-white' : 'text-muted-foreground'}`}
-                >
-                  <Grid className="h-4 w-4" />
-                </Button>
-                <Button 
-                  variant={currentViewType === 'list' ? "default" : "ghost"}
-                  size="sm"
-                  onClick={() => onViewTypeChange('list')}
-                  className={`rounded-none ${currentViewType === 'list' ? 'bg-securetrack-purple text-white' : 'text-muted-foreground'}`}
-                >
-                  <List className="h-4 w-4" />
-                </Button>
-              </div>
+    <div className="space-y-6 animate-fade-in mb-8">
+      <Card className="col-span-full bg-gradient-to-r from-blue-500/15 via-teal-500/15 to-emerald-500/15 border-none overflow-hidden animate-fade-in shadow-sm hover:shadow-md transition-all duration-300 relative">
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          <svg 
+            className="absolute top-0 left-0 h-full w-full" 
+            width="100%" 
+            height="100%" 
+            viewBox="0 0 900 200" 
+            fill="none" 
+            xmlns="http://www.w3.org/2000/svg"
+            preserveAspectRatio="none"
+          >
+            <defs>
+              <linearGradient id="blueIconGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stopColor="#4F9CF9" stopOpacity="0.15" />
+                <stop offset="100%" stopColor="#4F9CF9" stopOpacity="0.05" />
+              </linearGradient>
               
-              <motion.div
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-              >
-                <Button 
-                  onClick={onCreateProject} 
-                  className="bg-securetrack-purple text-white hover:bg-securetrack-darkpurple transition-all duration-300 shadow-md hover:shadow-lg"
-                >
-                  <PlusCircle className="mr-2 h-4 w-4" />
-                  Create Project
-                </Button>
-              </motion.div>
-            </div>
+              <linearGradient id="tealIconGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stopColor="#4ED8B8" stopOpacity="0.15" />
+                <stop offset="100%" stopColor="#4ED8B8" stopOpacity="0.05" />
+              </linearGradient>
+              
+              <linearGradient id="greenIconGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stopColor="#A9D86E" stopOpacity="0.15" />
+                <stop offset="100%" stopColor="#A9D86E" stopOpacity="0.05" />
+              </linearGradient>
+            </defs>
+            
+            <g transform="translate(380, 60) scale(0.9)">
+              <path d="M25,0 L50,10 L50,30 C50,45 40,55 25,60 C10,55 0,45 0,30 L0,10 L25,0 Z" 
+                    fill="url(#greenIconGradient)" />
+              <path d="M25,5 L45,13 L45,30 C45,42 36,50 25,55 C14,50 5,42 5,30 L5,13 L25,5 Z" 
+                    stroke="#A9D86E" strokeOpacity="0.2" strokeWidth="1" fill="none" />
+              <path d="M18,30 L22,35 L33,25" 
+                    stroke="#A9D86E" strokeOpacity="0.3" strokeWidth="2" fill="none" />
+            </g>
+            
+            <g transform="translate(510, 80) scale(0.8)">
+              <rect x="0" y="0" width="60" height="50" rx="4" fill="url(#tealIconGradient)" />
+              <rect x="0" y="0" width="60" height="10" rx="0" fill="#4ED8B8" fillOpacity="0.2" />
+              <circle cx="5" cy="5" r="2" fill="#4ED8B8" fillOpacity="0.3" />
+              <circle cx="12" cy="5" r="2" fill="#4ED8B8" fillOpacity="0.3" />
+              <circle cx="19" cy="5" r="2" fill="#4ED8B8" fillOpacity="0.3" />
+              <rect x="5" y="15" width="22" height="12" rx="2" fill="#4ED8B8" fillOpacity="0.15" />
+              <rect x="32" y="15" width="22" height="12" rx="2" fill="#4ED8B8" fillOpacity="0.15" />
+              <rect x="5" y="32" width="22" height="12" rx="2" fill="#4ED8B8" fillOpacity="0.15" />
+              <rect x="32" y="32" width="22" height="12" rx="2" fill="#4ED8B8" fillOpacity="0.15" />
+            </g>
+            
+            <g transform="translate(640, 100) scale(0.85)">
+              <path d="M40,40 C51,40 60,31 60,20 C60,9 51,0 40,0 C36,0 32,1 29,3 C26,1 22,0 18,0 C8,0 0,8 0,18 C0,28 8,36 18,36 C22,36 25,35 28,33 C31,38 35,40 40,40 Z" 
+                    fill="url(#greenIconGradient)" />
+              <path d="M40,35 C48,35 55,28 55,20 C55,12 48,5 40,5" 
+                    stroke="#A9D86E" strokeOpacity="0.2" strokeWidth="1.5" fill="none" />
+              <path d="M18,5 C11,5 5,11 5,18 C5,25 11,31 18,31" 
+                    stroke="#A9D86E" strokeOpacity="0.2" strokeWidth="1.5" fill="none" />
+            </g>
+          </svg>
+          
+          <div className="absolute right-7 top-1/2 transform -translate-y-1/2 opacity-70">
+            <StackedRings className="h-48 w-48" />
           </div>
+          
+          <div className="absolute right-0 top-1/2 transform -translate-y-1/4 opacity-10">
+            <img 
+              src="/indrabot-mascot.png" 
+              alt="Indrasol Mascot" 
+              className="h-20 w-auto object-contain"
+            />
+          </div>
+        </div>
+        
+        <CardHeader className="flex flex-row items-center justify-between pb-2 relative z-10">
+          <div className="flex items-center">
+            <div className="bg-gradient-to-r from-blue-500 to-teal-500 p-2 rounded-lg mr-3 shadow-inner">
+              <Briefcase className="h-5 w-5 text-white" />
+            </div>
+            <h3 className="text-3xl font-semibold font-['Geneva','Segoe UI',sans-serif] tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-teal-600">
+              Projects
+            </h3>
+          </div>
+        </CardHeader>
+        <CardContent className="relative z-10">
+          <p className="text-sm text-gray-600 mt-3 font-medium max-w-3xl">
+            Organize, manage, and track your projects in one place.
+          </p>
         </CardContent>
       </Card>
     </div>

@@ -1,4 +1,3 @@
-
 import { FileCog, FileText, ShieldCheck, Briefcase, TrendingUp, Users, Clock } from "lucide-react";
 import Layout from "@/components/layout/Layout";
 import StatCard from "@/components/dashboard/StatCard";
@@ -146,7 +145,7 @@ const Dashboard = () => {
                 value={stats.projects}
                 icon={<Briefcase />}
                 description="Total Projects"
-                className="animate-fade-up hover:bg-gradient-to-r hover:from-securetrack-purple/5 hover:to-securetrack-green/5"
+                className="animate-fade-up hover:bg-gradient-to-r hover:from-blue-500/5 hover:to-teal-500/5"
                 style={{ animationDelay: "0.05s" }}
                 linkTo="/projects"
             />
@@ -155,7 +154,7 @@ const Dashboard = () => {
                 value={stats.analyses}
                 icon={<ShieldCheck />}
                 description="Completed analyses"
-                className="animate-fade-up hover:bg-gradient-to-r hover:from-securetrack-purple/5 hover:to-securetrack-green/5"
+                className="animate-fade-up hover:bg-gradient-to-r hover:from-blue-500/5 hover:to-teal-500/5"
                 style={{ animationDelay: "0.1s" }}
             />
             <StatCard
@@ -163,7 +162,7 @@ const Dashboard = () => {
                 value={stats.teamSize}
                 icon={<Users />}
                 description="Security professionals"
-                className="animate-fade-up hover:bg-gradient-to-r hover:from-securetrack-purple/5 hover:to-securetrack-green/5"
+                className="animate-fade-up hover:bg-gradient-to-r hover:from-blue-500/5 hover:to-teal-500/5"
                 style={{ animationDelay: "0.15s" }}
             />
             <StatCard
@@ -171,7 +170,7 @@ const Dashboard = () => {
                 value={stats.deadline}
                 icon={<Clock />}
                 description="Days until next audit"
-                className="animate-fade-up hover:bg-gradient-to-r hover:from-securetrack-purple/5 hover:to-securetrack-green/5"
+                className="animate-fade-up hover:bg-gradient-to-r hover:from-blue-500/5 hover:to-teal-500/5"
                 style={{ animationDelay: "0.2s" }}
             />
             </div>
@@ -207,7 +206,7 @@ const Dashboard = () => {
                 value={stats.vulnerabilities}
                 icon={<FileCog />}
                 description="Issues identified & resolved"
-                className="animate-fade-up hover:bg-gradient-to-r hover:from-securetrack-purple/5 hover:to-securetrack-green/5"
+                className="animate-fade-up hover:bg-gradient-to-r hover:from-blue-500/5 hover:to-teal-500/5"
                 />
             </div>
             <CustomizeCard />
