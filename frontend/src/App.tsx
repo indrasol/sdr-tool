@@ -20,6 +20,7 @@ import Documents from "./pages/Documents";
 import SOC2 from "./pages/SOC2";
 import Projects from "./pages/Projects";
 import SecurityAnalysis from "./pages/SecurityAnalysis";
+import SolutionsHub from "./pages/SolutionsHub";
 
 const queryClient = new QueryClient();
 
@@ -67,6 +68,7 @@ const App = () => (
                 <Route path="/model-with-ai" element={<ModelWithAI />} /> 
                 <Route path="/projects" element={<Projects />} />
                 <Route path="/security-analysis" element={<SecurityAnalysis />} />
+                <Route path="/solutions-hub" element={<SolutionsHub />} />
                 <Route path="/generate-report" element={<GenerateReport />} />
                 <Route path="*" element={<NotFound />} />
               </Route>

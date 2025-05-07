@@ -1,4 +1,5 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -216,6 +217,10 @@
   font-family: 'Inter', sans-serif;
 }
 
+.font-poppins {
+  font-family: 'Poppins', sans-serif;
+}
+
 .report-card {
   @apply border-l-4 border-securetrack-purple bg-gray-50 p-4 rounded shadow-sm my-3;
 }
@@ -409,4 +414,57 @@
 /* Remove dot pattern from background */
 .react-flow__pane {
   background-image: none;
+}
+
+/* Typography styles */
+.heading-xl {
+  @apply font-heading text-3xl font-semibold tracking-tight;
+}
+
+.heading-lg {
+  @apply font-heading text-2xl font-semibold tracking-tight;
+}
+
+.heading-md {
+  @apply font-heading text-xl font-medium tracking-tight;
+}
+
+.heading-sm {
+  @apply font-heading text-lg font-medium;
+}
+
+/* Styles for filter buttons gradient hover effect */
+.filter-btn-hover {
+  @apply transition-colors duration-200;
+  background-color: transparent;
+}
+
+.filter-btn-hover:hover {
+  background-color: rgba(124, 101, 246, 0.05);
+  border-color: rgba(124, 101, 246, 0.2);
+}
+
+.filter-btn-active {
+  background-color: #7C65F6 !important;
+  color: white !important;
+  border-color: #7C65F6 !important;
+}
+
+.clear-filter-btn:hover {
+  background-color: rgba(124, 101, 246, 0.05);
+  border-color: rgba(124, 101, 246, 0.1);
+}
+
+/* Dropdown item hover style */
+.dropdown-item-hover {
+  @apply transition-colors duration-150;
+  background-color: transparent;
+}
+
+.dropdown-item-hover:hover {
+  background-color: rgba(124, 101, 246, 0.05);
+}
+
+.dropdown-item-selected {
+  background-color: rgba(124, 101, 246, 0.1);
 }

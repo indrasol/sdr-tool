@@ -1,10 +1,19 @@
-
 import { FileText, PlusCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 interface EmptyProjectsStateProps {
   onCreateProject: () => void;
 }
+
+// Add custom CSS for filter buttons
+const filterButtonStyles = `
+  bg-gradient-to-r from-blue-50/70 to-purple-50/70
+  border-blue-100 hover:border-blue-200
+  text-blue-600 hover:text-blue-700
+  hover:from-blue-100/80 hover:to-purple-100/80
+  hover:shadow-sm
+  transition-all duration-300
+`;
 
 const EmptyProjectsState = ({ onCreateProject }: EmptyProjectsStateProps) => {
   return (
@@ -16,7 +25,9 @@ const EmptyProjectsState = ({ onCreateProject }: EmptyProjectsStateProps) => {
       </p>
       <Button 
         onClick={onCreateProject}
-        className="bg-securetrack-purple hover:bg-securetrack-darkpurple"
+        variant="outline"
+        size="sm"
+        className={`${filterButtonStyles} h-9 text-sm whitespace-nowrap px-3 font-inter`}
       >
         <PlusCircle className="mr-2 h-4 w-4" />
         Create Your First Project

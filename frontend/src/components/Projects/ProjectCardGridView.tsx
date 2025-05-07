@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import ProjectCardBadges from './ProjectCardBadges';
@@ -7,6 +6,7 @@ import ProjectCardMetadata from './ProjectCardMetadata';
 import { getBorderColor } from './utils/projectStyleUtils';
 import type { ProjectCardProps } from '../../interfaces/projectInterfaces';
 import { motion } from 'framer-motion';
+import { CalendarDays } from 'lucide-react';
 
 const ProjectCardGridView: React.FC<ProjectCardProps> = ({
   id,
@@ -44,10 +44,10 @@ const ProjectCardGridView: React.FC<ProjectCardProps> = ({
         style={{ borderLeftColor: getBorderColor(priority) }}
         onClick={onClick}
       >
-        <CardContent className="p-4">
-          <div className="flex justify-between items-start mb-2">
+        <CardContent className="p-5">
+          <div className="flex justify-between items-start mb-3">
             <div>
-              <h3 className="font-semibold text-lg mb-1">{name}</h3>
+              <h3 className="font-poppins font-semibold text-lg mb-2 text-gray-800">{name}</h3>
               <ProjectCardBadges 
                 status={status} 
                 priority={priority} 
@@ -57,7 +57,7 @@ const ProjectCardGridView: React.FC<ProjectCardProps> = ({
               />
             </div>
             <div className="flex items-center gap-2">
-              <div className="text-xs text-muted-foreground bg-gray-100 rounded px-2 py-1 w-16 text-center">
+              <div className="text-xs font-inter text-muted-foreground bg-gray-100 rounded px-2 py-1 w-16 text-center">
                 {id}
               </div>
               <ProjectCardActions 
@@ -68,7 +68,18 @@ const ProjectCardGridView: React.FC<ProjectCardProps> = ({
             </div>
           </div>
           
-          <p className="text-sm text-muted-foreground mb-3 line-clamp-2">{description}</p>
+          <p className="text-sm text-muted-foreground mb-4 line-clamp-2 font-inter">{description}</p>
+          
+          {dueDate && (
+            <div className="mb-3 flex items-center text-xs font-inter text-gray-500">
+              <CalendarDays className="h-3.5 w-3.5 mr-1.5 text-gray-400" />
+              <span>Due: {new Date(dueDate).toLocaleDateString('en-US', { 
+                year: 'numeric', 
+                month: 'short', 
+                day: 'numeric' 
+              })}</span>
+            </div>
+          )}
           
           <ProjectCardMetadata
             createdDate={createdDate}

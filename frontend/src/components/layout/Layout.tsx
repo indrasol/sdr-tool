@@ -1,4 +1,3 @@
-
 import React from "react";
 import AppHeader from "./AppHeader";
 
@@ -8,7 +7,7 @@ interface LayoutProps {
 
 const Layout = ({ children }: LayoutProps) => {
   return (
-    <div className="min-h-screen flex flex-col bg-background bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI2MCIgaGVpZ2h0PSI2MCIgdmlld0JveD0iMCAwIDYwIDYwIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNCQkJEQzkiIGZpbGwtb3BhY2l0eT0iMC4xIj48cGF0aCBkPSJNMzYgMzBoLTYgdi02aDYtNnY2aDZ6TTMwIDM2aC02di02aDZ2NnoiLz48L2c+PC9nPjwvc3ZnPg==')]">
+    <div className="min-h-screen flex flex-col bg-background">
       <AppHeader />
       <main className="flex-1 container py-8 animate-fade-in">
         {children}

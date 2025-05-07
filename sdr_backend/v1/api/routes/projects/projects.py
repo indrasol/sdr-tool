@@ -118,8 +118,8 @@ async def create_project(
 @router.get("/projects")
 async def get_projects(
     tenant_id: int,
-    status: Optional[ProjectStatus] = None,  # Enum for status filtering
-    priority: Optional[ProjectPriority] = None,  # Enum for priority filtering
+    status: Optional[str] = None,  # Changed from ProjectStatus to str
+    priority: Optional[str] = None,  # Changed from ProjectPriority to str
     sort_by: Optional[str] = "created_date",
     sort_order: Optional[str] = "desc",
     limit: int = 10,
@@ -131,31 +131,48 @@ async def get_projects(
     """
     try:
         supabase = get_supabase_client()
+        
+        # Convert string status to enum if provided
+        status_enum = None
+        if status:
+            try:
+                # Try direct mapping first
+                status_enum = ProjectStatus[status]
+            except KeyError:
+                # Try converting "In Progress" to "IN_PROGRESS"
+                normalized_status = status.upper().replace(" ", "_")
+                try:
+                    status_enum = ProjectStatus[normalized_status]
+                except KeyError:
+                    log_info(f"Invalid status value: {status}")
+                    # Just continue without status filter if invalid
+        
+        # Convert string priority to enum if provided
+        priority_enum = None
+        if priority:
+            try:
+                # Try direct mapping first
+                priority_enum = ProjectPriority[priority]
+            except KeyError:
+                # Try converting "High Priority" to "HIGH_PRIORITY"
+                normalized_priority = priority.upper().replace(" ", "_")
+                try:
+                    priority_enum = ProjectPriority[normalized_priority]
+                except KeyError:
+                    log_info(f"Invalid priority value: {priority}")
+                    # Just continue without priority filter if invalid
+        
         # log_info("entered projects try block")
         projects = await supabase_manager.get_user_projects(
             user_id=current_user["id"],
             tenant_id=tenant_id,
-            status=status,
-            priority=priority,
+            status=status_enum,
+            priority=priority_enum,
             sort_by=sort_by,
             sort_order=sort_order,
             limit=limit,
             offset=offset
         )
-        # log_info("projects : {projects}")
-        # Fetch user roles for the tenant
-        # def fetch_roles():
-        #     return supabase.from_("roles").select("*").eq("user_id", current_user["id"]).eq("tenant_id", tenant_id).execute()
-        # roles_response = await safe_supabase_operation(fetch_roles, "Failed to fetch roles")
-        # user_roles = {role["project_code"]: role["permissions"] for role in roles_response.data}
-
-        # Annotate projects with access permissions
-        # annotated_projects = []
-        # for project in projects:
-        #     role_perms = user_roles.get(project["id"], {"view": True, "edit": False})  # Default: view only
-        #     project["can_view"] = role_perms.get("view", True)
-        #     project["can_edit"] = role_perms.get("edit", False) or project["creator"] == current_user["username"]
-        #     annotated_projects.append(project)
         
         return {"projects": projects}
     except Exception as e:
@@ -260,8 +277,11 @@ async def update_project(
         if not project_check.data:
             raise HTTPException(status_code=404, detail=f"Project {project_code} not found or not authorized")
         
+        # Get the project data from the response
+        project_data = project_check.data[0]
+        
         # Check ownership or edit permission
-        if project_check["creator"] != current_user["username"]:
+        if project_data.get("creator") != current_user.get("username"):
             def fetch_role():
                 return supabase.from_("roles").select("permissions").eq("user_id", current_user["id"]).eq("project_code", project_code).execute()
             role_response = await safe_supabase_operation(fetch_role, "Failed to fetch role")

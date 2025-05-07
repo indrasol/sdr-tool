@@ -1,4 +1,3 @@
-
 import { useEffect } from 'react'; 
 import Layout from '@/components/layout/Layout';
 import ProjectsListHeader from '@/components/Projects/ProjectsListHeader';
@@ -130,6 +129,7 @@ const Projects = () => {
             onDeleteProject={handleDeleteProject}
             onEditProject={handleEditProject}
             viewType={viewType}
+            onViewTypeChange={setViewType}
           />
         </motion.div>
 
