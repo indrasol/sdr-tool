@@ -19,8 +19,10 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { FolderOpen } from "lucide-react";
+import { useProjectsPage } from '@/components/Projects/ProjectListPage/useProjectsPage';
+import { BASE_API_URL } from '../services/apiService'
 
-const BASE_API_URL = import.meta.env.VITE_BASE_API_URL
+// const BASE_API_URL = import.meta.env.VITE_BASE_API_URL
 
 const ProjectsNavigationCard = () => (
     <Card className="hover:shadow-md transition-all duration-300 flex flex-col">
@@ -46,8 +48,9 @@ const ProjectsNavigationCard = () => (
 const Dashboard = () => {
     const navigate = useNavigate();
     const { user, isAuthenticated } = useContext(AuthContext);
+    const { allProjects } = useProjectsPage();
     const [stats, setStats] = useState({
-      projects: 0,
+      projects: allProjects.length,
       analyses: 0,
       reports: 0,
       vulnerabilities: 0,
@@ -87,7 +90,7 @@ const Dashboard = () => {
           } else {
             // If API fails, use default stats for now
             setStats({
-              projects: 17,
+              projects: allProjects.length,
               analyses: 42,
               reports: 31,
               vulnerabilities: 86,
@@ -99,7 +102,7 @@ const Dashboard = () => {
           console.error("Error fetching user stats:", error);
           // Fallback to default stats on error
           setStats({
-            projects: 17,
+            projects: allProjects.length,
             analyses: 42,
             reports: 31,
             vulnerabilities: 86,
@@ -131,6 +134,8 @@ const Dashboard = () => {
         .join(' ');
     };
 
+    console.log(`Total All Projects : ${allProjects.length}`)
+
     // Get username from user object, using fallbacks in case properties are missing
     const displayName = user.username || user.email || 'Valued User';
 
@@ -142,7 +147,7 @@ const Dashboard = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 animate-fade-in">
             <StatCard
                 title="Projects Created"
-                value={stats.projects}
+                value={allProjects.length}
                 icon={<Briefcase />}
                 description="Total Projects"
                 className="animate-fade-up hover:bg-gradient-to-r hover:from-blue-500/5 hover:to-teal-500/5"

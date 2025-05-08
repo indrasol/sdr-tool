@@ -8,72 +8,72 @@ import { useAuth } from "../components/Auth/AuthContext";
 import { useToast } from '@/hooks/use-toast';
 
 // Sample projects to display when creator is "testsdr"
-const sampleProjects: Project[] = [
-  {
-    id: 'P1234',
-    name: 'Web Application Security Assessment',
-    description: 'Comprehensive security analysis of the company ecommerce platform.',
-    status: 'In Progress',
-    priority: 'High',
-    createdDate: '2023-06-12',
-    dueDate: '2023-07-30',
-    creator: 'testsdr',
-    domain: 'ecommerce.example.com',
-    templateType: 'AI Assisted',
-    tenantId: 1
-  },
-  {
-    id: 'P2345',
-    name: 'Cloud Infrastructure Hardening',
-    description: 'Implementing security controls for AWS infrastructure and services.',
-    status: 'Not Started',
-    priority: 'Critical',
-    createdDate: '2023-06-15',
-    dueDate: '2023-08-10',
-    creator: 'testsdr',
-    assignedTo: 'DevOps Team',
-    templateType: 'Solutions Hub',
-    tenantId: 1
-  },
-  {
-    id: 'P3456',
-    name: 'Internal Network Penetration Test',
-    description: 'Testing the security of internal systems and network infrastructure.',
-    status: 'On Hold',
-    priority: 'Medium',
-    createdDate: '2023-05-20',
-    creator: 'testsdr',
-    importedFile: 'network_scan.xml',
-    templateType: 'Import Existing',
-    tenantId: 1
-  },
-  {
-    id: 'P4567',
-    name: 'SOC 2 Compliance Project',
-    description: 'Preparing documentation and controls for SOC 2 Type II audit.',
-    status: 'Not Started',
-    priority: 'High',
-    createdDate: '2023-04-10',
-    dueDate: '2023-09-15',
-    creator: 'testsdr',
-    assignedTo: 'Compliance Team',
-    templateType: 'AI Assisted',
-    tenantId: 1
-  },
-  {
-    id: 'P5678',
-    name: 'Mobile App Security Review',
-    description: 'Security code review and penetration testing of iOS and Android applications.',
-    status: 'In Progress',
-    priority: 'Medium',
-    createdDate: '2023-06-01',
-    dueDate: '2023-07-01',
-    creator: 'testsdr',
-    importedFile: 'mobile_scan_results.pdf',
-    templateType: 'Import Existing',
-    tenantId: 1
-  }
-];
+// const sampleProjects: Project[] = [
+//   {
+//     id: 'P1234',
+//     name: 'Web Application Security Assessment',
+//     description: 'Comprehensive security analysis of the company ecommerce platform.',
+//     status: 'In Progress',
+//     priority: 'High',
+//     createdDate: '2023-06-12',
+//     dueDate: '2023-07-30',
+//     creator: 'testsdr',
+//     domain: 'ecommerce.example.com',
+//     templateType: 'AI Assisted',
+//     tenantId: 1
+//   },
+//   {
+//     id: 'P2345',
+//     name: 'Cloud Infrastructure Hardening',
+//     description: 'Implementing security controls for AWS infrastructure and services.',
+//     status: 'Not Started',
+//     priority: 'Critical',
+//     createdDate: '2023-06-15',
+//     dueDate: '2023-08-10',
+//     creator: 'testsdr',
+//     assignedTo: 'DevOps Team',
+//     templateType: 'Solutions Hub',
+//     tenantId: 1
+//   },
+//   {
+//     id: 'P3456',
+//     name: 'Internal Network Penetration Test',
+//     description: 'Testing the security of internal systems and network infrastructure.',
+//     status: 'On Hold',
+//     priority: 'Medium',
+//     createdDate: '2023-05-20',
+//     creator: 'testsdr',
+//     importedFile: 'network_scan.xml',
+//     templateType: 'Import Existing',
+//     tenantId: 1
+//   },
+//   {
+//     id: 'P4567',
+//     name: 'SOC 2 Compliance Project',
+//     description: 'Preparing documentation and controls for SOC 2 Type II audit.',
+//     status: 'Not Started',
+//     priority: 'High',
+//     createdDate: '2023-04-10',
+//     dueDate: '2023-09-15',
+//     creator: 'testsdr',
+//     assignedTo: 'Compliance Team',
+//     templateType: 'AI Assisted',
+//     tenantId: 1
+//   },
+//   {
+//     id: 'P5678',
+//     name: 'Mobile App Security Review',
+//     description: 'Security code review and penetration testing of iOS and Android applications.',
+//     status: 'In Progress',
+//     priority: 'Medium',
+//     createdDate: '2023-06-01',
+//     dueDate: '2023-07-01',
+//     creator: 'testsdr',
+//     importedFile: 'mobile_scan_results.pdf',
+//     templateType: 'Import Existing',
+//     tenantId: 1
+//   }
+// ];
 
 // Mock projects data - empty by default
 const mockProjects: Project[] = [];
@@ -138,8 +138,6 @@ export const useProjects = () => {
       const projectsData = await projectService.getProjects(params);
       setProjects(projectsData);
       
-      // Update total count (in real app, this should come from API response)
-      // This is a placeholder - your backend should return total count
       setPagination(prev => ({
         ...prev,
         total: projectsData.length > 0 ? Math.max(projectsData.length, prev.total) : prev.total
@@ -212,7 +210,7 @@ export const useProjects = () => {
         name: project.name,
         description: project.description,
         priority: project.priority,
-        status: project.status || 'Not Started',
+        status: project.status || 'NOT_STARTED',
         domain: project.domain,
         due_date: project.dueDate,
         creator: user.id || user.email || 'unknown',
@@ -391,92 +389,3 @@ export const useProjects = () => {
     defaultTenantId
   };
 };
-
-
-// export const useProjects = () => {
-//   const [projects, setProjects] = useState<Project[]>(mockProjects);
-//   const [searchTerm, setSearchTerm] = useState('');
-//   const [statusFilter, setStatusFilter] = useState<ProjectStatus | 'All'>('All');
-//   const [priorityFilter, setPriorityFilter] = useState<ProjectPriority | 'All'>('All');
-//   const [templateFilter, setTemplateFilter] = useState<ProjectTemplateType | 'All'>('All');
-  
-//   const filteredProjects = useMemo(() => {
-//     return projects.filter(project => {
-//       // Apply search filter
-//       const matchesSearch = 
-//         searchTerm === '' || 
-//         project.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-//         project.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-//         project.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-//         (project.domain && project.domain.toLowerCase().includes(searchTerm.toLowerCase()));
-      
-//       // Apply status filter
-//       const matchesStatus = statusFilter === 'All' || project.status === statusFilter;
-      
-//       // Apply priority filter
-//       const matchesPriority = priorityFilter === 'All' || project.priority === priorityFilter;
-      
-//       // Apply template filter
-//       const matchesTemplate = templateFilter === 'All' || project.templateType === templateFilter;
-      
-//       return matchesSearch && matchesStatus && matchesPriority && matchesTemplate;
-//     });
-//   }, [projects, searchTerm, statusFilter, priorityFilter, templateFilter]);
-
-//   const hasActiveFilters = searchTerm !== '' || statusFilter !== 'All' || priorityFilter !== 'All' || templateFilter !== 'All';
-  
-//   const clearFilters = () => {
-//     setSearchTerm('');
-//     setStatusFilter('All');
-//     setPriorityFilter('All');
-//     setTemplateFilter('All');
-//   };
-
-//   const addProject = (project: Project) => {
-//     setProjects(prev => [...prev, project]);
-//   };
-
-//   const deleteProject = (projectId: string) => {
-//     setProjects(prev => prev.filter(project => project.id !== projectId));
-//   };
-
-//   const deleteAllProjects = () => {
-//     setProjects([]);
-//   };
-
-//   const updateProject = (projectId: string, updatedData: Partial<Project>) => {
-//     setProjects(prev => 
-//       prev.map(project => 
-//         project.id === projectId ? { ...project, ...updatedData } : project
-//       )
-//     );
-//   };
-
-//   const loadSampleProjects = (creatorName: string) => {
-//     if (creatorName === 'testsdr') {
-//       setProjects(sampleProjects);
-//       return true;
-//     }
-//     return false;
-//   };
-  
-//   return {
-//     projects: filteredProjects,
-//     allProjects: projects,
-//     searchTerm,
-//     setSearchTerm,
-//     statusFilter,
-//     setStatusFilter,
-//     priorityFilter,
-//     setPriorityFilter,
-//     templateFilter,
-//     setTemplateFilter,
-//     clearFilters,
-//     hasActiveFilters,
-//     addProject,
-//     deleteProject,
-//     deleteAllProjects,
-//     updateProject,
-//     loadSampleProjects
-//   };
-// };

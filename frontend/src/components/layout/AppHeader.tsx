@@ -2,8 +2,8 @@ import { useState } from 'react';
 import { Route, Menu, LogOut } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Link } from 'react-router-dom';
-import CreateProjectModel from "@/pages/CreateProjectModal"; // Import CreateProjectModel
 import { useNavigate } from 'react-router-dom';
+
 const AppHeader = () => {
   const navigate = useNavigate();
   const handleLogout = () => {
@@ -29,6 +29,9 @@ const AppHeader = () => {
           </Link>
           <Link to="/projects" className="text-sm font-medium hover:text-primary transition-colors">
             Projects
+          </Link>
+          <Link to="/solutions-hub" className="text-sm font-medium hover:text-primary transition-colors">
+            Hub
           </Link>
           <a href="/documents" className="text-sm font-medium hover:text-primary transition-colors">
             Documents
