@@ -3,6 +3,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { BarChart3Icon, CheckCircle, UserCheck, Briefcase, Clock, Archive, Activity } from 'lucide-react';
 import { Project } from '@/interfaces/projectInterfaces';
 import { motion } from 'framer-motion';
+import { ProjectStatus } from '@/types/projectTypes';
 
 interface ProjectStatsProps {
   allProjects: Project[];
@@ -12,11 +13,11 @@ interface ProjectStatsProps {
 const ProjectStats = ({ allProjects, onStatusFilterChange }: ProjectStatsProps) => {
   // Calculate project counts for stats cards
   const activeProjectsCount = useMemo(() => {
-    return allProjects.filter(p => p.status === 'In Progress' || p.status === 'Not Started').length;
+    return allProjects.filter(p => p.status === 'IN_PROGRESS' || p.status === 'NOT_STARTED').length;
   }, [allProjects]);
 
   const completedProjectsCount = useMemo(() => {
-    return allProjects.filter(p => p.status === 'Completed').length;
+    return allProjects.filter(p => p.status === 'COMPLETED').length;
   }, [allProjects]);
 
   const myProjectsCount = useMemo(() => {

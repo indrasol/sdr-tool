@@ -85,16 +85,8 @@ const ProjectsListHeader = ({
             </g>
           </svg>
           
-          <div className="absolute right-7 top-1/2 transform -translate-y-1/2 opacity-70">
+          <div className="absolute -right-2 top-1/2 transform -translate-y-1/2 opacity-70">
             <StackedRings className="h-48 w-48" />
-          </div>
-          
-          <div className="absolute right-0 top-1/2 transform -translate-y-1/4 opacity-10">
-            <img 
-              src="/indrabot-mascot.png" 
-              alt="Indrasol Mascot" 
-              className="h-20 w-auto object-contain"
-            />
           </div>
         </div>
         
@@ -103,9 +95,18 @@ const ProjectsListHeader = ({
             <div className="bg-gradient-to-r from-blue-500 to-teal-500 p-2 rounded-lg mr-3 shadow-inner">
               <Briefcase className="h-5 w-5 text-white" />
             </div>
-            <h3 className="text-3xl font-semibold font-['Geneva','Segoe UI',sans-serif] tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-teal-600">
-              Projects
-            </h3>
+            <div className="flex items-center">
+              <h3 className="text-3xl font-semibold font-['Geneva','Segoe UI',sans-serif] tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-teal-600">
+                Projects
+              </h3>
+              <div className="h-10 flex items-center">
+                <img 
+                  src="/indrabot-mascot.png" 
+                  alt="Indrasol Mascot" 
+                  className="h-20 w-auto object-contain opacity-35 ml-2 -my-10"
+                />
+              </div>
+            </div>
           </div>
         </CardHeader>
         <CardContent className="relative z-10">

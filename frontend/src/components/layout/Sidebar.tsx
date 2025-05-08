@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Plus, Users, Settings, BarChart, Menu } from "lucide-react";
 import { cn } from "@/lib/utils";
-import CreateProjectModal, { CreateProjectModel } from "@/pages/CreateProjectModal";
+// import CreateProjectModal, { CreateProjectModel } from "@/pages/CreateProjectModal";
 
 interface SidebarProps {
   className?: string;
@@ -35,14 +35,14 @@ export function Sidebar({ className }: SidebarProps) {
         </nav>
       </div>
       
-      <CreateProjectModal 
+      {/* <CreateProjectModal 
         open={createDialogOpen}
         onOpenChange={setCreateDialogOpen}
         addProject={(project) => {
           // Implement the addProject function here
           console.log("Project added:", project);
         }}
-      />
+      /> */}
     </>
   );
 }
