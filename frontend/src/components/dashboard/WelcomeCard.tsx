@@ -34,18 +34,18 @@ const WelcomeCard = ({ username }: WelcomeCardProps) => {
 
   return (
     <Card className="col-span-full bg-gradient-to-r from-blue-500/15 via-teal-500/15 to-emerald-500/15 border-none overflow-hidden animate-fade-in shadow-sm hover:shadow-md transition-all duration-300 relative">
-      <div className="absolute right-48 top-4 opacity-10">
-        <img 
-          src="/indrabot-mascot.png" 
-          alt="Indrasol Mascot" 
-          className="h-16 w-auto object-contain"
-        />
-      </div>
       <CardHeader className="flex flex-row items-center justify-between pb-2 relative z-10">
         <CardTitle className="text-3xl font-semibold font-['Geneva','Segoe UI',sans-serif] tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-teal-600 flex items-center gap-2">
           {getGreeting()}, {username}
           <div className="inline-block animate-pulse">
             <Sparkles className="h-6 w-6 text-blue-500" />
+          </div>
+          <div className="h-10 flex items-center">
+            <img 
+              src="/indrabot-mascot.png" 
+              alt="Indrasol Mascot" 
+              className="h-20 w-auto object-contain opacity-40 -ml-2 -my-10"
+            />
           </div>
         </CardTitle>
         <div className="flex items-center gap-4">

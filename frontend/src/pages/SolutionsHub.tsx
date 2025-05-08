@@ -487,7 +487,7 @@ const SolutionsHub = () => {
         {/* Header Card similar to WelcomeCard */}
         <Card className="col-span-full bg-gradient-to-r from-blue-500/20 via-teal-500/20 to-emerald-500/20 border-none overflow-hidden animate-fade-in shadow-sm hover:shadow-md transition-all duration-300 relative">
           <div className="absolute inset-0 overflow-hidden pointer-events-none">
-            <div className="absolute right-10 top-1/2 transform -translate-y-1/2 opacity-75">
+            <div className="absolute -right-1 top-1/2 transform -translate-y-1/2 opacity-75">
               <img 
                 src="/keys_image.png" 
                 alt="Security Keys" 
@@ -548,11 +548,7 @@ const SolutionsHub = () => {
             </div>
             
             <div className="absolute right-0 top-1/2 transform -translate-y-1/4 opacity-10">
-              <img 
-                src="/indrabot-mascot.png" 
-                alt="Indrasol Mascot" 
-                className="h-20 w-auto object-contain"
-              />
+              {/* Placeholder for the mascot image */}
             </div>
           </div>
           
@@ -561,9 +557,18 @@ const SolutionsHub = () => {
               <div className="bg-gradient-to-r from-blue-500 to-teal-500 p-2 rounded-lg mr-3 shadow-inner">
                 <Puzzle className="h-5 w-5 text-white" />
               </div>
-              <h3 className="text-3xl font-semibold font-['Geneva','Segoe UI',sans-serif] tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-teal-600">
-                Solutions Hub
-              </h3>
+              <div className="flex items-center">
+                <h3 className="text-3xl font-semibold font-['Geneva','Segoe UI',sans-serif] tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-teal-600">
+                  Solutions Hub
+                </h3>
+                <div className="h-10 flex items-center">
+                  <img 
+                    src="/indrabot-mascot.png" 
+                    alt="Indrasol Mascot" 
+                    className="h-20 w-auto object-contain opacity-35 ml-2 -my-10"
+                  />
+                </div>
+              </div>
             </div>
           </CardHeader>
           <CardContent className="relative z-10">
