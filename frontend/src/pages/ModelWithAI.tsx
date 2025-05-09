@@ -1438,6 +1438,9 @@ const ModelWithAI = () => {
                       isLoadedProject={projectLoaded}
                       diagramState={{ nodes, edges }}
                       onRevertToDiagramState={handleRevertToDiagramState}
+                      suggestion={suggestion}
+                      showSuggestion={showSuggestion}
+                      onCloseSuggestion={() => setShowSuggestion(false)}
                     />
                   </div>
                 </div>
@@ -1580,18 +1583,6 @@ const ModelWithAI = () => {
                 </li>
               ))}
             </ul>
-          </div>
-        )}
-
-        {showSuggestion && (
-          <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 bg-white rounded-lg shadow-lg p-4 max-w-md z-10">
-            <h3 className="text-md font-semibold mb-2">Perhaps you meant:</h3>
-            <button
-              onClick={handleUseSuggestion}
-              className="text-blue-600 hover:text-blue-800 hover:underline text-left w-full"
-            >
-              {suggestion}
-            </button>
           </div>
         )}
       </div>
