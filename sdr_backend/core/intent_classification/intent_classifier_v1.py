@@ -565,12 +565,15 @@ class IntentClassifier:
         Example: "ExpertResponse 0.85"
         """
         
-        response = await self.llm_service.generate_llm_response(prompt=prompt, temperature=0.3,model_provider="openai",model_name="gpt-4o-mini")
+        response = await self.llm_service.generate_llm_response(prompt=prompt, temperature=0.5,model_provider="openai",model_name="gpt-4o-mini")
         log_info(f"LLM classification response: {response}")
         
         # Parse LLM response to extract intent and confidence
         try:
-            parts = response.strip().split()
+            # Extract the content from the response dictionary
+            response_content = response.get('content', '') if isinstance(response, dict) else response
+            
+            parts = response_content.strip().split()
             intent_str = parts[0]
             confidence = float(parts[1])
             

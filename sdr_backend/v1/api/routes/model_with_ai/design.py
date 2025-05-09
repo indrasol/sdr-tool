@@ -275,7 +275,7 @@ async def design_endpoint(
                         prompt=prompt,
                         model_provider="anthropic",
                         model_name="claude-3.7-sonnet",
-                        temperature=0.7,
+                        temperature=0.4,
                         timeout=timeout
                     )
                     log_info(f"LLM Response Data : {llm_response}")
@@ -291,14 +291,16 @@ async def design_endpoint(
                     log_info(f"Processed Response : {processed_response}")
                 else:
                     # For clarification and out-of-context responses
-                    llm_response = await llm_service.generate_anthropic_response(
+                    llm_response = await llm_service.generate_llm_response(
                         prompt=prompt,
                         model_provider="anthropic",
                         model_name="claude-3.7-sonnet",
-                        temperature=0.5,
+                        temperature=0.4,
                         stream=False,
                         timeout=timeout
                     )
+
+                    log_info(f"LLM Response : {llm_response}")
                     
                     # Process and validate response
                     processed_response = await response_processor.process_response(
