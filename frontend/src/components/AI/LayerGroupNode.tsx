@@ -1,5 +1,6 @@
 import React from 'react';
 import { NodeProps } from '@xyflow/react';
+import { getLayerStyle } from './utils/layerUtils';
 
 interface ExtendedNodeProps extends NodeProps {
   style?: React.CSSProperties;
@@ -7,44 +8,12 @@ interface ExtendedNodeProps extends NodeProps {
 
 const LayerGroupNode = ({ id, data, style, width, height }: ExtendedNodeProps) => {
   // Get layer type from data for dynamic styling
-  const layerType = (data?.layer as keyof typeof layerStyles) || 'default';
+  const layerType = (data?.layer as string) || 'default';
   
-  // Define more visible layer styles based on layer type
-  const layerStyles = {
-    // security: { 
-    //   bgColor: 'rgba(255, 59, 48, 0.15)', 
-    //   borderColor: 'rgba(255, 59, 48, 0.5)',
-    //   color: '#990000',
-    //   label: 'Security Layer'
-    // },
-    application: { 
-      bgColor: 'rgba(52, 199, 89, 0.15)', 
-      borderColor: 'rgba(52, 199, 89, 0.5)',
-      color: '#006600',
-      label: 'Application Layer'
-    },
-    cloud: { 
-      bgColor: 'rgba(255, 149, 0, 0.15)', 
-      borderColor: 'rgba(255, 149, 0, 0.5)',
-      color: '#cc6600',
-      label: 'Cloud Infrastructure'
-    },
-    network: { 
-      bgColor: 'rgba(255, 59, 48, 0.15)', 
-      borderColor: 'rgba(255, 59, 48, 0.5)',
-      color: '#990000',
-      label: 'Network Layer'
-    },
-    default: { 
-      bgColor: '', 
-      borderColor: '',
-      color: '',
-      label: ''
-    }
-  };
+  // Get appropriate style from our centralized layer configuration
+  const layerStyle = getLayerStyle(layerType);
+
   
-  // Get appropriate style based on layer type
-  const layerStyle = layerStyles[layerType] || layerStyles.default;
   
   return (
     <div

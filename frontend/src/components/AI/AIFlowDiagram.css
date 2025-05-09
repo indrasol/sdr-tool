@@ -1001,3 +1001,93 @@
   position: absolute !important;
   z-index: 9999 !important;
 }
+
+/* Add this to your AIFlowDiagram.css or create a new LayerStyles.css file */
+
+/* Layer container styles for better visibility */
+.layer-container {
+  transition: all 0.3s ease;
+  pointer-events: none;
+  position: absolute;
+  z-index: -5 !important; /* Force behind other nodes */
+  transform-origin: top left;
+  animation: fadeInLayer 0.5s ease-out forwards;
+}
+
+/* Ensure layer containers are visible */
+.react-flow__node.react-flow__node-layerGroup {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  z-index: -1 !important;
+}
+
+/* Make layer title more visible */
+.layer-title {
+  transition: all 0.3s ease;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.2);
+  font-family: 'Inter', system-ui, sans-serif;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  z-index: 1;
+  white-space: nowrap;
+  backdrop-filter: blur(4px);
+}
+
+/* Override default node selection styles for layer groups */
+.react-flow__node-layerGroup.selected {
+  outline: none !important;
+  box-shadow: none !important;
+  border: none !important;
+}
+
+/* Ensure layer groups are properly visible on hover */
+.react-flow__node-layerGroup:hover .layer-container {
+  filter: brightness(1.05);
+}
+
+/* Animate layer appearance for better visibility */
+@keyframes fadeInLayer {
+  from {
+    opacity: 0;
+    transform: scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* Layer type-specific styling for even more distinctiveness */
+.layer-container[data-layer="aws"] {
+  background-image: linear-gradient(to bottom right, rgba(255, 153, 0, 0.03), rgba(255, 153, 0, 0.08));
+}
+
+.layer-container[data-layer="azure"] {
+  background-image: linear-gradient(to bottom right, rgba(0, 114, 198, 0.03), rgba(0, 114, 198, 0.08));
+}
+
+.layer-container[data-layer="gcp"] {
+  background-image: linear-gradient(to bottom right, rgba(26, 115, 232, 0.03), rgba(26, 115, 232, 0.08));
+}
+
+.layer-container[data-layer="application"] {
+  background-image: linear-gradient(to bottom right, rgba(0, 150, 136, 0.03), rgba(0, 150, 136, 0.08));
+}
+
+.layer-container[data-layer="network"] {
+  background-image: linear-gradient(to bottom right, rgba(220, 53, 69, 0.03), rgba(220, 53, 69, 0.08));
+}
+
+.layer-container[data-layer="client"] {
+  background-image: linear-gradient(to bottom right, rgba(75, 85, 99, 0.02), rgba(75, 85, 99, 0.05));
+}
+
+/* Improved layer title appearance */
+.layer-title {
+  border-radius: 4px;
+  padding: 4px 10px;
+  font-size: 10px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+  backdrop-filter: blur(8px);
+}
