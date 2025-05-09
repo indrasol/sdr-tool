@@ -7,6 +7,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { cn } from '@/lib/utils';
 import { WallpaperOption } from './types/chatTypes';
 import ThinkingDisplay from './ThinkingDisplay'
+import { X } from 'lucide-react';
 
 export interface Message {
   role: 'user' | 'assistant';
@@ -40,6 +41,10 @@ interface AIChatProps {
     edges: any[];
   };
   onRevertToDiagramState?: (messageContent: string, diagramState: any) => void;
+  // Add props for suggestion display
+  suggestion?: string;
+  showSuggestion?: boolean;
+  onCloseSuggestion?: () => void;
 }
 
 interface ChatSession {
@@ -59,7 +64,10 @@ const AIChat: React.FC<AIChatProps> = ({
   projectId,
   isLoadedProject = false,
   diagramState,
-  onRevertToDiagramState
+  onRevertToDiagramState,
+  suggestion = '',
+  showSuggestion = false,
+  onCloseSuggestion = () => {}
 }) => {
   const [activeTab, setActiveTab] = useState<'guardian' | 'history'>('guardian');
   const [chatHistory, setChatHistory] = useState<ChatSession[]>([]);
@@ -85,6 +93,30 @@ const AIChat: React.FC<AIChatProps> = ({
   
   // Track last message count to detect new messages
   const lastMessageCount = useRef(0);
+
+  // Add new state for handling the suggestion UI
+  const [internalShowSuggestion, setInternalShowSuggestion] = useState(showSuggestion);
+  const [internalSuggestion, setInternalSuggestion] = useState(suggestion);
+
+  // Update internal state when props change
+  useEffect(() => {
+    setInternalShowSuggestion(showSuggestion);
+    setInternalSuggestion(suggestion);
+  }, [showSuggestion, suggestion]);
+
+  // Function to handle using a suggestion
+  const handleUseSuggestion = () => {
+    if (internalSuggestion) {
+      onSendMessage(internalSuggestion);
+      setInternalShowSuggestion(false);
+    }
+  };
+
+  // Function to close the suggestion card
+  const handleCloseSuggestion = () => {
+    setInternalShowSuggestion(false);
+    onCloseSuggestion();
+  };
 
   // Function to refresh history if we're using backend history
   const refreshHistory = async () => {
@@ -502,6 +534,37 @@ const AIChat: React.FC<AIChatProps> = ({
               {error}
             </div>
           )}
+
+          {/* Display suggestion card inside chat interface */}
+          {internalShowSuggestion && internalSuggestion && (
+            <div className="mx-4 mb-3">
+              <div className="bg-gradient-to-r from-blue-50/80 via-indigo-50/80 to-purple-50/80 backdrop-blur-sm rounded-lg shadow-lg p-4 border border-indigo-100/50 relative transition-all duration-300 ease-in-out hover:shadow-indigo-100/30">
+                <button 
+                  onClick={handleCloseSuggestion}
+                  className="absolute top-3 right-3 text-indigo-400 hover:text-indigo-600 transition-colors duration-200"
+                  aria-label="Close suggestion"
+                >
+                  <X size={16} strokeWidth={2.5} />
+                </button>
+                <div className="flex items-start gap-2">
+                  <div className="w-1 h-16 bg-gradient-to-b from-indigo-400 to-purple-400 rounded-full opacity-70"></div>
+                  <div className="flex-1">
+                    <h3 className="text-sm font-semibold text-indigo-700 mb-1.5 flex items-center">
+                      <span className="inline-block w-2 h-2 bg-indigo-400 rounded-full animate-pulse mr-2"></span>
+                      Perhaps you meant:
+                    </h3>
+                    <button
+                      onClick={handleUseSuggestion}
+                      className="text-indigo-600 hover:text-indigo-800 hover:underline text-left w-full text-sm pl-1 transition-all duration-200"
+                    >
+                      {internalSuggestion}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+          
           <ChatInput 
             onSendMessage={onSendMessage} 
             onGenerateReport={onGenerateReport}
