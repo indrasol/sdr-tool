@@ -10,6 +10,29 @@
     flex: 1;
     overflow-y: auto;
     overflow-x: hidden;
+    /* Modern scrollbar styling */
+    scrollbar-width: thin;
+    scrollbar-color: rgba(203, 213, 225, 0.5) transparent;
+  }
+  
+  /* Custom webkit scrollbar styles */
+  .AIChat-wrapper .messages-container::-webkit-scrollbar {
+    width: 8px;
+  }
+  
+  .AIChat-wrapper .messages-container::-webkit-scrollbar-track {
+    background: transparent;
+    border: none;
+  }
+  
+  .AIChat-wrapper .messages-container::-webkit-scrollbar-thumb {
+    background-color: rgba(203, 213, 225, 0.5);
+    border-radius: 10px;
+    border: 3px solid transparent;
+  }
+  
+  .AIChat-wrapper .messages-container::-webkit-scrollbar-thumb:hover {
+    background-color: rgba(203, 213, 225, 0.8);
   }
   
   /* Fix the input at the bottom */
