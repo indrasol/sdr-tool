@@ -70,8 +70,8 @@ const Projects = () => {
   // };
 
   // Calculate project counts for header stats
-  const activeProjectsCount = allProjects.filter(p => p.status === 'In Progress' || p.status === 'Not Started').length;
-  const completedProjectsCount = allProjects.filter(p => p.status === 'Completed').length;
+  const activeProjectsCount = allProjects.filter(p => p.status === 'IN_PROGRESS' || p.status === 'NOT_STARTED').length;
+  const completedProjectsCount = allProjects.filter(p => p.status === 'COMPLETED').length;
   const myProjectsCount = user ? allProjects.filter(p => p.creator === user.username || p.creator === user.email || p.creator === user.id).length : 0;
 
   const fadeIn = {

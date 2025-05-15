@@ -52,6 +52,7 @@ export interface AIFlowDiagramProps {
   isLayouting?: boolean; // New prop for tracking layout state
   reactFlowInstanceRef?: React.MutableRefObject<any>; // Reference to the ReactFlow instance
   projectId?: string; // Project ID to display
+  diagramRef?: React.RefObject<HTMLDivElement>; // Reference to diagram container for image capture
 }
 
 // Additional types that might be useful

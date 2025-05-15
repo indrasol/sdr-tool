@@ -5,6 +5,8 @@ import { CustomNodeData } from './types/diagramTypes';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { getCategoryStyle } from './utils/nodeStyles';
 import ThreatBadges from './ThreatBadges';  // Import ThreatBadges component
+import { classNames } from "@/lib/utils";
+import { mapNodeTypeToIcon } from './utils/mapNodeTypeToIcon';  // Add mapNodeTypeToIcon import
 
 const CustomNode = ({ 
   id, 
@@ -47,7 +49,7 @@ const CustomNode = ({
     console.log(`Info toggle for node ${nodeId}`);
   };
 
-  // Check if this is a client category node
+  // Check if this is a client node
   const isClientNode = () => {
     const nodeTypeStr = nodeType.toLowerCase();
     const section = nodeTypeStr.split('_')[0];
@@ -74,75 +76,80 @@ const CustomNode = ({
            nodeTypeStr.includes('observability');
   };
 
-  // Get category and colors based on node type
-  const getNodeColor = () => {
+  // Check if this is an API Gateway node
+  const isApiGateway = () => {
     const nodeTypeStr = nodeType.toLowerCase();
-    const section = nodeTypeStr.split('_')[0]; // Get the first part of the nodeType (e.g., 'aws')
-    
-    // Match toolbar category colors
+    return nodeTypeStr.includes('api') && nodeTypeStr.includes('gateway');
+  };
+
+  // Check if this is a server node
+  const isServerNode = () => {
+    const nodeTypeStr = nodeType.toLowerCase();
+    return nodeTypeStr.includes('server') || nodeTypeStr.includes('compute');
+  };
+
+  const getNodeColor = () => {
+    // Extract section from nodeType
+    const nodeTypeStr = nodeType.toLowerCase();
+    const section = nodeTypeStr.split('_')[0];
     
     // AWS Category - Orange
     if (nodeTypeStr.includes('aws') || 
         nodeTypeStr.includes('lambda') || 
-        nodeTypeStr.includes('ec2') || 
         nodeTypeStr.includes('s3') ||
+        nodeTypeStr.includes('ec2') ||
+        nodeTypeStr.includes('dynamo') ||
         section === 'aws') {
       return { 
-        bg: 'bg-[#FF9900]/90', 
+        bg: 'bg-[#FF9900]/80', 
         border: 'border-orange-300',
-        iconClass: null
+        iconClass: 'text-white drop-shadow-md'
       };
     }
     
-    // Network Category - Red with black icons
-    if (nodeTypeStr.includes('network') || 
-        nodeTypeStr.includes('firewall') || 
-        nodeTypeStr.includes('waf') || 
-        section === 'network') {
-      return { 
-        bg: 'bg-[#DC3545]/90', 
-        border: 'border-red-600',
-        iconClass: null
-      };
-    }
-    
-    // Database nodes - Treat as Application category (teal) but preserve icon colors
-    if (isDatabaseNode()) {
-      return { 
-        bg: 'bg-[#009688]/90', 
-        border: 'border-teal-300',
-        iconClass: null
-      };
-    }
-    
-    // Cache and Monitoring nodes - Preserve icon colors
-    if (isCacheOrMonitoring()) {
-      return { 
-        bg: 'bg-[#009688]/90', 
-        border: 'border-teal-300',
-        iconClass: null
-      };
-    }
-    
-    // Azure Category - Blue
+    // Azure Category - Azure Blue
     if (nodeTypeStr.includes('azure') || 
+        nodeTypeStr.includes('microsoft') || 
         section === 'azure') {
       return { 
-        bg: 'bg-[#0072C6]/90', 
+        bg: 'bg-[#0078D4]/80', 
         border: 'border-blue-300',
-        iconClass: null
+        iconClass: 'text-white drop-shadow-md'
       };
     }
     
-    // Application/Microservice Category - Teal with black icons
-    if (nodeTypeStr.includes('microservice') || 
+    // Database Category - Teal
+    if (isDatabaseNode()) {
+      return { 
+        bg: 'bg-[#00A3A3]/80', 
+        border: 'border-teal-300',
+        iconClass: 'text-white drop-shadow-md'
+      };
+    }
+    
+    // Application/Service Category - Green
+    if (nodeTypeStr.includes('application') || 
         nodeTypeStr.includes('service') || 
-        nodeTypeStr.includes('application') ||
+        nodeTypeStr.includes('app') ||
+        nodeTypeStr.includes('microservice') ||
         section === 'application') {
       return { 
-        bg: 'bg-[#009688]/90', 
-        border: 'border-teal-300',
-        iconClass: 'filter invert brightness-0'
+        bg: 'bg-[#34A853]/80', 
+        border: 'border-green-300',
+        iconClass: 'text-white drop-shadow-md'
+      };
+    }
+    
+    // Network Category - Red
+    if (nodeTypeStr.includes('network') || 
+        nodeTypeStr.includes('firewall') || 
+        nodeTypeStr.includes('security') ||
+        nodeTypeStr.includes('router') ||
+        section === 'network') {
+      return { 
+        bg: 'bg-[#DC3545]/80', 
+        border: 'border-red-300',
+        iconClass: 'text-white drop-shadow-md'
       };
     }
     
@@ -152,9 +159,9 @@ const CustomNode = ({
         nodeTypeStr.includes('cloud run') ||
         section === 'gcp') {
       return { 
-        bg: 'bg-[#1A73E8]/90', 
+        bg: 'bg-[#1A73E8]/80', 
         border: 'border-blue-300',
-        iconClass: null
+        iconClass: 'text-white drop-shadow-md'
       };
     }
     
@@ -163,141 +170,209 @@ const CustomNode = ({
       return { 
         bg: 'bg-transparent', 
         border: 'border-transparent',
-        iconClass: null
+        iconClass: 'drop-shadow-md'
       };
     }
     
-    // API Gateway - Blue
-    if (nodeTypeStr.includes('api') || 
-        nodeTypeStr.includes('gateway') ||
-        section === 'api') {
+    // API Gateway - Blue with extra contrast
+    if (isApiGateway() || section === 'api') {
       return { 
-        bg: 'bg-[#0078D7]/90', 
+        bg: 'bg-[#0078D7]/75', 
         border: 'border-blue-300',
-        iconClass: null
+        iconClass: 'text-white drop-shadow-lg'
+      };
+    }
+    
+    // Servers - Special styling for better visibility
+    if (isServerNode()) {
+      return { 
+        bg: 'bg-[#5A5AF3]/75', 
+        border: 'border-indigo-300',
+        iconClass: 'text-white drop-shadow-lg'
       };
     }
     
     // Default color for unknown types - Purple
     return { 
-      bg: 'bg-[#7C65F6]/90', 
+      bg: 'bg-[#7C65F6]/80', 
       border: 'border-purple-300',
-      iconClass: null
+      iconClass: 'text-white drop-shadow-md'
     };
   };
 
   // Get node colors
   const nodeColors = getNodeColor();
 
-  // Render the icon component if iconRenderer is provided
-  const renderIcon = () => {
-    if (iconRenderer) {
-      const iconData = iconRenderer();
-      const IconComponent = iconData.component;
-      // Determine icon size based on node type
-      const iconSize = isClientNode() ? 60 : 45; // Increase size for client nodes
-
-      return (
-        <div className={`flex items-center justify-center ${nodeColors.iconClass || ''}`}>
-          <IconComponent {...iconData.props} size={iconSize} />
-        </div>
-      );
+  // Calculate icon size based on node type
+  const getIconSize = () => {
+    // Client nodes get larger icons
+    if (isClientNode()) {
+      return 60;
     }
-    return null;
+    
+    // Network nodes like firewall
+    if (nodeType.toLowerCase().includes('firewall') || 
+        nodeType.toLowerCase().includes('network')) {
+      return 40;
+    }
+    
+    // API Gateway and Servers get slightly larger icons for better visibility
+    if (isApiGateway() || isServerNode()) {
+      return 42;
+    }
+    
+    // Default size for other nodes
+    return 40;
   };
 
-  // Determine if we should render a full styled node or just the icon
-  const renderClientIconOnly = isClientNode();
+  const iconSize = getIconSize();
+  // Always use white for icon color to ensure visibility against colored backgrounds
+  const iconColor = isClientNode() ? (getCategoryStyle(nodeType)?.color || '#7C65F6') : 'white';
 
+  // Get description tooltip to display on hover, if a description exists
+  const getDescriptionTooltip = () => {
+    if (!description) return null;
+    
+    // Truncate description if it's longer than 200 characters
+    const truncatedDescription = description.length > 200 
+      ? description.substring(0, 200) + '...' 
+      : description;
+    
+    return (
+      <TooltipContent>
+        <div className="max-w-xs">
+          <p className="text-xs text-gray-800">{truncatedDescription}</p>
+        </div>
+      </TooltipContent>
+    );
+  };
+
+  // Add source handle style with conditional visibility
+  const sourceHandleStyle = {
+    background: '#fff',
+    border: '2px solid #000000',
+    width: '12px',
+    height: '12px',
+    bottom: '-6px',
+    borderRadius: '50%',
+    zIndex: 10,
+  };
+
+  // Add target handle style with conditional visibility
+  const targetHandleStyle = {
+    background: '#fff',
+    border: '2px solid #000000',
+    width: '12px',
+    height: '12px',
+    top: '-6px',
+    borderRadius: '50%',
+    zIndex: 10,
+  };
+  
   return (
-    <>
-      <NodeContextToolbar
-        id={id}
-        selected={!!selected}
-        data={{
-          label,
-          description,
-          nodeType
-        }}
-        onEdit={handleEdit}
-        onDelete={handleDelete}
-        onInfoToggle={handleInfoToggle}
-      />
-
-      {/* Main node container - defines the boundary */}
-      <div className={`node-fade-in custom-node w-16 h-16 relative`}>
-        {/* Render threat badges if there are threats */}
-        <ThreatBadges 
-          nodeId={id} 
-          threats={threats} 
-          activeSeverityFilter={activeSeverityFilter}
+    <div
+      className={`custom-node ${selected ? 'custom-node-selected' : ''}`}
+      style={{ position: 'relative', zIndex: 1 }}
+      data-nodetype={nodeType.toLowerCase()}
+      data-has-threats={threats && threats.length > 0 ? 'true' : 'false'}
+    >
+      {/* Source handle (bottom) - Only render when there's a connection or node is selected */}
+      {(hasSourceConnection || selected) && (
+        <Handle
+          type="source"
+          position={Position.Bottom}
+          id="bottom"
+          className="custom-handle source-handle"
+          style={sourceHandleStyle}
         />
-
-        {/* NodeResizer MOVED INSIDE */}
-        {selected && (
-          <NodeResizer 
-            minWidth={60}
-            minHeight={60}
-            isVisible={!!selected}
-            lineClassName="border-transparent" /* Hide the default resizer border */
-            handleClassName="h-2 w-2 bg-white border-2 border-gray-400 rounded"
-            handleStyle={{ borderWidth: 2 }}
+      )}
+      
+      {/* Target handle (top) - Only render when there's a connection or node is selected */}
+      {(hasTargetConnection || selected) && (
+        <Handle
+          type="target"
+          position={Position.Top}
+          id="top"
+          className="custom-handle target-handle"
+          style={targetHandleStyle}
+        />
+      )}
+      
+      {/* Toolbar for node actions */}
+      {selected && (
+        <NodeContextToolbar 
+          id={id}
+          selected={selected}
+          data={safeData}
+          onEdit={() => handleEdit(id)} 
+          onDelete={() => handleDelete(id)}
+          onInfoToggle={() => handleInfoToggle(id)}
+        />
+      )}
+      
+      {/* All nodes now use icon-only style with label underneath */}
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <div className={`flex flex-col items-center ${selected ? 'outline-2 outline-blue-400 outline-offset-2 rounded-md' : ''}`}>
+              {/* Icon container with shadow for better visibility */}
+              <div 
+                className={classNames(
+                  "flex items-center justify-center mb-1 shadow-md",
+                  selected ? "ring-2 ring-blue-400 rounded-md" : "",
+                  isClientNode() ? "" : "p-1.5 rounded-md",
+                  nodeColors.bg,
+                  nodeColors.border
+                )}
+                style={{ 
+                  minWidth: isClientNode() ? '60px' : '50px', 
+                  minHeight: isClientNode() ? '60px' : '50px',
+                  backgroundColor: isClientNode() ? 'transparent' : getCategoryStyle(nodeType)?.bgColor || 'transparent',
+                  position: 'relative', // Ensure icon container is positioned
+                }}
+              >
+                {iconRenderer ? (
+                  (() => {
+                    const { component: IconComponent, props } = iconRenderer();
+                    return (
+                      <IconComponent 
+                        {...props} 
+                        size={iconSize} 
+                        className={nodeColors.iconClass || ''}
+                        color={isClientNode() ? props.color : iconColor}
+                      />
+                    );
+                  })()
+                ) : (
+                  mapNodeTypeToIcon(nodeType)
+                )}
+              </div>
+              
+              {/* Label underneath */}
+              <div className="text-center mt-1 max-w-[120px]">
+                <div className="font-medium text-xs">
+                  {label}
+                </div>
+              </div>
+              
+              {/* Description tooltip */}
+              {description && getDescriptionTooltip()}
+            </div>
+          </TooltipTrigger>
+        </Tooltip>
+      </TooltipProvider>
+      
+      {/* Display threat badges - outside of all containers for maximum visibility */}
+      {threats && threats.length > 0 && (
+        <div className="threat-badge-container">
+          <ThreatBadges 
+            nodeId={id}
+            threats={threats} 
+            activeSeverityFilter={activeSeverityFilter}
           />
-        )}
-
-        {/* Tooltip wrapping the visual content */}
-        <TooltipProvider>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              {renderClientIconOnly ? (
-                // Icon-only for Client category
-                <div className={`w-full h-full flex items-center justify-center`} style={{background:'transparent', boxShadow:'none'}}>
-                  {renderIcon()}
-                </div>
-              ) : (
-                // Styled container for other categories
-                <div className={`w-full h-full rounded-xl ${nodeColors.bg} flex items-center justify-center shadow-sm border ${nodeColors.border}`}>
-                  {renderIcon()}
-                </div>
-              )}
-            </TooltipTrigger>
-            <TooltipContent 
-              className="max-w-xs bg-white/90 backdrop-blur-sm p-3 shadow-lg rounded-lg border border-gray-200"
-            >
-              <h4 className="font-semibold text-gray-900 mb-1">{label}</h4>
-              {description && <p className="text-sm text-gray-600">{description}</p>}
-            </TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
-      </div>
-
-      {/* Node Label - Still outside the main w-16 h-16 container */}
-      <div 
-        className="node-label absolute bottom-[-25px] left-1/4 transform -translate-x-1/2 text-center w-auto whitespace-nowrap bg-white/90 text-xs px-2 py-0.5 rounded-md border border-gray-100 shadow-sm"
-        style={{ zIndex: 1 }} /* Ensure label is above edges if necessary */
-      >
-        {label}
-      </div>
-
-      {/* Conditionally render Target Handle */}
-      {hasTargetConnection && (
-        <Handle 
-          type="target" 
-          position={Position.Left} 
-          className="w-1.5 h-1.5 border-2 border-securetrack-purple bg-white/90 handle-fade-in"
-          style={{ top: '50%', transform: 'translateY(-50%) ', left: '8px' }}
-        />
+        </div>
       )}
-      {/* Conditionally render Source Handle */}
-      {hasSourceConnection && (
-        <Handle 
-          type="source" 
-          position={Position.Right} 
-          className="w-1.5 h-1.5 border-2 border-securetrack-purple bg-white/90 handle-fade-in"
-          style={{ top: '50%', transform: 'translateY(-50%)', right: '70px' }}
-        />
-      )}
-    </>
+    </div>
   );
 };
 

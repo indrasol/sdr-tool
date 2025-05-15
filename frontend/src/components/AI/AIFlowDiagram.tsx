@@ -184,6 +184,9 @@ const AIFlowDiagram: React.FC<AIFlowDiagramProps> = ({
   reactFlowInstanceRef,
   projectId,
 }): React.ReactNode => {
+  // Add a ref for the diagram container to capture it as an image
+  const diagramContainerRef = useRef<HTMLDivElement>(null);
+  
   // Add state for layout functionality if not provided from parent
   const [internalIsLayouting, setInternalIsLayouting] = useState(false);
   const effectiveIsLayouting = externalIsLayouting !== undefined ? externalIsLayouting : internalIsLayouting;
@@ -226,22 +229,23 @@ const AIFlowDiagram: React.FC<AIFlowDiagramProps> = ({
 
   // Default edge options
   const defaultEdgeOptions = useMemo(() => ({
-    type: 'bezier',
+    type: 'straight',
     markerEnd: {
       type: MarkerType.ArrowClosed,
-      width: 22,
-      height: 22,
+      width: 25,
+      height: 25,
       color: '#000000',
-      markerEndOffset: -70,
+      markerEndOffset: -50,
     },
     style: {
-      strokeWidth: 1.5,
+      strokeWidth: 2,
       stroke: '#000000',
     },
     animated: false,
-    curvature: 0.25,
+    curvature: 0.1,
     pathOptions: {
-      offset: 15,
+      offset: 10,
+      vertical: true, // Prefer vertical paths first
     },
   }), []);
 
@@ -434,20 +438,25 @@ const AIFlowDiagram: React.FC<AIFlowDiagramProps> = ({
       return {
         ...edge,
         id: edge.id || `edge-${edge.source}-${edge.target}-${Date.now()}`,
-        type: 'smoothstep', // Force consistency in edge type
+        type: 'straight', // Force straight edges for top-to-bottom flow
         animated: edgeType === 'dataFlow' || edgeType === 'database',
-        // Always include markerEnd for arrowhead display
+        // Enhanced arrow marker for better visibility
         markerEnd: {
           type: MarkerType.ArrowClosed,
-          width: 22, // Increased from 15 to 22
-          height: 22,
-          color: '#000000', // Set to black
-          markerEndOffset: -70,
+          width: 25, // Increased from 22 to 25
+          height: 25, // Increased from 22 to 25
+          color: '#000000', // Always use black for better visibility
+          markerEndOffset: -50, // Adjusted for larger arrowhead
         },
         style: {
           strokeWidth: 2,
-          stroke: typeStyle.stroke || '#555',
+          stroke: '#000000', // Use black for better visibility
           ...(edge.style || {}),
+        },
+        // Add support for vertical-first routing to encourage top-to-bottom flow
+        pathOptions: {
+          offset: 10, // Reduced offset for cleaner lines
+          vertical: true, // Prefer vertical paths first
         }
       };
     }).filter(Boolean);
@@ -631,16 +640,22 @@ const AIFlowDiagram: React.FC<AIFlowDiagramProps> = ({
       // Create the new edge with proper styling
       const newEdge = {
         ...params,
-        type: 'smoothstep',
+        type: 'straight', // Use straight edge type for top-to-bottom flow
         markerEnd: {
           type: MarkerType.ArrowClosed,
-          width: 22,
-          height: 22,
+          width: 25,
+          height: 25,
           color: '#000000',
+          markerEndOffset: -50,
         },
         style: {
           strokeWidth: 2,
           stroke: '#000000',
+        },
+        // Add support for vertical-first routing for top-to-bottom flow
+        pathOptions: {
+          offset: 10,
+          vertical: true, // Prefer vertical paths first
         }
       };
       
@@ -793,6 +808,12 @@ const AIFlowDiagram: React.FC<AIFlowDiagramProps> = ({
 
   // Process nodes function - pass threats to nodes
   const processNodes = useCallback((nodes) => {
+    // Log the total threats and severity filter for debugging
+    if (threats && threats.length > 0) {
+      console.log(`Processing ${threats.length} threats with filter: ${activeSeverityFilter}`);
+      console.log('Threat targets:', threats.map(t => t.target_elements || []).flat());
+    }
+
     return nodes.map(node => {
       // Skip layer and group nodes or nodes without data
       if (node.type === 'layerGroup' || !node.data) {
@@ -805,8 +826,18 @@ const AIFlowDiagram: React.FC<AIFlowDiagramProps> = ({
         return threat.target_elements.includes(node.id);
       });
       
+      // Only update if we have threats to show
+      if (nodeThreats.length > 0) {
+        console.log(`Node ${node.id} has ${nodeThreats.length} threats with filter ${activeSeverityFilter}`);
+        
+        // Log each threat to verify they're being processed properly
+        nodeThreats.forEach((threat, index) => {
+          console.log(`- Threat ${index+1}: severity=${threat.severity}, target_elements=${threat.target_elements?.join(',')}`);
+        });
+      }
+      
       // Create a new node with the same properties
-      return {
+      const updatedNode = {
         ...node,
         data: {
           ...node.data,
@@ -814,12 +845,42 @@ const AIFlowDiagram: React.FC<AIFlowDiagramProps> = ({
           activeSeverityFilter: activeSeverityFilter
         }
       };
+      
+      // Force data-has-threats attribute for easier CSS targeting
+      if (nodeThreats.length > 0) {
+        updatedNode.data.hasThreats = true;
+      }
+      
+      return updatedNode;
     });
   }, [threats, activeSeverityFilter]);
 
   // Add effect to update nodes when threats or filter changes
   useEffect(() => {
-    setNodes(nodes => processNodes(nodes));
+    if (threats && threats.length > 0) {
+      console.log(`Processing ${threats.length} threats with filter: ${activeSeverityFilter}`);
+      
+      // Log unique nodes that are targeted by threats
+      const targetedNodeIds = new Set(threats.flatMap(t => t.target_elements || []));
+      console.log(`Threats target ${targetedNodeIds.size} unique nodes: ${Array.from(targetedNodeIds).join(', ')}`);
+    }
+    
+    // Use this temporary function to check if nodes were updated with threats
+    const verifyNodesUpdated = (updatedNodes) => {
+      const nodesWithThreats = updatedNodes.filter(n => 
+        n.data && n.data.threats && n.data.threats.length > 0
+      );
+      
+      if (nodesWithThreats.length > 0) {
+        console.log(`Successfully updated ${nodesWithThreats.length} nodes with threats`);
+      } else if (threats && threats.length > 0) {
+        console.warn('No nodes were updated with threats despite having threats available');
+      }
+      
+      return updatedNodes;
+    };
+    
+    setNodes(nodes => verifyNodesUpdated(processNodes(nodes)));
   }, [threats, activeSeverityFilter, processNodes, setNodes]);
 
   // Add auto-zoom effect when a threat is selected
@@ -1021,8 +1082,9 @@ const AIFlowDiagram: React.FC<AIFlowDiagramProps> = ({
         onGenerateReport={handleGenerateReport}
         onSave={handleSave}
         projectId={projectId || ''}
+        diagramRef={diagramContainerRef}
       />
-      <div className="flex-1 overflow-hidden relative">
+      <div className="flex-1 overflow-hidden relative" ref={diagramContainerRef}>
         {/* Modern gradient background */}
         <div className="diagram-background"></div>
         <div className="diagram-pattern"></div>
@@ -1074,7 +1136,7 @@ const AIFlowDiagram: React.FC<AIFlowDiagramProps> = ({
                   left: 0,
                   right: 0,
                   height: '5px',
-                  background: 'linear-gradient(90deg, #7C65F6 0%, #FF9900 50%, #4CAF50 100%)',
+                  background: 'linear-gradient(to right, rgba(124, 101, 246, 0.8), rgba(66, 153, 225, 0.8))',
                   boxShadow: '0 1px 10px rgba(124, 101, 246, 0.3)'
                 }}></div>
                 
@@ -1087,7 +1149,7 @@ const AIFlowDiagram: React.FC<AIFlowDiagramProps> = ({
                   fontFamily: 'Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
                   textShadow: '0 1px 1px rgba(255, 255, 255, 0.6)'
                 }}>
-                  Drag and drop components from toolbar to create your architecture diagram
+                  Design your secure architecture with AI assistance
                 </div>
                 <div style={{
                   marginTop: '16px',
@@ -1097,7 +1159,7 @@ const AIFlowDiagram: React.FC<AIFlowDiagramProps> = ({
                   fontFamily: 'Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
                   opacity: 0.85
                 }}>
-                  Or start with AI-generated diagram based on requirements
+                  Simply describe your requirements in natural language to generate diagrams
                 </div>
                 
                 {/* Additional subtle decorative element */}

@@ -105,14 +105,14 @@ const ModelWithAI = () => {
   const params = useParams();
 
   // Constants for panel sizing
-  const fixedExpandedWidth = 400;
+  const fixedExpandedWidth = 650;
   const collapsedWidth = 40;
 
   // UI state
   const [isChatCollapsed, setIsChatCollapsed] = useState(false);
   const [chatPanelWidth, setChatPanelWidth] = useState(fixedExpandedWidth);
   const [isResizingChat, setIsResizingChat] = useState(false);
-  const minChatWidth = 400; // Minimum chat panel width
+  const minChatWidth = 500; // Minimum chat panel width
   const maxChatWidth = 600; // Maximum chat panel width
 
   // Core state
@@ -200,9 +200,28 @@ const ModelWithAI = () => {
     setCurrentEditNode,
     prepareNodes,
     handleConnect,
-    handleAddNode: handleAddNodeWithType,
+    handleAddNode: hookHandleAddNode,
     handleSaveNodeEdit,
+    getEdgeType
   } = useDiagramNodes(nodes, edges, setNodes, setEdges);
+
+  // Apply custom node preparation that preserves sticky notes and comment nodes
+  const prepareNodesForDiagram = useCallback((inputNodes, inputEdges) => {
+    // Get the base prepareNodes function from the useDiagramNodes hook
+    // But filter out comment/sticky note nodes first to handle them specially
+    const regularNodes = inputNodes.filter(node => 
+      !(node.type === 'comment' || node.data?.nodeType === 'stickyNote' || node.data?.isComment === true));
+    
+    // Sticky notes and comment nodes - preserved as-is
+    const stickyNotes = inputNodes.filter(node => 
+      (node.type === 'comment' || node.data?.nodeType === 'stickyNote' || node.data?.isComment === true));
+    
+    // Process regular nodes using the hook's prepareNodes function
+    const processedRegularNodes = prepareNodes(regularNodes, inputEdges);
+    
+    // Combine both types of nodes 
+    return [...processedRegularNodes, ...stickyNotes];
+  }, [prepareNodes]);
 
   // Memoize the edges to prevent unnecessary updates
   const stableEdges = useMemo(() => {
@@ -322,8 +341,8 @@ const ModelWithAI = () => {
       const existingLayerContainers = currentNodes.filter(node => node.type === 'layerGroup');
       
       console.log(`[ModelWithAI] Preparing ${regularNodes.length} regular nodes.`);
-      // Call prepareNodes with the correct parameters - it expects (nodes, edges)
-      const preparedNodes = prepareNodes(regularNodes, currentEdges);
+      // Call prepareNodesForDiagram with the correct parameters
+      const preparedNodes = prepareNodesForDiagram(regularNodes, currentEdges);
       console.log(`[ModelWithAI] Processing ${currentEdges.length} edges.`);
       const processedEdges = processEdges(currentEdges, preparedNodes);
 
@@ -373,7 +392,7 @@ const ModelWithAI = () => {
       console.error('[ModelWithAI] Error applying layout:', error);
       setIsLayouting(false); // Ensure flag is reset on error
     }
-  }, [isLayouting, prepareNodes, processEdges, setNodes, setEdges, setIsLayouting]);
+  }, [isLayouting, prepareNodesForDiagram, processEdges, setNodes, setEdges, setIsLayouting]);
 
   // Helper function to update existing layer containers based on new node positions
   const updateExistingLayerContainers = useCallback((existingContainers: Node[], nodes: Node[]) => {
@@ -382,11 +401,46 @@ const ModelWithAI = () => {
       existingContainers.map(container => [container.data?.layer as string, container])
     );
     
+    // Filter out any comment nodes, sticky notes, client nodes, or nodes with excludeFromLayers flag
+    const filteredNodes = nodes.filter(node => {
+      // First check if it's a comment, sticky note, or explicitly excluded
+      if (
+        node.type === 'comment' || 
+        node.data?.nodeType === 'stickyNote' || 
+        node.data?.isComment === true ||
+        node.data?.excludeFromLayers === true
+      ) {
+        return false;
+      }
+      
+      // Then check if it's a client node
+      const nodeType = node.data?.nodeType || '';
+      if (typeof nodeType === 'string') {
+        const nodeTypeStr = nodeType.toLowerCase();
+        // Exclude all client nodes
+        if (nodeTypeStr.includes('client') || 
+            nodeTypeStr.startsWith('client_') ||
+            nodeTypeStr.includes('mobile_app') ||
+            nodeTypeStr.includes('browser') ||
+            nodeTypeStr.includes('desktop_app') ||
+            nodeTypeStr.includes('iot_device') ||
+            nodeTypeStr.includes('kiosk') ||
+            nodeTypeStr.includes('user_')) {
+          return false;
+        }
+      }
+      
+      return true;
+    });
+    
     // Group nodes by layer
     const nodesByLayer: Record<string, Node[]> = {};
-    nodes.forEach(node => {
+    filteredNodes.forEach(node => {
       const nodeType = node.data?.nodeType || 'default';
       const layer = determineNodeLayer(nodeType as string);
+      
+      // Skip client layer as an additional safety check
+      if (layer === 'client') return;
       
       if (!nodesByLayer[layer]) nodesByLayer[layer] = [];
       nodesByLayer[layer].push(node);
@@ -795,7 +849,7 @@ const ModelWithAI = () => {
           setEdges([]);
 
           // Prepare nodes with their handlers and styles
-          const preparedNodes = prepareNodes(loadedNodes, []);
+          const preparedNodes = prepareNodesForDiagram(loadedNodes, []);
 
           // Validate edges against prepared nodes
           const validEdges = loadedEdges.filter((edge) => {
@@ -882,7 +936,7 @@ const ModelWithAI = () => {
         setIsProjectLoading(false);
       }
     },
-    [toast, prepareNodes, handleEditNode, handleDeleteNode, processEdges, setNodes, setEdges]
+    [toast, prepareNodesForDiagram, handleEditNode, handleDeleteNode, processEdges, setNodes, setEdges]
   );
 
   const save = async () => {
@@ -1309,7 +1363,7 @@ const ModelWithAI = () => {
 
       // 7. Prepare ALL nodes using the FINAL nodes and FINAL edges list
       console.log('Preparing final node list with final edges...');
-      let finalNodesListPrepared = prepareNodes(finalNodesListUnprepared, finalEdgesList);
+      let finalNodesListPrepared = prepareNodesForDiagram(finalNodesListUnprepared, finalEdgesList);
 
       // 8. Apply layout to the fully prepared final nodes and edges
       console.log('Applying layout...');
@@ -1346,7 +1400,7 @@ const ModelWithAI = () => {
       console.log('Architecture response processed successfully');
     },
     // Include nodes and edges for correct reference but make sure useDiagramNodes is properly memoized
-    [setNodes, setEdges, prepareNodes, processEdges, getLayoutedElements, handleEditNode, handleDeleteNode, 
+    [setNodes, setEdges, prepareNodesForDiagram, processEdges, getLayoutedElements, handleEditNode, handleDeleteNode, 
      setIsLayouting, nodes, edges, updateExistingLayerContainers]
   );
 
@@ -1545,10 +1599,9 @@ const ModelWithAI = () => {
 
   const combinedAddNode = useCallback(
     (nodeType, position, iconRenderer) => {
-      handleAddNodeWithType(nodeType, position, iconRenderer);
-      // handleAddNode(nodeType, position, iconRenderer);
+      hookHandleAddNode(nodeType, position, iconRenderer);
     },
-    [handleAddNodeWithType]
+    [hookHandleAddNode]
   );
 
   const handleActualSave = async () => {
@@ -1612,7 +1665,7 @@ const ModelWithAI = () => {
         const regularNodes = revertNodes.filter(node => node.type !== 'layerGroup');
         
         // 4. Prepare nodes with proper callbacks and handlers
-        const preparedRegularNodes = prepareNodes(regularNodes, revertEdges);
+        const preparedRegularNodes = prepareNodesForDiagram(regularNodes, revertEdges);
         
         // 5. Create fresh layer containers if none exist in the old state
         let finalNodes;
@@ -1808,7 +1861,10 @@ const ModelWithAI = () => {
               className={styles.toggleButton}
               title={isChatCollapsed ? "Expand chat panel" : "Collapse chat panel"}
             >
-              {isChatCollapsed ? <ChevronRight size={10} className="text-blue-500" /> : <ChevronLeft size={10} className="text-blue-500" />}
+              {isChatCollapsed ? 
+                <ChevronRight size={10} className="text-blue-500 mx-auto" /> : 
+                <ChevronLeft size={10} className="text-blue-500 mx-auto" />
+              }
             </button>
             
 
