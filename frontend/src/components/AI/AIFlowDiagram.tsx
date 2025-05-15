@@ -29,6 +29,7 @@ import { ThreatItem } from '@/interfaces/aiassistedinterfaces';
 import ThreatPanel from './ThreatPanel';
 import RemoteSvgIcon from './icons/RemoteSvgIcon';
 import { mapNodeTypeToIcon } from '../AI/utils/mapNodeTypeToIcon';
+import LayerGroupNode from './LayerGroupNode';
 
 // Helper function to check if two arrays of nodes or edges are deeply equal by comparing their essential properties
 const areArraysEqual = (arr1: any[], arr2: any[], isNodes = true) => {
@@ -78,11 +79,14 @@ export const getLayoutedElements = (nodes, edges, direction = 'TB', nodeWidth = 
     // Create a new graph
     const dagreGraph = new dagre.graphlib.Graph();
     dagreGraph.setDefaultEdgeLabel(() => ({}));
-    // Default spacing for TB layout
+    // Enhanced spacing for TB layout to reduce edge overlapping
     dagreGraph.setGraph({ 
       rankdir: direction,
-      ranksep: 80, // Vertical separation
-      nodesep: 60  // Horizontal separation
+      ranksep: 120, // Increased vertical separation (was 80)
+      nodesep: 100,  // Increased horizontal separation (was 60)
+      edgesep: 40,  // Minimum separation between edges
+      ranker: 'network-simplex', // Use network simplex algorithm for better edge routing
+      acyclicer: 'greedy', // Greedy algorithm to handle cycles in the graph
     });
 
     // Add nodes to the graph with dimensions
@@ -96,11 +100,15 @@ export const getLayoutedElements = (nodes, edges, direction = 'TB', nodeWidth = 
       });
     });
 
-    // Add edges to the graph
+    // Add edges to the graph with weights to influence layout
     if (edges && edges.length > 0) {
       edges.forEach((edge) => {
         if (edge.source && edge.target) {
-          dagreGraph.setEdge(edge.source, edge.target);
+          // Add weight parameter to influence edge routing
+          dagreGraph.setEdge(edge.source, edge.target, {
+            weight: 1, // Default weight
+            minlen: 1  // Minimum path length
+          });
         }
       });
     }
@@ -135,8 +143,19 @@ export const getLayoutedElements = (nodes, edges, direction = 'TB', nodeWidth = 
       };
     });
 
-    // Return the original edges passed in
-    return { nodes: layoutedNodes, edges }; 
+    // Enhance the edges to reduce overlapping
+    const processedEdges = edges.map(edge => {
+      return {
+        ...edge,
+        // Add curvature and style parameters to help with overlap reduction
+        style: {
+          ...edge.style,
+          strokeWidth: 1.5, // Slightly thinner edges
+        }
+      };
+    });
+
+    return { nodes: layoutedNodes, edges: processedEdges }; 
   } catch (error) {
     console.error('Error in layout algorithm:', error);
     return { nodes, edges }; // Return original nodes and edges on error
@@ -162,6 +181,8 @@ const AIFlowDiagram: React.FC<AIFlowDiagramProps> = ({
   onSave,
   onLayout,
   isLayouting: externalIsLayouting,
+  reactFlowInstanceRef,
+  projectId,
 }): React.ReactNode => {
   // Add state for layout functionality if not provided from parent
   const [internalIsLayouting, setInternalIsLayouting] = useState(false);
@@ -178,6 +199,9 @@ const AIFlowDiagram: React.FC<AIFlowDiagramProps> = ({
     // If there's a stored preference, use it; otherwise default to true
     return storedPreference === null ? true : storedPreference === 'true';
   });
+  
+  // Add state for auto-zoom when selecting threats (default to OFF)
+  const [isAutoZoomEnabled, setIsAutoZoomEnabled] = useState(false);
   
   // Store the original diagram nodes and edges
   const originalDiagramRef = useRef({ nodes: [], edges: [] });
@@ -197,23 +221,28 @@ const AIFlowDiagram: React.FC<AIFlowDiagramProps> = ({
   const nodeTypes = useMemo(() => ({
     default: CustomNode,
     comment: CommentNode,
+    layerGroup: LayerGroupNode,
   }), []);
 
   // Default edge options
   const defaultEdgeOptions = useMemo(() => ({
-    type: 'smoothstep',
+    type: 'bezier',
     markerEnd: {
       type: MarkerType.ArrowClosed,
-      width: 20,
-      height: 20,
-      color: '#555',
+      width: 22,
+      height: 22,
+      color: '#000000',
       markerEndOffset: -70,
     },
     style: {
-      strokeWidth: 2,
-      stroke: '#555',
+      strokeWidth: 1.5,
+      stroke: '#000000',
     },
     animated: false,
+    curvature: 0.25,
+    pathOptions: {
+      offset: 15,
+    },
   }), []);
 
   const reactFlowInstance = useRef(null);
@@ -410,9 +439,9 @@ const AIFlowDiagram: React.FC<AIFlowDiagramProps> = ({
         // Always include markerEnd for arrowhead display
         markerEnd: {
           type: MarkerType.ArrowClosed,
-          width: 15,
-          height: 15,
-          color: typeStyle.stroke || '#555',
+          width: 22, // Increased from 15 to 22
+          height: 22,
+          color: '#000000', // Set to black
           markerEndOffset: -70,
         },
         style: {
@@ -605,13 +634,13 @@ const AIFlowDiagram: React.FC<AIFlowDiagramProps> = ({
         type: 'smoothstep',
         markerEnd: {
           type: MarkerType.ArrowClosed,
-          width: 15,
-          height: 15,
-          color: '#555',
+          width: 22,
+          height: 22,
+          color: '#000000',
         },
         style: {
           strokeWidth: 2,
-          stroke: '#555',
+          stroke: '#000000',
         }
       };
       
@@ -642,6 +671,10 @@ const AIFlowDiagram: React.FC<AIFlowDiagramProps> = ({
   // Store the instance of ReactFlow when it's initialized
   const onInit = useCallback((instance) => {
     reactFlowInstance.current = instance;
+    // If an external ref was provided, update it too
+    if (reactFlowInstanceRef) {
+      reactFlowInstanceRef.current = instance;
+    }
     console.log('ReactFlow instance initialized');
 
     // Force a fit view after a short delay
@@ -658,7 +691,7 @@ const AIFlowDiagram: React.FC<AIFlowDiagramProps> = ({
         }
       }
     }, 200);
-  }, [didFitView, handleLayout, nodes.length]);
+  }, [didFitView, handleLayout, nodes.length, reactFlowInstanceRef]);
 
   // handler for toggling data flow diagram view
   const handleToggleDataFlow = useCallback(() => {
@@ -694,8 +727,11 @@ const AIFlowDiagram: React.FC<AIFlowDiagramProps> = ({
     try {
       setRunningThreatAnalysis(true);
       
+      // Filter out layerGroup nodes first
+      const filteredNodes = nodes.filter(node => node.type !== 'layerGroup');
+      
       // Clean up the diagram state to ensure only essential properties
-      const cleanNodes = nodes.map(node => ({
+      const cleanNodes = filteredNodes.map(node => ({
         id: node.id,
         type: node.type,
         position: node.position,
@@ -752,10 +788,105 @@ const AIFlowDiagram: React.FC<AIFlowDiagramProps> = ({
     }
   }, [nodes, edges, toast]);
 
-  // Handler for threat selection
+  // Add a state for active severity filter
+  const [activeSeverityFilter, setActiveSeverityFilter] = useState('ALL');
+
+  // Process nodes function - pass threats to nodes
+  const processNodes = useCallback((nodes) => {
+    return nodes.map(node => {
+      // Skip layer and group nodes or nodes without data
+      if (node.type === 'layerGroup' || !node.data) {
+        return node;
+      }
+
+      // Find threats that target this node
+      const nodeThreats = threats.filter(threat => {
+        if (!threat || !threat.target_elements) return false;
+        return threat.target_elements.includes(node.id);
+      });
+      
+      // Create a new node with the same properties
+      return {
+        ...node,
+        data: {
+          ...node.data,
+          threats: nodeThreats,
+          activeSeverityFilter: activeSeverityFilter
+        }
+      };
+    });
+  }, [threats, activeSeverityFilter]);
+
+  // Add effect to update nodes when threats or filter changes
+  useEffect(() => {
+    setNodes(nodes => processNodes(nodes));
+  }, [threats, activeSeverityFilter, processNodes, setNodes]);
+
+  // Add auto-zoom effect when a threat is selected
+  useEffect(() => {
+    // Skip if auto-zoom is disabled, no threat is selected, or if the reactFlow instance isn't ready
+    if (!isAutoZoomEnabled || !selectedThreat || !reactFlowInstance.current) return;
+    
+    // Get the target elements from the selected threat
+    const targetNodeIds = selectedThreat.target_elements || [];
+    
+    // Skip if the threat doesn't target any specific nodes
+    if (targetNodeIds.length === 0) return;
+    
+    // Find the nodes that are targets of this threat
+    const targetNodes = nodes.filter(node => 
+      targetNodeIds.includes(node.id)
+    );
+    
+    // Skip if no target nodes found
+    if (targetNodes.length === 0) return;
+    
+    // Create a padding value to give some space around the nodes
+    const padding = 0.2; // 20% padding
+    
+    console.log('Auto-zooming to threat target nodes:', targetNodeIds);
+    
+    // Zoom to the target nodes with animation
+    setTimeout(() => {
+      reactFlowInstance.current.fitView({
+        nodes: targetNodes,
+        padding,
+        duration: 800, // Animation duration in ms
+        minZoom: 0.5, // Set a minimum zoom level
+        maxZoom: 1.5, // Set a maximum zoom level
+      });
+    }, 100);
+    
+  }, [selectedThreat, nodes, isAutoZoomEnabled]);
+
+  // Handler for threat selection (update to include severity filter)
   const handleThreatSelect = useCallback((threat: ThreatItem | null) => {
-    setSelectedThreat(threat);
-  }, []);
+    if (threat === null || (selectedThreat && selectedThreat.id === threat.id)) {
+      // Deselecting current threat, reset view to show all nodes if auto-zoom is enabled
+      setSelectedThreat(null);
+      
+      // Reset the view after a short delay if auto-zoom is enabled
+      if (isAutoZoomEnabled) {
+        setTimeout(() => {
+          if (reactFlowInstance.current && nodes.length > 0) {
+            reactFlowInstance.current.fitView({ padding: 0.2, duration: 800 });
+          }
+        }, 100);
+      }
+    } else {
+      // Selecting a new threat
+      setSelectedThreat(threat);
+      
+      // The zooming will be handled by the useEffect above if auto-zoom is enabled
+    }
+    
+    // If a threat is selected, set the severity filter to match its severity
+    if (threat) {
+      setActiveSeverityFilter(threat.severity || 'ALL');
+    } else {
+      setActiveSeverityFilter('ALL');
+    }
+  }, [selectedThreat, nodes, isAutoZoomEnabled]);
 
   // Handler for node selection
   const onNodeClick = useCallback((event, node) => {
@@ -889,6 +1020,7 @@ const AIFlowDiagram: React.FC<AIFlowDiagramProps> = ({
         onToggleDataFlow={handleToggleDataFlow}
         onGenerateReport={handleGenerateReport}
         onSave={handleSave}
+        projectId={projectId || ''}
       />
       <div className="flex-1 overflow-hidden relative">
         {/* Modern gradient background */}
@@ -1098,6 +1230,10 @@ const AIFlowDiagram: React.FC<AIFlowDiagramProps> = ({
             selectedThreat={selectedThreat}
             selectedNode={selectedNode}
             onRunThreatAnalysis={handleRunThreatAnalysis}
+            activeSeverityFilter={activeSeverityFilter}
+            setActiveSeverityFilter={setActiveSeverityFilter}
+            isAutoZoomEnabled={isAutoZoomEnabled}
+            setIsAutoZoomEnabled={setIsAutoZoomEnabled}
           />
         )}
       </div>
@@ -1116,4 +1252,3 @@ const AIFlowDiagram: React.FC<AIFlowDiagramProps> = ({
 };
 
 export default AIFlowDiagram;
-

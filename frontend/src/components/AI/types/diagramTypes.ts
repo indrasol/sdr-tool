@@ -1,5 +1,5 @@
-
 import { Node, Edge, NodeProps as ReactFlowNodeProps } from '@xyflow/react';
+import { ThreatItem } from '@/interfaces/aiassistedinterfaces';
 
 // Define the data structure for node data
 export interface CustomNodeData {
@@ -10,6 +10,10 @@ export interface CustomNodeData {
   onEdit?: (id: string, label: string) => void;
   onDelete?: (id: string) => void;
   isComment?: boolean;
+  threats?: ThreatItem[];
+  activeSeverityFilter?: string;
+  hasSourceConnection?: boolean;
+  hasTargetConnection?: boolean;
   [key: string]: unknown; // Add index signature to satisfy Record<string, unknown>
 }
 
@@ -46,6 +50,8 @@ export interface AIFlowDiagramProps {
   onSave?: () => void;
   onLayout?: () => void; // New prop for layout functionality
   isLayouting?: boolean; // New prop for tracking layout state
+  reactFlowInstanceRef?: React.MutableRefObject<any>; // Reference to the ReactFlow instance
+  projectId?: string; // Project ID to display
 }
 
 // Additional types that might be useful

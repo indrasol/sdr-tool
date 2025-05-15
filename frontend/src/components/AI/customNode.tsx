@@ -4,6 +4,7 @@ import NodeContextToolbar from './NodeContextToolbar';
 import { CustomNodeData } from './types/diagramTypes';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { getCategoryStyle } from './utils/nodeStyles';
+import ThreatBadges from './ThreatBadges';  // Import ThreatBadges component
 
 const CustomNode = ({ 
   id, 
@@ -24,6 +25,9 @@ const CustomNode = ({
   // Access connection flags safely, defaulting to false if undefined
   const hasSourceConnection = safeData.hasSourceConnection ?? false;
   const hasTargetConnection = safeData.hasTargetConnection ?? false;
+  // Get threats from context/props
+  const threats = safeData.threats || [];
+  const activeSeverityFilter = safeData.activeSeverityFilter || 'ALL';
 
   const handleEdit = (nodeId: string) => {
     if (safeData.onEdit) {
@@ -222,6 +226,13 @@ const CustomNode = ({
 
       {/* Main node container - defines the boundary */}
       <div className={`node-fade-in custom-node w-16 h-16 relative`}>
+        {/* Render threat badges if there are threats */}
+        <ThreatBadges 
+          nodeId={id} 
+          threats={threats} 
+          activeSeverityFilter={activeSeverityFilter}
+        />
+
         {/* NodeResizer MOVED INSIDE */}
         {selected && (
           <NodeResizer 
