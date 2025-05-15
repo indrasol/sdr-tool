@@ -422,6 +422,7 @@ class PromptBuilder:
                         "threat_type": "SPOOFING|TAMPERING|REPUDIATION|INFORMATION_DISCLOSURE|DENIAL_OF_SERVICE|ELEVATION_OF_PRIVILEGE",
                         "attack_vector": "Description of how the attack would occur against the current implementation",
                         "impact": "Description of the specific impact this would have on the system"
+                        "target_elements_labels": ["Node Label 1", "Node Label 2"]
                     }}
                 }}
             ]

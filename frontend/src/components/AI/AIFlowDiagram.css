@@ -77,13 +77,18 @@
 /* Add pulsing effect for high threats */
 @keyframes pulse {
   0% {
-    opacity: 1;
+    transform: scale(0.95);
+    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7);
   }
-  50% {
-    opacity: 0.6;
+  
+  70% {
+    transform: scale(1);
+    box-shadow: 0 0 0 10px rgba(239, 68, 68, 0);
   }
+  
   100% {
-    opacity: 1;
+    transform: scale(0.95);
+    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0);
   }
 }
 
@@ -93,11 +98,7 @@
 
 /* Styles for threat badges */
 .threat-badge {
-  position: absolute;
-  right: -4px;
-  top: -4px;
-  width: 20px;
-  height: 20px;
+  position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -105,32 +106,58 @@
   font-size: 10px;
   font-weight: bold;
   color: white;
+  width: 18px;
+  height: 18px;
+  z-index: 100;
+  box-shadow: 0 0 0 1.5px white, 0 2px 4px rgba(0,0,0,0.3);
+  margin-left: 3px;
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  transform-origin: center;
+}
+
+.threat-badge:hover, .threat-badge:active {
+  transform: scale(1.3);
+  box-shadow: 0 0 0 1.5px white, 0 4px 8px rgba(0,0,0,0.4);
 }
 
 .threat-badge-high {
   background-color: #ef4444;
-  box-shadow: 0 0 0 2px white;
+}
+
+.threat-badge-high:hover, .threat-badge-high:active {
+  background-color: #dc2626;
+  box-shadow: 0 0 0 1.5px white, 0 0 10px rgba(239, 68, 68, 0.6);
 }
 
 .threat-badge-medium {
   background-color: #f59e0b;
-  box-shadow: 0 0 0 2px white;
+}
+
+.threat-badge-medium:hover, .threat-badge-medium:active {
+  background-color: #d97706;
+  box-shadow: 0 0 0 1.5px white, 0 0 10px rgba(245, 158, 11, 0.6);
 }
 
 .threat-badge-low {
   background-color: #3b82f6;
-  box-shadow: 0 0 0 2px white;
+}
+
+.threat-badge-low:hover, .threat-badge-low:active {
+  background-color: #2563eb;
+  box-shadow: 0 0 0 1.5px white, 0 0 10px rgba(59, 130, 246, 0.6);
 }
 
 /* Threat indicator positioning */
 .threat-indicator {
   position: absolute;
-  top: -5px;
-  right: -5px;
+  top: -6px;
+  right: -6px;
   display: flex;
   flex-direction: row;
-  gap: 2px;
-  cursor: pointer;
+  gap: 3px;
+  z-index: 9999 !important;
+  pointer-events: auto;
 }
 
 /* Modern gradient background for diagram pane */
@@ -867,9 +894,7 @@
 
 /* Styles for threat badges */
 .threat-badge {
-  position: relative;
-  width: 20px;
-  height: 20px;
+  position: absolute;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -877,35 +902,43 @@
   font-size: 10px;
   font-weight: bold;
   color: white;
+  width: 22px;
+  height: 22px;
+  z-index: 100;
   box-shadow: 0 0 0 2px white;
   margin-left: 3px;
 }
 
 .threat-badge-high {
   background-color: #ef4444;
+  box-shadow: 0 0 0 2px white;
 }
 
 .threat-badge-medium {
   background-color: #f59e0b;
+  box-shadow: 0 0 0 2px white;
 }
 
 .threat-badge-low {
   background-color: #3b82f6;
+  box-shadow: 0 0 0 2px white;
 }
 
 /* Add pulsing effect for high threats */
 @keyframes pulse {
   0% {
-    opacity: 1;
+    transform: scale(0.95);
+    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7);
+  }
+  
+  70% {
     transform: scale(1);
+    box-shadow: 0 0 0 10px rgba(239, 68, 68, 0);
   }
-  50% {
-    opacity: 0.7;
-    transform: scale(1.1);
-  }
+  
   100% {
-    opacity: 1;
-    transform: scale(1);
+    transform: scale(0.95);
+    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0);
   }
 }
 
@@ -1477,4 +1510,166 @@ button[disabled],
 
 .lock-icon:hover {
   transform: scale(1.1);
+}
+
+/* Add these styles to enhance edge handle visibility on hover */
+
+/* Only enhance handles that are actually rendered (when they exist or when selected) */
+.custom-handle:hover {
+  transform: scale(1.3) !important;
+  opacity: 1 !important;
+  border-color: #7C65F6 !important;
+  box-shadow: 0 0 0 2px rgba(124, 101, 246, 0.3) !important;
+}
+
+/* Make handles larger when connecting */
+.react-flow__handle-connecting {
+  transform: scale(1.5) !important;
+  opacity: 1 !important;
+  border-color: #7C65F6 !important;
+  box-shadow: 0 0 0 3px rgba(124, 101, 246, 0.3) !important;
+}
+
+/* Enhance node icon visibility */
+/* Add a subtle text shadow to improve contrast for all icons, especially against colored backgrounds */
+.custom-node svg {
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.3));
+}
+
+/* Additional styles for specific node types to enhance contrast */
+.custom-node[data-nodetype*="api"] svg,
+.custom-node[data-nodetype*="server"] svg,
+.custom-node[data-nodetype*="gateway"] svg {
+  filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.4));
+}
+
+/* Enhance icon container with better shadow for depth */
+.custom-node .shadow-md {
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.2), 0 2px 4px -1px rgba(0, 0, 0, 0.1) !important;
+}
+
+/* Node hover effect to slightly lift and enhance the node's appearance */
+.custom-node:hover > div > div:first-child {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 10px -2px rgba(0, 0, 0, 0.25), 0 4px 6px -2px rgba(0, 0, 0, 0.15) !important;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+/* Enhanced styles for threat badges */
+.custom-node[data-has-threats="true"] {
+  overflow: visible !important;
+}
+
+/* Override any potential clipping */
+.react-flow__node-default, 
+.react-flow__node {
+  overflow: visible !important;
+}
+
+/* Threat badges enhanced visibility styles */
+.threat-indicator {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  display: flex;
+  gap: 3px;
+  z-index: 9999 !important;
+}
+
+/* Ensure badges stay on top of everything */
+.threat-badge {
+  position: relative;
+  z-index: 9999 !important;
+  transform: scale(1);
+  transition: transform 0.15s ease-out, box-shadow 0.15s ease-out;
+  cursor: pointer;
+  pointer-events: auto !important;
+}
+
+.threat-badge:hover {
+  transform: scale(1.35);
+  z-index: 10000 !important;
+  box-shadow: 0 0 0 2px white, 0 0 10px 2px rgba(0, 0, 0, 0.3) !important;
+}
+
+/* High severity badge glow effect */
+.threat-badge-high {
+  box-shadow: 0 0 0 1.5px white, 0 0 5px 1px rgba(239, 68, 68, 0.5) !important;
+}
+
+.threat-badge-high:hover {
+  box-shadow: 0 0 0 2px white, 0 0 10px 3px rgba(239, 68, 68, 0.6) !important;
+}
+
+/* Medium severity badge */
+.threat-badge-medium {
+  box-shadow: 0 0 0 1.5px white, 0 0 5px 1px rgba(245, 158, 11, 0.5) !important;
+}
+
+.threat-badge-medium:hover {
+  box-shadow: 0 0 0 2px white, 0 0 10px 3px rgba(245, 158, 11, 0.6) !important;
+}
+
+/* Low severity badge */
+.threat-badge-low {
+  box-shadow: 0 0 0 1.5px white, 0 0 5px 1px rgba(59, 130, 246, 0.5) !important;
+}
+
+.threat-badge-low:hover {
+  box-shadow: 0 0 0 2px white, 0 0 10px 3px rgba(59, 130, 246, 0.6) !important;
+}
+
+/* Make pulse animation more subtle but effective */
+@keyframes pulse {
+  0% {
+    transform: scale(1);
+    box-shadow: 0 0 0 1.5px white, 0 2px 4px rgba(0,0,0,0.3);
+  }
+  
+  50% {
+    transform: scale(1.1);
+    box-shadow: 0 0 0 1.5px white, 0 2px 4px rgba(0,0,0,0.3), 0 0 0 4px rgba(239, 68, 68, 0.3);
+  }
+  
+  100% {
+    transform: scale(1);
+    box-shadow: 0 0 0 1.5px white, 0 2px 4px rgba(0,0,0,0.3);
+  }
+}
+
+/* Improve tooltip styling */
+.threat-tooltip {
+  animation: tooltipFadeIn 0.2s ease-out;
+}
+
+@keyframes tooltipFadeIn {
+  from { 
+    opacity: 0;
+    transform: translateY(-90%);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(-100%);
+  }
+}
+
+/* Force visible parent containers */
+.react-flow__renderer, 
+.react-flow__pane, 
+.react-flow__container,
+.react-flow__viewport,
+.react-flow__nodes {
+  overflow: visible !important;
+}
+
+/* Threat badge container positioning */
+.threat-badge-container {
+  pointer-events: none;
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 0;
+  height: 0;
+  overflow: visible;
+  z-index: 9999;
 }

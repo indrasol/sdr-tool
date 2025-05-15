@@ -12,6 +12,8 @@ import traceback
 import jwt
 from fastapi import Depends
 from fastapi.security import APIKeyHeader
+import time
+import datetime
 
 app = FastAPI()
 
@@ -39,7 +41,26 @@ async def verify_token(authorization: str = Header(None), is_registration: bool 
         # log_info(f"Authorization: {authorization}")
         token = authorization.split(" ")[1]
         token = str(token)
-        # log_info(f"Token: {token}")
+        log_info(f"Token: {token}")
+
+        # Log current server time for debugging
+        current_timestamp = int(time.time())
+        current_time = datetime.datetime.fromtimestamp(current_timestamp).strftime('%Y-%m-%d %H:%M:%S')
+        log_info(f"Current server time: {current_time} (timestamp: {current_timestamp})")
+
+        # Decode token payload without verification to check timestamps
+        try:
+            unverified_payload = jwt.decode(token, options={"verify_signature": False})
+            token_iat = unverified_payload.get("iat", 0)
+            token_exp = unverified_payload.get("exp", 0)
+            token_iat_time = datetime.datetime.fromtimestamp(token_iat).strftime('%Y-%m-%d %H:%M:%S')
+            token_exp_time = datetime.datetime.fromtimestamp(token_exp).strftime('%Y-%m-%d %H:%M:%S')
+            
+            log_info(f"Token iat: {token_iat_time} (timestamp: {token_iat})")
+            log_info(f"Token exp: {token_exp_time} (timestamp: {token_exp})")
+            log_info(f"Time difference: {token_iat - current_timestamp} seconds")
+        except Exception as e:
+            log_info(f"Could not decode token payload for time comparison: {str(e)}")
 
         # log_info(f"SUPABASE_SECRET_KEY: {SUPABASE_SECRET_KEY}")
 
@@ -49,6 +70,7 @@ async def verify_token(authorization: str = Header(None), is_registration: bool 
             raise HTTPException(status_code=500, detail="Server configuration error: Missing or invalid secret key")
 
         # Verify the JWT using the secret from environment variables
+        # log_info(f"Secret Key : {SUPABASE_SECRET_KEY}")
         try:
             # jwt_secret = base64.b64decode(SUPABASE_SECRET_KEY)
             payload = jwt.decode(token, SUPABASE_SECRET_KEY, algorithms=["HS256"], audience="authenticated")

@@ -880,6 +880,125 @@ const SolutionsHub = () => {
               ))}
             </div>
           </div>
+
+          {/* Your Org Templates Section */}
+          <div className="mt-14">
+            <div className="bg-gradient-to-r from-indigo-500/20 via-purple-500/20 to-pink-500/20 rounded-xl p-4 mb-6 shadow-sm backdrop-blur-sm">
+              <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+                <div className="flex items-center">
+                  <div className="bg-gradient-to-r from-indigo-500 to-purple-600 p-2 rounded-lg mr-3 shadow-inner">
+                    <Shield className="h-5 w-5 text-white" />
+                  </div>
+                  <h3 className="text-lg font-semibold font-['Geneva','Segoe UI',sans-serif] tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-purple-600">
+                    Your Org Templates
+                  </h3>
+                </div>
+              </div>
+              <p className="text-sm text-gray-600 mt-3 font-medium max-w-3xl">
+                Custom security templates created specifically within your organization.
+              </p>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {/* Organization template examples - typically would be loaded from API */}
+              {[1, 2, 3].map((_, index) => (
+                <motion.div
+                  key={`org-template-${index}`}
+                  className="relative perspective-1000"
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ duration: 0.4 }}
+                  whileHover={{ 
+                    z: 10,
+                    transition: { duration: 0.2 }
+                  }}
+                >
+                  <div className="bg-white rounded-xl overflow-hidden border shadow-md transform transition-all duration-300 hover:shadow-xl hover:rotate-y-10 hover:scale-105 hover:border-securetrack-purple">
+                    {/* Template header with organization branding */}
+                    <div className="relative h-48 bg-gradient-to-r from-blue-600 to-purple-700 overflow-hidden flex items-center justify-center">
+                      <div className="absolute inset-0 opacity-20">
+                        <div className="absolute inset-0 bg-grid-pattern"></div>
+                      </div>
+                      
+                      {/* Template icon */}
+                      <div className="relative z-10 flex flex-col items-center justify-center p-4">
+                        {index === 0 ? (
+                          <Database className="h-10 w-10 text-white mb-2" />
+                        ) : index === 1 ? (
+                          <Server className="h-10 w-10 text-white mb-2" />
+                        ) : (
+                          <Globe className="h-10 w-10 text-white mb-2" />
+                        )}
+                        <div className="text-white text-xl font-bold text-center">
+                          {index === 0 ? "Internal DB Security" : index === 1 ? "Corporate Network" : "Employee Access"}
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div className="p-4">
+                      <div className="flex justify-between items-start mb-2">
+                        <h3 className="font-semibold">
+                          {index === 0 ? "Internal DB Security" : index === 1 ? "Corporate Network" : "Employee Access Controls"}
+                        </h3>
+                        <div className="bg-blue-100 text-blue-800 text-xs px-2 py-0.5 rounded-full">
+                          {index === 0 ? "Data Security" : index === 1 ? "Network" : "Access Control"}
+                        </div>
+                      </div>
+                      <p className="text-sm text-gray-600 mb-3">
+                        {index === 0 
+                          ? "Custom database security controls with organization-specific policies and encryption settings." 
+                          : index === 1 
+                            ? "Network security configuration tailored to your corporate infrastructure and requirements."
+                            : "Employee access management template with role-based permissions and multi-factor authentication."
+                        }
+                      </p>
+                      
+                      <div className="flex flex-wrap gap-1.5 mb-3">
+                        {index === 0 ? (
+                          <>
+                            <span className="text-xs bg-blue-50 text-blue-600 px-2 py-0.5 rounded-full font-medium">Internal</span>
+                            <span className="text-xs bg-blue-50 text-blue-600 px-2 py-0.5 rounded-full font-medium">Database</span>
+                            <span className="text-xs bg-blue-50 text-blue-600 px-2 py-0.5 rounded-full font-medium">Encryption</span>
+                          </>
+                        ) : index === 1 ? (
+                          <>
+                            <span className="text-xs bg-blue-50 text-blue-600 px-2 py-0.5 rounded-full font-medium">Network</span>
+                            <span className="text-xs bg-blue-50 text-blue-600 px-2 py-0.5 rounded-full font-medium">Firewall</span>
+                            <span className="text-xs bg-blue-50 text-blue-600 px-2 py-0.5 rounded-full font-medium">VPN</span>
+                          </>
+                        ) : (
+                          <>
+                            <span className="text-xs bg-blue-50 text-blue-600 px-2 py-0.5 rounded-full font-medium">Access</span>
+                            <span className="text-xs bg-blue-50 text-blue-600 px-2 py-0.5 rounded-full font-medium">RBAC</span>
+                            <span className="text-xs bg-blue-50 text-blue-600 px-2 py-0.5 rounded-full font-medium">MFA</span>
+                          </>
+                        )}
+                      </div>
+                      
+                      <div className="flex items-center justify-between mt-4">
+                        <div className="flex items-center gap-1">
+                          <div className="h-5 w-5 rounded-full bg-green-100 flex items-center justify-center">
+                            <Check className="h-3 w-3 text-green-600" />
+                          </div>
+                          <span className="text-xs text-gray-500">Organization approved</span>
+                        </div>
+                        <div className="flex gap-2">
+                          <Button className="gap-1 bg-securetrack-purple/10 text-securetrack-purple hover:bg-securetrack-purple/20 border border-securetrack-purple/30 hover:border-securetrack-purple/50 transition-all duration-200 font-medium text-sm py-1 px-3">
+                            Preview
+                          </Button>
+                          <Button 
+                            className="gap-1 bg-blue-500/10 text-blue-600 hover:bg-blue-500/20 border border-blue-400/30 hover:border-blue-500/50 transition-all duration-200 font-medium text-sm py-1 px-3"
+                          >
+                            Deploy
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+          </div>
         </div>
       </div>
 

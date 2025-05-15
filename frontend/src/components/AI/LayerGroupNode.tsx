@@ -6,14 +6,52 @@ interface ExtendedNodeProps extends NodeProps {
   style?: React.CSSProperties;
 }
 
+// Get opacity based on hierarchy level
+const getHierarchicalOpacity = (level: number): number => {
+  // Higher level (child) layers are more opaque
+  // Level 0 (top-level) layers are most transparent
+  const baseOpacity = 0.15;
+  const opacityIncrement = 0.05;
+  return Math.min(baseOpacity + (level * opacityIncrement), 0.4); // Cap at 0.4
+};
+
 const LayerGroupNode = ({ id, data, style, width, height }: ExtendedNodeProps) => {
-  // Get layer type from data for dynamic styling
+  // Get layer type and hierarchy level from data
   const layerType = (data?.layer as string) || 'default';
+  const hierarchyLevel = typeof data?.hierarchyLevel === 'number' ? data.hierarchyLevel : 0; 
   
   // Get appropriate style from our centralized layer configuration
   const layerStyle = getLayerStyle(layerType);
 
+  // Adjust border style based on hierarchy level
+  const getBorderStyle = (level: number): string => {
+    // Top-level containers use dashed border
+    // Child containers use dotted borders
+    return level === 0 ? 'dashed' : 'dotted';
+  };
   
+  // Get background opacity based on hierarchy level
+  const bgOpacity = getHierarchicalOpacity(hierarchyLevel);
+  
+  // Dynamically adjust background color based on layer type and level
+  const getBackgroundColor = (): string => {
+    // Extract the base color from the layerStyle
+    const baseColor = layerStyle.bgColor;
+    
+    // If it's already in rgba format, modify the opacity
+    if (baseColor.startsWith('rgba(')) {
+      return baseColor.replace(/rgba\(([^,]+),([^,]+),([^,]+),[^)]+\)/, 
+        (_, r, g, b) => `rgba(${r},${g},${b},${bgOpacity})`);
+    }
+    
+    // Otherwise return the original color
+    return baseColor;
+  };
+  
+  // Calculate z-index based on level - ensure parent layers are behind child layers
+  const getZIndex = (): number => {
+    return hierarchyLevel === 0 ? -10 : -5;
+  };
   
   return (
     <div
@@ -21,16 +59,16 @@ const LayerGroupNode = ({ id, data, style, width, height }: ExtendedNodeProps) =
         ...style,
         position: 'absolute',
         pointerEvents: 'none', // Allow click-through to nodes
-        borderStyle: 'dashed', // More visible dashed border
-        borderWidth: style?.borderWidth || 2, // Increased width
-        borderColor: style?.borderColor || layerStyle.borderColor, // Use layer-specific color
-        backgroundColor: style?.backgroundColor || layerStyle.bgColor, // Use layer-specific background
-        width: width || style?.width || 200, // Explicit width
-        height: height || style?.height || 200, // Explicit height
-        borderRadius: style?.borderRadius || 10, // Slight rounding
-        zIndex: -5, // Ensure it's behind other nodes but visible
-        padding: '10px', // Space for child nodes
-        boxShadow: '0 0 10px rgba(0,0,0,0.05)', // Subtle shadow to enhance visibility
+        borderStyle: getBorderStyle(hierarchyLevel), // Style based on level
+        borderWidth: style?.borderWidth || 2, 
+        borderColor: style?.borderColor || layerStyle.borderColor,
+        backgroundColor: style?.backgroundColor || getBackgroundColor(),
+        width: width || style?.width || 200,
+        height: height || style?.height || 200,
+        borderRadius: style?.borderRadius || 10,
+        zIndex: getZIndex(), // Use function to calculate safe z-index
+        padding: '10px',
+        boxShadow: '0 0 10px rgba(0,0,0,0.05)',
       }}
       className="layer-container"
     >
@@ -38,8 +76,8 @@ const LayerGroupNode = ({ id, data, style, width, height }: ExtendedNodeProps) =
       <div
         className="layer-title absolute -top-6 left-4 px-3 py-1 text-xs font-semibold rounded"
         style={{
-          backgroundColor: style?.backgroundColor || layerStyle.bgColor, // Match layer background
-          color: style?.color || layerStyle.color, // Match layer text color
+          backgroundColor: style?.backgroundColor || getBackgroundColor(),
+          color: style?.color || layerStyle.color,
           borderWidth: 1,
           borderStyle: 'solid',
           borderColor: layerStyle.borderColor,

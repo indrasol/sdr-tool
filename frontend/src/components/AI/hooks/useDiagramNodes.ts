@@ -145,8 +145,53 @@ export function useDiagramNodes(
         return null;
       }
       
+      // Special case: Preserve sticky notes and comment nodes
+      if (
+        node.type === 'comment' || 
+        node.data?.nodeType === 'stickyNote' || 
+        node.data?.isComment === true ||
+        node.data?.preserveType === 'comment'
+      ) {
+        // Return sticky notes as-is with minimal modifications to preserve their nature
+        const stickyNoteNode = {
+          ...node,
+          // Ensure type is kept as 'comment'
+          type: 'comment',
+          // Ensure these properties are preserved
+          connectable: false,
+          data: {
+            ...node.data,
+            // Ensure these critical properties are always present
+            nodeType: node.data?.nodeType || 'stickyNote',
+            isComment: true,
+            excludeFromLayers: true,
+            // Add handlers only if they don't exist
+            onEdit: node.data?.onEdit || handleEditNode,
+            onDelete: node.data?.onDelete || handleDeleteNode,
+          }
+        };
+        return stickyNoteNode as Node<CustomNodeData>;
+      }
+      
+      // Regular node processing
       // Extract node type and ensure it exists
       const nodeType = (node.data?.nodeType || node.type || 'default') as string;
+      
+      // Check if this is a client node 
+      const isClientNode = () => {
+        const nodeTypeStr = nodeType.toLowerCase();
+        const section = nodeTypeStr.split('_')[0];
+        
+        return section === 'client' || 
+              nodeTypeStr.startsWith('client_') ||
+              nodeTypeStr.includes('client') || 
+              nodeTypeStr.includes('mobile_app') ||
+              nodeTypeStr.includes('browser') ||
+              nodeTypeStr.includes('desktop_app') ||
+              nodeTypeStr.includes('iot_device') ||
+              nodeTypeStr.includes('kiosk') ||
+              nodeTypeStr.includes('user_');
+      };
       
       // Check if the node already has an iconRenderer from toolbar
       const existingIconRenderer = node.data?.iconRenderer;
@@ -197,6 +242,9 @@ export function useDiagramNodes(
       const hasSourceConnection = sourceIds.has(node.id);
       const hasTargetConnection = targetIds.has(node.id);
       
+      // Determine if this node should be excluded from layers (client nodes)
+      const shouldExcludeFromLayers = isClientNode();
+      
       // Always force draggable to be true, never override with false
       return {
         ...node,
@@ -215,6 +263,7 @@ export function useDiagramNodes(
           iconRenderer: iconRenderer,
           hasSourceConnection: hasSourceConnection, 
           hasTargetConnection: hasTargetConnection,
+          excludeFromLayers: shouldExcludeFromLayers || data.excludeFromLayers, // Mark client nodes to exclude from layers
         } as CustomNodeData, // Assert the final data structure
         className: node.dragging ? 'dragging' : '',
       } as Node<CustomNodeData>; // Assert the final node structure

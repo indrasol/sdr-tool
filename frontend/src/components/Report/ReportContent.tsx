@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import TypewriterText from '@/components/AI/TypewriterText';
@@ -28,7 +27,7 @@ const ReportContent: React.FC<ReportContentProps> = ({
   reportRef
 }) => {
   return (
-    <div className="col-span-10">
+    <div className="col-span-9">
       <Card className="h-[calc(100vh-280px)] min-h-[500px] border-securetrack-lightpurple/20 overflow-auto shadow-md bg-gradient-to-r from-[#f8f9fc] via-white to-[#f5f2fc]" ref={reportRef}>
         <CardContent className="p-6">
           <h2 className="text-2xl font-bold mb-4 text-black font-playfair">{reportPages[currentPage].title}</h2>
