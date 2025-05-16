@@ -1,7 +1,7 @@
 node_types = {
     "application": [
       {"name": "application_web_server", "description": "Hosts web applications, serving HTTP requests (e.g., Nginx, Apache)."},
-      {"name": "application_database", "description": "Stores and manages structured or unstructured data (e.g., SQL, NoSQL)."},
+      # {"name": "application_database", "description": "Stores and manages structured or unstructured data (e.g., SQL, NoSQL)."},
       {"name": "application_api_gateway", "description": "Centralizes and routes API requests, often with rate limiting and authentication."},
       {"name": "application_load_balancer", "description": "Distributes incoming traffic across multiple servers for scalability and reliability."},
       {"name": "application_cache", "description": "Stores frequently accessed data for low-latency retrieval (e.g., Redis, Memcached)."},
@@ -12,7 +12,19 @@ node_types = {
       {"name": "application_microservice", "description": "A small, independent service that performs a specific function within a larger application."},
       {"name": "application_faas", "description": "A serverless computing service that executes code in response to events without managing servers."},
       {"name": "application_monitoring", "description": "Collects and analyzes metrics and logs to monitor application performance and health."},
-      {"name": "application_logging", "description": "Centralizes and manages log data from various sources for analysis and troubleshooting."}
+      {"name": "application_logging", "description": "Centralizes and manages log data from various sources for analysis and troubleshooting."},
+    ],
+    "backend": [
+        {
+      "name": "backend_fastapi",
+      "description": "Backend Python Fastapi Framework."
+    }
+    ],
+    "frontend": [
+        {
+      "name": "frontend_react",
+      "description": "Frontend React Framework."
+    }
     ],
     "client": [
     {
@@ -4599,12 +4611,158 @@ node_types = {
         "description": "Ork Network Service Mesh Network."
       }
     ],
+    "database": [
+    {
+      "name": "database_sql_server",
+      "description": "Microsoft SQL Server is a relational database management system developed by Microsoft. It provides a wide range of features including business intelligence, analytics, and integration services.",
+    },
+    {
+      "name": "database_riak",
+      "description": "Riak is a distributed NoSQL database designed to deliver maximum data availability by distributing data across multiple servers. It is highly fault-tolerant and scalable.",
+    },
+    {
+      "name": "database_tidb",
+      "description": "Base Tidb Database.",
+    },
+    {
+      "name": "database_hbase",
+      "description": "Apache HBase is an open-source, distributed, scalable, big data store that runs on top of Hadoop HDFS. It provides random, real-time read/write access to data in large tables.",
+    },
+    {
+      "name": "database_db4o",
+      "description": "db4o (database for objects) is an open-source object database for Java and .NET developers, allowing the storage and retrieval of objects without a separate schema.",
+    },
+    {
+      "name": "database_postgresql",
+      "description": "PostgreSQL is a powerful, open-source object-relational database system that uses and extends the SQL language. It is highly extensible and standards-compliant, suitable for a variety of applications.",
+    },
+    {
+      "name": "database_cockroachdb",
+      "description": "CockroachDB is a distributed SQL database designed for global, cloud-native applications, offering resilience against single-point-of-failure and horizontal scalability.",
+    },
+    {
+      "name": "database_leveldb",
+      "description": "LevelDB is a fast key-value storage library written at Google that provides an ordered mapping from string keys to string values, designed for high performance and simplicity.",
+    },
+    {
+      "name": "database_firebase",
+      "description": "Firebase is a platform developed by Google for creating mobile and web applications. It includes a real-time NoSQL database that synchronizes data between clients and servers.",
+    },
+    {
+      "name": "database_ravendb",
+      "description": "RavenDB is an open-source document-oriented database written in C#, designed to handle high-performance, scalable data storage with a focus on ease of use and developer productivity.",
+    },
+    {
+      "name": "sqlite",
+      "description": "Te Database.",
+    },
+    {
+      "name": "database_mongodb",
+      "description": "MongoDB is a cross-platform, document-oriented database that provides high performance, high availability, and easy scalability. It works on the concept of collections and documents.",
+    },
+    {
+      "name": "database_mariadb",
+      "description": "MariaDB is a community-developed, commercially supported fork of the MySQL relational database management system, intended to remain free and open-source software under the GNU GPL.",
+    },
+    {
+      "name": "database_timescaledb",
+      "description": "TimescaleDB is an open-source time-series database designed to scale smoothly for time-series data, built as an extension on PostgreSQL.",
+    },
+    {
+      "name": "database_redis_cache",
+      "description": "Redis is an open-source, in-memory data structure store used as a database, cache, and message broker. It supports various data structures such as strings, hashes, lists, and sets with high performance.",
+    },
+    {
+      "name": "database_cassandra",
+      "description": "Apache Cassandra is a free and open-source distributed wide column store NoSQL database designed to handle large amounts of data across many commodity servers, providing high availability with no single point of failure.",
+    },
+    {
+      "name": "database_couchdb",
+      "description": "Apache CouchDB is an open-source document-oriented NoSQL database that uses JSON to store data, JavaScript as its query language using MapReduce, and HTTP for an API.",
+    },
+    {
+      "name": "database_oracledb",
+      "description": "Oracle Database is a multi-model database management system produced and marketed by Oracle Corporation. It supports a wide range of data types and is known for its robustness and scalability in enterprise environments.",
+    },
+    {
+      "name": "database_influxdb",
+      "description": "InfluxDB is an open-source time series database designed to handle high write and query loads, optimized for metrics, events, and real-time analytics.",
+    },
+    {
+      "name": "database_neo4j",
+      "description": "Neo4j is a highly scalable, robust native graph database that helps organizations build intelligent applications leveraging relationships and graph structures.",
+    },
+    {
+      "name": "database_janusgraph",
+      "description": "JanusGraph is an open-source, distributed graph database optimized for storing and querying large graphs with billions of vertices and edges distributed across a multi-machine cluster.",
+    },
+    {
+      "name": "database_arangodb",
+      "description": "ArangoDB is a native multi-model database system developed by ArangoDB Inc. It supports three data models with one database core and a unified query language AQL (ArangoDB Query Language).",
+    },
+    {
+      "name": "database_objectdb",
+      "description": "ObjectDB is a powerful Object-Oriented Database (OODBMS) written in Java, designed to store and manage Java objects natively without the need for an ORM layer.",
+    },
+    {
+      "name": "database_elasticsearch",
+      "description": "Elasticsearch is a distributed, RESTful search and analytics engine capable of addressing a growing number of use cases, built on Apache Lucene.",
+    },
+    {
+      "name": "database_apache_solr",
+      "description": "Apache Solr is an open-source enterprise search platform built on Apache Lucene, providing full-text search, hit highlighting, faceted search, and dynamic clustering.",
+    },
+    {
+      "name": "database_mysql",
+      "description": "MySQL is an open-source relational database management system (RDBMS) based on Structured Query Language (SQL). It is widely used for web applications and supports a variety of data types and storage engines.",
+    }
+  ],
+  "databasetype": [
+    {
+      "name": "databasetype_time_series_database",
+      "description": "Optimized for storing and querying time-stamped data like logs and metrics. Examples: InfluxDB, TimescaleDB.",
+    },
+    {
+      "name": "databasetype_sql_database",
+      "description": "Manages structured data in tables using SQL, ensuring data integrity and supporting transactions. Examples: MySQL, PostgreSQL.",
+    },
+    {
+      "name": "databasetype_graph_database",
+      "description": "Models data as graphs to efficiently query and analyze relationships. Examples: Neo4j, Amazon Neptune.",
+    },
+    {
+      "name": "databasetype_columnar_store",
+      "description": "Stores data in wide columns for scalability and performance in big data applications. Examples: Cassandra, HBase.",
+    },
+    {
+      "name": "databasetype_object_database",
+      "description": "Manages data as objects, aligning with object-oriented programming. Examples: db4o, ObjectDB.",
+    },
+    {
+      "name": "databasetype_multi_model_database",
+      "description": "Handles multiple data models like document, graph, and key-value. Examples: ArangoDB, OrientDB.",
+    },
+    {
+      "name": "databasetype_newsql_database",
+      "description": "Provides distributed scalability with transactional consistency and SQL support. Examples: CockroachDB, Spanner.",
+    },
+    {
+      "name": "databasetype_nosql_database",
+      "description": "Basetype_Nosql_Database Database Type.",
+    },
+    {
+      "name": "databasetype_in_memory_database",
+      "description": "Keeps data in memory for high-speed access and processing. Examples: SAP HANA, Redis.",
+    }
+  ],
     "default": {
       "application": "application_service",
       "aws": "aws_service",
       "gcp": "gcp_service",
       "azure": "azure_service",
       "network": "network",
-      "client": "client"
+      "client": "client",
+      "database": "database_db4o",
+      "databasetype": "databasetype_newsql_database",
     }
   }

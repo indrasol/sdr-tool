@@ -51,6 +51,14 @@ export const layerConfigurations: Record<string, LayerStyle> = {
     label: 'Application Layer'
   },
   
+  // Data layer (databases) - Subtle blue theme
+  data: {
+    bgColor: 'rgba(41, 121, 255, 0.05)',
+    borderColor: 'rgba(41, 121, 255, 0.25)',
+    color: '#2979FF',
+    label: 'Data Layer'
+  },
+  
   // Network - Red theme
   network: {
     bgColor: 'rgba(220, 53, 69, 0.15)',
@@ -96,6 +104,11 @@ const defaultLayerHierarchy: Record<string, LayerHierarchy> = {
   application: {
     level: 1,
     children: ['api', 'aws', 'azure', 'gcp']
+  },
+  // Data layer is a separate layer for databases
+  data: {
+    level: 1,
+    children: []
   },
   // API layer can contain services
   api: {
@@ -167,7 +180,8 @@ const categoryKeywords: Record<string, string[]> = {
   aws: ['lambda', 'ec2', 's3', 'amazon'],
   azure: [],
   gcp: ['google', 'cloud run'],
-  application: ['service', 'microservice', 'function', 'database', 'sql', 'storage', 'cache', 'monitor'],
+  application: ['service', 'microservice', 'function', 'monitor'],
+  data: ['database', 'sql', 'nosql', 'db', 'storage', 'cache', 'postgresql', 'mongodb', 'redis', 'cassandra', 'mysql', 'databasetype', 'neo4j', 'graph_database'],
   network: ['router', 'load_balancer', 'security', 'firewall', 'waf', 'iam'],
   client: ['device', 'user'],
   api: ['gateway']
@@ -200,6 +214,26 @@ export const determineNodeLayer = (nodeType: string | undefined): string => {
       nodeTypeStr.includes('kiosk') ||
       nodeTypeStr.includes('user_')) {
     return 'client';
+  }
+  
+  // Database and DatabaseType specific detection
+  if (nodeTypeStr.includes('database') || 
+      nodeTypeStr.includes('databasetype') ||
+      nodeTypeStr.includes('sql') || 
+      nodeTypeStr.includes('nosql') || 
+      nodeTypeStr.includes('db') ||
+      nodeTypeStr.includes('mongo') ||
+      nodeTypeStr.includes('redis') ||
+      nodeTypeStr.includes('cassandra') ||
+      nodeTypeStr.includes('postgresql') ||
+      nodeTypeStr.includes('mysql') ||
+      nodeTypeStr.includes('neo4j') ||
+      nodeTypeStr.includes('graph_database') ||
+      nodeTypeStr.includes('time_series') ||
+      nodeTypeStr.includes('in_memory') ||
+      section === 'database' ||
+      section === 'databasetype') {
+    return 'data';
   }
   
   // First, check if the node type is directly mapped in our icon data

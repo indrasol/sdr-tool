@@ -231,8 +231,33 @@ export function useDiagramNodes(
       
       // Extract label from node data or generate from component part of nodeType, ensure it's a string
       const [section = '', component = ''] = nodeType.split('_');
-      const label: string = (data.label || 
+      const originalLabel: string = (data.label || 
                    (component ? component.charAt(0).toUpperCase() + component.slice(1) : 'Node')) as string;
+      
+      // NEW LOGIC: Format the label based on nodeType and originalLabel
+      let formattedLabel = originalLabel;
+      
+      // Only apply the special formatting if both nodeType and originalLabel exist
+      if (nodeType && originalLabel) {
+        // Extract the component name without the category prefix
+        if (component) {
+          // Format the component name to be user-friendly
+          // e.g., "redis_cache" becomes "Redis Cache"
+          const formattedComponent = component
+            .split('_')
+            .map(part => part.charAt(0).toUpperCase() + part.slice(1))
+            .join(' ');
+          
+          // Check if the original label already contains the component name at the start
+          // to avoid duplication like "Redis - Redis - Session Cache"
+          const startsWithComponent = originalLabel.toLowerCase().startsWith(formattedComponent.toLowerCase());
+          
+          // Only apply the formatting if the label doesn't already start with the component name
+          if (!startsWithComponent && formattedComponent.toLowerCase() !== originalLabel.toLowerCase()) {
+            formattedLabel = `${formattedComponent} - ${originalLabel}`;
+          }
+        }
+      }
       
       // Check if this is an application or microservice node
       const isApplicationNode = section === 'application';
@@ -253,7 +278,7 @@ export function useDiagramNodes(
         dragging: node.dragging || false, // Preserve dragging state if it exists
         draggable: true, // Always draggable
         data: { // Ensure data matches CustomNodeData structure
-          label: label, // Use the typed label
+          label: formattedLabel, // Use the newly formatted label
           onEdit: handleEditNode,
           onDelete: handleDeleteNode,
           description: data.description || '',

@@ -65,7 +65,15 @@ const CustomNode = ({
     const nodeTypeStr = nodeType.toLowerCase();
     return nodeTypeStr.includes('database') || 
            nodeTypeStr.includes('sql') || 
-           nodeTypeStr.includes('storage');
+           nodeTypeStr.includes('nosql') ||
+           nodeTypeStr.includes('mongodb') ||
+           nodeTypeStr.includes('redis') ||
+           nodeTypeStr.includes('postgresql') ||
+           nodeTypeStr.includes('cassandra') ||
+           nodeTypeStr.includes('neo4j') ||
+           nodeTypeStr.includes('storage') ||
+           nodeTypeStr.includes('db') ||
+           nodeTypeStr.includes('cache');
   };
 
   // Check if this is a cache or monitoring node
@@ -86,6 +94,30 @@ const CustomNode = ({
   const isServerNode = () => {
     const nodeTypeStr = nodeType.toLowerCase();
     return nodeTypeStr.includes('server') || nodeTypeStr.includes('compute');
+  };
+
+  // Check if this is an application node
+  const isApplicationNode = () => {
+    const nodeTypeStr = nodeType.toLowerCase();
+    const section = nodeTypeStr.split('_')[0];
+    
+    return nodeTypeStr.includes('application') || 
+           nodeTypeStr.includes('service') || 
+           nodeTypeStr.includes('app') ||
+           nodeTypeStr.includes('microservice') ||
+           section === 'application';
+  };
+
+  // Check if this is a network node
+  const isNetworkNode = () => {
+    const nodeTypeStr = nodeType.toLowerCase();
+    const section = nodeTypeStr.split('_')[0];
+    
+    return nodeTypeStr.includes('network') || 
+           nodeTypeStr.includes('firewall') || 
+           nodeTypeStr.includes('security') ||
+           nodeTypeStr.includes('router') ||
+           section === 'network';
   };
 
   const getNodeColor = () => {
@@ -118,12 +150,22 @@ const CustomNode = ({
       };
     }
     
-    // Database Category - Teal
+    // Database Category - Transparent (icon only, no background)
     if (isDatabaseNode()) {
+      // Different styling for database types vs specific databases
+      if (nodeTypeStr.includes('databasetype') || (nodeTypeStr.includes('database') && nodeTypeStr.includes('type'))) {
+        // Special styling for database type nodes - transparent with icon only
+        return { 
+          bg: 'bg-transparent', 
+          border: 'border-transparent',
+          iconClass: 'text-[#0D47A1] drop-shadow-md'
+        };
+      }
+      // Standard styling for database instances - transparent with icon only
       return { 
-        bg: 'bg-[#00A3A3]/80', 
-        border: 'border-teal-300',
-        iconClass: 'text-white drop-shadow-md'
+        bg: 'bg-transparent', 
+        border: 'border-transparent',
+        iconClass: 'text-[#1976D2] drop-shadow-md'
       };
     }
     
@@ -200,20 +242,61 @@ const CustomNode = ({
     };
   };
 
-  // Get node colors
+  // Get node colors with special case for different node types
   const nodeColors = getNodeColor();
+  
+  // Check if this is a specific node type
+  const isApplication = isApplicationNode();
+  const isNetwork = isNetworkNode();
+  const isClient = isClientNode();
+  
+  // Database nodes need special treatment - always transparent
+  const isDatabase = isDatabaseNode();
+  const nodeStyle = isDatabase ? {
+    bg: 'bg-transparent',
+    border: 'border-transparent',
+    iconClass: 'text-[#1976D2] drop-shadow-lg', // Enhanced shadow for better visibility
+    hasBackground: false
+  } : isApplication ? {
+    bg: 'bg-transparent',
+    border: 'border-transparent',
+    iconClass: 'text-[#34A853] drop-shadow-lg', // Green color for application icons with enhanced shadow
+    hasBackground: false
+  } : isNetwork ? {
+    bg: 'bg-transparent',
+    border: 'border-transparent',
+    iconClass: 'text-[#DC3545] drop-shadow-lg', // Red color for network icons with enhanced shadow
+    hasBackground: false
+  } : isClient ? {
+    bg: 'bg-transparent',
+    border: 'border-transparent',
+    iconClass: 'text-[#7C65F6] drop-shadow-lg', // Purple color for client icons with enhanced shadow
+    hasBackground: false
+  } : {
+    ...nodeColors,
+    hasBackground: true
+  };
 
   // Calculate icon size based on node type
   const getIconSize = () => {
-    // Client nodes get larger icons
-    if (isClientNode()) {
-      return 60;
+    // Client nodes get largest icons
+    if (isClient) {
+      return 70; // Extra large for client icons
     }
     
-    // Network nodes like firewall
-    if (nodeType.toLowerCase().includes('firewall') || 
-        nodeType.toLowerCase().includes('network')) {
-      return 40;
+    // Database nodes get larger icons since they have no background
+    if (isDatabase) {
+      return 64; // Slightly larger for better visibility without background
+    }
+    
+    // Application nodes also get larger icons
+    if (isApplication) {
+      return 60; // Larger application icons
+    }
+    
+    // Network nodes also get larger icons
+    if (isNetwork) {
+      return 58; // Large network icons
     }
     
     // API Gateway and Servers get slightly larger icons for better visibility
@@ -239,9 +322,40 @@ const CustomNode = ({
       : description;
     
     return (
-      <TooltipContent>
-        <div className="max-w-xs">
-          <p className="text-xs text-gray-800">{truncatedDescription}</p>
+      <TooltipContent 
+        className="radix-tooltip-content-override"
+        style={{
+          backgroundColor: 'white', 
+          background: 'white',
+          color: '#000000',
+          boxShadow: '0 5px 15px rgba(0, 0, 0, 0.2)', 
+          border: '1px solid rgba(0, 0, 0, 0.1)',
+          padding: '10px',
+          borderRadius: '8px',
+          zIndex: 10000,
+          opacity: 1,
+          width: 'auto',
+          maxWidth: '280px',
+          backdropFilter: 'none',
+          WebkitBackdropFilter: 'none'
+        }}
+      >
+        <div style={{ 
+          backgroundColor: 'white', 
+          background: 'white',
+          opacity: 1,
+          backdropFilter: 'none',
+          WebkitBackdropFilter: 'none'
+        }}>
+          <p style={{ 
+            fontSize: '0.875rem', 
+            fontWeight: 600, 
+            color: 'black',
+            margin: 0,
+            lineHeight: '1.4'
+          }}>
+            {truncatedDescription}
+          </p>
         </div>
       </TooltipContent>
     );
@@ -269,12 +383,30 @@ const CustomNode = ({
     zIndex: 10,
   };
   
+  // Add specific database node style 
+  const databaseNodeStyle = {
+    className: "database-node", // Special class for database nodes
+    width: '70px',
+    height: '70px',
+    background: 'transparent',
+    padding: '0',
+    margin: '0 auto',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    filter: 'drop-shadow(0px 2px 5px rgba(0,0,0,0.15))'
+  };
+
   return (
     <div
-      className={`custom-node ${selected ? 'custom-node-selected' : ''}`}
+      className={`custom-node ${selected ? 'custom-node-selected' : ''} ${isDatabase ? 'database-node-container' : ''} ${isApplication ? 'application-node-container' : ''} ${isNetwork ? 'network-node-container' : ''} ${isClient ? 'client-node-container' : ''}`}
       style={{ position: 'relative', zIndex: 1 }}
       data-nodetype={nodeType.toLowerCase()}
       data-has-threats={threats && threats.length > 0 ? 'true' : 'false'}
+      data-is-database={isDatabase ? 'true' : 'false'}
+      data-is-application={isApplication ? 'true' : 'false'}
+      data-is-network={isNetwork ? 'true' : 'false'}
+      data-is-client={isClient ? 'true' : 'false'}
     >
       {/* Source handle (bottom) - Only render when there's a connection or node is selected */}
       {(hasSourceConnection || selected) && (
@@ -311,24 +443,29 @@ const CustomNode = ({
       )}
       
       {/* All nodes now use icon-only style with label underneath */}
-      <TooltipProvider>
+      <TooltipProvider delayDuration={300}>
         <Tooltip>
           <TooltipTrigger asChild>
             <div className={`flex flex-col items-center ${selected ? 'outline-2 outline-blue-400 outline-offset-2 rounded-md' : ''}`}>
               {/* Icon container with shadow for better visibility */}
               <div 
                 className={classNames(
-                  "flex items-center justify-center mb-1 shadow-md",
+                  "flex items-center justify-center mb-1",
                   selected ? "ring-2 ring-blue-400 rounded-md" : "",
-                  isClientNode() ? "" : "p-1.5 rounded-md",
-                  nodeColors.bg,
-                  nodeColors.border
+                  isDatabase ? "database-node" : 
+                  isApplication ? "application-node" : 
+                  isNetwork ? "network-node" : 
+                  isClient ? "client-node" :
+                  "p-1.5 rounded-md shadow-md", // Special class for node types
+                  !isDatabase && !isApplication && !isNetwork && !isClient && nodeStyle.bg, // Only apply background if not a special node type
+                  !isDatabase && !isApplication && !isNetwork && !isClient && nodeStyle.border // Only apply border if not a special node type
                 )}
                 style={{ 
-                  minWidth: isClientNode() ? '60px' : '50px', 
-                  minHeight: isClientNode() ? '60px' : '50px',
-                  backgroundColor: isClientNode() ? 'transparent' : getCategoryStyle(nodeType)?.bgColor || 'transparent',
+                  minWidth: isClient ? '70px' : isDatabase || isApplication || isNetwork ? '64px' : '50px', 
+                  minHeight: isClient ? '70px' : isDatabase || isApplication || isNetwork ? '64px' : '50px',
+                  backgroundColor: isClient || isDatabase || isApplication || isNetwork ? 'transparent' : (getCategoryStyle(nodeType)?.bgColor || 'transparent'),
                   position: 'relative', // Ensure icon container is positioned
+                  ...(isClient || isDatabase || isApplication || isNetwork ? { filter: 'drop-shadow(0px 2px 8px rgba(0,0,0,0.2))' } : {}), // Add drop shadow
                 }}
               >
                 {iconRenderer ? (
@@ -338,8 +475,8 @@ const CustomNode = ({
                       <IconComponent 
                         {...props} 
                         size={iconSize} 
-                        className={nodeColors.iconClass || ''}
-                        color={isClientNode() ? props.color : iconColor}
+                        className={nodeStyle.iconClass || ''}
+                        color={isClient || isDatabase || isApplication || isNetwork ? props.color : iconColor}
                       />
                     );
                   })()
@@ -349,8 +486,8 @@ const CustomNode = ({
               </div>
               
               {/* Label underneath */}
-              <div className="text-center mt-1 max-w-[120px]">
-                <div className="font-medium text-xs">
+              <div className="text-center mt-2 max-w-[140px]">
+                <div className="font-semibold text-sm node-label bg-transparent">
                   {label}
                 </div>
               </div>

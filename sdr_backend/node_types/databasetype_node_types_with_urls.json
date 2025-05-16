@@ -1,0 +1,49 @@
+{
+  "databasetype": [
+    {
+      "name": "databasetype_time_series_database",
+      "description": "Optimized for storing and querying time-stamped data like logs and metrics. Examples: InfluxDB, TimescaleDB.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/databasetype-icons/databasetype_time_series_database.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJkYXRhYmFzZXR5cGUtaWNvbnMvZGF0YWJhc2V0eXBlX3RpbWVfc2VyaWVzX2RhdGFiYXNlLnN2ZyIsImlhdCI6MTc0NzM1MzgxMywiZXhwIjozNTI2MjQzNjI2fQ.PDuOVHbL1INMkpHjDB-WsaG9wAUm35PW35Qc4XvWdPw"
+    },
+    {
+      "name": "databasetype_sql_database",
+      "description": "Manages structured data in tables using SQL, ensuring data integrity and supporting transactions. Examples: MySQL, PostgreSQL.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/databasetype-icons/databasetype_sql_database.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJkYXRhYmFzZXR5cGUtaWNvbnMvZGF0YWJhc2V0eXBlX3NxbF9kYXRhYmFzZS5zdmciLCJpYXQiOjE3NDczNTM4MTQsImV4cCI6MzUyNjI0MzYyN30.qgHUp-E-Mvs7oxL7MXQOrAa1R24xAgg47a0opwP6JmI"
+    },
+    {
+      "name": "databasetype_graph_database",
+      "description": "Models data as graphs to efficiently query and analyze relationships. Examples: Neo4j, Amazon Neptune.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/databasetype-icons/databasetype_graph_database.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJkYXRhYmFzZXR5cGUtaWNvbnMvZGF0YWJhc2V0eXBlX2dyYXBoX2RhdGFiYXNlLnN2ZyIsImlhdCI6MTc0NzM1MzgxNCwiZXhwIjozNTI2MjQzNjI4fQ.Ii0YLZBLJ843n3OKbBhODoc2Bnc_zaVaowyx93ShLgA"
+    },
+    {
+      "name": "databasetype_columnar_store",
+      "description": "Stores data in wide columns for scalability and performance in big data applications. Examples: Cassandra, HBase.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/databasetype-icons/databasetype_columnar_store.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJkYXRhYmFzZXR5cGUtaWNvbnMvZGF0YWJhc2V0eXBlX2NvbHVtbmFyX3N0b3JlLnN2ZyIsImlhdCI6MTc0NzM1MzgxNSwiZXhwIjozNTI2MjQzNjMwfQ.-mOsCRaL67jW-Gn4juJ2oOtdb6S-sa6S_qhsdSJrOEk"
+    },
+    {
+      "name": "databasetype_object_database",
+      "description": "Manages data as objects, aligning with object-oriented programming. Examples: db4o, ObjectDB.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/databasetype-icons/databasetype_object_database.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJkYXRhYmFzZXR5cGUtaWNvbnMvZGF0YWJhc2V0eXBlX29iamVjdF9kYXRhYmFzZS5zdmciLCJpYXQiOjE3NDczNTM4MTUsImV4cCI6MzUyNjI0MzYzMH0.QnWPVSl_oNH2mBeqbPOH-2Jjt8u-wg_09mJk5_EZzfU"
+    },
+    {
+      "name": "databasetype_multi_model_database",
+      "description": "Handles multiple data models like document, graph, and key-value. Examples: ArangoDB, OrientDB.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/databasetype-icons/databasetype_multi_model_database.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJkYXRhYmFzZXR5cGUtaWNvbnMvZGF0YWJhc2V0eXBlX211bHRpX21vZGVsX2RhdGFiYXNlLnN2ZyIsImlhdCI6MTc0NzM1MzgxNiwiZXhwIjozNTI2MjQzNjMyfQ.e8OHoY_wxBfzr_5yX5ZTinc_L-ziN57MJ_cNGUnrzTA"
+    },
+    {
+      "name": "databasetype_newsql_database",
+      "description": "Provides distributed scalability with transactional consistency and SQL support. Examples: CockroachDB, Spanner.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/databasetype-icons/databasetype_newsql_database.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJkYXRhYmFzZXR5cGUtaWNvbnMvZGF0YWJhc2V0eXBlX25ld3NxbF9kYXRhYmFzZS5zdmciLCJpYXQiOjE3NDczNTM4MTYsImV4cCI6MzUyNjI0MzYzMn0.l_pH_li3vC1VC1-CRSFr-mZJn39P5Hj0J4RJjSq7FMY"
+    },
+    {
+      "name": "databasetype_nosql_database",
+      "description": "Basetype_Nosql_Database Database Type.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/databasetype-icons/databasetype_nosql_database.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJkYXRhYmFzZXR5cGUtaWNvbnMvZGF0YWJhc2V0eXBlX25vc3FsX2RhdGFiYXNlLnN2ZyIsImlhdCI6MTc0NzM1MzgxNywiZXhwIjozNTI2MjQzNjMzfQ.CdW3HhOWgdQGWtz2nsmBBbHIvZa8NBPotAePURFMbeM"
+    },
+    {
+      "name": "databasetype_in_memory_database",
+      "description": "Keeps data in memory for high-speed access and processing. Examples: SAP HANA, Redis.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/databasetype-icons/databasetype_in_memory_database.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJkYXRhYmFzZXR5cGUtaWNvbnMvZGF0YWJhc2V0eXBlX2luX21lbW9yeV9kYXRhYmFzZS5zdmciLCJpYXQiOjE3NDczNTM4MTcsImV4cCI6MzUyNjI0MzYzNH0.95yeV5dA4naJ1mWM1oRv7_Mybe-Y0Rkcp_3QNa1I3e8"
+    }
+  ]
+}
