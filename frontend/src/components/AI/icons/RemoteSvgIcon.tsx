@@ -25,6 +25,8 @@ const RemoteSvgIcon: React.FC<RemoteSvgIconProps> = ({
     if (className?.includes('azure')) return 'azure';
     if (className?.includes('client')) return 'client';
     if (className?.includes('application')) return 'application';
+    if (className?.includes('database')) return 'database';
+    if (className?.includes('databasetype')) return 'databasetype';
     
     if (url.includes('aws-icons')) return 'aws';
     if (url.includes('gcp-icons')) return 'gcp';
@@ -32,12 +34,16 @@ const RemoteSvgIcon: React.FC<RemoteSvgIconProps> = ({
     if (url.includes('client-icons')) return 'client';
     if (url.includes('network-icons')) return 'network';
     if (url.includes('application-icons')) return 'application';
+    if (url.includes('database-icons')) return 'database';
+    if (url.includes('databasetype-icons')) return 'databasetype';
     
     return 'generic';
   };
 
   // Check if this is a special icon type
   const isMicroserviceIcon = className?.includes('microservice') || url.includes('microservice');
+  const isDatabaseIcon = className?.includes('database') || url.includes('database-icons');
+  const isDatabaseTypeIcon = className?.includes('databasetype') || url.includes('databasetype-icons');
 
   useEffect(() => {
     // Check if the URL is a data URL for SVG
@@ -107,6 +113,20 @@ const RemoteSvgIcon: React.FC<RemoteSvgIconProps> = ({
           processedSvg = processedSvg.replace(/<svg/, '<svg fill="white"');
         } else if (provider === 'gcp') {
           processedSvg = processedSvg.replace(/<svg/, '<svg fill="#4285F4"');
+        } 
+        // Apply coloring for database icons
+        else if (provider === 'database' || isDatabaseIcon) {
+          // Use blue color for database icons since they have no background
+          processedSvg = processedSvg.replace(/<svg/, '<svg fill="#1976D2"');
+          // Make sure paths have proper fill too if not already specified
+          processedSvg = processedSvg.replace(/<path(?![^>]*fill=)/g, '<path fill="#1976D2"');
+        } 
+        // Apply coloring for database type icons
+        else if (provider === 'databasetype' || isDatabaseTypeIcon) {
+          // Use darker blue color for database type icons
+          processedSvg = processedSvg.replace(/<svg/, '<svg fill="#0D47A1"');
+          // Make sure paths have proper fill too if not already specified
+          processedSvg = processedSvg.replace(/<path(?![^>]*fill=)/g, '<path fill="#0D47A1"');
         }
         // Apply coloring for application icons to ensure visibility
         else if (provider === 'application' && (!svgText.includes('fill=') || isMicroserviceIcon)) {
@@ -132,7 +152,7 @@ const RemoteSvgIcon: React.FC<RemoteSvgIconProps> = ({
     if (url && !isPngImage && !isDataUrl) {
       fetchSvg();
     }
-  }, [url, isPngImage, isDataUrl, className, isMicroserviceIcon]);
+  }, [url, isPngImage, isDataUrl, className, isMicroserviceIcon, isDatabaseIcon, isDatabaseTypeIcon]);
 
   if (isLoading) {
     return (

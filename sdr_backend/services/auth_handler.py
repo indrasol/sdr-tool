@@ -73,7 +73,7 @@ async def verify_token(authorization: str = Header(None), is_registration: bool 
         # log_info(f"Secret Key : {SUPABASE_SECRET_KEY}")
         try:
             # jwt_secret = base64.b64decode(SUPABASE_SECRET_KEY)
-            payload = jwt.decode(token, SUPABASE_SECRET_KEY, algorithms=["HS256"], audience="authenticated")
+            payload = jwt.decode(token, SUPABASE_SECRET_KEY, algorithms=["HS256"], audience="authenticated", options={"leeway": 10, "verify_iat":False})
             # log_info(f"Payload: {payload}")
         except ExpiredSignatureError:
             log_info("Token verification failed: Token expired")
