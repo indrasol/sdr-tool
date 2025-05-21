@@ -27,6 +27,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: List workspace root
+        run: ls -la
+
+      - name: List sdr_backend contents
+        run: ls -la sdr_backend || echo "sdr_backend directory not found"
+
       - name: Set up Python version
         uses: actions/setup-python@v5
         with:
@@ -41,7 +47,7 @@ jobs:
           # pip install -r requirements.txt  # Relative to sdr_backend
 
       - name: Install dependencies
-        run: pip install -r sdr_backend/requirements.txt
+        run: pip install -r requirements.txt
 
       # Optional: Add step to run tests here (PyTest, Django test suites, etc.)
 
