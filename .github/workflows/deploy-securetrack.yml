@@ -45,7 +45,12 @@ jobs:
       #   run: pytest
 
       - name: Zip artifact for deployment
-        run: zip -r release.zip .  # Zip the contents of sdr_backend
+        run: |
+          echo "Current directory: $(pwd)"
+          ls -la
+          zip -r release.zip .
+          echo "Zip command exit code: $?"
+          ls -la  # Zip the contents of sdr_backend
 
       - name: Upload artifact for deployment jobs
         uses: actions/upload-artifact@v4
