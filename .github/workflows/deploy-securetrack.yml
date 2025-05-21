@@ -38,25 +38,38 @@ jobs:
         run: |
           python -m venv venv
           source venv/bin/activate
-          pip install -r requirements.txt  # Relative to sdr_backend
+          # pip install -r requirements.txt  # Relative to sdr_backend
 
-      # Optional: Add step to run tests here (e.g., pytest)
-      # - name: Run tests
-      #   run: pytest
+      - name: Install dependencies
+        run: pip install -r sdr_backend/requirements.txt
 
-      - name: Zip artifact for deployment
-        run: |
-          echo "Current directory: $(pwd)"
-          ls -la
-          zip -r release.zip .
-          echo "Zip command exit code: $?"
-          ls -la  # Zip the contents of sdr_backend
+      # Optional: Add step to run tests here (PyTest, Django test suites, etc.)
 
       - name: Upload artifact for deployment jobs
         uses: actions/upload-artifact@v4
         with:
           name: python-app
-          path: release.zip
+          path: |
+            .
+            !venv/
+
+      # Optional: Add step to run tests here (e.g., pytest)
+      # - name: Run tests
+      #   run: pytest
+
+      # - name: Zip artifact for deployment
+      #   run: |
+      #     echo "Current directory: $(pwd)"
+      #     ls -la
+      #     zip -r release.zip .
+      #     echo "Zip command exit code: $?"
+      #     ls -la  # Zip the contents of sdr_backend
+
+      # - name: Upload artifact for deployment jobs
+      #   uses: actions/upload-artifact@v4
+      #   with:
+      #     name: python-app
+      #     path: release.zip
 
   deploy:
     runs-on: ubuntu-latest
@@ -73,9 +86,10 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: python-app
+          path: .
 
-      - name: Unzip artifact for deployment
-        run: unzip release.zip -d ./sdr_backend_deploy
+      # - name: Unzip artifact for deployment
+      #   run: unzip release.zip -d ./sdr_backend_deploy
 
       - name: Login to Azure
         uses: azure/login@v2
