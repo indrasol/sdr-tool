@@ -44,10 +44,10 @@ jobs:
         run: |
           python -m venv venv
           source venv/bin/activate
-          # pip install -r requirements.txt  # Relative to sdr_backend
+          pip install -r requirements.txt  # Relative to sdr_backend
 
-      - name: Install dependencies
-        run: pip install -r requirements.txt
+      # - name: Install dependencies
+      #   run: pip install -r requirements.txt
 
       # Optional: Add step to run tests here (PyTest, Django test suites, etc.)
 
@@ -111,4 +111,4 @@ jobs:
           app-name: ${{ env.AZURE_WEBAPP_NAME }}
           slot-name: 'Production'
           package: '.'  # Deploy the unzipped sdr_backend contents
-          startup-command: 'uvicorn main:app --host 0.0.0.0 --port $PORT'
+          startup-command: 'source /home/site/wwwroot/venv/bin/activate && uvicorn main:app --host 0.0.0.0 --port $PORT'
