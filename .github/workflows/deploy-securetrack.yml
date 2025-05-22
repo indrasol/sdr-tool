@@ -97,6 +97,11 @@ jobs:
         with:
           name: backend
           path: .
+      - name: List after download (debug)
+        run: |
+          echo "Workspace: $GITHUB_WORKSPACE"
+          ls -R
+
 
       # - name: Unzip artifact for deployment
       #   run: unzip release.zip -d ./sdr_backend_deploy
@@ -115,6 +120,6 @@ jobs:
         with:
           app-name: ${{ env.AZURE_WEBAPP_NAME }}
           # publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
-          package: sdr_backend  # Deploy the unzipped sdr_backend contents
+          package: backend/sdr_backend  # Deploy the unzipped sdr_backend contents
           startup-command: |
             uvicorn main:app --host 0.0.0.0 --port $PORT
