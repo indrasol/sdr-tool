@@ -4,6 +4,10 @@
 
 name: Build and deploy Python app to Azure Web App - securetrackv1
 
+concurrency:
+  group: deploy-securetrack
+  cancel-in-progress: true
+  
 on:
   push:
     branches:
