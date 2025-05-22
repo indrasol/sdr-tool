@@ -92,12 +92,12 @@ jobs:
       # - name: Unzip artifact for deployment
       #   run: unzip release.zip -d ./sdr_backend_deploy
 
-      - name: Login to Azure
-        uses: azure/login@v2
-        with:
-          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID }}
-          tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID }}
-          subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID }}
+      # - name: Login to Azure
+      #   uses: azure/login@v2
+      #   with:
+      #     client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID }}
+      #     tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID }}
+      #     subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID }}
 
       - name: 'Deploy to Azure Web App'
         uses: azure/webapps-deploy@v3
@@ -105,5 +105,8 @@ jobs:
         with:
           app-name: ${{ env.AZURE_WEBAPP_NAME }}
           slot-name: 'Production'
+          publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
           package: '.'  # Deploy the unzipped sdr_backend contents
           startup-command: 'uvicorn main:app --host 0.0.0.0 --port $PORT'
+        env:
+          SCM_DO_BUILD_DURING_DEPLOYMENT: true
