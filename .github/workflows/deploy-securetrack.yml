@@ -106,4 +106,4 @@ jobs:
           app-name: ${{ env.AZURE_WEBAPP_NAME }}
           slot-name: 'Production'
           package: '.'  # Deploy the unzipped sdr_backend contents
-          startup-command: 'source /home/site/wwwroot/venv/bin/activate && uvicorn main:app --host 0.0.0.0 --port $PORT'
+          startup-command: 'uvicorn main:app --host 0.0.0.0 --port $PORT'
