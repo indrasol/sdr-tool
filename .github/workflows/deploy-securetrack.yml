@@ -35,7 +35,7 @@ jobs:
         with:
           python-version: ${{ env.PYTHON_VERSION }}
           cache: 'pip'
-          cache-dependency-path: 'requirements.txt'
+          cache-dependency-path: 'sdr_backend/requirements.txt'
 
       - name: Create and start virtual environment
         run: |
