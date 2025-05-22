@@ -107,6 +107,6 @@ jobs:
           slot-name: 'Production'
           publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
           package: '.'  # Deploy the unzipped sdr_backend contents
-          startup-command: 'uvicorn main:app --host 0.0.0.0 --port $PORT'
+          # startup-command: 'uvicorn main:app --host 0.0.0.0 --port $PORT'
         env:
           SCM_DO_BUILD_DURING_DEPLOYMENT: true
