@@ -30,9 +30,6 @@ jobs:
       - name: List workspace root
         run: ls -la
 
-      - name: List sdr_backend contents
-        run: ls -la sdr_backend || echo "sdr_backend directory not found"
-
       - name: Set up Python version
         uses: actions/setup-python@v5
         with:
@@ -55,9 +52,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: python-app
-          path: |
-            .
-            !venv/
+          path: .
 
       # Optional: Add step to run tests here (e.g., pytest)
       # - name: Run tests
