@@ -18,7 +18,7 @@ permissions:
   contents: read  # Required for actions/checkout
 
 jobs:
-  build-and-deploy:
+  build:
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -35,7 +35,7 @@ jobs:
         with:
           python-version: ${{ env.PYTHON_VERSION }}
           cache: 'pip'
-          cache-dependency-path: 'sdr_backend/requirements.txt'
+          cache-dependency-path: 'requirements.txt'
 
       - name: Create and start virtual environment
         run: |
@@ -43,26 +43,16 @@ jobs:
           source venv/bin/activate
           pip install -r requirements.txt  # Relative to sdr_backend
 
-      - name: 'Deploy to Azure Web App'
-        uses: azure/webapps-deploy@v3
-        id: deploy-to-webapp
-        with:
-          app-name: ${{ env.AZURE_WEBAPP_NAME }}
-          slot-name: 'Production'
-          publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
-          package: '.'  # Deploy the unzipped sdr_backend contents
-          # startup-command: 'uvicorn main:app --host 0.0.0.0 --port $PORT'
-
       # - name: Install dependencies
       #   run: pip install -r requirements.txt
 
       # Optional: Add step to run tests here (PyTest, Django test suites, etc.)
 
-      # - name: Upload artifact for deployment jobs
-      #   uses: actions/upload-artifact@v4
-      #   with:
-      #     name: python-app
-      #     path: .
+      - name: Upload artifact for deployment jobs
+        uses: actions/upload-artifact@v4
+        with:
+          name: python-app
+          path: .
 
       # Optional: Add step to run tests here (e.g., pytest)
       # - name: Run tests
@@ -82,39 +72,38 @@ jobs:
       #     name: python-app
       #     path: release.zip
 
-  # deploy:
-  #   runs-on: ubuntu-latest
-  #   needs: build
-  #   environment:
-  #     name: 'Production'
-  #     url: ${{ steps.deploy-to-webapp.outputs.webapp-url }}
-  #   permissions:
-  #     id-token: write  # Required for OIDC authentication
-  #     contents: read   # Required for actions/checkout
+  deploy:
+    runs-on: ubuntu-latest
+    needs: build
+    environment:
+      name: 'Production'
+      url: ${{ steps.deploy-to-webapp.outputs.webapp-url }}
+    permissions:
+      id-token: write  # Required for OIDC authentication
+      contents: read   # Required for actions/checkout
 
-  #   steps:
-  #     - name: Download artifact from build job
-  #       uses: actions/download-artifact@v4
-  #       with:
-  #         name: python-app
-  #         path: .
+    steps:
+      - name: Download artifact from build job
+        uses: actions/download-artifact@v4
+        with:
+          name: python-app
+          path: .
 
       # - name: Unzip artifact for deployment
       #   run: unzip release.zip -d ./sdr_backend_deploy
 
-      # - name: Login to Azure
-      #   uses: azure/login@v2
-      #   with:
-      #     client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID }}
-      #     tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID }}
-      #     subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID }}
+      - name: Login to Azure
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID }}
+          tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID }}
+          subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID }}
 
-      # - name: 'Deploy to Azure Web App'
-      #   uses: azure/webapps-deploy@v3
-      #   id: deploy-to-webapp
-      #   with:
-      #     app-name: ${{ env.AZURE_WEBAPP_NAME }}
-      #     slot-name: 'Production'
-      #     publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
-      #     package: '.'  # Deploy the unzipped sdr_backend contents
-      #     startup-command: 'uvicorn main:app --host 0.0.0.0 --port $PORT'
+      - name: 'Deploy to Azure Web App'
+        uses: azure/webapps-deploy@v3
+        id: deploy-to-webapp
+        with:
+          app-name: ${{ env.AZURE_WEBAPP_NAME }}
+          # publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
+          package: '.'  # Deploy the unzipped sdr_backend contents
+          startup-command: 'uvicorn main:app --host 0.0.0.0 --port $PORT'
