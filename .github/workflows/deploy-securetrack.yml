@@ -9,7 +9,7 @@ concurrency:
   cancel-in-progress: true
   
 env:
-  AZURE_WEBAPP_NAME: securetrack  # Name of your Azure Web App
+  AZURE_WEBAPP_NAME: securetrackv1  # Name of your Azure Web App
   PYTHON_VERSION: '3.11'          # Python version to use
   ACTIONS_STEP_DEBUG: true        # Enable debug logs
   WEBSITE_RUN_FROM_PACKAGE: 1
@@ -81,7 +81,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: build
     environment:
-      name: Production
+      name: production
       url: ${{ steps.deploy-to-webapp.outputs.webapp-url }}
     permissions:
       id-token: write  # Required for OIDC authentication
@@ -109,9 +109,9 @@ jobs:
       - name: Login to Azure
         uses: azure/login@v2
         with:
-          client-id: ${{ secrets.CLIENT_ID }}
-          tenant-id: ${{ secrets.TENANT_ID }}
-          subscription-id: ${{ secrets.SUB_ID }}
+          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID }}
+          tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID }}
+          subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID }}
 
       - name: Deploy to Azure Web App
         id: deploy-to-webapp
