@@ -111,4 +111,4 @@ jobs:
           app-name: ${{ env.AZURE_WEBAPP_NAME }}
           slot-name: 'Production'
           package: '.'  # Deploy the unzipped sdr_backend contents
-          startup-command: 'gunicorn -k uvicorn.workers.UvicornWorker main:app'  # Adjust as needed
+          startup-command: 'uvicorn main:app --host 0.0.0.0 --port $PORT'
