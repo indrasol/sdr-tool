@@ -50,7 +50,7 @@ jobs:
           name: python-app
           path: |
             release.zip
-            !venv/
+            venv/
 
   deploy:
     runs-on: ubuntu-latest
