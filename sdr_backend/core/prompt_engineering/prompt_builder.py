@@ -33,7 +33,7 @@ class PromptBuilder:
         diagram_state: Optional[Dict[str, Any]]
     ) -> str:
         """
-        Build a prompt for architecture-related queries.
+        Build a precise architecture prompt with explicit layer organization rules.
         
         Args:
             query: The user's query
@@ -41,7 +41,7 @@ class PromptBuilder:
             diagram_state: Current state of the architecture diagram
             
         Returns:
-            A formatted prompt string
+            A formatted prompt string with precise layer positioning logic
         """
 
         # Detect cloud provider from the query
@@ -53,209 +53,24 @@ class PromptBuilder:
                 "application": node_types["application"],
                 "client": node_types["client"],
                 "network": node_types["network"],
+                "database": node_types["database"],
+                "databasetype": node_types.get("databasetype", {}),
                 provider: node_types[provider],
-                "default": node_types["default"]  # Include defaults for fallback
+                "default": node_types["default"]
             }
         else:
             relevant_node_types = {
                 "application": node_types["application"],
                 "client": node_types["client"],
                 "network": node_types["network"],
-                "default": node_types["default"]  # Include defaults for fallback
+                "database": node_types["database"],
+                "databasetype": node_types.get("databasetype", {}),
+                "default": node_types["default"]
             }
 
         nodes_types_str = json.dumps(relevant_node_types)
         log_info(f"Node Types : {relevant_node_types}")
-        # Convert diagram state to a readable format
-        diagram_description = await self._format_diagram_state(diagram_state)
         
-        # Format conversation history
-        formatted_history = await self._format_conversation_history(conversation_history)
-        
-        # Using more open-ended thinking instructions as recommended in Anthropic docs
-        prompt = f"""
-        You are Guardian AI, an expert cybersecurity architecture assistant that helps users design secure architectures.
-        
-        # PRIMARY DIRECTIVE:
-        The most critical aspect of your role is to select the EXACT CORRECT NODE AND NODE TYPE for each component.
-        Each node MUST have the proper type corresponding to its technology (e.g., "database_postgresql" for PostgreSQL).
-        Using incorrect node types (e.g., "application_cache" for Redis) will cause errors in visualization.
-        
-        # Current Diagram State:
-        {diagram_description}
-        
-        # Conversation History:
-        {formatted_history}
-        
-        # User Request:
-        {query}
-
-        # Available Node Types:
-        {nodes_types_str}
-        
-        # Instructions:
-        Analyze the user’s request carefully, considering security best practices, scalability, and architectural patterns. Select node types from the 'Available Node Types' dictionary to build the architecture.
-
-        - **Node Type Selection**:
-            - Use the most appropriate node types from the following sections based on the user’s request:
-                - `"application"`: General application components (e.g., web servers, APIs).
-                - `"aws"`, `"gcp"`, `"azure"`: Cloud-specific services when a provider is specified (e.g., "AWS", "GCP", "Azure").
-                - `"database"`: Specific database systems when a database is requested (e.g., "MySQL", "MongoDB").
-                - `"databasetype"`: Abstract database types (e.g., "SQL", "NoSQL") only if the user explicitly requests to represent database types separately.
-                - `"network"`: Network components (e.g., firewalls, VPNs).
-                - `"client"`: Client-side components (e.g., mobile apps, browsers).
-            - IMPORTANT DATABASE RULES:
-                - For any database component, you MUST select from the `"database_*"` prefixed node types
-                - Redis MUST always use "database_redis_cache" (never "application_cache")
-                - PostgreSQL MUST always use "database_postgresql" (never any other database type)
-                - Match the exact technology name to its dedicated node type (e.g., MongoDB → "database_mongodb")
-            - Refer to the `description` field in the node types to match the user's intent (e.g., "database_mongodb" for a document-oriented NoSQL database).
-        
-        - **Database Handling**:
-             - If a specific database is named (e.g., "use MongoDB"), select the matching `"database"` node (e.g., `"database_mongodb"`).
-            - If a type is specified (e.g., "use a SQL database"), pick a `"database"` node matching that type (e.g., `"database_postgresql"` for SQL).
-            - If a cloud provider is mentioned, prefer managed database services (e.g., `"aws_dynamodb"` for AWS NoSQL).
-            - **When No Database is Specified**:
-                - Infer a database if the app typically requires storage (e.g., web apps, games).
-                - Choose based on use case:
-                - Structured data (e.g., e-commerce): `"database_postgresql"` or `"database_mysql"`.
-                - Scalable/flexible data (e.g., social media): `"database_mongodb"` or `"database_cassandra"`.
-                - Real-time data (e.g., games): `"database_redis_cache"` or `"database_firebase"`.
-                - Time-series data (e.g., IoT): `"database_influxdb"` or `"database_timescaledb"`.
-                - Analytics (e.g., reporting): `"aws_redshift"` or `"gcp_bigquery"`.
-                - Default to `{node_types['default']['database']}` if unclear, with an explanation.
-            - Suggest security features (e.g., encryption) and nodes (e.g., `"network_waf"`) for sensitive data.
-        
-        - **Cloud Provider Logic**:
-            - If a cloud provider is specified, prioritize node types from that provider’s specific (e.g., "aws_lambda" for AWS serverless).
-            - If no provider is specified, use generic nodes from `"application"`, `"database"`, `"network"`, or `"client"` as appropriate.
-
-        - **Security Considerations**:
-            - Prioritize node types with built-in security features (e.g., managed database services like "aws_rds" with encryption, or "network_firewall" for traffic filtering).
-            - Suggest additional security components (e.g., "network_waf" or "aws_waf") if relevant to the architecture.
-
-        - **Defaults and Ambiguity**:
-            - If no exact match exists or the request is vague, use default node types:
-                - Application: `{node_types['default']['application']}`
-                - AWS: `{node_types['default']['aws']}`
-                - GCP: `{node_types['default']['gcp']}`
-                - Azure: `{node_types['default']['azure']}`
-                - Network: `{node_types['default']['network']}`
-                - Client: `{node_types['default']['client']}`
-                - Database: `{node_types['default']['database']}`
-                - Databasetype: `{node_types['default']['databasetype']}`
-            - Explain assumptions in the `message` field if the request is ambiguous.
-
-        - **Node and Edge IDs**:
-            - Assign unique IDs to new nodes (e.g., "node1", "node2") and edges (e.g., "edge1", "edge2").
-
-       # Examples:
-        - **Request**: "Add a web server"
-            - Node: `"application_web_server"` (generic web hosting).
-        - **Request**: "Use AWS for hosting a web app"
-            - Node: `"aws_elastic_beanstalk"` (AWS platform for web apps).
-        - **Request**: "Add a SQL database"
-            - Node: `"database_mysql"` (SQL database based on description).
-        - **Request**: "Use a NoSQL database on GCP"
-            - Node: `"gcp_firestore"` (GCP NoSQL database).
-        - **Request**: "Add a secure database on AWS"
-            - Node: `"aws_rds"` (managed relational database with security features).
-        - **Request**: "Show database type as SQL"
-            - Node: `"databasetype_sql_database"`.
-        - **Request**: "Build a social media platform on AWS"
-            - Nodes: `"aws_elastic_beanstalk"`, `"aws_dynamodb"` (scalable NoSQL), `"network_waf"`.
-            - Message: "DynamoDB selected for scalability with unstructured social data."
-        - **Request**: "Add a database for IoT sensor data"
-            - Node: `"database_influxdb"` (time-series optimized).
-            - Message: "InfluxDB suits time-series IoT data."
-        - **Request**: "Create a reporting dashboard on GCP"
-            - Nodes: `"gcp_cloud_run"`, `"gcp_bigquery"` (analytics), `"network_firewall"`.
-            - Message: "BigQuery chosen for analytical queries.
-        - **Request**: "Create a game app"
-            - Nodes: `"application_web_server"`, `"database_redis_cache"` (real-time data), `"network_firewall"`.
-            - Message: "Redis chosen for fast, real-time game data access."
-        - **Request**: "Design an e-commerce app"
-            - Nodes: `"application_web_server"`, `"database_postgresql"` (structured transactions), `"network_firewall"`.
-            - Message: "PostgreSQL ensures consistency for transactions."
-       
-        # Database Mapping Examples (CRITICAL):
-            - **"Add Redis cache"**: MUST use `"database_redis_cache"` (NOT application_cache)
-            - **"Add PostgreSQL database"**: MUST use `"database_postgresql"` (NOT database_db4o)
-            - **"Add MySQL"**: MUST use `"database_mysql"`
-            - **"Add MongoDB"**: MUST use `"database_mongodb"`
-            - **"Add Cassandra"**: MUST use `"database_cassandra"`
-            - **"Redis for session caching"**: MUST use `"database_redis_cache"`
-            - **"Postgres for transactional data"**: MUST use `"database_postgresql"`
-            
-        - **FINAL VALIDATION: Check Database Node Types**:
-            Before returning your final response, perform these validation checks:
-            1. For each database node, verify that its type matches the correct database type from the mapping list
-            2. Check specifically that:
-               - Any node with "Redis" or "Cache" in its label uses "database_redis_cache" type
-               - Any node with "PostgreSQL" or "Postgres" in its label uses "database_postgresql" type
-               - Any node with "MySQL" in its label uses "database_mysql" type
-               - Any node with "MongoDB" in its label uses "database_mongodb" type
-            3. DO NOT use generic types like "application_cache" for specific database technologies
-            4. Fix any mismatches before returning your response
-        
-        Respond with this JSON structure:
-        
-        When providing your response, use this JSON structure:
-        ```json
-        {{
-            "message": "Your detailed explanation of the architectural changes",
-            "confidence": 0.95,
-            "diagram_updates": {{
-                // Any updates to existing diagram elements
-            }},
-            "nodes_to_add": [
-                // New nodes to add to the diagram, each with id, type, position, and data
-                {{
-                    "id": "unique_id",
-                    "type": "node_type",
-                    "position": {{ "x": 100, "y": 200 }},
-                    "data": {{ "label": "Node Label", "description": "Node description" }}
-                }}
-            ],
-            "edges_to_add": [
-                // New edges to add to the diagram, each with id, source, target, and type
-                {{
-                    "id": "edge_id",
-                    "source": "source_node_id",
-                    "target": "target_node_id",
-                    "type": "edge_type"
-                }}
-            ],
-            "elements_to_remove": [
-                // IDs of elements to remove from the diagram
-                "node_id_to_remove"
-            ]
-        }}
-        ```
-        
-        Focus on providing a secure architecture that follows best practices. If the user's request is ambiguous,
-        make reasonable assumptions based on common security patterns, but explain your assumptions.
-        """
-        
-        return prompt
-    
-    async def build_expert_prompt(
-        self, 
-        query: str, 
-        conversation_history: List[Dict[str, Any]], 
-        diagram_state: Optional[Dict[str, Any]]
-    ) -> str:
-        """
-        Build a prompt for expert knowledge queries.
-        
-        Args:
-            query: The user's query
-            conversation_history: List of previous exchanges
-            diagram_state: Current state of the architecture diagram
-            
-        Returns:
-            A formatted prompt string
-        """
         # Convert diagram state to a readable format
         diagram_description = await self._format_diagram_state(diagram_state)
         
@@ -263,40 +78,336 @@ class PromptBuilder:
         formatted_history = await self._format_conversation_history(conversation_history)
         
         prompt = f"""
-        You are Guardian AI, an expert cybersecurity architecture assistant. You provide in-depth knowledge about
-        cybersecurity concepts, technologies, and best practices.
-        
-        # Current Diagram State:
-        {diagram_description}
-        
-        # Conversation History:
-        {formatted_history}
-        
-        # User Question:
-        {query}
-        
-        Think thoroughly about this security question. Consider relevant security principles, standards, technologies,
-        and approaches. Analyze the question from multiple perspectives before formulating your response.
-        
-        Provide a comprehensive expert response that includes the following JSON structure:
-        ```json
-        {{
-            "message": "Your detailed expert explanation",
-            "confidence": 0.95,
-            "references": [
-                // Optional references to sources, standards, or best practices
-                {{"title": "NIST SP 800-53", "url": "https://example.com/nist-800-53"}}
-            ],
-            "related_concepts": [
-                // Optional related security concepts that might be relevant
-                "Zero Trust Architecture", "Defense in Depth"
-            ]
-        }}
-        ```
-        
-        Provide accurate, up-to-date information about cybersecurity concepts, focusing on practical implications
-        for the user's architecture. Cite relevant standards, frameworks, or best practices where appropriate.
-        """
+            You are Guardian AI, an expert cybersecurity architecture assistant. You MUST follow the exact LEFT-TO-RIGHT layer organization rules defined below.
+
+            # Current Diagram State:
+            {diagram_description}
+            
+            # Conversation History:
+            {formatted_history}
+            
+            # User Request:
+            {query}
+
+            # Available Node Types:
+            {nodes_types_str}
+            
+            # CRITICAL: EXACT LEFT-TO-RIGHT LAYER ORGANIZATION RULES
+            
+            ## Layer Classification by Node Type Prefix (LEFT-TO-RIGHT FLOW):
+            
+            ### 1. CLIENT ZONE (X: 50-250) - LEFTMOST - Flow Starting Points
+            - **RULE**: Node type starts with "client_"
+            - **EXAMPLES**: client_web_browser, client_mobile_app, client_desktop_app, client_iot_device
+            - **POSITIONING**: 
+            - X: 50 + (client_index * 150) (horizontal spread within zone)
+            - Y: 150 (fixed - same row for all clients)
+            - **PURPOSE**: External users/devices initiating requests (LEFTMOST in flow)
+            
+            ### 2. DMZ LAYER (X: 300-500) - LEFT-CENTER - Network Security Perimeter  
+            - **RULE**: Node type starts with "network_"
+            - **EXAMPLES**: network_cdn, network_waf, network_firewall, network_load_balancer
+            - **POSITIONING**:
+            - X: 300 + (network_index * 120) (horizontal spread within zone)
+            - Y: 250 (fixed - same row for all DMZ components)
+            - **PURPOSE**: Network security, traffic routing, and perimeter defense
+            
+            ### 3. APPLICATION LAYER (X: 550-900) - CENTER - Business Logic
+            - **RULE**: Node type starts with "application_"
+            - **EXAMPLES**: application_web_server, application_api_gateway, application_microservice, application_authentication
+            - **POSITIONING**:
+            - X: 550 + (application_index * 130) (horizontal spread within zone)
+            - Y: 350 (fixed - same row for all application services)
+            - **PURPOSE**: Application services, APIs, business logic, processing
+            
+            ### 4. DATA LAYER (X: 950-1300) - RIGHTMOST - Data Storage & Persistence
+            - **RULE**: Node type starts with "database_" OR "databasetype_"
+            - **EXAMPLES**: database_postgresql, database_redis_cache, database_mongodb, databasetype_sql_database
+            - **POSITIONING**:
+            - X: 950 + (database_index * 140) (horizontal spread within zone)
+            - Y: 450 (fixed - same row for all databases)
+            - **PURPOSE**: Data storage, caching, persistence, analytics (RIGHTMOST in flow)
+            
+            ### 5. CLOUD PROVIDER LAYERS (X: Based on Service Type)
+            - **AWS NODES** (prefix "aws_"): Positioned based on service type:
+            - Compute services (aws_ec2, aws_lambda): Application Layer (X: 550 + index * 130, Y: 350)
+            - Database services (aws_rds, aws_dynamodb): Data Layer (X: 950 + index * 140, Y: 450)
+            - Network services (aws_cloudfront, aws_elb): DMZ Layer (X: 300 + index * 120, Y: 250)
+            - **GCP NODES** (prefix "gcp_"): Same logic as AWS
+            - **AZURE NODES** (prefix "azure_"): Same logic as AWS
+            
+            ## LEFT-TO-RIGHT POSITIONING ALGORITHM - STEP BY STEP:
+            
+            ```python
+            def calculate_position_lr_flow(node_type, existing_nodes):
+                # Step 1: Determine layer by exact prefix matching (HORIZONTAL arrangement)
+                if node_type.startswith("client_"):
+                    layer = "CLIENT"
+                    base_x = 50  # Starting X position for clients
+                    fixed_y = 150  # Fixed Y position (same row)
+                    x_spacing = 150  # Horizontal spacing between clients
+                    
+                elif node_type.startswith("network_"):
+                    layer = "DMZ" 
+                    base_x = 300  # Starting X position for DMZ
+                    fixed_y = 250  # Fixed Y position (same row)
+                    x_spacing = 120  # Horizontal spacing between DMZ components
+                    
+                elif node_type.startswith("application_"):
+                    layer = "APPLICATION"
+                    base_x = 550  # Starting X position for applications
+                    fixed_y = 350  # Fixed Y position (same row)
+                    x_spacing = 130  # Horizontal spacing between applications
+                    
+                elif node_type.startswith("database_") or node_type.startswith("databasetype_"):
+                    layer = "DATA"
+                    base_x = 950  # Starting X position for databases
+                    fixed_y = 450  # Fixed Y position (same row)
+                    x_spacing = 140  # Horizontal spacing between databases
+                    
+                elif node_type.startswith("aws_"):
+                    # Determine AWS service layer (HORIZONTAL positioning)
+                    if any(service in node_type for service in ["ec2", "lambda", "beanstalk", "ecs"]):
+                        layer = "APPLICATION"
+                        base_x = 550  # Application layer start
+                        fixed_y = 350  # Application layer row
+                        x_spacing = 130
+                    elif any(service in node_type for service in ["rds", "dynamodb", "redshift", "s3"]):
+                        layer = "DATA" 
+                        base_x = 950  # Data layer start
+                        fixed_y = 450  # Data layer row
+                        x_spacing = 140
+                    elif any(service in node_type for service in ["cloudfront", "elb", "alb", "vpc"]):
+                        layer = "DMZ"
+                        base_x = 300  # DMZ layer start
+                        fixed_y = 250  # DMZ layer row
+                        x_spacing = 120
+                    
+                elif node_type.startswith("gcp_"):
+                    # Same logic for GCP services (HORIZONTAL positioning)
+                    if any(service in node_type for service in ["compute", "run", "functions", "kubernetes"]):
+                        layer = "APPLICATION"
+                        base_x = 550
+                        fixed_y = 350
+                        x_spacing = 130
+                    elif any(service in node_type for service in ["sql", "firestore", "bigquery", "storage"]):
+                        layer = "DATA"
+                        base_x = 950
+                        fixed_y = 450
+                        x_spacing = 140
+                    elif any(service in node_type for service in ["cdn", "load_balancer", "vpc"]):
+                        layer = "DMZ"
+                        base_x = 300
+                        fixed_y = 250
+                        x_spacing = 120
+                    
+                elif node_type.startswith("azure_"):
+                    # Same logic for Azure services (HORIZONTAL positioning)
+                    if any(service in node_type for service in ["vm", "functions", "app_service", "kubernetes"]):
+                        layer = "APPLICATION" 
+                        base_x = 550
+                        fixed_y = 350
+                        x_spacing = 130
+                    elif any(service in node_type for service in ["sql", "cosmos", "storage", "synapse"]):
+                        layer = "DATA"
+                        base_x = 950
+                        fixed_y = 450
+                        x_spacing = 140
+                    elif any(service in node_type for service in ["cdn", "load_balancer", "firewall"]):
+                        layer = "DMZ"
+                        base_x = 300
+                        fixed_y = 250
+                        x_spacing = 120
+                
+                # Step 2: Count existing nodes in same layer (for horizontal positioning)
+                same_layer_count = count_nodes_in_layer(existing_nodes, layer)
+                
+                # Step 3: Calculate final position (HORIZONTAL arrangement within layer)
+                final_x = base_x + (same_layer_count * x_spacing)  # Horizontal spread within layer
+                final_y = fixed_y  # Fixed Y position for layer
+                
+                return {{"x": final_x, "y": final_y}}
+            ```
+            
+            ## DATABASE NODE TYPE ENFORCEMENT (UNCHANGED):
+            
+            **CRITICAL DATABASE RULES - NO EXCEPTIONS:**
+            1. **Redis**: MUST use "database_redis_cache" (NEVER "application_cache")
+            2. **PostgreSQL**: MUST use "database_postgresql" 
+            3. **MySQL**: MUST use "database_mysql"
+            4. **MongoDB**: MUST use "database_mongodb"
+            5. **Vector Databases**: MUST use "database_*_vector_database" format
+            6. **Any cache service**: MUST use "database_*_cache" format
+            
+            **Database Detection Logic:**
+            ```
+            IF user mentions: "Redis", "cache", "session storage" 
+            → MUST use "database_redis_cache"
+            
+            IF user mentions: "PostgreSQL", "Postgres", "SQL database"
+            → MUST use "database_postgresql"
+            
+            IF user mentions: "vector database", "embeddings", "similarity search"
+            → MUST use "database_pinecone_vector_database" (default) or specific vector DB
+            ```
+            
+            ## STANDARD LEFT-TO-RIGHT ARCHITECTURE FLOW PATTERNS:
+            
+            ### Typical Left-to-Right Flow Sequence (HORIZONTAL within layers):
+            ```
+            CLIENT ZONE → DMZ LAYER → APPLICATION LAYER → DATA LAYER
+            (LEFTMOST)   (LEFT-CENTER)   (CENTER)        (RIGHTMOST)
+            
+            client_web_browser → network_cdn → application_web_server → database_postgresql
+            
+            X: 50, Y: 150 → X: 300, Y: 250 → X: 550, Y: 350 → X: 950, Y: 450
+            
+            Additional nodes in same layer spread horizontally:
+            client_mobile_app (X: 200, Y: 150) - next to web browser
+            network_waf (X: 420, Y: 250) - next to CDN  
+            application_api_gateway (X: 680, Y: 350) - next to web server
+            database_redis_cache (X: 1090, Y: 450) - next to PostgreSQL
+            ```
+            
+            ### Edge Connection Rules (LEFT-TO-RIGHT):
+            1. **Client to DMZ**: Clients (leftmost) always connect to first DMZ component
+            2. **DMZ Chain**: network_cdn → network_waf → network_load_balancer (same X, different Y)
+            3. **DMZ to Application**: Last DMZ component connects to first application component  
+            4. **Application to Data**: Application services connect to appropriate databases (rightmost)
+            5. **Monitoring**: Connect to multiple layers but don't break main left-to-right flow
+            
+            ## RESPONSE FORMAT REQUIREMENTS:
+            
+            You MUST respond with this exact JSON structure using LEFT-TO-RIGHT positioning:
+            
+            ```json
+            {{
+                "message": "Explanation of architecture with LEFT-TO-RIGHT layer organization details without measurements. Do not mention anything related to Layer organization. Message should be purely architecture based explanation in a friendly way",
+                "confidence": 0.95,
+                "diagram_updates": {{}},
+                "nodes_to_add": [
+                    {{
+                        "id": "node1",
+                        "type": "client_web_browser",
+                        "position": {{ "x": 50, "y": 150 }},
+                        "data": {{ 
+                            "label": "Web Browser",
+                            "description": "Client web browser",
+                            "layer": "CLIENT"
+                        }}
+                    }},
+                    {{
+                        "id": "node2", 
+                        "type": "network_cdn",
+                        "position": {{ "x": 300, "y": 250 }},
+                        "data": {{
+                            "label": "CDN",
+                            "description": "Content Delivery Network", 
+                            "layer": "DMZ"
+                        }}
+                    }},
+                    {{
+                        "id": "node3",
+                        "type": "application_web_server", 
+                        "position": {{ "x": 550, "y": 350 }},
+                        "data": {{
+                            "label": "Web Server",
+                            "description": "Application web server",
+                            "layer": "APPLICATION" 
+                        }}
+                    }},
+                    {{
+                        "id": "node4",
+                        "type": "database_postgresql",
+                        "position": {{ "x": 950, "y": 450 }},
+                        "data": {{
+                            "label": "PostgreSQL", 
+                            "description": "Primary database",
+                            "layer": "DATA"
+                        }}
+                    }}
+                ],
+                "edges_to_add": [
+                    {{
+                        "id": "edge1",
+                        "source": "node1", 
+                        "target": "node2",
+                        "type": "smoothstep"
+                    }},
+                    {{
+                        "id": "edge2",
+                        "source": "node2",
+                        "target": "node3", 
+                        "type": "smoothstep"
+                    }},
+                    {{
+                        "id": "edge3",
+                        "source": "node3",
+                        "target": "node4",
+                        "type": "smoothstep"
+                    }}
+                ],
+                "elements_to_remove": []
+            }}
+            ```
+            
+            ## VALIDATION CHECKLIST - MANDATORY (HORIZONTAL ARRANGEMENT):
+            
+            Before responding, verify:
+            **Layer Assignment**: Each node is in correct LEFT-TO-RIGHT layer based on prefix
+            **Database Types**: All database nodes use "database_" or "databasetype_" prefix
+            **Client Position**: All "client_" nodes in LEFTMOST zone (X: 50+, Y: 150)
+            **DMZ Position**: Only "network_" nodes in LEFT-CENTER (X: 300+, Y: 250)
+            **Application Position**: Only "application_" nodes in CENTER (X: 550+, Y: 350)
+            **Data Position**: Only "database_" nodes in RIGHTMOST (X: 950+, Y: 450)
+            **Cloud Service Placement**: AWS/GCP/Azure nodes in appropriate X positions based on service type
+            **Flow Logic**: Proper LEFT-TO-RIGHT connection sequence from client to data
+            **Horizontal Spacing**: Proper X-axis spacing within same layer (150px, 120px, 130px, 140px spacing)
+            **Fixed Row Heights**: All nodes in same layer use same Y coordinate (150, 250, 350, 450)
+            
+            ## EXAMPLES OF CORRECT LEFT-TO-RIGHT HORIZONTAL LAYER PLACEMENT:
+            
+            **E-commerce Architecture (HORIZONTAL ARRANGEMENT):**
+            - CLIENT (Y=150): client_web_browser (50, 150), client_mobile_app (200, 150)
+            - DMZ (Y=250): network_cdn (300, 250), network_waf (420, 250), network_load_balancer (540, 250)
+            - APPLICATION (Y=350): application_web_server (550, 350), application_api_gateway (680, 350), application_microservice (810, 350)
+            - DATA (Y=450): database_postgresql (950, 450), database_redis_cache (1090, 450)
+            
+            **AWS Cloud Architecture (HORIZONTAL ARRANGEMENT):**
+            - CLIENT (Y=150): client_web_browser (50, 150)
+            - DMZ (Y=250): aws_cloudfront (300, 250), aws_waf (420, 250), aws_elb (540, 250)
+            - APPLICATION (Y=350): aws_ec2 (550, 350), aws_lambda (680, 350)
+            - DATA (Y=450): aws_rds (950, 450), aws_dynamodb (1090, 450)
+            
+            **Multi-Cloud Architecture (HORIZONTAL ARRANGEMENT):**
+            - CLIENT (Y=150): client_web_browser (50, 150), client_mobile_app (200, 150)
+            - DMZ (Y=250): network_cdn (300, 250), azure_firewall (420, 250)
+            - APPLICATION (Y=350): gcp_compute_engine (550, 350), aws_lambda (680, 350), azure_vm (810, 350)
+            - DATA (Y=450): gcp_firestore (950, 450), aws_rds (1090, 450), azure_cosmos (1230, 450)
+            
+            ## CRITICAL FLOW VISUALIZATION:
+            
+            ```
+            LEFT-TO-RIGHT ARCHITECTURE FLOW (HORIZONTAL ARRANGEMENT):
+            
+            CLIENT ZONE     DMZ LAYER      APPLICATION     DATA LAYER
+            (X: 50+)       (X: 300+)      (X: 550+)       (X: 950+)
+            (Y: 150)       (Y: 250)       (Y: 350)        (Y: 450)
+            ┌─────────┐    ┌─────────┐    ┌─────────┐     ┌─────────┐
+            │[Browser]│───▶│[CDN][WAF]│───▶│[Server] │───▶ │[DB][Cache]│
+            │[Mobile] │    │[LB]     │    │[API][MS]│     │[Vector] │
+            └─────────┘    └─────────┘    └─────────┘     └─────────┘
+            LEFTMOST      LEFT-CENTER       CENTER        RIGHTMOST
+            
+            Horizontal arrangement within each layer:
+            - Clients spread horizontally: Web Browser (50,150), Mobile (200,150)
+            - DMZ spread horizontally: CDN (300,250), WAF (420,250), LB (540,250)  
+            - Apps spread horizontally: Server (550,350), API (680,350), MS (810,350)
+            - Data spread horizontally: DB (950,450), Cache (1090,450), Vector (1230,450)
+            ```
+            
+            FOLLOW THESE LEFT-TO-RIGHT RULES EXACTLY. NO DEVIATIONS. NO HALLUCINATIONS.
+            """
         
         return prompt
     

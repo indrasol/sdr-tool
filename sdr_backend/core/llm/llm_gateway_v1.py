@@ -831,8 +831,8 @@ class LLMService:
     async def generate_anthropic_response(
         self, 
         prompt: str, 
+        model_name: str,
         system_prompt: Optional[str] = None,
-        model_name: str = "claude-3-7-sonnet-20250219",
         temperature: Optional[float] = None,
         max_tokens: Optional[int] = None,
         stream: Optional[bool] = None,
@@ -856,6 +856,7 @@ class LLMService:
         # Resolve the model name from our mapping if needed
         client = self.anthropic_client
         models = MODEL_MAPPING["anthropic"]
+        
         model = models[model_name]
         
         # Set default system prompt if not provided
@@ -982,9 +983,9 @@ class LLMService:
     async def generate_llm_response(
         self, 
         prompt: str, 
+        model_name: str,
         system_prompt: Optional[str] = None,
         model_provider: str = "anthropic",
-        model_name: str = "claude-3.7-sonnet",
         temperature: Optional[float] = None,
         max_tokens: Optional[int] = None,
         stream: Optional[bool] = None,
@@ -993,6 +994,7 @@ class LLMService:
         
 
         if model_provider == "anthropic":
+            log_info(f"Model name : {model_name}")
             response = await self.generate_anthropic_response(
                 prompt=prompt, 
                 model_name = model_name,

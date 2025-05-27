@@ -8,11 +8,8 @@ interface ExtendedNodeProps extends NodeProps {
 
 // Get opacity based on hierarchy level
 const getHierarchicalOpacity = (level: number): number => {
-  // Higher level (child) layers are more opaque
-  // Level 0 (top-level) layers are most transparent
-  const baseOpacity = 0.15;
-  const opacityIncrement = 0.05;
-  return Math.min(baseOpacity + (level * opacityIncrement), 0.4); // Cap at 0.4
+  // Make all backgrounds fully transparent
+  return 0;
 };
 
 const LayerGroupNode = ({ id, data, style, width, height }: ExtendedNodeProps) => {
@@ -35,17 +32,7 @@ const LayerGroupNode = ({ id, data, style, width, height }: ExtendedNodeProps) =
   
   // Dynamically adjust background color based on layer type and level
   const getBackgroundColor = (): string => {
-    // Extract the base color from the layerStyle
-    const baseColor = layerStyle.bgColor;
-    
-    // If it's already in rgba format, modify the opacity
-    if (baseColor.startsWith('rgba(')) {
-      return baseColor.replace(/rgba\(([^,]+),([^,]+),([^,]+),[^)]+\)/, 
-        (_, r, g, b) => `rgba(${r},${g},${b},${bgOpacity})`);
-    }
-    
-    // Otherwise return the original color
-    return baseColor;
+    return 'transparent'; // Always use transparent background
   };
   
   // Calculate z-index based on level - ensure parent layers are behind child layers
@@ -60,15 +47,15 @@ const LayerGroupNode = ({ id, data, style, width, height }: ExtendedNodeProps) =
         position: 'absolute',
         pointerEvents: 'none', // Allow click-through to nodes
         borderStyle: getBorderStyle(hierarchyLevel), // Style based on level
-        borderWidth: style?.borderWidth || 2, 
+        borderWidth: style?.borderWidth || 3, // Increased from 2 to 3 for bolder borders
         borderColor: style?.borderColor || layerStyle.borderColor,
-        backgroundColor: style?.backgroundColor || getBackgroundColor(),
+        backgroundColor: 'transparent', // Always transparent
         width: width || style?.width || 200,
         height: height || style?.height || 200,
         borderRadius: style?.borderRadius || 10,
         zIndex: getZIndex(), // Use function to calculate safe z-index
         padding: '10px',
-        boxShadow: '0 0 10px rgba(0,0,0,0.05)',
+        boxShadow: 'none', // Remove box shadow for cleaner look
       }}
       className="layer-container"
     >
@@ -76,14 +63,16 @@ const LayerGroupNode = ({ id, data, style, width, height }: ExtendedNodeProps) =
       <div
         className="layer-title absolute -top-6 left-4 px-3 py-1 text-xs font-semibold rounded"
         style={{
-          backgroundColor: style?.backgroundColor || getBackgroundColor(),
+          backgroundColor: style?.backgroundColor || '#fff', // White background for label
           color: style?.color || layerStyle.color,
-          borderWidth: 1,
+          borderWidth: 1.5, // Slightly thicker border
           borderStyle: 'solid',
           borderColor: layerStyle.borderColor,
-          opacity: 0.95,
+          opacity: 1, // Full opacity for better visibility
           pointerEvents: 'all', // Make title clickable
           boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+          fontWeight: 700, // Bolder text
+          fontSize: '0.8rem', // Slightly larger font
         }}
       >
         {typeof data?.label === 'string' ? data.label : layerStyle.label}

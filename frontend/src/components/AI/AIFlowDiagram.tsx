@@ -79,35 +79,80 @@ export const getLayoutedElements = (nodes, edges, direction = 'TB', nodeWidth = 
     // Create a new graph
     const dagreGraph = new dagre.graphlib.Graph();
     dagreGraph.setDefaultEdgeLabel(() => ({}));
-    // Enhanced spacing for TB layout to reduce edge overlapping
+    
+    // Configure for flow-oriented layout
     dagreGraph.setGraph({ 
-      rankdir: direction,
-      ranksep: 120, // Increased vertical separation (was 80)
-      nodesep: 100,  // Increased horizontal separation (was 60)
-      edgesep: 40,  // Minimum separation between edges
-      ranker: 'network-simplex', // Use network simplex algorithm for better edge routing
-      acyclicer: 'greedy', // Greedy algorithm to handle cycles in the graph
+      rankdir: 'LR', // Left to right flow
+      ranksep: 150, // Increase horizontal separation between ranks for better spacing
+      nodesep: 60,  // Vertical separation between nodes in the same rank
+      marginx: 50,  // Larger margin at the left/right 
+      marginy: 40,  // Margin at the top/bottom
+      align: 'DL', // Down-left alignment for clearer hierarchy
+      acyclicer: 'greedy', // Handle cycles
+      edgesep: 30, // Increase edge separation
+    });
+
+    // First, group nodes by their logical layers (if available)
+    const nodesByLayer = {};
+    nodes.forEach(node => {
+      // Try to determine the node's layer from its data or type
+      let layer = 'default';
+      if (node.data && node.data.nodeType) {
+        const nodeType = node.data.nodeType.toLowerCase();
+        if (nodeType.includes('client') || nodeType.includes('user')) {
+          layer = 'client';
+        } else if (nodeType.includes('database')) {
+          layer = 'database';
+        } else if (nodeType.includes('service') || nodeType.includes('application')) {
+          layer = 'service';
+        }
+      }
+      
+      if (!nodesByLayer[layer]) {
+        nodesByLayer[layer] = [];
+      }
+      nodesByLayer[layer].push(node);
     });
 
     // Add nodes to the graph with dimensions
-    nodes.forEach((node) => {
-      // Use explicit dimensions if provided in node data, otherwise use defaults
-      const width = node.data?.width || nodeWidth; 
-      const height = node.data?.height || nodeHeight;
-      dagreGraph.setNode(node.id, { 
-        width: width, 
-        height: height 
-      });
+    // Process nodes layer by layer to improve alignment
+    const layerOrder = ['client', 'service', 'database', 'default'];
+    let currentRank = 0;
+    
+    layerOrder.forEach(layer => {
+      const layerNodes = nodesByLayer[layer] || [];
+      
+      if (layerNodes.length > 0) {
+        // Place nodes in this layer at the same rank
+        layerNodes.forEach(node => {
+          dagreGraph.setNode(node.id, { 
+            width: node.data?.width || nodeWidth, 
+            height: node.data?.height || nodeHeight,
+            rank: currentRank
+          });
+        });
+        
+        currentRank += 1; // Increment rank for next layer
+      }
+    });
+    
+    // Add any remaining nodes
+    nodes.forEach(node => {
+      if (!dagreGraph.node(node.id)) {
+        dagreGraph.setNode(node.id, { 
+          width: node.data?.width || nodeWidth, 
+          height: node.data?.height || nodeHeight
+        });
+      }
     });
 
     // Add edges to the graph with weights to influence layout
     if (edges && edges.length > 0) {
       edges.forEach((edge) => {
         if (edge.source && edge.target) {
-          // Add weight parameter to influence edge routing
           dagreGraph.setEdge(edge.source, edge.target, {
-            weight: 1, // Default weight
-            minlen: 1  // Minimum path length
+            weight: 1,
+            minlen: 1
           });
         }
       });
@@ -143,19 +188,18 @@ export const getLayoutedElements = (nodes, edges, direction = 'TB', nodeWidth = 
       };
     });
 
-    // Enhance the edges to reduce overlapping
-    const processedEdges = edges.map(edge => {
-      return {
-        ...edge,
-        // Add curvature and style parameters to help with overlap reduction
-        style: {
-          ...edge.style,
-          strokeWidth: 1.5, // Slightly thinner edges
-        }
-      };
-    });
+    // Apply simple default edge styling for all edges
+    const simplifiedEdges = edges.map(edge => ({
+      ...edge,
+      type: 'bezier', // Use bezier curves with minimal curvature
+      pathOptions: {
+        curvature: 0.1, // Minimal curvature for clean appearance
+        offset: 0
+      }
+    }));
 
-    return { nodes: layoutedNodes, edges: processedEdges }; 
+    // Return the nodes with their calculated positions and edges
+    return { nodes: layoutedNodes, edges: simplifiedEdges }; 
   } catch (error) {
     console.error('Error in layout algorithm:', error);
     return { nodes, edges }; // Return original nodes and edges on error
@@ -229,24 +273,22 @@ const AIFlowDiagram: React.FC<AIFlowDiagramProps> = ({
 
   // Default edge options
   const defaultEdgeOptions = useMemo(() => ({
-    type: 'straight',
+    type: 'bezier', // Use bezier with minimal curvature
     markerEnd: {
       type: MarkerType.ArrowClosed,
-      width: 25,
-      height: 25,
-      color: '#000000',
-      markerEndOffset: -50,
+      width: 12, 
+      height: 12,
+      color: '#333',
     },
     style: {
-      strokeWidth: 2,
-      stroke: '#000000',
+      strokeWidth: 1.5,
+      stroke: '#333',
     },
     animated: false,
-    curvature: 0.1,
     pathOptions: {
-      offset: 10,
-      vertical: true, // Prefer vertical paths first
-    },
+      curvature: 0.1, // Minimal curvature
+      offset: 0
+    }
   }), []);
 
   const reactFlowInstance = useRef(null);
@@ -637,25 +679,23 @@ const AIFlowDiagram: React.FC<AIFlowDiagramProps> = ({
   // Handle connect event
   const handleConnect = useCallback(
     (params) => {
-      // Create the new edge with proper styling
+      // Create the new edge with simple, directional styling
       const newEdge = {
         ...params,
-        type: 'straight', // Use straight edge type for top-to-bottom flow
+        type: 'bezier', 
         markerEnd: {
           type: MarkerType.ArrowClosed,
-          width: 25,
-          height: 25,
-          color: '#000000',
-          markerEndOffset: -50,
+          width: 12,
+          height: 12,
+          color: '#333',
         },
         style: {
-          strokeWidth: 2,
-          stroke: '#000000',
+          strokeWidth: 1.5,
+          stroke: '#333',
         },
-        // Add support for vertical-first routing for top-to-bottom flow
         pathOptions: {
-          offset: 10,
-          vertical: true, // Prefer vertical paths first
+          curvature: 0.1, // Minimal curvature
+          offset: 0
         }
       };
       

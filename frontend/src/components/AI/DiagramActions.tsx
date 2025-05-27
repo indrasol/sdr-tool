@@ -249,59 +249,193 @@ const DiagramActions: React.FC<DiagramActionsProps> = ({
     }));
   };
 
-  const handleSaveImage = () => {
-    if (!diagramRef || !diagramRef.current) {
+  const handleSaveImage = async () => {
+    const reactFlowWrapper = document.querySelector('.react-flow') as HTMLElement;
+    const viewport = document.querySelector('.react-flow__viewport') as HTMLElement;
+    
+    if (!reactFlowWrapper || !viewport) {
       toast({
         title: "Error",
-        description: "Could not capture diagram. Please try again.",
+        description: "Could not find diagram. Please try again.",
         duration: 3000,
       });
       setIsImageModalOpen(false);
       return;
     }
     
-    // Configure options for the image capture
-    const options = {
-      quality: 0.95,
-      backgroundColor: '#ffffff',
-      skipAutoScale: true,
-      pixelRatio: 2, // For better quality on high DPI displays
-    };
-    
-    // Show a loading state
     toast({
       title: "Processing",
       description: "Generating diagram image...",
       duration: 2000,
     });
     
-    // Capture the diagram as PNG
-    toPng(diagramRef.current, options)
-      .then((dataUrl) => {
-        // Create a download link
-        const link = document.createElement('a');
-        link.download = `${imageForm.name || 'architecture-diagram'}.png`;
-        link.href = dataUrl;
-        link.click();
-        
-        // Show success message
-        toast({
-          title: "Image Downloaded",
-          description: `"${imageForm.name}" has been saved successfully.`,
-          duration: 3000,
-        });
-        
-        setIsImageModalOpen(false);
-      })
-      .catch((error) => {
-        console.error('Error generating diagram image:', error);
+    try {
+      // Get all nodes and edges to calculate proper bounds
+      const nodes = viewport.querySelectorAll('.react-flow__node');
+      const edges = viewport.querySelectorAll('.react-flow__edge');
+      
+      if (nodes.length === 0) {
         toast({
           title: "Error",
-          description: "Failed to generate diagram image. Please try again.",
+          description: "No diagram content found.",
           duration: 3000,
         });
         setIsImageModalOpen(false);
+        return;
+      }
+      
+      // Calculate the actual bounds of all content
+      let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+      
+      // Process nodes to get their actual positions
+      nodes.forEach(node => {
+        const style = window.getComputedStyle(node);
+        const transform = style.transform;
+        
+        if (transform && transform !== 'none') {
+          // Parse transform matrix to get x, y coordinates
+          const matrix = transform.match(/matrix.*\((.+)\)/);
+          if (matrix) {
+            const values = matrix[1].split(', ');
+            const x = parseFloat(values[4]) || 0;
+            const y = parseFloat(values[5]) || 0;
+            
+            // Get node dimensions
+            const rect = node.getBoundingClientRect();
+            const width = parseFloat(style.width) || rect.width;
+            const height = parseFloat(style.height) || rect.height;
+            
+            minX = Math.min(minX, x);
+            minY = Math.min(minY, y);
+            maxX = Math.max(maxX, x + width);
+            maxY = Math.max(maxY, y + height);
+          }
+        }
       });
+      
+      // Also check edges for complete bounds
+      edges.forEach(edge => {
+        const pathElement = edge.querySelector('path');
+        if (pathElement) {
+          const bbox = pathElement.getBBox();
+          const edgeTransform = window.getComputedStyle(edge).transform;
+          
+          let edgeX = 0, edgeY = 0;
+          if (edgeTransform && edgeTransform !== 'none') {
+            const matrix = edgeTransform.match(/matrix.*\((.+)\)/);
+            if (matrix) {
+              const values = matrix[1].split(', ');
+              edgeX = parseFloat(values[4]) || 0;
+              edgeY = parseFloat(values[5]) || 0;
+            }
+          }
+          
+          minX = Math.min(minX, bbox.x + edgeX);
+          minY = Math.min(minY, bbox.y + edgeY);
+          maxX = Math.max(maxX, bbox.x + bbox.width + edgeX);
+          maxY = Math.max(maxY, bbox.y + bbox.height + edgeY);
+        }
+      });
+      
+      // Add padding around the content
+      const padding = 50;
+      const contentWidth = maxX - minX + (padding * 2);
+      const contentHeight = maxY - minY + (padding * 2);
+      
+      // Store original styles
+      const originalViewportTransform = viewport.style.transform;
+      const originalWrapperStyles = {
+        width: reactFlowWrapper.style.width,
+        height: reactFlowWrapper.style.height,
+        overflow: reactFlowWrapper.style.overflow
+      };
+      
+      // Calculate new transform to center the content
+      const newTranslateX = -minX + padding;
+      const newTranslateY = -minY + padding;
+      
+      // Apply new transform to viewport
+      viewport.style.transform = `translate(${newTranslateX}px, ${newTranslateY}px) scale(1)`;
+      
+      // Adjust wrapper size to fit content
+      reactFlowWrapper.style.width = contentWidth + 'px';
+      reactFlowWrapper.style.height = contentHeight + 'px';
+      reactFlowWrapper.style.overflow = 'hidden';
+      
+      // Hide UI elements
+      const elementsToHide = [
+        '.react-flow__minimap',
+        '.react-flow__controls',
+        '.react-flow__attribution',
+        '.react-flow__panel'
+      ];
+      
+      const hiddenElements: { element: HTMLElement, originalDisplay: string }[] = [];
+      
+      elementsToHide.forEach(selector => {
+        const elements = document.querySelectorAll(selector);
+        elements.forEach(el => {
+          const element = el as HTMLElement;
+          hiddenElements.push({
+            element,
+            originalDisplay: element.style.display
+          });
+          element.style.display = 'none';
+        });
+      });
+      
+      // Wait for layout changes to take effect
+      await new Promise(resolve => setTimeout(resolve, 300));
+      
+      // Capture the image with exact dimensions
+      const dataUrl = await toPng(reactFlowWrapper, {
+        quality: 1.0,
+        backgroundColor: '#ffffff',
+        pixelRatio: 2,
+        width: contentWidth,
+        height: contentHeight,
+        skipAutoScale: true,
+        cacheBust: true,
+        style: {
+          transform: 'scale(1)',
+          transformOrigin: 'top left'
+        }
+      });
+      
+      // Restore all original styles
+      viewport.style.transform = originalViewportTransform;
+      reactFlowWrapper.style.width = originalWrapperStyles.width;
+      reactFlowWrapper.style.height = originalWrapperStyles.height;
+      reactFlowWrapper.style.overflow = originalWrapperStyles.overflow;
+      
+      // Restore hidden elements
+      hiddenElements.forEach(({ element, originalDisplay }) => {
+        element.style.display = originalDisplay;
+      });
+      
+      // Download the image
+      const link = document.createElement('a');
+      link.download = `${imageForm.name || 'architecture-diagram'}.png`;
+      link.href = dataUrl;
+      link.click();
+      
+      toast({
+        title: "Image Downloaded",
+        description: `"${imageForm.name}" has been saved successfully.`,
+        duration: 3000,
+      });
+      
+      setIsImageModalOpen(false);
+      
+    } catch (error) {
+      console.error('Error generating diagram image:', error);
+      toast({
+        title: "Error",
+        description: "Failed to generate diagram image. Please try again.",
+        duration: 3000,
+      });
+      setIsImageModalOpen(false);
+    }
   };
 
   return (

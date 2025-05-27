@@ -16,6 +16,11 @@
         "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/network-icons/network_ddos_protection.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJuZXR3b3JrLWljb25zL25ldHdvcmtfZGRvc19wcm90ZWN0aW9uLnN2ZyIsImlhdCI6MTc0NTYxNzcwOCwiZXhwIjozNTIyNzcxNDE2fQ.7YqI_nyOr8kb7fkhRqwmxCFiFIWm9RQhmAt_3ojWK-M"
       },
       {
+        "name": "network_load_balancer",
+        "description": "Distributes incoming traffic across multiple servers for scalability and reliability",
+        "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/application-icons/load_balancer.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhcHBsaWNhdGlvbi1pY29ucy9sb2FkX2JhbGFuY2VyLnN2ZyIsImlhdCI6MTc0NTU0NDk4MCwiZXhwIjozNTIyNjI1OTYwfQ.gqysuJk6PrMInVKn6oMDa8wOCjSSORCRqM0NhKuvg84"
+      },
+      {
         "name": "network_router",
         "description": "Ork Network Router Network.",
         "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/network-icons/network_router.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJuZXR3b3JrLWljb25zL25ldHdvcmtfcm91dGVyLnN2ZyIsImlhdCI6MTc0NTYxNzcwOCwiZXhwIjozNTIyNzcxNDE2fQ.OTbmO7ieZ2fEDFgsXrtZfh7ya9ojNCNP7v3Wm_6Ss9I"

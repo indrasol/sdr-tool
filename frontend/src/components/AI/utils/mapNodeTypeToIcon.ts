@@ -75,8 +75,11 @@ const nodeTypeAliases: Record<string, string> = {
   'cdn': 'network_cdn',
   
   // Security
-  'waf': 'security_waf',
+  'waf': 'network_waf',
+  'web_application_firewall': 'network_waf',
+  'application_firewall': 'network_waf',
   'security_firewall': 'network_firewall',
+  'web_app_firewall': 'network_waf',
   
   // Application
   'api_gateway': 'application_api_gateway',
@@ -162,6 +165,21 @@ databaseTypeIcons.databasetype.forEach((icon: IconData) => {
   directIconMappings[icon.name] = icon.icon_url;
 });
 
+// Add direct mappings for network icons
+networkIcons.network.forEach((icon: IconData) => {
+  const simpleName = icon.name.replace('network_', '');
+  directIconMappings[simpleName] = icon.icon_url;
+  // Also store the full name for exact matches
+  directIconMappings[icon.name] = icon.icon_url;
+  
+  // Special case for WAF - add multiple aliases
+  if (icon.name === 'network_waf' || simpleName === 'waf') {
+    directIconMappings['waf'] = icon.icon_url;
+    directIconMappings['web_application_firewall'] = icon.icon_url;
+    directIconMappings['application_firewall'] = icon.icon_url;
+  }
+});
+
 // Add database icon color mappings
 const databaseIconColors: Record<string, string> = {
   'database_mongodb': '#4DB33D', // MongoDB green
@@ -201,6 +219,7 @@ const networkIconColors: Record<string, string> = {
   'network_proxy': '#DC3545', // Proxy red
   'network_cdn': '#DC3545', // CDN red
   'network_waf': '#DC3545', // WAF red
+  'waf': '#DC3545', // WAF red (additional direct mapping)
   // Default network color
   'network': '#DC3545' // Generic network red
 };
@@ -217,16 +236,37 @@ const clientIconColors: Record<string, string> = {
   'client': '#7C65F6' // Generic client purple
 };
 
+// Define fallback icons for each category when an icon fails to load
+const fallbackIcons: Record<string, string> = {
+  'network': 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2NCA2NCI+PHJlY3Qgd2lkdGg9IjEwMCUiIGhlaWdodD0iMTAwJSIgZmlsbD0iI0RDMzU0NSIgb3BhY2l0eT0iMC4xIiByeD0iOCIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBkb21pbmFudC1iYXNlbGluZT0ibWlkZGxlIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmb250LXNpemU9IjMyIj7wn5OcPC90ZXh0Pjwvc3ZnPg==',
+  'network_waf': 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2NCA2NCI+PHJlY3Qgd2lkdGg9IjEwMCUiIGhlaWdodD0iMTAwJSIgZmlsbD0iI0RDMzU0NSIgb3BhY2l0eT0iMC4xIiByeD0iOCIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBkb21pbmFudC1iYXNlbGluZT0ibWlkZGxlIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmb250LXNpemU9IjMyIj7wn5a7PC90ZXh0Pjwvc3ZnPg==',
+  'application': 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2NCA2NCI+PHJlY3Qgd2lkdGg9IjEwMCUiIGhlaWdodD0iMTAwJSIgZmlsbD0iIzM0QTg1MyIgb3BhY2l0eT0iMC4xIiByeD0iOCIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBkb21pbmFudC1iYXNlbGluZT0ibWlkZGxlIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmb250LXNpemU9IjMyIj7wn5OxPC90ZXh0Pjwvc3ZnPg==',
+  'database': 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2NCA2NCI+PHJlY3Qgd2lkdGg9IjEwMCUiIGhlaWdodD0iMTAwJSIgZmlsbD0iIzE5NzZEMiIgb3BhY2l0eT0iMC4xIiByeD0iOCIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBkb21pbmFudC1iYXNlbGluZT0ibWlkZGxlIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmb250LXNpemU9IjMyIj7wn5a0PC90ZXh0Pjwvc3ZnPg==',
+  'client': 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2NCA2NCI+PHJlY3Qgd2lkdGg9IjEwMCUiIGhlaWdodD0iMTAwJSIgZmlsbD0iIzdDNjVGNiIgb3BhY2l0eT0iMC4xIiByeD0iOCIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBkb21pbmFudC1iYXNlbGluZT0ibWlkZGxlIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmb250LXNpemU9IjMyIj7wn5SbPC90ZXh0Pjwvc3ZnPg=='
+};
+
 // Utility function to map nodeType to icon URL
 export const mapNodeTypeToIcon = (nodeType: string): string | null => {
   if (!nodeType) {
     console.warn('mapNodeTypeToIcon received empty nodeType');
-    return null;
+    return fallbackIcons['application']; // Return a default fallback
   }
 
   // Handle different formats - try both the exact match and a lowercase match
   const normalizedType = nodeType.toLowerCase();
   console.log('Looking up icon for nodeType:', nodeType, 'normalized:', normalizedType);
+  
+  // Special handling for WAF to ensure it always renders
+  if (normalizedType.includes('waf') || normalizedType.includes('web application firewall')) {
+    const wafUrl = directIconMappings['network_waf'] || directIconMappings['waf'];
+    if (wafUrl) {
+      console.log('Found WAF icon via special handler:', wafUrl);
+      return wafUrl;
+    } else {
+      console.log('Using fallback WAF icon');
+      return fallbackIcons['network_waf'];
+    }
+  }
   
   // Try direct icon mappings first (for priority components like API Gateway)
   if (directIconMappings[normalizedType]) {
@@ -244,18 +284,28 @@ export const mapNodeTypeToIcon = (nodeType: string): string | null => {
     for (const [netType, color] of Object.entries(networkIconColors)) {
       if (normalizedType.includes(netType.replace('network_', ''))) {
         console.log(`Found network match for ${normalizedType}: ${netType}`);
-        // For specific network types, add a data attribute for styling
+        
+        // For specific network types, check direct mappings first
         if (directIconMappings[netType]) {
           const url = directIconMappings[netType];
           console.log(`Using direct icon URL for ${netType}: ${url}`);
-          return `<div class="network-icon" data-net-type="${netType}" style="width:100%;height:100%;">
-                    <img src="${url}" 
-                         style="width:100%;height:100%;object-fit:contain;filter:drop-shadow(0px 2px 4px rgba(0,0,0,0.2));" 
-                         alt="${netType.replace('network_', '')}" />
-                  </div>`;
+          return url; // Return the URL directly for better handling
+        }
+        
+        // Try to find in network icons specifically
+        const networkIconMatch = networkIcons.network.find(
+          (icon: IconData) => icon.name === netType || icon.name.includes(netType.replace('network_', ''))
+        );
+        
+        if (networkIconMatch) {
+          console.log(`Found specific network icon for ${netType}: ${networkIconMatch.icon_url}`);
+          return networkIconMatch.icon_url;
         }
       }
     }
+    
+    // If we got here, use a fallback network icon
+    return fallbackIcons['network'];
   }
   
   // Special styling for application types - update microservice to black
@@ -269,29 +319,11 @@ export const mapNodeTypeToIcon = (nodeType: string): string | null => {
       if (normalizedType.includes(appType.replace('application_', ''))) {
         console.log(`Found application match for ${normalizedType}: ${appType}`);
         
-        // Special case for microservices
-        if (appType === 'application_microservice' || normalizedType.includes('microservice')) {
-          console.log('Using black color for microservice');
-          
-          if (directIconMappings[appType]) {
-            const url = directIconMappings[appType];
-            return `<div class="application-icon" data-app-type="${appType}" style="width:100%;height:100%;">
-                      <img src="${url}" 
-                           style="width:100%;height:100%;object-fit:contain;filter:drop-shadow(0px 2px 4px rgba(0,0,0,0.3));color:#000000;" 
-                           alt="${appType.replace('application_', '')}" />
-                    </div>`;
-          }
-        }
-        
-        // For other application types, add a data attribute for styling
+        // Return direct URL for better handling
         if (directIconMappings[appType]) {
           const url = directIconMappings[appType];
           console.log(`Using direct icon URL for ${appType}: ${url}`);
-          return `<div class="application-icon" data-app-type="${appType}" style="width:100%;height:100%;">
-                    <img src="${url}" 
-                         style="width:100%;height:100%;object-fit:contain;filter:drop-shadow(0px 2px 4px rgba(0,0,0,0.2));" 
-                         alt="${appType.replace('application_', '')}" />
-                  </div>`;
+          return url;
         }
       }
     }
@@ -308,15 +340,11 @@ export const mapNodeTypeToIcon = (nodeType: string): string | null => {
     for (const [dbType, color] of Object.entries(databaseIconColors)) {
       if (normalizedType.includes(dbType.replace('database_', ''))) {
         console.log(`Found database match for ${normalizedType}: ${dbType}`);
-        // For specific db types, add a data attribute for styling
+        // Return direct URL for better handling
         if (directIconMappings[dbType]) {
           const url = directIconMappings[dbType];
           console.log(`Using direct icon URL for ${dbType}: ${url}`);
-          return `<div class="database-icon" data-db-type="${dbType}" style="width:100%;height:100%;">
-                    <img src="${url}" 
-                         style="width:100%;height:100%;object-fit:contain;filter:drop-shadow(0px 2px 4px rgba(0,0,0,0.2));" 
-                         alt="${dbType.replace('database_', '')}" />
-                  </div>`;
+          return url;
         }
       }
     }
@@ -443,6 +471,9 @@ export const mapNodeTypeToIcon = (nodeType: string): string | null => {
         return iconMappings[variation];
       }
     }
+    
+    // If all else fails, use fallback database icon
+    return fallbackIcons['database'];
   }
   
   // API Gateway specific check (try with different formats)
@@ -474,18 +505,17 @@ export const mapNodeTypeToIcon = (nodeType: string): string | null => {
     for (const [clientType, color] of Object.entries(clientIconColors)) {
       if (normalizedType.includes(clientType.replace('client_', ''))) {
         console.log(`Found client match for ${normalizedType}: ${clientType}`);
-        // For specific client types, add a data attribute for styling
+        // Return direct URL for better handling
         if (directIconMappings[clientType]) {
           const url = directIconMappings[clientType];
           console.log(`Using direct icon URL for ${clientType}: ${url}`);
-          return `<div class="client-icon" data-client-type="${clientType}" style="width:100%;height:100%;">
-                    <img src="${url}" 
-                         style="width:100%;height:100%;object-fit:contain;filter:drop-shadow(0px 2px 5px rgba(124, 101, 246, 0.35));" 
-                         alt="${clientType.replace('client_', '')}" />
-                  </div>`;
+          return url;
         }
       }
     }
+    
+    // If all else fails, use fallback client icon
+    return fallbackIcons['client'];
   }
   
   // Final fallback: log available keys for debugging
@@ -501,5 +531,17 @@ export const mapNodeTypeToIcon = (nodeType: string): string | null => {
     }
   }
   
-  return null; // No match found
+  // Use a category-based fallback icon if we have one
+  if (normalizedType.includes('network')) {
+    return fallbackIcons['network'];
+  } else if (normalizedType.includes('database')) {
+    return fallbackIcons['database'];
+  } else if (normalizedType.includes('client')) {
+    return fallbackIcons['client'];
+  } else if (normalizedType.includes('application')) {
+    return fallbackIcons['application'];
+  }
+  
+  // Absolute last resort fallback
+  return fallbackIcons['application']; // Default to application icon
 };
