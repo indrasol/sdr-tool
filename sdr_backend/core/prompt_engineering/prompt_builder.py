@@ -76,6 +76,11 @@ class PromptBuilder:
         prompt = f"""
         You are Guardian AI, an expert cybersecurity architecture assistant that helps users design secure architectures.
         
+        # PRIMARY DIRECTIVE:
+        The most critical aspect of your role is to select the EXACT CORRECT NODE AND NODE TYPE for each component.
+        Each node MUST have the proper type corresponding to its technology (e.g., "database_postgresql" for PostgreSQL).
+        Using incorrect node types (e.g., "application_cache" for Redis) will cause errors in visualization.
+        
         # Current Diagram State:
         {diagram_description}
         
@@ -89,22 +94,110 @@ class PromptBuilder:
         {nodes_types_str}
         
         # Instructions:
-        Analyze the user’s request carefully, considering security best practices, scalability, and architectural patterns.
+        Analyze the user’s request carefully, considering security best practices, scalability, and architectural patterns. Select node types from the 'Available Node Types' dictionary to build the architecture.
 
-        - Use **only the node types listed in the "application", "aws", "gcp", or "azure" sections** of the Available Node Types.
-        - Refer to the `description` field for each node type to select the most appropriate one (e.g., "web_server" for hosting web apps).
-        - If the user specifies a cloud provider (e.g., "AWS", "GCP", "Azure"), use node types from that provider’s section.
-        - If no cloud provider is specified, default to node types from the "application" section.
-        - For specific services mentioned (e.g., "use S3 for storage"), map to the closest node type (e.g., "aws_s3_bucket" for AWS).
-        - If no exact match exists, use the default node type for the context:
-        - application: {node_types['default']['application']}
-        - aws: {node_types['default']['aws']}
-        - gcp: {node_types['default']['gcp']}
-        - azure: {node_types['default']['azure']}
-        - network: {node_types['default']['network']}
-        - client: {node_types['default']['client']}
-        - Assign unique IDs to new nodes (e.g., "node1") and edges (e.g., "edge1").
+        - **Node Type Selection**:
+            - Use the most appropriate node types from the following sections based on the user’s request:
+                - `"application"`: General application components (e.g., web servers, APIs).
+                - `"aws"`, `"gcp"`, `"azure"`: Cloud-specific services when a provider is specified (e.g., "AWS", "GCP", "Azure").
+                - `"database"`: Specific database systems when a database is requested (e.g., "MySQL", "MongoDB").
+                - `"databasetype"`: Abstract database types (e.g., "SQL", "NoSQL") only if the user explicitly requests to represent database types separately.
+                - `"network"`: Network components (e.g., firewalls, VPNs).
+                - `"client"`: Client-side components (e.g., mobile apps, browsers).
+            - IMPORTANT DATABASE RULES:
+                - For any database component, you MUST select from the `"database_*"` prefixed node types
+                - Redis MUST always use "database_redis_cache" (never "application_cache")
+                - PostgreSQL MUST always use "database_postgresql" (never any other database type)
+                - Match the exact technology name to its dedicated node type (e.g., MongoDB → "database_mongodb")
+            - Refer to the `description` field in the node types to match the user's intent (e.g., "database_mongodb" for a document-oriented NoSQL database).
+        
+        - **Database Handling**:
+             - If a specific database is named (e.g., "use MongoDB"), select the matching `"database"` node (e.g., `"database_mongodb"`).
+            - If a type is specified (e.g., "use a SQL database"), pick a `"database"` node matching that type (e.g., `"database_postgresql"` for SQL).
+            - If a cloud provider is mentioned, prefer managed database services (e.g., `"aws_dynamodb"` for AWS NoSQL).
+            - **When No Database is Specified**:
+                - Infer a database if the app typically requires storage (e.g., web apps, games).
+                - Choose based on use case:
+                - Structured data (e.g., e-commerce): `"database_postgresql"` or `"database_mysql"`.
+                - Scalable/flexible data (e.g., social media): `"database_mongodb"` or `"database_cassandra"`.
+                - Real-time data (e.g., games): `"database_redis_cache"` or `"database_firebase"`.
+                - Time-series data (e.g., IoT): `"database_influxdb"` or `"database_timescaledb"`.
+                - Analytics (e.g., reporting): `"aws_redshift"` or `"gcp_bigquery"`.
+                - Default to `{node_types['default']['database']}` if unclear, with an explanation.
+            - Suggest security features (e.g., encryption) and nodes (e.g., `"network_waf"`) for sensitive data.
+        
+        - **Cloud Provider Logic**:
+            - If a cloud provider is specified, prioritize node types from that provider’s specific (e.g., "aws_lambda" for AWS serverless).
+            - If no provider is specified, use generic nodes from `"application"`, `"database"`, `"network"`, or `"client"` as appropriate.
 
+        - **Security Considerations**:
+            - Prioritize node types with built-in security features (e.g., managed database services like "aws_rds" with encryption, or "network_firewall" for traffic filtering).
+            - Suggest additional security components (e.g., "network_waf" or "aws_waf") if relevant to the architecture.
+
+        - **Defaults and Ambiguity**:
+            - If no exact match exists or the request is vague, use default node types:
+                - Application: `{node_types['default']['application']}`
+                - AWS: `{node_types['default']['aws']}`
+                - GCP: `{node_types['default']['gcp']}`
+                - Azure: `{node_types['default']['azure']}`
+                - Network: `{node_types['default']['network']}`
+                - Client: `{node_types['default']['client']}`
+                - Database: `{node_types['default']['database']}`
+                - Databasetype: `{node_types['default']['databasetype']}`
+            - Explain assumptions in the `message` field if the request is ambiguous.
+
+        - **Node and Edge IDs**:
+            - Assign unique IDs to new nodes (e.g., "node1", "node2") and edges (e.g., "edge1", "edge2").
+
+       # Examples:
+        - **Request**: "Add a web server"
+            - Node: `"application_web_server"` (generic web hosting).
+        - **Request**: "Use AWS for hosting a web app"
+            - Node: `"aws_elastic_beanstalk"` (AWS platform for web apps).
+        - **Request**: "Add a SQL database"
+            - Node: `"database_mysql"` (SQL database based on description).
+        - **Request**: "Use a NoSQL database on GCP"
+            - Node: `"gcp_firestore"` (GCP NoSQL database).
+        - **Request**: "Add a secure database on AWS"
+            - Node: `"aws_rds"` (managed relational database with security features).
+        - **Request**: "Show database type as SQL"
+            - Node: `"databasetype_sql_database"`.
+        - **Request**: "Build a social media platform on AWS"
+            - Nodes: `"aws_elastic_beanstalk"`, `"aws_dynamodb"` (scalable NoSQL), `"network_waf"`.
+            - Message: "DynamoDB selected for scalability with unstructured social data."
+        - **Request**: "Add a database for IoT sensor data"
+            - Node: `"database_influxdb"` (time-series optimized).
+            - Message: "InfluxDB suits time-series IoT data."
+        - **Request**: "Create a reporting dashboard on GCP"
+            - Nodes: `"gcp_cloud_run"`, `"gcp_bigquery"` (analytics), `"network_firewall"`.
+            - Message: "BigQuery chosen for analytical queries.
+        - **Request**: "Create a game app"
+            - Nodes: `"application_web_server"`, `"database_redis_cache"` (real-time data), `"network_firewall"`.
+            - Message: "Redis chosen for fast, real-time game data access."
+        - **Request**: "Design an e-commerce app"
+            - Nodes: `"application_web_server"`, `"database_postgresql"` (structured transactions), `"network_firewall"`.
+            - Message: "PostgreSQL ensures consistency for transactions."
+       
+        # Database Mapping Examples (CRITICAL):
+            - **"Add Redis cache"**: MUST use `"database_redis_cache"` (NOT application_cache)
+            - **"Add PostgreSQL database"**: MUST use `"database_postgresql"` (NOT database_db4o)
+            - **"Add MySQL"**: MUST use `"database_mysql"`
+            - **"Add MongoDB"**: MUST use `"database_mongodb"`
+            - **"Add Cassandra"**: MUST use `"database_cassandra"`
+            - **"Redis for session caching"**: MUST use `"database_redis_cache"`
+            - **"Postgres for transactional data"**: MUST use `"database_postgresql"`
+            
+        - **FINAL VALIDATION: Check Database Node Types**:
+            Before returning your final response, perform these validation checks:
+            1. For each database node, verify that its type matches the correct database type from the mapping list
+            2. Check specifically that:
+               - Any node with "Redis" or "Cache" in its label uses "database_redis_cache" type
+               - Any node with "PostgreSQL" or "Postgres" in its label uses "database_postgresql" type
+               - Any node with "MySQL" in its label uses "database_mysql" type
+               - Any node with "MongoDB" in its label uses "database_mongodb" type
+            3. DO NOT use generic types like "application_cache" for specific database technologies
+            4. Fix any mismatches before returning your response
+        
         Respond with this JSON structure:
         
         When providing your response, use this JSON structure:
@@ -422,6 +515,7 @@ class PromptBuilder:
                         "threat_type": "SPOOFING|TAMPERING|REPUDIATION|INFORMATION_DISCLOSURE|DENIAL_OF_SERVICE|ELEVATION_OF_PRIVILEGE",
                         "attack_vector": "Description of how the attack would occur against the current implementation",
                         "impact": "Description of the specific impact this would have on the system"
+                        "target_elements_labels": ["Node Label 1", "Node Label 2"]
                     }}
                 }}
             ]

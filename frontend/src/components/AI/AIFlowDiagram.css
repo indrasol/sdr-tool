@@ -77,13 +77,18 @@
 /* Add pulsing effect for high threats */
 @keyframes pulse {
   0% {
-    opacity: 1;
+    transform: scale(0.95);
+    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7);
   }
-  50% {
-    opacity: 0.6;
+  
+  70% {
+    transform: scale(1);
+    box-shadow: 0 0 0 10px rgba(239, 68, 68, 0);
   }
+  
   100% {
-    opacity: 1;
+    transform: scale(0.95);
+    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0);
   }
 }
 
@@ -93,11 +98,7 @@
 
 /* Styles for threat badges */
 .threat-badge {
-  position: absolute;
-  right: -4px;
-  top: -4px;
-  width: 20px;
-  height: 20px;
+  position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -105,32 +106,58 @@
   font-size: 10px;
   font-weight: bold;
   color: white;
+  width: 18px;
+  height: 18px;
+  z-index: 100;
+  box-shadow: 0 0 0 1.5px white, 0 2px 4px rgba(0,0,0,0.3);
+  margin-left: 3px;
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  transform-origin: center;
+}
+
+.threat-badge:hover, .threat-badge:active {
+  transform: scale(1.3);
+  box-shadow: 0 0 0 1.5px white, 0 4px 8px rgba(0,0,0,0.4);
 }
 
 .threat-badge-high {
   background-color: #ef4444;
-  box-shadow: 0 0 0 2px white;
+}
+
+.threat-badge-high:hover, .threat-badge-high:active {
+  background-color: #dc2626;
+  box-shadow: 0 0 0 1.5px white, 0 0 10px rgba(239, 68, 68, 0.6);
 }
 
 .threat-badge-medium {
   background-color: #f59e0b;
-  box-shadow: 0 0 0 2px white;
+}
+
+.threat-badge-medium:hover, .threat-badge-medium:active {
+  background-color: #d97706;
+  box-shadow: 0 0 0 1.5px white, 0 0 10px rgba(245, 158, 11, 0.6);
 }
 
 .threat-badge-low {
   background-color: #3b82f6;
-  box-shadow: 0 0 0 2px white;
+}
+
+.threat-badge-low:hover, .threat-badge-low:active {
+  background-color: #2563eb;
+  box-shadow: 0 0 0 1.5px white, 0 0 10px rgba(59, 130, 246, 0.6);
 }
 
 /* Threat indicator positioning */
 .threat-indicator {
   position: absolute;
-  top: -5px;
-  right: -5px;
+  top: -6px;
+  right: -6px;
   display: flex;
   flex-direction: row;
-  gap: 2px;
-  cursor: pointer;
+  gap: 3px;
+  z-index: 9999 !important;
+  pointer-events: auto;
 }
 
 /* Modern gradient background for diagram pane */
@@ -453,1028 +480,380 @@
   animation-delay: 0.5s;
 }
 
-/* Node label styles - enhance for better visibility with no node background */
+/* Node label styles - enhance for better visibility and modern design */
 .node-label {
-  position: absolute;
-  bottom: -25px;
-  left: 50%;
-  transform: translateX(-50%);
   white-space: nowrap;
-  font-size: 12px;
-  font-weight: 500;
-  font-family: 'Geneva', 'Helvetica Neue', Helvetica, Arial, sans-serif;
-  color: rgba(55, 65, 81, 1);
-  text-shadow: 0 1px 1px rgba(255, 255, 255, 0.9);
-  background: linear-gradient(135deg, rgba(250, 250, 255, 0.9) 0%, rgba(240, 242, 250, 0.9) 100%);
-  padding: 3px 10px;
-  border-radius: 12px;
-  backdrop-filter: blur(4px);
-  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-  border: 1px solid rgba(255, 255, 255, 0.6);
-  z-index: 2;
-}
-
-/* Placeholder node label specific styles */
-.placeholder-node .node-label {
-  position: absolute;
-  bottom: -25px;
-  left: 50%;
-  transform: translateX(-50%);
-  font-size: 12px;
-  font-weight: 500;
-  font-family: 'Geneva', 'Helvetica Neue', Helvetica, Arial, sans-serif;
-  color: #374151;
-  white-space: nowrap;
-  background: linear-gradient(135deg, rgba(250, 250, 255, 0.9) 0%, rgba(240, 242, 250, 0.9) 100%);
-  border-radius: 12px;
-  padding: 3px 10px;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-  border: 1px solid rgba(255, 255, 255, 0.6);
-  backdrop-filter: blur(4px);
-}
-
-/* Updated styles for the remote SVG icons */
-.aws-icon svg {
-  fill: white !important;
-  width: 100%;
-  height: 100%;
-  filter: drop-shadow(0 1px 2px rgba(0,0,0,0.1));
-}
-
-.gcp-icon svg {
-  filter: brightness(1.2) contrast(1.1);
-  padding: 4px;
-  fill: white !important; /* Force white fill for better visibility */
-  stroke: white;
-  stroke-width: 0.5;
-}
-
-/* New enhanced style specifically for GCP Cloud Run */
-.gcp-icon svg path {
-  fill: white !important;
-}
-
-/* Update any GCP-specific paths for better visibility */
-.gcp-icon svg g path {
-  fill: white !important;
-  stroke: white;
-  stroke-width: 0.1;
-}
-
-.gcp-icon-white svg {
-  fill: white !important;
-  width: 100%;
-  height: 100%;
-  filter: drop-shadow(0 1px 2px rgba(0,0,0,0.1));
-}
-
-.network-icon svg {
-  fill: white !important;
-  width: 100%;
-  height: 100%;
-  filter: drop-shadow(0 1px 2px rgba(0,0,0,0.1));
-}
-
-/* Enhance box shadow for all nodes */
-[class*="rounded-xl"] {
-  box-shadow: 0 8px 16px -4px rgba(0, 0, 0, 0.1), 0 4px 8px -2px rgba(0, 0, 0, 0.06) !important;
-}
-
-/* Ensure elements remain visible even when they animate far away */
-.empty-canvas-container {
-  overflow: visible !important;
-  z-index: 5;
-  transition: opacity 0.3s ease-out;
-}
-
-.empty-canvas {
-  overflow: visible !important;
-}
-
-/* Add smooth drag transition for nodes */
-.react-flow__node {
-  transition: transform 0.1s ease-out;
-  z-index: 10 !important;
-}
-
-/* Override default React Flow selection styling */
-.react-flow__node.react-flow__node-default.selected {
-  box-shadow: none !important;
-  outline: none !important;
-  border: none !important;
-}
-
-/* Override purple outline when dragging */
-.react-flow__node.react-flow__node-default.dragging {
-  box-shadow: none !important;
-  outline: none !important;
-  border: none !important;
-}
-
-/* Hide resize handles by default and show subtle ones only on hover */
-.react-flow__nodesselection-rect {
-  background: transparent !important;
-  border: none !important;
-  box-shadow: none !important;
-}
-
-/* Make node selection completely invisible */
-.react-flow__node.selected::before {
-  display: none !important;
-}
-
-.react-flow__node.selected::after {
-  display: none !important;
-}
-
-/* Override any possible box shadows on selected nodes */
-.react-flow__node.selected [class*="rounded-xl"] {
-  box-shadow: none !important;
-}
-
-/* Make node icons more prominent since they won't have a background */
-.node-icon-container {
-  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2));
-  transition: transform 0.2s ease-out, filter 0.2s ease-out;
-}
-
-.node-icon-container:hover {
-  transform: scale(1.1);
-  filter: drop-shadow(0 4px 8px rgba(0,0,0,0.3));
-}
-
-/* Enhance handle visibility since nodes have no background */
-.react-flow__handle {
-  width: 6px !important;
-  height: 6px !important;
-  background-color: white !important;
-  border: 2px solid #7C65F6 !important;
-  transition: opacity 0.2s ease-out, transform 0.2s ease-out;
-  opacity: 0.8;
-  z-index: 11 !important;
-}
-
-.react-flow__handle:hover {
-  opacity: 1;
-  transform: scale(1.3);
-}
-
-/* Custom node styling - override base node styles */
-.react-flow__node.custom-node {
-  background: transparent !important;
-  border: none !important;
-  box-shadow: none !important;
-  /* width: auto !important; */ /* Size handled by component */
-  /* height: auto !important; */ /* Size handled by component */
-  padding: 0 !important; 
-  backdrop-filter: none !important; 
-  overflow: visible !important; 
-}
-
-/* Override any hover/selection styles that might add backgrounds */
-.react-flow__node:hover,
-.react-flow__node.selected {
-  background: transparent !important;
-  border: none !important;
-  box-shadow: none !important;
-}
-
-/* Welcome message styling */
-.welcome-message {
-  animation: fadeInUp 0.8s ease-out forwards;
-  max-width: 500px;
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(248, 249, 251, 0.85) 100%);
-  backdrop-filter: blur(8px);
-  border-radius: 10px;
-  box-shadow: 0 4px 15px rgba(124, 101, 246, 0.2);
-  max-width: 600px;
-  z-index: 5;
-  animation: fadeInUp 0.5s ease-out;
-}
-
-@keyframes fadeInUp {
-  from {
-    opacity: 0;
-    transform: translate(-50%, 20px);
-  }
-  to {
-    opacity: 1;
-    transform: translate(-50%, 0);
-  }
-}
-
-.welcome-text {
-  animation: pulse 2s infinite;
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
-
-@keyframes pulse {
-  0% {
-    opacity: 0.8;
-  }
-  50% {
-    opacity: 1;
-  }
-  100% {
-    opacity: 0.8;
-  }
-}
-
-/* Ensure React Flow components have higher z-index */
-.react-flow__node {
-  z-index: 10 !important;
-}
-
-.react-flow__edge {
-  z-index: 10 !important;
-}
-
-.react-flow__handle {
-  z-index: 11 !important;
-}
-
-/* Ensure React Flow pane has higher z-index than empty canvas */
-.react-flow__pane {
-  z-index: 8 !important;
-}
-
-/* Edge Hover Effects */
-@keyframes edgeFlow {
-  to {
-    stroke-dashoffset: -16; /* Animate the dash offset */
-  }
-}
-
-/* Add an invisible wider stroke for easier hover detection */
-.react-flow__edge .react-flow__edge-interaction {
-  stroke-width: 30px !important; /* INCREASED - Much wider invisible line for hovering */
-  stroke: transparent;
-  pointer-events: stroke;
-  cursor: pointer;
-  z-index: 11 !important; /* Ensure interaction layer is above the visible path */
-}
-
-/* Edge Hover Effects - Applied when hovering the interaction layer */
-.react-flow__edge:hover .react-flow__edge-path {
-  stroke-width: 4.5px !important; /* Make VISIBLE edge noticeably thicker on hover */
-  stroke: #00529B !important; /* Change VISIBLE edge color to dark blue on hover */
-  /* stroke-dasharray: 8 8; */ /* Dashes for animation - REMOVED */
-  /* animation: edgeFlow 0.7s linear infinite; */ /* Apply the flow animation - REMOVED */
-  /* cursor: pointer; */ /* Cursor is handled by interaction layer */
-}
-
-/* Keep arrowhead color matching */
-.react-flow__edge:hover .react-flow__arrowhead path {
-  fill: #00529B !important; /* Match arrowhead color */
-  stroke: #00529B !important;
-  transition: fill 0.2s ease-out, stroke 0.2s ease-out;
-}
-
-/* --- Node Selection Overrides --- */
-/* Ensure no background/border on the main node element itself when selected */
-.react-flow__node.selected,
-.react-flow__node.dragging {
-  border: none !important;
-  outline: none !important;
-  box-shadow: none !important;
-  background: transparent !important; /* Force transparent background */
-}
-
-/* Target the specific custom node class to be extra sure */
-.react-flow__node.custom-node.selected > div {
-  border: none !important;
-  box-shadow: none !important;
-}
-
-/* Target the inner container of the custom node when selected */
-.react-flow__node.custom-node.selected .rounded-xl {
-    border-color: transparent !important; /* Override any border color */
-    box-shadow: none !important; /* Remove any potential shadow */
-}
-
-/* Ensure NodeResizer handles don't imply a border on the node */
-.react-flow__node.selected .react-flow__handle {
-    border-color: #888 !important; /* Make handles grey, not implying a node border */
-}
-/* --- End Node Selection Overrides --- */
-
-/* Add styles to ensure edges remain visible during dragging */
-.react-flow__edge {
-  pointer-events: all;
-  z-index: 5;
-}
-
-/* Style for edges during node dragging */
-.react-flow__node.dragging + .react-flow__edge {
-  opacity: 0.8;
-}
-
-/* Make sure dragged nodes stay on top */
-.react-flow__node.dragging {
-  z-index: 10;
-}
-
-/* Ensure nodes are interactive */
-.react-flow__node {
-  cursor: grab;
-}
-
-.react-flow__node:active {
-  cursor: grabbing;
-}
-
-/* Add this to AIFlowDiagram.css */
-.layer-container {
-  transition: all 0.3s ease;
-  pointer-events: none;
-}
-
-.layer-title {
-  transition: all 0.3s ease;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-  font-family: 'Inter', system-ui, sans-serif;
-  font-weight: 600;
-  letter-spacing: -0.01em;
-}
-
-/* Layer container styles for better visibility */
-.layer-container {
-  transition: all 0.3s ease;
-  pointer-events: none;
-  position: absolute;
-  z-index: -5 !important; /* Force behind other nodes */
-}
-
-/* Ensure layer containers are visible */
-.react-flow__node.react-flow__node-layerGroup {
-  background: transparent !important;
-  border: none !important;
-  box-shadow: none !important;
-  z-index: -1 !important;
-}
-
-/* Make layer title more visible */
-.layer-title {
-  transition: all 0.3s ease;
-  box-shadow: 0 1px 4px rgba(0,0,0,0.2);
-  font-family: 'Inter', system-ui, sans-serif;
-  font-weight: 600;
-  letter-spacing: -0.01em;
-  z-index: 1;
-  white-space: nowrap;
-}
-
-/* Override default node selection styles for layer groups */
-.react-flow__node-layerGroup.selected {
-  outline: none !important;
-  box-shadow: none !important;
-  border: none !important;
-}
-
-/* Ensure layer groups are properly visible on hover */
-.react-flow__node-layerGroup:hover .layer-container {
-  filter: brightness(1.05);
-}
-
-/* Animate layer appearance for better visibility */
-@keyframes fadeInLayer {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
-}
-
-.layer-container {
-  animation: fadeInLayer 0.5s ease-out forwards;
-}
-
-
-/* Styles for threat badges on nodes */
-
-/* Threat indicator positioning */
-.threat-indicator {
-  position: absolute;
-  top: -5px;
-  right: -5px;
-  display: flex;
-  flex-direction: row;
-  gap: 2px;
-  z-index: 10;
-  pointer-events: none; /* Ensure badges don't interfere with node interactions */
-}
-
-/* Styles for threat badges */
-.threat-badge {
-  position: relative;
-  width: 20px;
-  height: 20px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 50%;
-  font-size: 10px;
-  font-weight: bold;
-  color: white;
-  box-shadow: 0 0 0 2px white;
-  margin-left: 3px;
-}
-
-.threat-badge-high {
-  background-color: #ef4444;
-}
-
-.threat-badge-medium {
-  background-color: #f59e0b;
-}
-
-.threat-badge-low {
-  background-color: #3b82f6;
-}
-
-/* Add pulsing effect for high threats */
-@keyframes pulse {
-  0% {
-    opacity: 1;
-    transform: scale(1);
-  }
-  50% {
-    opacity: 0.7;
-    transform: scale(1.1);
-  }
-  100% {
-    opacity: 1;
-    transform: scale(1);
-  }
-}
-
-.threat-badge-pulse {
-  animation: pulse 1.5s infinite;
-}
-
-/* Improve visibility of threat badges */
-.threat-badge svg {
-  width: 10px;
-  height: 10px;
-  margin-right: 1px;
-}
-
-/* Badge counter style */
-.threat-badge span {
-  font-size: 9px;
-  font-weight: 700;
+  font-size: 0.975rem !important;
+  font-weight: 690 !important;
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-}
-
-/* Make node container relative to position badges correctly */
-.custom-node {
-  position: relative !important;
-}
-
-/* Ensure threat badges stay on top */
-.react-flow__node-default .threat-indicator {
-  z-index: 20;
-}
-
-/* Add tooltip to show more information on hover */
-.threat-badge:hover::after {
-  content: attr(title);
-  position: absolute;
-  top: -30px;
-  left: 50%;
-  transform: translateX(-50%);
-  background-color: rgba(0, 0, 0, 0.8);
-  color: white;
-  padding: 3px 6px;
-  border-radius: 4px;
-  font-size: 10px;
-  white-space: nowrap;
-  pointer-events: none;
-}
-
-/* Enhanced ThreatCount component styles */
-.threat-count {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 11px;
-  font-weight: 600;
-  border-radius: 4px;
-  padding: 2px 6px;
-  transition: all 0.2s ease;
-  cursor: pointer;
-}
-
-.threat-count:hover {
-  transform: translateY(-1px);
-}
-
-.threat-count-high {
-  background-color: rgba(239, 68, 68, 0.15);
-  color: rgb(185, 28, 28);
-  border: 1px solid rgba(239, 68, 68, 0.3);
-}
-
-.threat-count-medium {
-  background-color: rgba(245, 158, 11, 0.15);
-  color: rgb(180, 83, 9);
-  border: 1px solid rgba(245, 158, 11, 0.3);
-}
-
-.threat-count-low {
-  background-color: rgba(59, 130, 246, 0.15);
-  color: rgb(30, 64, 175);
-  border: 1px solid rgba(59, 130, 246, 0.3);
-}
-
-/* Enhance node threat badges visibility with shadow */
-.threat-badge {
-  box-shadow: 0 0 0 2px white, 0 2px 4px rgba(0, 0, 0, 0.2);
-}
-
-/* Add this to your CSS */
-.threat-panel {
-  visibility: visible !important;
-  display: block !important;
-  opacity: 1 !important;
-  position: absolute !important;
-  z-index: 9999 !important;
-}
-
-/* Add this to your AIFlowDiagram.css or create a new LayerStyles.css file */
-
-/* Layer container styles for better visibility */
-.layer-container {
-  transition: all 0.3s ease;
-  pointer-events: none;
-  position: absolute;
-  z-index: -5 !important; /* Force behind other nodes */
-  transform-origin: top left;
-  animation: fadeInLayer 0.5s ease-out forwards;
-}
-
-/* Ensure layer containers are visible */
-.react-flow__node.react-flow__node-layerGroup {
-  background: transparent !important;
-  border: none !important;
-  box-shadow: none !important;
-  z-index: -1 !important;
-}
-
-/* Make layer title more visible */
-.layer-title {
-  transition: all 0.3s ease;
-  box-shadow: 0 1px 4px rgba(0,0,0,0.2);
-  font-family: 'Inter', system-ui, sans-serif;
-  font-weight: 600;
+  color: rgba(23, 37, 84, 0.9);
   letter-spacing: -0.01em;
-  z-index: 1;
-  white-space: nowrap;
-  backdrop-filter: blur(4px);
-}
-
-/* Override default node selection styles for layer groups */
-.react-flow__node-layerGroup.selected {
-  outline: none !important;
-  box-shadow: none !important;
-  border: none !important;
-}
-
-/* Ensure layer groups are properly visible on hover */
-.react-flow__node-layerGroup:hover .layer-container {
-  filter: brightness(1.05);
-}
-
-/* Animate layer appearance for better visibility */
-@keyframes fadeInLayer {
-  from {
-    opacity: 0;
-    transform: scale(0.98);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1);
-  }
-}
-
-/* Layer type-specific styling for even more distinctiveness */
-.layer-container[data-layer="aws"] {
-  background-image: linear-gradient(to bottom right, rgba(255, 153, 0, 0.03), rgba(255, 153, 0, 0.08));
-}
-
-.layer-container[data-layer="azure"] {
-  background-image: linear-gradient(to bottom right, rgba(0, 114, 198, 0.03), rgba(0, 114, 198, 0.08));
-}
-
-.layer-container[data-layer="gcp"] {
-  background-image: linear-gradient(to bottom right, rgba(26, 115, 232, 0.03), rgba(26, 115, 232, 0.08));
-}
-
-.layer-container[data-layer="application"] {
-  background-image: linear-gradient(to bottom right, rgba(0, 150, 136, 0.03), rgba(0, 150, 136, 0.08));
-}
-
-.layer-container[data-layer="network"] {
-  background-image: linear-gradient(to bottom right, rgba(220, 53, 69, 0.03), rgba(220, 53, 69, 0.08));
-}
-
-.layer-container[data-layer="client"] {
-  background-image: linear-gradient(to bottom right, rgba(75, 85, 99, 0.02), rgba(75, 85, 99, 0.05));
-}
-
-/* Improved layer title appearance */
-.layer-title {
-  border-radius: 4px;
-  padding: 4px 10px;
-  font-size: 10px;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
-  backdrop-filter: blur(8px);
-}
-
-/* Add these custom styles for the auto-zoom toggle to AIFlowDiagram.css */
-
-/* Custom checkbox styling */
-.form-checkbox {
-  appearance: none;
-  -webkit-appearance: none;
-  border: 1px solid rgba(124, 101, 246, 0.5);
-  height: 12px;
-  width: 12px;
-  padding: 0;
-  display: inline-block;
-  position: relative;
-  vertical-align: middle;
-  border-radius: 3px;
-  background-color: white;
-  transition: all 0.2s ease-out;
-  cursor: pointer;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
-}
-
-.form-checkbox:checked {
-  background-color: rgba(124, 101, 246, 0.9);
-  border-color: rgba(124, 101, 246, 0.9);
-}
-
-.form-checkbox:focus {
-  outline: none;
-  box-shadow: 0 0 0 2px rgba(124, 101, 246, 0.3);
-}
-
-/* Checkmark icon */
-.form-checkbox:checked::after {
-  content: '';
-  position: absolute;
-  left: 4px;
-  top: 2px;
-  width: 4px;
-  height: 6px;
-  border: solid white;
-  border-width: 0 1.5px 1.5px 0;
-  transform: rotate(45deg);
-}
-
-/* Style the toggle container for better appearance */
-.auto-zoom-toggle {
-  transition: all 0.2s ease-out;
-  border-top: 1px solid rgba(0, 0, 0, 0.05);
-}
-
-/* Animate the badge when toggling */
-.auto-zoom-toggle span {
-  transition: all 0.3s ease;
-}
-
-/* Add subtle highlight when enabled */
-.auto-zoom-enabled {
-  background-color: rgba(124, 101, 246, 0.05);
-}
-
-/* Improved hover card styling */
-.threat-hover-card {
-  pointer-events: none;
-  will-change: opacity, visibility;
-  transform-origin: bottom center;
-  filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.1)) drop-shadow(0 2px 4px rgba(0, 0, 0, 0.06));
-  z-index: 9999 !important;
-}
-
-/* Fix for group hover behavior */
-.group:hover .threat-hover-card {
-  opacity: 1;
-  visibility: visible;
-  animation: fadeInTooltip 0.2s ease forwards;
-}
-
-/* Add animation for smooth appearance */
-@keyframes fadeInTooltip {
-  from {
-    opacity: 0;
-    transform: translate(-50%, -90%) scale(0.95);
-  }
-  to {
-    opacity: 1;
-    transform: translate(-50%, -100%) scale(1);
-  }
-}
-
-/* Make sure hover effect works correctly */
-.threat-card {
-  position: relative;
-  overflow: visible !important;
-}
-
-/* Prevent z-index issues */
-.react-flow__panel {
-  z-index: 5;
-}
-
-.threat-panel {
-  z-index: 1000 !important;
-}
-
-/* Ensure the popup stays on top */
-.group:hover {
-  z-index: 9999 !important;
-}
-
-/* Ensure the threat description wrapper has proper positioning */
-.threat-description-wrapper {
-  position: relative;
-}
-
-/* Add these styles to AIFlowDiagram.css */
-
-/* Analysis lock button styles */
-.analysis-locked {
-  background-color: rgba(100, 100, 100, 0.05);
-}
-
-/* Animation for when the button becomes locked */
-@keyframes lockPulse {
-  0% {
-    opacity: 1;
-  }
-  50% {
-    opacity: 0.6;
-  }
-  100% {
-    opacity: 1;
-  }
-}
-
-/* Add a subtle animation when the button is first locked */
-.analysis-locked-animation {
-  animation: lockPulse 0.5s ease-in-out;
-}
-
-/* Make locked buttons visually distinct */
-button:disabled, 
-button[disabled],
-.cursor-not-allowed {
-  opacity: 0.6;
-  cursor: not-allowed !important;
-  filter: grayscale(30%);
-}
-
-/* Add some hover effect to the lock toggle */
-.lock-toggle-button {
+  text-shadow: 0 1px 1px rgba(255, 255, 255, 0.7);
+  background: transparent;
+  padding: 5px 12px;
+  border-radius: 12px;
+  z-index: 2;
   transition: all 0.2s ease;
+  border: none;
+  box-shadow: none;
 }
 
-.lock-toggle-button:hover {
-  background-color: rgba(100, 100, 100, 0.1);
-  transform: scale(1.05);
+/* Add hover effect to labels */
+.node-label:hover {
+  transform: translateY(-1px);
+  box-shadow: none;
 }
 
-/* Style for lock icon */
-.lock-icon {
-  transition: all 0.2s ease;
-}
-
-.lock-icon:hover {
-  transform: scale(1.1);
-}
-
-/* ----- AUTO-ZOOM TOGGLE STYLES ----- */
-
-/* Custom checkbox styling */
-.form-checkbox {
-  appearance: none;
-  -webkit-appearance: none;
-  border: 1px solid rgba(124, 101, 246, 0.5);
-  height: 12px;
-  width: 12px;
-  padding: 0;
-  display: inline-block;
-  position: relative;
-  vertical-align: middle;
-  border-radius: 3px;
-  background-color: white;
-  transition: all 0.2s ease-out;
-  cursor: pointer;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
-}
-
-.form-checkbox:checked {
-  background-color: rgba(124, 101, 246, 0.9);
-  border-color: rgba(124, 101, 246, 0.9);
-}
-
-.form-checkbox:focus {
-  outline: none;
-  box-shadow: 0 0 0 2px rgba(124, 101, 246, 0.3);
-}
-
-/* Checkmark icon */
-.form-checkbox:checked::after {
-  content: '';
-  position: absolute;
-  left: 4px;
-  top: 2px;
-  width: 4px;
-  height: 6px;
-  border: solid white;
-  border-width: 0 1.5px 1.5px 0;
-  transform: rotate(45deg);
-}
-
-/* Style the toggle container for better appearance */
-.auto-zoom-toggle {
-  transition: all 0.2s ease-out;
-  border-top: 1px solid rgba(0, 0, 0, 0.05);
-}
-
-/* Animate the badge when toggling */
-.auto-zoom-toggle span {
-  transition: all 0.3s ease;
-}
-
-/* Add subtle highlight when enabled */
-.auto-zoom-enabled {
-  background-color: rgba(124, 101, 246, 0.05);
-}
-
-/* ----- TOOLTIP/HOVER CARD STYLES ----- */
-
-/* Enhanced tooltip container */
-.threat-description-wrapper {
-  position: relative !important;
-  z-index: 1;
-}
-
-/* When container is hovered, increase z-index to ensure tooltip is above all other elements */
-.threat-description-wrapper:hover {
-  z-index: 9999 !important;
-}
-
-/* Base tooltip styling with improved visibility */
-.threat-hover-card {
-  position: absolute !important;
-  pointer-events: none;
-  z-index: 9999 !important;
-  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.2), 0 10px 10px -5px rgba(0, 0, 0, 0.1) !important;
-  border: 1px solid rgba(0, 0, 0, 0.1) !important;
+/* Enhanced tooltip styling */
+.custom-node .react-tooltip {
   background-color: white !important;
-  
-  /* Fixed positioning relative to its container */
-  top: -5px !important;
-  left: 50% !important;
-  transform: translateX(-50%) translateY(-100%) !important;
-  
-  /* Default state: hidden */
-  opacity: 0 !important;
-  visibility: hidden !important;
-  
-  /* Smooth transition */
-  transition: opacity 0.2s ease, visibility 0.2s ease, transform 0.2s ease !important;
-}
-
-/* When parent is hovered, show the tooltip with animation */
-.threat-description-wrapper:hover .threat-hover-card {
   opacity: 1 !important;
-  visibility: visible !important;
-  transform: translateX(-50%) translateY(-105%) !important;
-}
-
-/* Make sure tooltip has enough space and doesn't get clipped */
-.threat-panel-transition {
-  overflow: visible !important;
-}
-
-.threat-card {
-  overflow: visible !important;
-}
-
-/* Ensure the tooltip content is visible */
-.threat-hover-card * {
-  opacity: 1 !important;
-  visibility: visible !important;
-}
-
-/* Fix z-index for the whole card to ensure proper stacking */
-.threat-card {
-  position: relative !important;
-  z-index: 1 !important;
-}
-
-.threat-card:hover {
-  z-index: 10 !important;
-}
-
-/* Make sure panels don't clip the tooltips */
-.react-flow__panel,
-.react-flow__panels {
-  overflow: visible !important;
-}
-
-/* Stronger tooltip container */
-.threat-hover-card {
-  /* Reinforced styling */
-  padding: 12px !important;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15) !important;
   border-radius: 8px !important;
-  /* Increased visual prominence */
-  outline: 1px solid rgba(0, 0, 0, 0.05) !important;
-  backdrop-filter: blur(8px) !important;
-  background-color: rgba(255, 255, 255, 0.98) !important;
+  border: 1px solid rgba(0,0,0,0.1) !important;
+  padding: 8px 12px !important;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+  z-index: 1000 !important;
+  max-width: 300px !important;
 }
 
-/* Tooltip arrow styling */
-.threat-hover-card::after {
-  content: '';
-  position: absolute;
-  bottom: -8px;
-  left: 50%;
-  transform: translateX(-50%) rotate(45deg);
-  width: 16px;
-  height: 16px;
-  background-color: white;
-  border-right: 1px solid rgba(0, 0, 0, 0.1);
-  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
-  z-index: -1;
+/* Improved tooltip styling */
+.threat-tooltip {
+  animation: tooltipFadeIn 0.2s ease-out;
 }
 
-/* Create a custom threat card container class for better control */
-.threat-card-container {
+@keyframes tooltipFadeIn {
+  from { 
+    opacity: 0;
+    transform: translateY(-90%);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(-100%);
+  }
+}
+
+/* Force visible parent containers */
+.react-flow__renderer, 
+.react-flow__pane, 
+.react-flow__container,
+.react-flow__viewport,
+.react-flow__nodes {
   overflow: visible !important;
-  position: relative;
-  z-index: 1;
 }
 
-.threat-card-container:hover {
-  z-index: 100;
+/* Threat badge container positioning */
+.threat-badge-container {
+  pointer-events: none;
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 0;
+  height: 0;
+  overflow: visible;
+  z-index: 9999;
 }
 
-/* ----- ANALYSIS LOCK BUTTON STYLES ----- */
-
-/* Analysis lock button styles */
-.analysis-locked {
-  background-color: rgba(100, 100, 100, 0.05);
+/* Database node styling */
+.database-node-container {
+  --database-shadow: 0px 2px 10px rgba(0, 0, 0, 0.1);
 }
 
-/* Animation for when the button becomes locked */
-@keyframes lockPulse {
-  0% {
-    opacity: 1;
-  }
-  50% {
-    opacity: 0.6;
-  }
-  100% {
-    opacity: 1;
-  }
+.database-node {
+  background-color: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  filter: drop-shadow(var(--database-shadow));
 }
 
-/* Add a subtle animation when the button is first locked */
-.analysis-locked-animation {
-  animation: lockPulse 0.5s ease-in-out;
+.database-node img,
+.database-node svg {
+  filter: drop-shadow(var(--database-shadow));
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
 }
 
-/* Make locked buttons visually distinct */
-button:disabled, 
-button[disabled],
-.cursor-not-allowed {
-  opacity: 0.6;
-  cursor: not-allowed !important;
-  filter: grayscale(30%);
+/* Special styling for specific database types */
+[data-nodetype="database_redis_cache"] .database-node img,
+[data-nodetype="database_redis_cache"] .database-node svg {
+  filter: drop-shadow(0px 1px 3px rgba(216, 44, 32, 0.3));
 }
 
-/* Add some hover effect to the lock toggle */
-.lock-toggle-button {
-  transition: all 0.2s ease;
+[data-nodetype="database_postgresql"] .database-node img,
+[data-nodetype="database_postgresql"] .database-node svg {
+  filter: drop-shadow(0px 1px 3px rgba(51, 103, 145, 0.3));
 }
 
-.lock-toggle-button:hover {
-  background-color: rgba(100, 100, 100, 0.1);
-  transform: scale(1.05);
+[data-nodetype="database_mongodb"] .database-node img,
+[data-nodetype="database_mongodb"] .database-node svg {
+  filter: drop-shadow(0px 1px 3px rgba(77, 179, 61, 0.3));
 }
 
-/* Style for lock icon */
-.lock-icon {
-  transition: all 0.2s ease;
+/* Override any shadow or background from ancestor elements for database nodes */
+[data-is-database="true"] * {
+  background-color: transparent !important;
 }
 
-.lock-icon:hover {
-  transform: scale(1.1);
+/* Custom background clearing for database icons */
+.database-icon {
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+/* Application node styling */
+.application-node-container {
+  --application-shadow: 0px 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.application-node {
+  background-color: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  filter: drop-shadow(var(--application-shadow));
+}
+
+.application-node img,
+.application-node svg {
+  filter: drop-shadow(var(--application-shadow));
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+}
+
+/* Special styling for specific application types */
+[data-nodetype="application_api_gateway"] .application-node img,
+[data-nodetype="application_api_gateway"] .application-node svg {
+  filter: drop-shadow(0px 1px 3px rgba(52, 168, 83, 0.3));
+}
+
+[data-nodetype="application_microservice"] .application-node img,
+[data-nodetype="application_microservice"] .application-node svg,
+[data-nodetype*="service"] .application-node img,
+[data-nodetype*="service"] .application-node svg {
+  filter: drop-shadow(0px 1px 3px rgba(52, 168, 83, 0.3));
+}
+
+[data-nodetype="application_web_server"] .application-node img,
+[data-nodetype="application_web_server"] .application-node svg {
+  filter: drop-shadow(0px 1px 3px rgba(52, 168, 83, 0.3));
+}
+
+/* Override any shadow or background from ancestor elements for application nodes */
+[data-is-application="true"] * {
+  background-color: transparent !important;
+}
+
+/* Custom background clearing for application icons */
+.application-icon {
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+/* Network node styling */
+.network-node-container {
+  --network-shadow: 0px 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.network-node {
+  background-color: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  filter: drop-shadow(var(--network-shadow));
+}
+
+.network-node img,
+.network-node svg {
+  filter: drop-shadow(var(--network-shadow));
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+}
+
+/* Special styling for specific network types */
+[data-nodetype="network_firewall"] .network-node img,
+[data-nodetype="network_firewall"] .network-node svg {
+  filter: drop-shadow(0px 1px 3px rgba(220, 53, 69, 0.3));
+}
+
+[data-nodetype="network_router"] .network-node img,
+[data-nodetype="network_router"] .network-node svg {
+  filter: drop-shadow(0px 1px 3px rgba(220, 53, 69, 0.3));
+}
+
+[data-nodetype="network_load_balancer"] .network-node img,
+[data-nodetype="network_load_balancer"] .network-node svg {
+  filter: drop-shadow(0px 1px 3px rgba(220, 53, 69, 0.3));
+}
+
+/* Override any shadow or background from ancestor elements for network nodes */
+[data-is-network="true"] * {
+  background-color: transparent !important;
+}
+
+/* Custom background clearing for network icons */
+.network-icon {
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+/* Update microservice styling to use black color */
+[data-nodetype="application_microservice"] .application-node img,
+[data-nodetype="application_microservice"] .application-node svg,
+[data-nodetype*="microservice"] .application-node img,
+[data-nodetype*="microservice"] .application-node svg {
+  filter: drop-shadow(0px 1px 3px rgba(0, 0, 0, 0.4)) !important;
+  color: #000000 !important;
+}
+
+/* Client node styling */
+.client-node-container {
+  --client-shadow: 0px 2px 12px rgba(0, 0, 0, 0.15);
+}
+
+.client-node {
+  background-color: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  filter: drop-shadow(var(--client-shadow));
+}
+
+.client-node img,
+.client-node svg {
+  filter: drop-shadow(var(--client-shadow));
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+}
+
+/* Special styling for specific client types */
+[data-nodetype="client_browser"] .client-node img,
+[data-nodetype="client_browser"] .client-node svg {
+  filter: drop-shadow(0px 2px 5px rgba(124, 101, 246, 0.4));
+}
+
+[data-nodetype="client_mobile"] .client-node img,
+[data-nodetype="client_mobile"] .client-node svg {
+  filter: drop-shadow(0px 2px 5px rgba(124, 101, 246, 0.4));
+}
+
+[data-nodetype="client_user"] .client-node img,
+[data-nodetype="client_user"] .client-node svg,
+[data-nodetype*="user"] .client-node img,
+[data-nodetype*="user"] .client-node svg {
+  filter: drop-shadow(0px 2px 5px rgba(124, 101, 246, 0.4));
+}
+
+[data-nodetype="client_device"] .client-node img,
+[data-nodetype="client_device"] .client-node svg {
+  filter: drop-shadow(0px 2px 5px rgba(124, 101, 246, 0.4));
+}
+
+/* Override any shadow or background from ancestor elements for client nodes */
+[data-is-client="true"] * {
+  background-color: transparent !important;
+}
+
+/* Custom background clearing for client icons */
+.client-icon {
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+/* Target the Radix UI tooltip portal directly */
+[data-radix-popper-content-wrapper] {
+  opacity: 1 !important;
+}
+
+[data-radix-popper-content-wrapper] > [role="tooltip"],
+[data-radix-popper-content-wrapper] > div {
+  background: white !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  background-color: white !important;
+  background-image: none !important;
+  opacity: 1 !important;
+  --tw-bg-opacity: 1 !important;
+}
+
+/* Force tooltips to have solid white background - override any transparency */
+.radix-tooltip-content-override,
+[data-radix-tooltip-content-wrapper] > div,
+div[role="tooltip"],
+.TooltipContent,
+.tooltip-content {
+  background-color: white !important;
+  background: white !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  opacity: 1 !important;
+}
+
+/* Override parent wrappers that might have transparency */
+[data-radix-tooltip-content-wrapper],
+[data-radix-popper-content-wrapper] {
+  opacity: 1 !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  background: transparent !important;
+}
+
+/* Ensure tooltip poppers have no transparency */
+.Tooltip-root,
+.TooltipContent::before,
+.TooltipContent::after,
+div[role="tooltip"]::before,
+div[role="tooltip"]::after {
+  background: white !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  opacity: 1 !important;
+}
+
+/* Enhanced Tooltip content styling - Make stronger and more visible */
+.TooltipContent,
+[data-radix-tooltip-content],
+div[role="tooltip"],
+.tooltip-content {
+  background-color: white !important;
+  color: black !important;
+  border-radius: 6px !important;
+  padding: 10px !important;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2) !important;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+  font-size: 0.875rem !important;
+  line-height: 1.5 !important;
+  z-index: 9999 !important;
+  border: 1px solid rgba(0, 0, 0, 0.1) !important;
+  max-width: 320px !important;
+  opacity: 1 !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+/* Make sure tooltip text is bold and clear */
+.TooltipContent p,
+[data-radix-tooltip-content] p,
+div[role="tooltip"] p,
+.tooltip-content p {
+  font-weight: 500 !important;
+  color: black !important;
+  font-size: 0.875rem !important;
+}
+
+/* Ensure the tooltip container has no transparency */
+div[data-radix-popper-content-wrapper] {
+  opacity: 1 !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  background-color: transparent !important;
+}
+
+/* Force tooltip to use solid white background */
+.Tooltip-content,
+.tooltip-content {
+  background-color: white !important;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2) !important;
+  border: 1px solid rgba(0, 0, 0, 0.1) !important;
+  opacity: 1 !important;
 }

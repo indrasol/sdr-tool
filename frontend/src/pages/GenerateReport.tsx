@@ -12,7 +12,8 @@ import {
   generatePDF, 
   addReportPage, 
   moveReportPage, 
-  deleteReportPage 
+  deleteReportPage,
+  addSubsectionAfterParent
 } from '@/utils/reportUtils';
 
 const GenerateReport = () => {
@@ -28,16 +29,40 @@ const GenerateReport = () => {
   // Report content state
   const [reportPages, setReportPages] = useState([
     {
-      title: "Security Assessment Summary",
-      content: "Based on the current infrastructure diagram, we've identified several key security strengths and areas for improvement. The implementation of a dedicated firewall provides a strong foundation for perimeter security. However, the direct connection between the web server and application server represents a potential vulnerability that should be addressed."
+      title: "Project Description",
+      content: "This document provides a comprehensive security assessment of the current system infrastructure and architecture. It identifies potential security vulnerabilities, attack vectors, and recommended mitigations."
     },
     {
-      title: "Identified Security Gaps",
-      content: "1. No network segmentation between web and application tiers\n2. Single firewall represents a potential single point of failure\n3. No encryption shown for database connections\n4. No intrusion detection/prevention system in place\n5. No redundancy or failover mechanisms identified"
+      title: "System Architecture Diagram",
+      content: "The system architecture diagram illustrates the high-level components of the infrastructure and their relationships. This visual representation helps identify potential security boundaries and critical interfaces."
     },
     {
-      title: "Recommendations",
-      content: "1. Implement a DMZ for web-facing servers\n2. Add a second firewall for defense in depth\n3. Enable TLS encryption for all database connections\n4. Deploy an IDS/IPS solution to monitor for suspicious activity\n5. Implement high availability pairs for critical infrastructure components\n6. Add a web application firewall (WAF) to protect against application-layer attacks"
+      title: "Data-flow Diagram",
+      content: "This diagram illustrates how data moves through the system, highlighting sensitive data paths, authentication points, and trust boundaries. Understanding these flows is essential for identifying potential security vulnerabilities."
+    },
+    {
+      title: "Entry Point",
+      content: "This section identifies all possible entry points into the system, including user interfaces, APIs, service connections, and administrative access points. Each entry point represents a potential attack surface that requires appropriate security controls."
+    },
+    {
+      title: "Model Attack Possibilities",
+      content: "This section analyzes potential attack vectors against the system, including common exploitation techniques, threat actors, and their motivations. Understanding these attack possibilities helps inform appropriate defensive measures."
+    },
+    {
+      title: "Key Risk Areas",
+      content: "This section outlines the key security risk areas identified during the assessment, categorized by severity level."
+    },
+    {
+      title: "High Risks",
+      content: "Risk of attack on network and critical resource can be reduced by minimizing attack surface, isolating by critical resource by Network Segmentation and Network Segregation.\n\nRisk of information theft and reputation damage can be avoided by implementing proper Multi-Factor Authentication.\n\nRisk Summary: Risk of accessing internal network can be minimized by the use of DMZ.\n\nRisk Summary: Risk of non-repudiation and data integrity can be remediated by using proper logging, monitoring and alerting methods.\n\nIssue Summary: Human users should not process secrets. Risk of key and credential compromise can be addressed by secret management methodology.\n\nRisk of data loss or theft in cases of data breach can be addressed by encrypting the data at rest for all databases, file server, workstation or cloud.\n\nRisk Summary: Risk of all kinds of injection attacks can be addressed by implementing a) input data-validation or data filtering of malicious characters at the server side b) Escaping all special chars before inserting to datasource c) Encoding all responses which are displayed to browser."
+    },
+    {
+      title: "Medium Risks",
+      content: "This section details the medium-priority security risks identified during the assessment. These risks represent potential vulnerabilities that should be addressed but may have lower impact or lower likelihood than high risks."
+    },
+    {
+      title: "Low Risks",
+      content: "This section details the low-priority security risks identified during the assessment. While these risks represent potential vulnerabilities, they typically have lower impact or require complex exploitation chains that reduce their likelihood."
     }
   ]);
 
@@ -88,6 +113,21 @@ const GenerateReport = () => {
     toast({
       title: "Section Added",
       description: `New section "${newPage.title}" has been added to your report.`,
+    });
+  };
+
+  const handleAddSubsection = (parentIndex: number, newSubsection: { title: string; content: string }) => {
+    const updatedPages = addSubsectionAfterParent(reportPages, parentIndex, newSubsection);
+    setReportPages(updatedPages);
+    
+    // Find the index of the newly added subsection
+    const newIndex = parentIndex + 1;
+    // Switch to the newly added subsection
+    setCurrentPage(newIndex);
+    
+    toast({
+      title: "Sub-section Added",
+      description: `New sub-section "${newSubsection.title}" has been added under "${reportPages[parentIndex].title}".`,
     });
   };
 
@@ -160,7 +200,7 @@ const GenerateReport = () => {
           <Button 
             variant="outline" 
             onClick={handleBackClick}
-            className="mb-4 transition-all hover:bg-securetrack-lightpurple text-securetrack-purple border-securetrack-purple/50 hover:text-white hover:border-securetrack-purple shadow-sm hover:-translate-y-1 duration-300 animate-fade-in"
+            className="mb-4 transition-all bg-gradient-to-r from-blue-50/70 to-purple-50/70 border-blue-100 hover:border-blue-200 text-blue-600 hover:text-blue-700 hover:from-blue-100/80 hover:to-purple-100/80 hover:shadow-sm"
           >
             <ArrowLeft className="mr-2 h-4 w-4" />
             <Cpu className="mr-2 h-4 w-4" />
@@ -174,6 +214,7 @@ const GenerateReport = () => {
             currentPage={currentPage} 
             setCurrentPage={setCurrentPage}
             onAddPage={handleAddPage}
+            onAddSubsection={handleAddSubsection}
             onMovePage={handleMovePage}
             onDeletePage={handleDeletePage}
           />

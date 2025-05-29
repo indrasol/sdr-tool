@@ -1,0 +1,142 @@
+/* CommentNode.css - Styles for sticky notes */
+
+.sticky-note-wrapper {
+  /* Override any blue selection box from ReactFlow */
+  outline: none !important;
+  box-shadow: none !important;
+  max-width: 350px; /* Limit maximum width for better readability */
+}
+
+.sticky-note-wrapper.sticky-note-selected {
+  /* Override ReactFlow selection styling */
+  outline: none !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+.sticky-note-wrapper.sticky-note-selected .react-flow__resize-control {
+  /* Make sure the selection border is invisible */
+  border: none !important;
+  background: transparent !important;
+}
+
+/* Add a subtle paper texture to the sticky note */
+.comment-node {
+  border: 1px solid rgba(226, 205, 109, 0.3);
+  border-radius: 2px;
+  background: linear-gradient(135deg, #fff9c4 0%, #fff59d 100%);
+  padding: 12px;
+  display: flex;
+  flex-direction: column; /* Ensure content flows vertically */
+  align-items: flex-start; 
+  justify-content: flex-start;
+  text-align: left;
+  box-shadow: 2px 4px 7px rgba(0,0,0,0.12);
+  position: relative;
+  z-index: 10; /* Ensure sticky notes appear above other elements */
+  color: #5d4037;
+  font-size: 14px;
+  font-family: 'Indie Flower', 'Comic Sans MS', cursive, sans-serif;
+  word-wrap: break-word; /* Ensure long words don't overflow */
+  overflow: visible; /* Allow content to be fully visible */
+  transition: height 0.2s ease; /* Smooth height changes */
+  min-height: 120px;
+  width: 100%;
+  height: 100%;
+}
+
+.comment-node::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-image: url("data:image/svg+xml,%3Csvg width='100' height='100' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.7' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100' height='100' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
+  opacity: 0.07;
+  z-index: -1;
+  pointer-events: none;
+}
+
+/* Style the textarea to properly fit the sticky note */
+.comment-node textarea {
+  font-family: inherit;
+  font-size: inherit;
+  line-height: 1.5;
+  background: transparent;
+  color: inherit;
+  width: 100%;
+  height: auto; /* Let height adjust based on content */
+  min-height: 100px;
+  resize: none;
+  overflow-y: auto; /* Allow scrolling when needed */
+  white-space: pre-wrap; /* Respect line breaks */
+}
+
+/* Style for the text display div */
+.comment-node .sticky-text-content {
+  width: 100%;
+  min-height: 100px;
+  height: auto;
+  overflow-y: auto; /* Allow scrolling when content exceeds height */
+  white-space: pre-wrap; /* Preserve line breaks */
+  line-height: 1.5;
+  padding: 0;
+}
+
+/* Add a scrollbar style that's more subtle */
+.comment-node textarea::-webkit-scrollbar,
+.sticky-text-content::-webkit-scrollbar {
+  width: 6px;
+}
+
+.comment-node textarea::-webkit-scrollbar-track,
+.sticky-text-content::-webkit-scrollbar-track {
+  background: rgba(255, 248, 186, 0.3);
+  border-radius: 3px;
+}
+
+.comment-node textarea::-webkit-scrollbar-thumb,
+.sticky-text-content::-webkit-scrollbar-thumb {
+  background-color: rgba(226, 205, 109, 0.5);
+  border-radius: 3px;
+}
+
+/* Hide the default React Flow node border styles */
+.react-flow__node.react-flow__node-comment {
+  background: transparent;
+  border: none;
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+/* Hide selection outline on parent */
+.react-flow__node.react-flow__node-comment.selected {
+  outline: none !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+/* Resizer styles */
+.sticky-note-resizer-line {
+  /* Hide the resizer line completely */
+  border: none !important;
+  background: transparent !important;
+  display: none !important;
+}
+
+.sticky-note-resizer-handle {
+  width: 7px !important;
+  height: 7px !important;
+  border-radius: 50% !important;
+  background-color: rgba(255, 255, 255, 0.85) !important;
+  border: 1px solid rgba(226, 205, 109, 0.8) !important;
+  box-shadow: 0 0 2px rgba(0,0,0,0.1) !important;
+  opacity: 0.4;
+  transition: opacity 0.2s;
+}
+
+.sticky-note-resizer-handle:hover,
+.sticky-note-resizer-handle.visible {
+  opacity: 1;
+} 

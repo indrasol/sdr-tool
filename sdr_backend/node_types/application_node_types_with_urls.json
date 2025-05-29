@@ -69,6 +69,16 @@
       "name": "application_load_balancer",
       "description": "Application Ication Load Balancer service.",
       "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/application-icons/load_balancer.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhcHBsaWNhdGlvbi1pY29ucy9sb2FkX2JhbGFuY2VyLnN2ZyIsImlhdCI6MTc0NTU0NDk4MCwiZXhwIjozNTIyNjI1OTYwfQ.gqysuJk6PrMInVKn6oMDa8wOCjSSORCRqM0NhKuvg84"
+    },
+    {
+      "name": "application_fastapi",
+      "description": "Application Ication Fastapi service.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/application-icons/FastAPI.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhcHBsaWNhdGlvbi1pY29ucy9GYXN0QVBJLnN2ZyIsImlhdCI6MTc0NzM1MDkzOCwiZXhwIjozNTI2MjM3ODc2fQ.rJ51WqZ1A1XUfiidMA1SUIuSNeJEqe0y5XCqgLALNQw"
+    },
+    {
+      "name": "application_react",
+      "description": "Application Ication React service.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/application-icons/React.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhcHBsaWNhdGlvbi1pY29ucy9SZWFjdC5zdmciLCJpYXQiOjE3NDczNTA5MzksImV4cCI6MzUyNjIzNzg3OH0.rqoFQq1nz5SuNBDKzaNgGpPa-WiVd5GqERla6cSFIQw"
     }
   ]
 }

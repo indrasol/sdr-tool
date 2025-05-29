@@ -18,18 +18,18 @@ version=os.getenv("version")
 print(f"title: {title}, description: {description}, version: {version}")
 
 # API Keys
-OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+OPENAI_API_KEY = os.getenv("OPENAIST")
 # CLAUDE_API_KEY = os.getenv("CLAUDE_API_KEY")
-ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY")
-GROK_API_KEY = os.getenv("GROK_API_KEY")
+ANTHROPIC_API_KEY = os.getenv("ANTHROPICAPIKEYST")
+GROK_API_KEY = os.getenv("GROKAPIKEYST")
 # CLAUDE_API_KEY = os.getenv("CLAUDE_API_KEY"
 
 
 # Langsmith Tracing
-LANGSMITH_API_KEY = os.getenv("LANGSMITH_API_KEY")
-LANGSMITH_TRACING=os.getenv("LANGSMITH_TRACING", "false")  # Default to false if not set
-LANGSMITH_ENDPOINT=os.getenv("LANGSMITH_ENDPOINT", "https://api.langsmith.com/v1/trace")  # Default endpoint
-LANGSMITH_PROJECT=os.getenv("LANGSMITH_PROJECT", "default_project")  # Default project name
+# LANGSMITH_API_KEY = os.getenv("LANGSMITH_API_KEY")
+# LANGSMITH_TRACING=os.getenv("LANGSMITH_TRACING", "false")  # Default to false if not set
+# LANGSMITH_ENDPOINT=os.getenv("LANGSMITH_ENDPOINT", "https://api.langsmith.com/v1/trace")  # Default endpoint
+# LANGSMITH_PROJECT=os.getenv("LANGSMITH_PROJECT", "default_project")  # Default project name
 
 # TESSERACT_PATH = os.getenv("TESSERACT_PATH", "C:/Program Files/Tesseract-OCR/tesseract.exe")  # Update if needed
 
@@ -70,34 +70,34 @@ ML_MODELS_DIR = os.getenv("ML_MODELS_FOLDER", os.path.join(BASE_DIR, "ml_models/
 SUPABASE_SECRET_KEY = os.getenv("JWT_SECRET_KEY")
 
 # Database
-DB_USER = os.getenv("DB_USER")
-DB_PASSWORD = os.getenv("DB_PASSWORD")
-DB_HOST = os.getenv("DB_HOST")
-DB_PORT = os.getenv("DB_PORT")
-DB_NAME = os.getenv("DB_NAME")
+# DB_USER = os.getenv("DB_USER")
+# DB_PASSWORD = os.getenv("DB_PASSWORD")
+# DB_HOST = os.getenv("DB_HOST")
+# DB_PORT = os.getenv("DB_PORT")
+# DB_NAME = os.getenv("DB_NAME")
 
-POSTGRES_DATABASE_URL = os.getenv("POSTGRES_DATABASE_URL")
+# POSTGRES_DATABASE_URL = os.getenv("POSTGRES_DATABASE_URL")
 
 SUPABASE_URL = os.getenv("SUPABASE_DB_URL")
 SUPABASE_KEY = os.getenv("SUPABASE_KEY")
-SUPABASE_PROJECT_URL = os.getenv("SUPABASE_URL")
-SUPABASE_API_KEY = os.getenv("SUPABASE_API_KEY")
-SUPABASE_SERVICE_KEY = os.getenv("SUPABASE_SERVICE_KEY")
-SUPABASE_SECRET_KEY = os.getenv("SUPABASE_SECRET_KEY")
+SUPABASE_PROJECT_URL = os.getenv("SUPABASEURLST")
+SUPABASE_API_KEY = os.getenv("SUPABASEAPIKEYST")
+SUPABASE_SERVICE_KEY = os.getenv("SUPABASESERVICEKEYST")
+SUPABASE_SECRET_KEY = os.getenv("SUPABASESECRETKEYST")
 
 HEALTH_API_KEY = os.getenv("HEALTH_API_KEY")
 
 
 # Redis settings for session management
-REDIS_HOST = os.getenv("REDIS_HOST")
-REDIS_PORT = os.getenv("REDIS_PORT")
-REDIS_PASSWORD = os.getenv("REDIS_PASSWORD")
-REDIS_DB = os.getenv("REDIS_DB")
-SESSION_EXPIRY = 86400
+REDIS_HOST = os.getenv("REDISHOSTST")
+REDIS_PORT = os.getenv("REDISPORTST")
+REDIS_PASSWORD = os.getenv("REDISPASSWORDST")
+REDIS_DB = os.getenv("REDISDBST")
+SESSION_EXPIRY = os.getenv("SESSIONEXPIRYST")
 
 # Custom Metrics
 METRICS_USERNAME = os.getenv("METRICS_USERNAME")
 METRICS_PASSWORD = os.getenv("METRICS_PASSWORD")
 
 # Trasnformer Model Token
-TRANSFORMER_MODEL_TOKEN = os.getenv("TRANSFORMER_MODEL_TOKEN")
+TRANSFORMER_MODEL_TOKEN = os.getenv("TRANSFORMERMODELTOKENST")

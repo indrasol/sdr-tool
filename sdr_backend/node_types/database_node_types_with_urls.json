@@ -1,0 +1,134 @@
+{
+  "database": [
+    {
+      "name": "database_sql_server",
+      "description": "Microsoft SQL Server is a relational database management system developed by Microsoft. It provides a wide range of features including business intelligence, analytics, and integration services.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/database-icons/database_sql_server.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJkYXRhYmFzZS1pY29ucy9kYXRhYmFzZV9zcWxfc2VydmVyLnN2ZyIsImlhdCI6MTc0NzM1MzQyMSwiZXhwIjozNTI2MjQyODQyfQ.x9dPFnF7wKrOeAeHnG5R4IWdKodyVHYFXGyFFe5NgN4"
+    },
+    {
+      "name": "database_riak",
+      "description": "Riak is a distributed NoSQL database designed to deliver maximum data availability by distributing data across multiple servers. It is highly fault-tolerant and scalable.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/database-icons/database_riak.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJkYXRhYmFzZS1pY29ucy9kYXRhYmFzZV9yaWFrLnN2ZyIsImlhdCI6MTc0NzM1MzQyMywiZXhwIjozNTI2MjQyODQ2fQ.l1m00BXAAz3-oMJEEPvTI0aEkfKHsn6BFgAvMKHntSo"
+    },
+    {
+      "name": "database_tidb",
+      "description": "Base Tidb Database.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/database-icons/database_tidb.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJkYXRhYmFzZS1pY29ucy9kYXRhYmFzZV90aWRiLnN2ZyIsImlhdCI6MTc0NzM1MzQyNCwiZXhwIjozNTI2MjQyODQ4fQ.Av7VrZEjYtyS1XjR9soSGzAZh46xsDROF3iUhtNgAa8"
+    },
+    {
+      "name": "database_hbase",
+      "description": "Apache HBase is an open-source, distributed, scalable, big data store that runs on top of Hadoop HDFS. It provides random, real-time read/write access to data in large tables.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/database-icons/database_hbase.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJkYXRhYmFzZS1pY29ucy9kYXRhYmFzZV9oYmFzZS5zdmciLCJpYXQiOjE3NDczNTM0MjQsImV4cCI6MzUyNjI0Mjg0OH0.3x0MlwLy0MgyfneCaARd381E6b1zad9eMbsN1pydVD0"
+    },
+    {
+      "name": "database_db4o",
+      "description": "db4o (database for objects) is an open-source object database for Java and .NET developers, allowing the storage and retrieval of objects without a separate schema.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/database-icons/database_db4o.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJkYXRhYmFzZS1pY29ucy9kYXRhYmFzZV9kYjRvLnN2ZyIsImlhdCI6MTc0NzM1MzQyNSwiZXhwIjozNTI2MjQyODUwfQ.2-BGCl52g1A-brsV981XuyP0IQNJD65kaJGnsI6WMOU"
+    },
+    {
+      "name": "database_postgresql",
+      "description": "PostgreSQL is a powerful, open-source object-relational database system that uses and extends the SQL language. It is highly extensible and standards-compliant, suitable for a variety of applications.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/database-icons/database_postgresql.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJkYXRhYmFzZS1pY29ucy9kYXRhYmFzZV9wb3N0Z3Jlc3FsLnN2ZyIsImlhdCI6MTc0NzM1MzQyNSwiZXhwIjozNTI2MjQyODUwfQ.Q9jsrLNKpQM3s_W_3TO2ftIEYxpGa_P468Yc_j1qbhY"
+    },
+    {
+      "name": "database_cockroachdb",
+      "description": "CockroachDB is a distributed SQL database designed for global, cloud-native applications, offering resilience against single-point-of-failure and horizontal scalability.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/database-icons/database_cockroachdb.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJkYXRhYmFzZS1pY29ucy9kYXRhYmFzZV9jb2Nrcm9hY2hkYi5zdmciLCJpYXQiOjE3NDczNTM0MjYsImV4cCI6MzUyNjI0Mjg1Mn0.xL3Rn_aRTFEsIOTTY-AFsiMOmpe_okDnQYDPXqfZ31I"
+    },
+    {
+      "name": "database_leveldb",
+      "description": "LevelDB is a fast key-value storage library written at Google that provides an ordered mapping from string keys to string values, designed for high performance and simplicity.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/database-icons/database_leveldb.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJkYXRhYmFzZS1pY29ucy9kYXRhYmFzZV9sZXZlbGRiLnN2ZyIsImlhdCI6MTc0NzM1MzQyNiwiZXhwIjozNTI2MjQyODUyfQ.YKBC--spM49C7EIwy7x96Hrv6Ni4uVElHPCzs44j770"
+    },
+    {
+      "name": "database_firebase",
+      "description": "Firebase is a platform developed by Google for creating mobile and web applications. It includes a real-time NoSQL database that synchronizes data between clients and servers.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/database-icons/database_firebase.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJkYXRhYmFzZS1pY29ucy9kYXRhYmFzZV9maXJlYmFzZS5zdmciLCJpYXQiOjE3NDczNTM0MjcsImV4cCI6MzUyNjI0Mjg1NH0.HnyY3BjkQJPvgB6Zbl-y7JVq9xrjsETCNfVzu7UjNZQ"
+    },
+    {
+      "name": "database_ravendb",
+      "description": "RavenDB is an open-source document-oriented database written in C#, designed to handle high-performance, scalable data storage with a focus on ease of use and developer productivity.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/database-icons/database_ravendb.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJkYXRhYmFzZS1pY29ucy9kYXRhYmFzZV9yYXZlbmRiLnN2ZyIsImlhdCI6MTc0NzM1MzQyNywiZXhwIjozNTI2MjQyODU0fQ.nMv1R0ZsLWgwXb0XvRj_96P9IE2zghHn-7IxKn8WLng"
+    },
+    {
+      "name": "sqlite",
+      "description": "Te Database.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/database-icons/sqlite.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJkYXRhYmFzZS1pY29ucy9zcWxpdGUuc3ZnIiwiaWF0IjoxNzQ3MzUzNDI4LCJleHAiOjM1MjYyNDI4NTV9.uoPzQH20qbH2dgw67z-L8zeKh3rr2tCDUyJX09-OwDs"
+    },
+    {
+      "name": "database_mongodb",
+      "description": "MongoDB is a cross-platform, document-oriented database that provides high performance, high availability, and easy scalability. It works on the concept of collections and documents.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/database-icons/database_mongodb.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJkYXRhYmFzZS1pY29ucy9kYXRhYmFzZV9tb25nb2RiLnN2ZyIsImlhdCI6MTc0NzM1MzQyOCwiZXhwIjozNTI2MjQyODU2fQ.mtrTHEJA8cWt2WP589v0qF_yACNnPMC1jVMof5WZJi0"
+    },
+    {
+      "name": "database_mariadb",
+      "description": "MariaDB is a community-developed, commercially supported fork of the MySQL relational database management system, intended to remain free and open-source software under the GNU GPL.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/database-icons/database_mariadb.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJkYXRhYmFzZS1pY29ucy9kYXRhYmFzZV9tYXJpYWRiLnN2ZyIsImlhdCI6MTc0NzM1MzQyOSwiZXhwIjozNTI2MjQyODU3fQ.3TS7jlBF5AVFIrz_WmkOpCewoemS9unHI0atxl6m_zA"
+    },
+    {
+      "name": "database_timescaledb",
+      "description": "TimescaleDB is an open-source time-series database designed to scale smoothly for time-series data, built as an extension on PostgreSQL.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/database-icons/database_timescaledb.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJkYXRhYmFzZS1pY29ucy9kYXRhYmFzZV90aW1lc2NhbGVkYi5zdmciLCJpYXQiOjE3NDczNTM0MjksImV4cCI6MzUyNjI0Mjg1OH0.Wm24qbKMhRJ7eX-ZBib4rbg1VA-M8HV9EasS_0DFPBo"
+    },
+    {
+      "name": "database_redis_cache",
+      "description": "Redis is an open-source, in-memory data structure store used as a database, cache, and message broker. It supports various data structures such as strings, hashes, lists, and sets with high performance.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/database-icons/database_redis_cache.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJkYXRhYmFzZS1pY29ucy9kYXRhYmFzZV9yZWRpc19jYWNoZS5zdmciLCJpYXQiOjE3NDczNTM0MzAsImV4cCI6MzUyNjI0Mjg2MH0.U3AurCV4sNJOOqussZdHhw-pQ6TXWZ4P7Fn9KgURLb0"
+    },
+    {
+      "name": "database_cassandra",
+      "description": "Apache Cassandra is a free and open-source distributed wide column store NoSQL database designed to handle large amounts of data across many commodity servers, providing high availability with no single point of failure.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/database-icons/database_cassandra.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJkYXRhYmFzZS1pY29ucy9kYXRhYmFzZV9jYXNzYW5kcmEuc3ZnIiwiaWF0IjoxNzQ3MzUzNDMwLCJleHAiOjM1MjYyNDI4NjB9.4puvr_xJj4w0UHCAfuVqzATYd-wVhDkVaFi0GPkv5yY"
+    },
+    {
+      "name": "database_couchdb",
+      "description": "Apache CouchDB is an open-source document-oriented NoSQL database that uses JSON to store data, JavaScript as its query language using MapReduce, and HTTP for an API.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/database-icons/database_couchdb.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJkYXRhYmFzZS1pY29ucy9kYXRhYmFzZV9jb3VjaGRiLnN2ZyIsImlhdCI6MTc0NzM1MzQzMSwiZXhwIjozNTI2MjQyODYyfQ.fc7gIw0l9F9b-555STGqpKvX8lIgnJ47eo2yC8XpHWU"
+    },
+    {
+      "name": "database_oracledb",
+      "description": "Oracle Database is a multi-model database management system produced and marketed by Oracle Corporation. It supports a wide range of data types and is known for its robustness and scalability in enterprise environments.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/database-icons/database_oracledb.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJkYXRhYmFzZS1pY29ucy9kYXRhYmFzZV9vcmFjbGVkYi5zdmciLCJpYXQiOjE3NDczNTM0MzEsImV4cCI6MzUyNjI0Mjg2Mn0.h4TkfmK896DcViNjf85APzwQV34coquA_CLNvTOITD8"
+    },
+    {
+      "name": "database_influxdb",
+      "description": "InfluxDB is an open-source time series database designed to handle high write and query loads, optimized for metrics, events, and real-time analytics.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/database-icons/database_influxdb.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJkYXRhYmFzZS1pY29ucy9kYXRhYmFzZV9pbmZsdXhkYi5zdmciLCJpYXQiOjE3NDczNTM0MzIsImV4cCI6MzUyNjI0Mjg2M30.j18XXhABnBR69ZmNvGj4ppEM9Gcc4GjUyjUaQpMU6fo"
+    },
+    {
+      "name": "database_neo4j",
+      "description": "Neo4j is a highly scalable, robust native graph database that helps organizations build intelligent applications leveraging relationships and graph structures.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/database-icons/database_neo4j.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJkYXRhYmFzZS1pY29ucy9kYXRhYmFzZV9uZW80ai5zdmciLCJpYXQiOjE3NDczNTM0MzIsImV4cCI6MzUyNjI0Mjg2NH0.N6X5rNTCsKSKxCqlFUYbbcIy7DAthvhQ9y3KYlG95jo"
+    },
+    {
+      "name": "database_janusgraph",
+      "description": "JanusGraph is an open-source, distributed graph database optimized for storing and querying large graphs with billions of vertices and edges distributed across a multi-machine cluster.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/database-icons/database_janusgraph.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJkYXRhYmFzZS1pY29ucy9kYXRhYmFzZV9qYW51c2dyYXBoLnN2ZyIsImlhdCI6MTc0NzM1MzQzMywiZXhwIjozNTI2MjQyODY2fQ.754rW7Edb9Lx24Op0yDoVTE8LC5MIHXlwIDH3o6rgEA"
+    },
+    {
+      "name": "database_arangodb",
+      "description": "ArangoDB is a native multi-model database system developed by ArangoDB Inc. It supports three data models with one database core and a unified query language AQL (ArangoDB Query Language).",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/database-icons/database_arangodb.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJkYXRhYmFzZS1pY29ucy9kYXRhYmFzZV9hcmFuZ29kYi5zdmciLCJpYXQiOjE3NDczNTM0MzMsImV4cCI6MzUyNjI0Mjg2Nn0.TUJgWtAfhRIaUEdU2n9hpOpo2WYCKBtltHC3k2E0Dnk"
+    },
+    {
+      "name": "database_objectdb",
+      "description": "ObjectDB is a powerful Object-Oriented Database (OODBMS) written in Java, designed to store and manage Java objects natively without the need for an ORM layer.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/database-icons/database_objectdb.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJkYXRhYmFzZS1pY29ucy9kYXRhYmFzZV9vYmplY3RkYi5zdmciLCJpYXQiOjE3NDczNTM0MzQsImV4cCI6MzUyNjI0Mjg2OH0.UjvEcFmozHXfA4gZCA1HE29RDjcpTzP2N0iiSNk8b5Y"
+    },
+    {
+      "name": "database_elasticsearch",
+      "description": "Elasticsearch is a distributed, RESTful search and analytics engine capable of addressing a growing number of use cases, built on Apache Lucene.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/database-icons/database_elasticsearch.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJkYXRhYmFzZS1pY29ucy9kYXRhYmFzZV9lbGFzdGljc2VhcmNoLnN2ZyIsImlhdCI6MTc0NzM1MzQzNCwiZXhwIjozNTI2MjQyODY4fQ.3XjXRQt57jrDPBIDS8fF5iKjmUQG28FXYF9GcG_iWk8"
+    },
+    {
+      "name": "database_apache_solr",
+      "description": "Apache Solr is an open-source enterprise search platform built on Apache Lucene, providing full-text search, hit highlighting, faceted search, and dynamic clustering.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/database-icons/database_apache_solr.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJkYXRhYmFzZS1pY29ucy9kYXRhYmFzZV9hcGFjaGVfc29sci5zdmciLCJpYXQiOjE3NDczNTM0MzQsImV4cCI6MzUyNjI0Mjg2OH0.9VfqPWAZVj1M2yjpH_tGiP8MRMvSKdq1Q0bUmS5j3uo"
+    },
+    {
+      "name": "database_mysql",
+      "description": "MySQL is an open-source relational database management system (RDBMS) based on Structured Query Language (SQL). It is widely used for web applications and supports a variety of data types and storage engines.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/database-icons/database_mysql.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJkYXRhYmFzZS1pY29ucy9kYXRhYmFzZV9teXNxbC5zdmciLCJpYXQiOjE3NDczNTM0MzUsImV4cCI6MzUyNjI0Mjg3MH0.IamBxV4ivk8pAzWmigGgAv62o74yUHHtzF3RpFaQAII"
+    }
+  ]
+}

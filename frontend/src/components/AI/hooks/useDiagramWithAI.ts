@@ -98,40 +98,74 @@ export function useDiagramWithAI(
   }, []);
 
   const handleComment = useCallback(() => {
-    console.log('Creating comment node');
+    console.log('Creating sticky note');
     
-    // Create a comment node at a fixed position initially
+    // Create a comment node at a position more likely to be visible
+    // and away from other diagram elements
     const centerPosition = {
-      x: 250,
-      y: 150,
+      x: Math.random() * 200 + 300, // Random position between 300-500 px
+      y: Math.random() * 200 + 100, // Random position between 100-300 px
     };
     
-    const newId = `comment-${Date.now()}`;
-    console.log(`Creating new comment node with ID: ${newId}`);
+    const newId = `sticky-note-${Date.now()}`;
+    console.log(`Creating new sticky note with ID: ${newId}`);
     
-    const commentNode = {
+    // Create sticky note with stronger type identity
+    const stickyNote = {
       id: newId,
       type: 'comment',
       position: centerPosition,
+      // Explicitly set properties to prevent transformation
+      draggable: true,
+      selectable: true,
+      // Add connector properties to prevent edge connections
+      sourcePosition: null,
+      targetPosition: null,
+      connectable: false,
+      // Use data properties to identify as a sticky note
       data: { 
-        label: "This is a comment. Click the text area to edit it.",
-        nodeType: 'comment',
-        isComment: true
+        label: "Click to add note...",
+        nodeType: 'stickyNote',
+        isComment: true,
+        excludeFromLayers: true,
+        // Flag to prevent transformation
+        isSticky: true,
+        preserveType: 'comment',
+        // Add delete handler
+        onDelete: (id: string) => {
+          // Use functional update to guarantee we're working with the latest state
+          setNodes(prevNodes => {
+            console.log(`Deleting sticky note with ID: ${id}`);
+            return prevNodes.filter(node => node.id !== id);
+          });
+          
+          toast({
+            description: "Sticky note removed."
+          });
+        }
+      },
+      // Add style directly to node to reinforce its appearance
+      style: {
+        zIndex: 1000, // Ensure sticky notes are always on top
+        background: 'linear-gradient(135deg, #fff9c4 0%, #fff59d 100%)',
+        border: '1px solid rgba(226, 205, 109, 0.5)',
+        borderRadius: '2px',
+        boxShadow: '2px 4px 7px rgba(0,0,0,0.15)',
       }
     };
     
     // Use functional update to guarantee we're working with the latest state
     setNodes(prevNodes => {
-      console.log('Current nodes before adding comment:', prevNodes.length);
-      const newNodes = [...prevNodes, commentNode];
-      console.log('Nodes after adding comment:', newNodes.length);
+      console.log('Adding sticky note to diagram');
+      // Add sticky note to nodes
+      const newNodes = [...prevNodes, stickyNote];
       return newNodes;
     });
     
     toast({
-      description: "Comment added. Click on it to edit."
+      description: "Sticky note added. Click to edit."
     });
-  }, [toast]);
+  }, [toast, setNodes]);
 
   const handleSave = useCallback(() => {
     console.log('Save diagram');

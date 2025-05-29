@@ -145,8 +145,53 @@ export function useDiagramNodes(
         return null;
       }
       
+      // Special case: Preserve sticky notes and comment nodes
+      if (
+        node.type === 'comment' || 
+        node.data?.nodeType === 'stickyNote' || 
+        node.data?.isComment === true ||
+        node.data?.preserveType === 'comment'
+      ) {
+        // Return sticky notes as-is with minimal modifications to preserve their nature
+        const stickyNoteNode = {
+          ...node,
+          // Ensure type is kept as 'comment'
+          type: 'comment',
+          // Ensure these properties are preserved
+          connectable: false,
+          data: {
+            ...node.data,
+            // Ensure these critical properties are always present
+            nodeType: node.data?.nodeType || 'stickyNote',
+            isComment: true,
+            excludeFromLayers: true,
+            // Add handlers only if they don't exist
+            onEdit: node.data?.onEdit || handleEditNode,
+            onDelete: node.data?.onDelete || handleDeleteNode,
+          }
+        };
+        return stickyNoteNode as Node<CustomNodeData>;
+      }
+      
+      // Regular node processing
       // Extract node type and ensure it exists
       const nodeType = (node.data?.nodeType || node.type || 'default') as string;
+      
+      // Check if this is a client node 
+      const isClientNode = () => {
+        const nodeTypeStr = nodeType.toLowerCase();
+        const section = nodeTypeStr.split('_')[0];
+        
+        return section === 'client' || 
+              nodeTypeStr.startsWith('client_') ||
+              nodeTypeStr.includes('client') || 
+              nodeTypeStr.includes('mobile_app') ||
+              nodeTypeStr.includes('browser') ||
+              nodeTypeStr.includes('desktop_app') ||
+              nodeTypeStr.includes('iot_device') ||
+              nodeTypeStr.includes('kiosk') ||
+              nodeTypeStr.includes('user_');
+      };
       
       // Check if the node already has an iconRenderer from toolbar
       const existingIconRenderer = node.data?.iconRenderer;
@@ -186,8 +231,33 @@ export function useDiagramNodes(
       
       // Extract label from node data or generate from component part of nodeType, ensure it's a string
       const [section = '', component = ''] = nodeType.split('_');
-      const label: string = (data.label || 
+      const originalLabel: string = (data.label || 
                    (component ? component.charAt(0).toUpperCase() + component.slice(1) : 'Node')) as string;
+      
+      // NEW LOGIC: Format the label based on nodeType and originalLabel
+      let formattedLabel = originalLabel;
+      
+      // Only apply the special formatting if both nodeType and originalLabel exist
+      if (nodeType && originalLabel) {
+        // Extract the component name without the category prefix
+        if (component) {
+          // Format the component name to be user-friendly
+          // e.g., "redis_cache" becomes "Redis Cache"
+          const formattedComponent = component
+            .split('_')
+            .map(part => part.charAt(0).toUpperCase() + part.slice(1))
+            .join(' ');
+          
+          // Check if the original label already contains the component name at the start
+          // to avoid duplication like "Redis - Redis - Session Cache"
+          const startsWithComponent = originalLabel.toLowerCase().startsWith(formattedComponent.toLowerCase());
+          
+          // Only apply the formatting if the label doesn't already start with the component name
+          if (!startsWithComponent && formattedComponent.toLowerCase() !== originalLabel.toLowerCase()) {
+            formattedLabel = `${formattedComponent} - ${originalLabel}`;
+          }
+        }
+      }
       
       // Check if this is an application or microservice node
       const isApplicationNode = section === 'application';
@@ -197,6 +267,9 @@ export function useDiagramNodes(
       const hasSourceConnection = sourceIds.has(node.id);
       const hasTargetConnection = targetIds.has(node.id);
       
+      // Determine if this node should be excluded from layers (client nodes)
+      const shouldExcludeFromLayers = isClientNode();
+      
       // Always force draggable to be true, never override with false
       return {
         ...node,
@@ -205,7 +278,7 @@ export function useDiagramNodes(
         dragging: node.dragging || false, // Preserve dragging state if it exists
         draggable: true, // Always draggable
         data: { // Ensure data matches CustomNodeData structure
-          label: label, // Use the typed label
+          label: formattedLabel, // Use the newly formatted label
           onEdit: handleEditNode,
           onDelete: handleDeleteNode,
           description: data.description || '',
@@ -215,6 +288,7 @@ export function useDiagramNodes(
           iconRenderer: iconRenderer,
           hasSourceConnection: hasSourceConnection, 
           hasTargetConnection: hasTargetConnection,
+          excludeFromLayers: shouldExcludeFromLayers || data.excludeFromLayers, // Mark client nodes to exclude from layers
         } as CustomNodeData, // Assert the final data structure
         className: node.dragging ? 'dragging' : '',
       } as Node<CustomNodeData>; // Assert the final node structure

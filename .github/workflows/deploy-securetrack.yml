@@ -1,0 +1,125 @@
+# # Docs for the Azure Web Apps Deploy action: https://github.com/Azure/webapps-deploy
+# # More GitHub Actions for Azure: https://github.com/Azure/actions
+# # More info on Python, GitHub Actions, and Azure App Service: https://aka.ms/python-webapps-actions
+
+# name: Build and deploy Python app to Azure Web App - securetrack
+
+# concurrency:
+#   group: deploy-securetrack
+#   cancel-in-progress: true
+  
+# env:
+#   AZURE_WEBAPP_NAME: securetrack  # Name of your Azure Web App
+#   PYTHON_VERSION: '3.11'          # Python version to use
+#   ACTIONS_STEP_DEBUG: true        # Enable debug logs
+#   WEBSITE_RUN_FROM_PACKAGE: 1
+
+# on:
+#   push:
+#     branches: ["development"]
+#   workflow_dispatch:
+
+# permissions:
+#   contents: read  # Required for actions/checkout
+
+# jobs:
+#   build:
+#     runs-on: ubuntu-latest
+#     # defaults:
+#     #   run:
+#     #     working-directory: ./sdr_backend  # Set default working directory to sdr_backend
+
+#     steps:
+#       - uses: actions/checkout@v4
+
+#       - name: List workspace root
+#         run: ls -la
+
+#       # - name: Set up Python version
+#       #   uses: actions/setup-python@v5
+#       #   with:
+#       #     python-version: ${{ env.PYTHON_VERSION }}
+#       #     cache: 'pip'
+#       #     cache-dependency-path: 'sdr_backend/requirements.txt'
+
+#       # - name: Create and start virtual environment
+#       #   run: |
+#       #     python -m venv venv
+#       #     source venv/bin/activate
+#       #     pip install -r requirements.txt  # Relative to sdr_backend
+
+#       # - name: Install dependencies
+#       #   run: pip install -r requirements.txt
+
+#       # Optional: Add step to run tests here (PyTest, Django test suites, etc.)
+
+#       - name: Upload backend
+#         uses: actions/upload-artifact@v4
+#         with:
+#           name: backend
+#           path: sdr_backend
+
+#       # Optional: Add step to run tests here (e.g., pytest)
+#       # - name: Run tests
+#       #   run: pytest
+
+#       # - name: Zip artifact for deployment
+#       #   run: |
+#       #     echo "Current directory: $(pwd)"
+#       #     ls -la
+#       #     zip -r release.zip .
+#       #     echo "Zip command exit code: $?"
+#       #     ls -la  # Zip the contents of sdr_backend
+
+#       # - name: Upload artifact for deployment jobs
+#       #   uses: actions/upload-artifact@v4
+#       #   with:
+#       #     name: python-app
+#       #     path: release.zip
+
+#   deploy:
+#     runs-on: ubuntu-latest
+#     needs: build
+#     environment:
+#       name: Production
+#       url: ${{ steps.deploy-to-webapp.outputs.webapp-url }}
+#     permissions:
+#       id-token: write  # Required for OIDC authentication
+#       contents: read   # Required for actions/checkout
+
+#     steps:
+#       # - name: Download artifact from build job
+#       #   uses: actions/download-artifact@v4
+#       #   with:
+#       #     name: python-app
+#       #     path: .
+#       - uses: actions/download-artifact@v4
+#         with:
+#           name: backend
+#           path: .
+#       - name: List after download (debug)
+#         run: |
+#           echo "Workspace: $GITHUB_WORKSPACE"
+#           ls -R
+
+
+#       # - name: Unzip artifact for deployment
+#       #   run: unzip release.zip -d ./sdr_backend_deploy
+
+#       - name: Login to Azure
+#         uses: azure/login@v2
+#         with:
+#           client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID }}
+#           tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID }}
+#           subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID }}
+
+#       - name: Deploy to Azure Web App
+#         id: deploy-to-webapp
+#         uses: azure/webapps-deploy@v3
+#         # id: deploy-to-webapp
+#         with:
+#           app-name: ${{ env.AZURE_WEBAPP_NAME }}
+#           # publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
+#           package: "."  # Deploy the unzipped sdr_backend contents
+#           startup-command: |
+#             uvicorn main:app --host 0.0.0.0 --port $PORT

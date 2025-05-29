@@ -1,130 +1,140 @@
-// Simplified and improved edge styles configuration
-// This should replace your current edgeStyles.js file
+// Updated edge styles configuration with enhanced arrow styling
 
 export const edgeStyles = {
     // Default edge style (fallback)
     default: {
-      stroke: '#999999',
-      strokeWidth: 1.5,
+      stroke: '#000000', // Black for better visibility
+      strokeWidth: 2,
+      markerEnd: {
+        type: 'arrowclosed',
+        width: 25,
+        height: 25,
+        color: '#000000',
+      },
     },
     
     // Data flow connections (API, services)
     dataFlow: {
-      stroke: '#AAAAAA',
-      strokeWidth: 1.5,
+      stroke: '#000000', // Black for better visibility
+      strokeWidth: 2,
+      animated: true,
+      markerEnd: {
+        type: 'arrowclosed',
+        width: 25,
+        height: 25,
+        color: '#000000',
+      },
     },
     
     // Network connections
     network: {
-      stroke: '#B0B0B0',
-      strokeWidth: 1.5,
+      stroke: '#000000', // Black for better visibility
+      strokeWidth: 2,
+      markerEnd: {
+        type: 'arrowclosed',
+        width: 25, 
+        height: 25,
+        color: '#000000',
+      },
     },
     
     // Database connections
     database: {
-      stroke: '#A5A5A5',
-      strokeWidth: 1.5,
+      stroke: '#000000', // Black for better visibility
+      strokeWidth: 2,
       animated: true,
+      markerEnd: {
+        type: 'arrowclosed',
+        width: 25,
+        height: 25, 
+        color: '#000000',
+      },
     },
     
     // Log and monitoring connections
     log: {
-      stroke: '#ACACAC',
-      strokeWidth: 1.5,
+      stroke: '#000000', // Black for better visibility
+      strokeWidth: 2,
       strokeDasharray: '5,5',
+      markerEnd: {
+        type: 'arrowclosed',
+        width: 25,
+        height: 25,
+        color: '#000000',
+      },
     },
     
     // Security-related connections
     security: {
-      stroke: '#989898',
-      strokeWidth: 1.5,
+      stroke: '#000000', // Black for better visibility
+      strokeWidth: 2,
+      markerEnd: {
+        type: 'arrowclosed',
+        width: 25,
+        height: 25,
+        color: '#000000',
+      },
     },
     
     // Secure connections (SSL/TLS)
     'secure-connection': {
-      stroke: '#A0A0A0',
-      strokeWidth: 1.5,
+      stroke: '#000000', // Black for better visibility
+      strokeWidth: 2,
+      markerEnd: {
+        type: 'arrowclosed',
+        width: 25,
+        height: 25,
+        color: '#000000',
+      },
     },
     
     // Vulnerable or insecure connections
     vulnerable: {
-      stroke: '#B8B8B8',
-      strokeWidth: 1.5,
+      stroke: '#000000', // Black for better visibility
+      strokeWidth: 2,
       strokeDasharray: '3,3',
+      markerEnd: {
+        type: 'arrowclosed',
+        width: 25,
+        height: 25,
+        color: '#000000',
+      },
     }
   };
   
-  // Centralized function to determine edge type based on connected nodes
-  export const determineEdgeType = (sourceId, targetId, nodes = []) => {
+  // Helper function to determine edge type based on connected nodes
+  export const determineEdgeType = (sourceId: string, targetId: string, nodes: any[] = []): string => {
     // Find the source and target nodes
     const sourceNode = nodes.find(n => n.id === sourceId);
     const targetNode = nodes.find(n => n.id === targetId);
     
-    // If either node is missing, default to 'dataFlow'
-    if (!sourceNode || !targetNode) {
-      return 'dataFlow';
-    }
+    // Default to dataFlow if nodes not found
+    if (!sourceNode || !targetNode) return 'dataFlow';
     
-    // Extract node types, defaulting to empty string if not present
-    const sourceType = (sourceNode.data?.nodeType || sourceNode.type || '').toLowerCase();
-    const targetType = (targetNode.data?.nodeType || targetNode.type || '').toLowerCase();
-    
-    // Combined type string for easier checking
-    const combinedType = `${sourceType} ${targetType}`;
-    
-    // Security-related connections
-    if (combinedType.includes('security') || 
-        combinedType.includes('iam') || 
-        combinedType.includes('auth') || 
-        combinedType.includes('firewall') || 
-        combinedType.includes('waf')) {
-      return 'security';
-    }
+    // Extract node types from data
+    const sourceType = (sourceNode.data?.nodeType || '').toLowerCase();
+    const targetType = (targetNode.data?.nodeType || '').toLowerCase();
     
     // Database connections
-    if (combinedType.includes('database') || 
-        combinedType.includes('db') || 
-        combinedType.includes('rds') || 
-        combinedType.includes('sql')) {
+    if (sourceType.includes('database') || targetType.includes('database') ||
+        sourceType.includes('sql') || targetType.includes('sql') ||
+        sourceType.includes('storage') || targetType.includes('storage')) {
       return 'database';
     }
     
-    // API and data flow connections
-    if (combinedType.includes('api') || 
-        combinedType.includes('lambda') || 
-        combinedType.includes('function') || 
-        combinedType.includes('gateway')) {
-      return 'dataFlow';
+    // Security/firewall connections
+    if (sourceType.includes('security') || targetType.includes('security') ||
+        sourceType.includes('firewall') || targetType.includes('firewall') ||
+        sourceType.includes('waf') || targetType.includes('waf')) {
+      return 'security';
     }
     
-    // Network connections
-    if (combinedType.includes('network') || 
-        combinedType.includes('cdn') || 
-        combinedType.includes('dns') || 
-        combinedType.includes('vpc')) {
-      return 'network';
-    }
-    
-    // Log connections
-    if (combinedType.includes('log') || 
-        combinedType.includes('monitor') || 
-        combinedType.includes('trace')) {
+    // Monitoring/logging connections
+    if (sourceType.includes('monitor') || targetType.includes('monitor') ||
+        sourceType.includes('log') || targetType.includes('log')) {
       return 'log';
     }
     
-    // Secure connections
-    if (combinedType.includes('ssl') || 
-        combinedType.includes('tls') || 
-        combinedType.includes('https')) {
-      return 'secure-connection';
-    }
-    
-    // Vulnerable connections
-    if (combinedType.includes('vulnerable') || 
-        combinedType.includes('insecure')) {
-      return 'vulnerable';
-    }
-    
-    // Default case
+    // Default to dataFlow for standard connections
     return 'dataFlow';
   };

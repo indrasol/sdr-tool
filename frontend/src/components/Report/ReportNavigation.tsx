@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import ReportSectionList from './ReportSectionList';
@@ -16,6 +15,7 @@ interface ReportNavigationProps {
   currentPage: number;
   setCurrentPage: (index: number) => void;
   onAddPage: (page: ReportPage) => void;
+  onAddSubsection: (parentIndex: number, subsection: ReportPage) => void;
   onMovePage: (fromIndex: number, toIndex: number) => void;
   onDeletePage: (index: number) => void;
 }
@@ -25,6 +25,7 @@ const ReportNavigation: React.FC<ReportNavigationProps> = ({
   currentPage,
   setCurrentPage,
   onAddPage,
+  onAddSubsection,
   onMovePage,
   onDeletePage
 }) => {
@@ -63,11 +64,15 @@ const ReportNavigation: React.FC<ReportNavigationProps> = ({
   };
 
   return (
-    <div className="col-span-2">
-      <Card className="overflow-hidden border-securetrack-green/20 bg-white shadow-md">
-        <CardContent className="p-4">
+    <div className="col-span-3">
+      <Card className="overflow-hidden border border-blue-200/70 bg-white shadow-md hover:shadow-lg transition-all duration-300">
+        <CardContent className="p-4 bg-gradient-to-br from-blue-50/80 via-white to-purple-50/80">
           <div className="flex justify-between items-center mb-3">
-            <h3 className="font-bold text-sm text-black">Report Sections</h3>
+            <div className="flex items-center gap-2">
+              <div className="bg-gradient-to-r from-blue-500 to-purple-500 p-2 rounded-lg shadow-inner">
+                <h3 className="font-bold text-sm text-white">Report Sections</h3>
+              </div>
+            </div>
             <AddSectionDialog onAddPage={onAddPage} />
           </div>
           
@@ -77,6 +82,8 @@ const ReportNavigation: React.FC<ReportNavigationProps> = ({
             setCurrentPage={setCurrentPage}
             onOpenMoveDialog={handleOpenMoveDialog}
             onOpenDeleteDialog={handleOpenDeleteDialog}
+            onAddPage={onAddPage}
+            onAddSubsection={onAddSubsection}
           />
           
           <MoveSectionDialog

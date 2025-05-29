@@ -1,4 +1,3 @@
-
 import jsPDF from 'jspdf';
 
 interface ReportPage {
@@ -126,4 +125,59 @@ export const generateTableOfContents = (pages: ReportPage[]): string => {
   });
   
   return tableOfContents;
+};
+
+export const addSubsectionAfterParent = (
+  pages: ReportPage[], 
+  parentIndex: number,
+  newSubsection: ReportPage
+): ReportPage[] => {
+  const result = [...pages];
+  
+  // Find the last subsection of this parent, if any
+  const lastSubsectionIndex = findLastSubsectionIndex(pages, parentIndex);
+  
+  // If we found a last subsection, insert after it
+  // Otherwise, insert right after the parent
+  const insertIndex = lastSubsectionIndex !== -1 ? lastSubsectionIndex + 1 : parentIndex + 1;
+  
+  // Insert the subsection
+  result.splice(insertIndex, 0, newSubsection);
+  
+  return result;
+};
+
+// Helper function to find the last subsection of a parent
+const findLastSubsectionIndex = (pages: ReportPage[], parentIndex: number): number => {
+  // Get parent title to identify its subsections
+  const parentTitle = pages[parentIndex]?.title;
+  if (!parentTitle) return -1;
+  
+  // Start from the parent and look for the last consecutive subsection
+  let lastIndex = parentIndex;
+  
+  for (let i = parentIndex + 1; i < pages.length; i++) {
+    // Stop if we encounter another main section (not a subsection of this parent)
+    const isMainSection = ["Project Description", "System Architecture Diagram", 
+                          "Data-flow Diagram", "Entry Point", "Model Attack Possibilities", 
+                          "Key Risk Areas"].includes(pages[i].title);
+    
+    if (isMainSection) {
+      break;
+    }
+    
+    // If we're dealing with Key Risk Areas, only High/Medium/Low Risks are valid subsections
+    if (parentTitle === "Key Risk Areas") {
+      if (["High Risks", "Medium Risks", "Low Risks"].includes(pages[i].title)) {
+        lastIndex = i;
+      } else {
+        break;
+      }
+    } else {
+      // For other sections, consider any non-main section as a subsection
+      lastIndex = i;
+    }
+  }
+  
+  return lastIndex;
 };
