@@ -3,7 +3,6 @@ node_types = {
       {"name": "application_web_server", "description": "Hosts web applications, serving HTTP requests (e.g., Nginx, Apache)."},
       # {"name": "application_database", "description": "Stores and manages structured or unstructured data (e.g., SQL, NoSQL)."},
       {"name": "application_api_gateway", "description": "Centralizes and routes API requests, often with rate limiting and authentication."},
-      {"name": "application_load_balancer", "description": "Distributes incoming traffic across multiple servers for scalability and reliability."},
       {"name": "application_cache", "description": "Stores frequently accessed data for low-latency retrieval (e.g., Redis, Memcached)."},
       {"name": "application_message_queue", "description": "Facilitates asynchronous communication between services (e.g., RabbitMQ, Kafka)."},
       {"name": "application_authentication", "description": "Handles user identity verification and access control (e.g., OAuth, LDAP)."},
@@ -4559,6 +4558,11 @@ node_types = {
         "description": "Ork Network Ddos Protection Network."
       },
       {
+        "name": "network_load_balancer",
+        "description": "Distributes incoming traffic across multiple servers for scalability and reliability",
+        "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/application-icons/load_balancer.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhcHBsaWNhdGlvbi1pY29ucy9sb2FkX2JhbGFuY2VyLnN2ZyIsImlhdCI6MTc0NTU0NDk4MCwiZXhwIjozNTIyNjI1OTYwfQ.gqysuJk6PrMInVKn6oMDa8wOCjSSORCRqM0NhKuvg84"
+      },
+      {
         "name": "network_router",
         "description": "Ork Network Router Network."
       },
@@ -4623,6 +4627,18 @@ node_types = {
     {
       "name": "database_tidb",
       "description": "Base Tidb Database.",
+    },
+    {
+      "name": "database_pinecone_vector_database",
+      "description": "Pinecone is a vector database that allows you to store and query vectors, which are a type of data structure that can be used to represent complex data like images, text, and audio.",
+    },
+    {
+      "name": "database_weaviate_vector_database",
+      "description": "Weaviate is a vector database that allows you to store and query vectors, which are a type of data structure that can be used to represent complex data like images, text, and audio.",
+    },
+    {
+      "name": "database_milvus_vector_database",
+      "description": "Milvus is a vector database that allows you to store and query vectors, which are a type of data structure that can be used to represent complex data like images, text, and audio.",
     },
     {
       "name": "database_hbase",

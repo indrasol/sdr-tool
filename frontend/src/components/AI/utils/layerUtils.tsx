@@ -19,74 +19,66 @@ export interface LayerHierarchy {
 
 // Define a central registry of layer configurations
 export const layerConfigurations: Record<string, LayerStyle> = {
-  // AWS - Orange theme
-  aws: {
-    bgColor: 'rgba(255, 153, 0, 0.15)',
-    borderColor: 'rgba(255, 153, 0, 0.4)',
-    color: '#FF9900',
-    label: 'AWS Layer'
-  },
-  
-  // Azure - Blue theme
-  azure: {
-    bgColor: 'rgba(0, 114, 198, 0.15)',
-    borderColor: 'rgba(0, 114, 198, 0.4)',
-    color: '#0072C6',
-    label: 'Azure Layer'
-  },
-  
-  // GCP - Blue theme (different shade than Azure)
-  gcp: {
-    bgColor: 'rgba(26, 115, 232, 0.15)',
-    borderColor: 'rgba(26, 115, 232, 0.4)',
-    color: '#1A73E8',
-    label: 'GCP Layer'
-  },
-  
-  // Application services - Green theme
-  application: {
-    bgColor: 'rgba(52, 168, 83, 0.15)',
-    borderColor: 'rgba(52, 168, 83, 0.4)',
-    color: '#34A853',
-    label: 'Application Layer'
-  },
-  
-  // Data layer (databases) - Subtle blue theme
-  data: {
-    bgColor: 'rgba(41, 121, 255, 0.05)',
-    borderColor: 'rgba(41, 121, 255, 0.25)',
-    color: '#2979FF',
-    label: 'Data Layer'
-  },
-  
-  // Network - Red theme
-  network: {
-    bgColor: 'rgba(220, 53, 69, 0.15)',
-    borderColor: 'rgba(220, 53, 69, 0.4)',
-    color: '#DC3545',
-    label: 'Network Layer'
-  },
-  
-  // Client - Made fully transparent to be invisible
+  // Client Zone - Purple theme (transparent as clients are separate)
   client: {
     bgColor: 'rgba(0, 0, 0, 0)', // Completely transparent
     borderColor: 'rgba(0, 0, 0, 0)', // Completely transparent
     color: 'rgba(0, 0, 0, 0)', // Completely transparent
-    label: '' // Empty label
+    label: '' // Empty label - clients don't get grouped
   },
   
-  // API Gateway - Azure blue-like theme
-  api: {
-    bgColor: 'rgba(0, 120, 215, 0.15)',
-    borderColor: 'rgba(0, 120, 215, 0.4)',
-    color: '#0078D7',
-    label: 'API Layer'
+  // DMZ Layer - Red theme (Network Security Perimeter)
+  network: {
+    bgColor: 'rgba(220, 53, 69, 0.1)',
+    borderColor: 'rgba(220, 53, 69, 0.8)',
+    color: '#DC3545',
+    label: 'DMZ Layer'
+  },
+  
+  // Application Layer - Green theme (Business Logic)
+  application: {
+    bgColor: 'rgba(52, 168, 83, 0.1)',
+    borderColor: 'rgba(52, 168, 83, 0.8)',
+    color: '#34A853',
+    label: 'Application Layer'
+  },
+  
+  // Data Layer - Blue theme (Data Storage & Persistence)
+  data: {
+    bgColor: 'rgba(41, 121, 255, 0.1)',
+    borderColor: 'rgba(41, 121, 255, 0.8)',
+    color: '#2979FF',
+    label: 'Data Layer'
+  },
+  
+  // AWS - Orange theme (positioned by service type)
+  aws: {
+    bgColor: 'rgba(255, 153, 0, 0.1)',
+    borderColor: 'rgba(255, 153, 0, 0.8)',
+    color: '#FF9900',
+    label: 'AWS Services'
+  },
+  
+  // Azure - Blue theme
+  azure: {
+    bgColor: 'rgba(0, 114, 198, 0.1)',
+    borderColor: 'rgba(0, 114, 198, 0.8)',
+    color: '#0072C6',
+    label: 'Azure Services'
+  },
+  
+  // GCP - Blue theme (different shade than Azure)
+  gcp: {
+    bgColor: 'rgba(26, 115, 232, 0.1)',
+    borderColor: 'rgba(26, 115, 232, 0.8)',
+    color: '#1A73E8',
+    label: 'GCP Services'
   },
   
   // Default - Purple theme (for unknown types)
   default: {
     bgColor: 'rgba(124, 101, 246, 0.1)',
-    borderColor: 'rgba(124, 101, 246, 0.3)',
+    borderColor: 'rgba(124, 101, 246, 0.8)',
     color: '#7C65F6',
     label: 'Other Services'
   }
@@ -95,28 +87,27 @@ export const layerConfigurations: Record<string, LayerStyle> = {
 // Define default layer hierarchy
 // This establishes which layers contain other layers
 const defaultLayerHierarchy: Record<string, LayerHierarchy> = {
-  // Client layer sits at top level
+  // Client nodes don't get grouped - they're separate
   client: {
     level: 0,
     children: []
   },
-  // Application layer can contain API, AWS, Azure, GCP layers
+  // Network layer (DMZ) - top level
+  network: {
+    level: 1,
+    children: []
+  },
+  // Application layer - top level
   application: {
     level: 1,
-    children: ['api', 'aws', 'azure', 'gcp']
+    children: ['aws', 'azure', 'gcp'] // Cloud services can be nested in application
   },
-  // Data layer is a separate layer for databases
+  // Data layer - top level  
   data: {
     level: 1,
     children: []
   },
-  // API layer can contain services
-  api: {
-    level: 2,
-    parent: 'application',
-    children: []
-  },
-  // Cloud provider layers
+  // Cloud provider layers as children of application when appropriate
   aws: {
     level: 2,
     parent: 'application',
@@ -124,7 +115,7 @@ const defaultLayerHierarchy: Record<string, LayerHierarchy> = {
   },
   azure: {
     level: 2,
-    parent: 'application',
+    parent: 'application', 
     children: []
   },
   gcp: {
@@ -132,15 +123,9 @@ const defaultLayerHierarchy: Record<string, LayerHierarchy> = {
     parent: 'application',
     children: []
   },
-  // Network layer is separate but at same level as application
-  network: {
-    level: 1,
-    children: []
-  },
   // Default for anything else
   default: {
     level: 2,
-    parent: 'application',
     children: []
   }
 };
@@ -199,66 +184,109 @@ export const determineNodeLayer = (nodeType: string | undefined): string => {
   const nodeTypeStr = (nodeType || '').toLowerCase();
   const section = nodeTypeStr.split('_')[0]; // Extract prefix
   
-  // Enhanced client detection logic
-  // Check for client prefix/section first for better performance
+  // CLIENT ZONE - nodes with client_ prefix
   if (section === 'client' || nodeTypeStr.startsWith('client_')) {
     return 'client';
   }
   
-  // Additional client detection based on keywords
-  if (nodeTypeStr.includes('client') || 
-      nodeTypeStr.includes('mobile_app') ||
-      nodeTypeStr.includes('browser') ||
-      nodeTypeStr.includes('desktop_app') ||
-      nodeTypeStr.includes('iot_device') ||
-      nodeTypeStr.includes('kiosk') ||
+  // DMZ LAYER - nodes with network_ prefix  
+  if (section === 'network' || nodeTypeStr.startsWith('network_')) {
+    return 'network';
+  }
+  
+  // APPLICATION LAYER - nodes with application_ prefix
+  if (section === 'application' || nodeTypeStr.startsWith('application_')) {
+    return 'application';
+  }
+  
+  // DATA LAYER - nodes with database_ or databasetype_ prefix
+  if (section === 'database' || section === 'databasetype' || 
+      nodeTypeStr.startsWith('database_') || nodeTypeStr.startsWith('databasetype_')) {
+    return 'data';
+  }
+  
+  // CLOUD PROVIDER LAYERS - determine by service type
+  if (section === 'aws' || nodeTypeStr.startsWith('aws_')) {
+    // Determine AWS service layer based on service type
+    if (nodeTypeStr.includes('ec2') || nodeTypeStr.includes('lambda') || 
+        nodeTypeStr.includes('beanstalk') || nodeTypeStr.includes('ecs')) {
+      return 'application'; // Compute services go in application layer
+    } else if (nodeTypeStr.includes('rds') || nodeTypeStr.includes('dynamodb') || 
+               nodeTypeStr.includes('redshift') || nodeTypeStr.includes('s3')) {
+      return 'data'; // Database services go in data layer
+    } else if (nodeTypeStr.includes('cloudfront') || nodeTypeStr.includes('elb') || 
+               nodeTypeStr.includes('alb') || nodeTypeStr.includes('vpc')) {
+      return 'network'; // Network services go in DMZ layer
+    }
+    return 'aws'; // Default AWS layer
+  }
+  
+  if (section === 'gcp' || nodeTypeStr.startsWith('gcp_')) {
+    // Determine GCP service layer
+    if (nodeTypeStr.includes('compute') || nodeTypeStr.includes('run') || 
+        nodeTypeStr.includes('functions') || nodeTypeStr.includes('kubernetes')) {
+      return 'application';
+    } else if (nodeTypeStr.includes('sql') || nodeTypeStr.includes('firestore') || 
+               nodeTypeStr.includes('bigquery') || nodeTypeStr.includes('storage')) {
+      return 'data';
+    } else if (nodeTypeStr.includes('cdn') || nodeTypeStr.includes('load_balancer') || 
+               nodeTypeStr.includes('vpc')) {
+      return 'network';
+    }
+    return 'gcp'; // Default GCP layer
+  }
+  
+  if (section === 'azure' || nodeTypeStr.startsWith('azure_')) {
+    // Determine Azure service layer
+    if (nodeTypeStr.includes('vm') || nodeTypeStr.includes('functions') || 
+        nodeTypeStr.includes('app_service') || nodeTypeStr.includes('kubernetes')) {
+      return 'application';
+    } else if (nodeTypeStr.includes('sql') || nodeTypeStr.includes('cosmos') || 
+               nodeTypeStr.includes('storage') || nodeTypeStr.includes('synapse')) {
+      return 'data';
+    } else if (nodeTypeStr.includes('cdn') || nodeTypeStr.includes('load_balancer') || 
+               nodeTypeStr.includes('firewall')) {
+      return 'network';
+    }
+    return 'azure'; // Default Azure layer
+  }
+  
+  // Fallback: Check for keyword matches for backward compatibility
+  // But ensure we follow the prefix-based rules first
+  
+  // Additional client detection
+  if (nodeTypeStr.includes('client') || nodeTypeStr.includes('mobile_app') ||
+      nodeTypeStr.includes('browser') || nodeTypeStr.includes('desktop_app') ||
+      nodeTypeStr.includes('iot_device') || nodeTypeStr.includes('kiosk') ||
       nodeTypeStr.includes('user_')) {
     return 'client';
   }
   
-  // Database and DatabaseType specific detection
-  if (nodeTypeStr.includes('database') || 
-      nodeTypeStr.includes('databasetype') ||
-      nodeTypeStr.includes('sql') || 
-      nodeTypeStr.includes('nosql') || 
-      nodeTypeStr.includes('db') ||
-      nodeTypeStr.includes('mongo') ||
-      nodeTypeStr.includes('redis') ||
-      nodeTypeStr.includes('cassandra') ||
-      nodeTypeStr.includes('postgresql') ||
-      nodeTypeStr.includes('mysql') ||
-      nodeTypeStr.includes('neo4j') ||
-      nodeTypeStr.includes('graph_database') ||
-      nodeTypeStr.includes('time_series') ||
-      nodeTypeStr.includes('in_memory') ||
-      section === 'database' ||
-      section === 'databasetype') {
+  // Additional database detection
+  if (nodeTypeStr.includes('database') || nodeTypeStr.includes('databasetype') ||
+      nodeTypeStr.includes('sql') || nodeTypeStr.includes('nosql') || 
+      nodeTypeStr.includes('db') || nodeTypeStr.includes('mongo') ||
+      nodeTypeStr.includes('redis') || nodeTypeStr.includes('cassandra') ||
+      nodeTypeStr.includes('postgresql') || nodeTypeStr.includes('mysql') ||
+      nodeTypeStr.includes('neo4j') || nodeTypeStr.includes('graph_database') ||
+      nodeTypeStr.includes('time_series') || nodeTypeStr.includes('in_memory')) {
     return 'data';
   }
   
-  // First, check if the node type is directly mapped in our icon data
-  if (nodeTypeToCategory[nodeTypeStr]) {
-    return nodeTypeToCategory[nodeTypeStr];
+  // Additional network detection
+  if (nodeTypeStr.includes('firewall') || nodeTypeStr.includes('router') ||
+      nodeTypeStr.includes('load_balancer') || nodeTypeStr.includes('cdn') ||
+      nodeTypeStr.includes('waf') || nodeTypeStr.includes('vpn') ||
+      nodeTypeStr.includes('proxy')) {
+    return 'network';
   }
   
-  // Second, check if the section/prefix is a known category
-  if (Object.keys(layerConfigurations).includes(section)) {
-    return section;
-  }
-  
-  // Third, check for keyword matches (backward compatibility)
-  for (const [category, keywords] of Object.entries(categoryKeywords)) {
-    // Check if nodeTypeStr includes the category name itself
-    if (nodeTypeStr.includes(category)) {
-      return category;
-    }
-    
-    // Check if nodeTypeStr includes any of the keywords for this category
-    for (const keyword of keywords) {
-      if (nodeTypeStr.includes(keyword)) {
-        return category;
-      }
-    }
+  // Additional application detection
+  if (nodeTypeStr.includes('service') || nodeTypeStr.includes('microservice') ||
+      nodeTypeStr.includes('server') || nodeTypeStr.includes('api') ||
+      nodeTypeStr.includes('gateway') || nodeTypeStr.includes('function') ||
+      nodeTypeStr.includes('container') || nodeTypeStr.includes('monitor')) {
+    return 'application';
   }
   
   // Default fallback
@@ -279,7 +307,8 @@ export const getLayerStyle = (layer: string): LayerStyle => {
   // For backward compatibility, handle legacy layer names
   const legacyMappings: Record<string, string> = {
     'security': 'network',  // Map old 'security' to 'network'
-    'cloud': 'aws'          // Map generic 'cloud' to 'aws'
+    'cloud': 'aws',         // Map generic 'cloud' to 'aws'
+    'database': 'data'      // Map 'database' to 'data'
   };
   
   if (legacyMappings[layer] && layerConfigurations[legacyMappings[layer]]) {
@@ -309,7 +338,7 @@ export const determineLayerHierarchy = (nodesByLayer: Record<string, Node[]>): R
     if (!hierarchy[layer]) {
       // If layer not in default hierarchy, add it with sensible defaults
       hierarchy[layer] = {
-        level: 2, // Default to application child level
+        level: 2, // Default to child level
         parent: 'application',
         children: []
       };
@@ -341,7 +370,7 @@ export const determineLayerHierarchy = (nodesByLayer: Record<string, Node[]>): R
 export const createLayerContainers = (nodes: Node[]): Node[] => {
   if (!nodes || nodes.length === 0) return [];
 
-  // Group nodes by layer
+  // Group nodes by layer using updated determination logic
   const nodesByLayer: Record<string, Node[]> = {};
   nodes.forEach(node => {
     // Skip layer containers to avoid recursion
@@ -360,13 +389,8 @@ export const createLayerContainers = (nodes: Node[]): Node[] => {
     const nodeType = node.data?.nodeType || 'default';
     const layer = determineNodeLayer(nodeType as string);
 
-    // Enhanced client layer exclusion
-    // Skip client layer - don't group client nodes 
-    if (layer === 'client' || 
-        (typeof nodeType === 'string' && (
-          nodeType.toLowerCase().includes('client') || 
-          nodeType.toLowerCase().startsWith('client_')
-        ))) {
+    // Skip client layer - don't group client nodes (they're separate)
+    if (layer === 'client') {
       return;
     }
 
@@ -377,34 +401,58 @@ export const createLayerContainers = (nodes: Node[]): Node[] => {
   // Determine appropriate hierarchy based on active layers
   const layerHierarchy = determineLayerHierarchy(nodesByLayer);
   
-  // Sort layers by hierarchy level (top-level first)
+   // Sort layers by hierarchy level (top-level first)
   const sortedLayers = Object.entries(nodesByLayer)
-    .filter(([_, layerNodes]) => layerNodes.length > 0)
-    .sort(([layerA], [layerB]) => {
-      return (layerHierarchy[layerA]?.level || 0) - (layerHierarchy[layerB]?.level || 0);
-    });
+   .filter(([_, layerNodes]) => layerNodes.length > 0)
+   .sort(([layerA], [layerB]) => {
+     return (layerHierarchy[layerA]?.level || 0) - (layerHierarchy[layerB]?.level || 0);
+   });
   
-  // Calculate layer boundaries - first pass for basic sizing
+  // Calculate layer boundaries based on backend positioning rules
   const layerBoundaries: Record<string, { minX: number, minY: number, maxX: number, maxY: number, width: number, height: number }> = {};
   
-  // First pass: Calculate initial boundaries based on contained nodes
-  sortedLayers.forEach(([layer, layerNodes]) => {
+  // Define expected X ranges for each layer based on LEFT-TO-RIGHT flow
+  const layerXRanges: Record<string, { min: number, max: number }> = {
+    client: { min: 50, max: 350 },       // CLIENT ZONE (X: 50-350) - LEFTMOST (wider for horizontal spread)
+    network: { min: 300, max: 600 },     // DMZ LAYER (X: 300-600) - LEFT-CENTER (wider for horizontal spread)
+    application: { min: 550, max: 900 }, // APPLICATION LAYER (X: 550-900) - CENTER (wider for horizontal spread)
+    data: { min: 950, max: 1350 },       // DATA LAYER (X: 950-1350) - RIGHTMOST (wider for horizontal spread)
+    aws: { min: 550, max: 900 },         // AWS services positioned by type (wider range)
+    azure: { min: 550, max: 900 },       // Azure services positioned by type (wider range)
+    gcp: { min: 550, max: 900 },         // GCP services positioned by type (wider range)
+    default: { min: 550, max: 900 }      // Default to application layer (wider range)
+  };
+  
+   // Calculate boundaries for each layer (LEFT-TO-RIGHT flow)
+   sortedLayers.forEach(([layer, layerNodes]) => {
     // Find boundaries of all nodes in this layer
     const positions = layerNodes.map(n => n.position);
     
-    // Initial boundary calculations with LESS padding than before (tighter fit)
-    const padding = 30; // Reduced padding
-    const minX = Math.min(...positions.map(p => p.x)) - padding;
+    // Get expected X range for this layer (LEFT-TO-RIGHT flow)
+    const expectedXRange = layerXRanges[layer] || layerXRanges.default;
+    
+    // Calculate boundaries with proper padding for LR flow
+    const padding = 40; // Consistent padding for all layers
+    
+    // Use expected X range to position layer container properly (horizontal)
+    const minX = Math.min(
+      Math.min(...positions.map(p => p.x)) - padding,
+      expectedXRange.min
+    );
+    
     const minY = Math.min(...positions.map(p => p.y)) - padding;
 
-    // Calculate maximum extents using each node's width/height or default values
-    const maxX = Math.max(...layerNodes.map(node => {
-      const nodeWidth = node.width || 100;
-      return node.position.x + nodeWidth;
-    })) + padding;
+    // Calculate maximum extents for LR flow
+    const maxX = Math.max(
+      Math.max(...layerNodes.map(node => {
+        const nodeWidth = node.width || 120;
+        return node.position.x + nodeWidth;
+      })) + padding,
+      expectedXRange.max
+    );
     
     const maxY = Math.max(...layerNodes.map(node => {
-      const nodeHeight = node.height || 100;
+      const nodeHeight = node.height || 120;
       return node.position.y + nodeHeight;
     })) + padding;
 
@@ -414,75 +462,19 @@ export const createLayerContainers = (nodes: Node[]): Node[] => {
     layerBoundaries[layer] = { minX, minY, maxX, maxY, width, height };
   });
   
-  // Second pass: Adjust child layers to stay within parent boundaries and add spacing
-  sortedLayers.forEach(([layer]) => {
-    const parentLayer = layerHierarchy[layer]?.parent;
-    if (parentLayer && layerBoundaries[parentLayer] && layerBoundaries[layer]) {
-      // Get parent boundaries
-      const parent = layerBoundaries[parentLayer];
-      const current = layerBoundaries[layer];
-      
-      // Calculate margin between parent and child
-      const margin = 30; // Space between parent edge and child edge
-      
-      // Adjust boundaries to ensure child is inside parent with margin
-      // We'll adjust the parent instead to be larger if needed
-      if (current.minX < parent.minX + margin) {
-        parent.minX = current.minX - margin;
-        parent.width = parent.maxX - parent.minX;
-      }
-      
-      if (current.maxX > parent.maxX - margin) {
-        parent.maxX = current.maxX + margin;
-        parent.width = parent.maxX - parent.minX;
-      }
-      
-      if (current.minY < parent.minY + margin) {
-        parent.minY = current.minY - margin;
-        parent.height = parent.maxY - parent.minY;
-      }
-      
-      if (current.maxY > parent.maxY - margin) {
-        parent.maxY = current.maxY + margin;
-        parent.height = parent.maxY - parent.minY;
-      }
-    }
-  });
-  
-  // Third pass: Ensure sibling layers don't overlap
-  // Sort by y-position to handle layers at the same hierarchy level
-  const siblingGroups: Record<string, string[]> = {};
-  
-  // Group layers by their hierarchy level
-  Object.entries(layerHierarchy).forEach(([layer, hierarchy]) => {
-    if (layerBoundaries[layer]) {
-      const level = hierarchy.level.toString(); // Convert number to string for key
-      if (!siblingGroups[level]) siblingGroups[level] = [];
-      siblingGroups[level].push(layer);
-    }
-  });
-  
-  // For each level, make sure siblings don't overlap
-  Object.values(siblingGroups).forEach(siblings => {
-    if (siblings.length <= 1) return; // No siblings to compare with
+  // Ensure proper layer separation based on backend Y ranges
+  Object.entries(layerBoundaries).forEach(([layer, bounds]) => {
+    const expectedXRange = layerXRanges[layer] || layerXRanges.default;
     
-    // Sort siblings by minY position
-    siblings.sort((a, b) => layerBoundaries[a].minY - layerBoundaries[b].minY);
+    // Ensure layer container encompasses the expected X range (horizontal)
+    if (bounds.minX > expectedXRange.min) {
+      bounds.minX = expectedXRange.min;
+      bounds.width = bounds.maxX - bounds.minX;
+    }
     
-    // Check for overlaps and adjust
-    for (let i = 1; i < siblings.length; i++) {
-      const aboveSibling = siblings[i-1];
-      const currentSibling = siblings[i];
-      const above = layerBoundaries[aboveSibling];
-      const current = layerBoundaries[currentSibling];
-      
-      // Check for vertical overlap
-      if (current.minY < above.maxY) {
-        // Move the current layer down
-        const offset = above.maxY - current.minY + 20; // 20px gap
-        current.minY += offset;
-        current.maxY += offset;
-      }
+    if (bounds.maxX < expectedXRange.max) {
+      bounds.maxX = expectedXRange.max;
+      bounds.width = bounds.maxX - bounds.minX;
     }
   });
   
@@ -505,14 +497,14 @@ export const createLayerContainers = (nodes: Node[]): Node[] => {
       style: {
         width: bounds.width,
         height: bounds.height,
-        backgroundColor: layerStyle.bgColor,
+        backgroundColor: 'transparent', // Always transparent
         borderColor: layerStyle.borderColor,
         color: layerStyle.color,
         borderWidth: 2,
         borderStyle: 'dashed',
         borderRadius: 10,
-        zIndex: -5, // Simple z-index, the component will handle display order
-        boxShadow: '0 0 10px rgba(0,0,0,0.05)',
+        zIndex: -10, // Ensure layers are behind nodes
+        boxShadow: 'none',
       },
       data: {
         label: layerStyle.label,
@@ -522,7 +514,7 @@ export const createLayerContainers = (nodes: Node[]): Node[] => {
         hierarchyLevel: hierarchyLevel
       },
     } as Node;
-  }).filter(Boolean) as Node[]; // Filter out any null values
+  }).filter(Boolean) as Node[];
 
   // Sort containers so parent layers are drawn first (bottom layer)
   return layerContainers.sort((a, b) => {

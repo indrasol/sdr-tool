@@ -35,6 +35,7 @@ import { getAuthHeaders, BASE_API_URL, fetchWithTimeout, DEFAULT_TIMEOUT } from 
 import { debounce } from 'lodash';
 import { createLayerContainers, determineNodeLayer, getLayerStyle } from '@/components/AI/utils/layerUtils';
 import LayerGroupNode from '@/components/AI/LayerGroupNode';
+import { mapNodeTypeToIcon } from '@/components/AI/utils/mapNodeTypeToIcon'; // Add import for mapNodeTypeToIcon
 
 
 // Interface for proper TypeScript support
@@ -69,30 +70,45 @@ const processEdges = (edges = [], nodes = []) => {
 
     edgeIdMap.set(edgeId, true);
 
-    // Determine edge type
-    const edgeType = edge.type || determineEdgeType(edge.source, edge.target, nodes);
+    // Determine edge type - Fix the bezier warning by using correct React Flow edge types
+    let edgeType = edge.type || determineEdgeType(edge.source, edge.target, nodes);
+    
+    // Map invalid edge types to valid React Flow edge types
+    const validEdgeTypes = ['default', 'straight', 'step', 'smoothstep', 'simplebezier'];
+    if (!validEdgeTypes.includes(edgeType)) {
+      // Map common invalid types to valid ones
+      if (edgeType === 'bezier') {
+        edgeType = 'smoothstep'; // Use smoothstep instead of bezier for curved edges
+      } else {
+        edgeType = 'smoothstep'; // Default to smoothstep for unknown types
+      }
+    }
 
     // Get styling for this edge type
     const typeStyle = edgeStyles[edgeType] || edgeStyles.dataFlow || edgeStyles.default || {};
 
-    // Create properly formatted edge object
+    // Create edge with proper React Flow edge type
     return {
       ...edge,
       id: edgeId,
-      type: 'smoothstep',  // Force consistent edge type
-      animated: edgeType === 'dataFlow' || edgeType === 'database',
-      // Use a dedicated markerEnd object for better arrow rendering
+      type: edgeType, // Use the validated edge type
+      animated: edgeType === 'dataFlow' || edgeType === 'database' || edge.animated || false,
       markerEnd: {
         type: 'arrowclosed',
-        width: 10,
-        height: 10,
-        color: typeStyle.stroke || '#555'
+        width: 12,
+        height: 12,
+        color: typeStyle.stroke || '#333',
       },
       style: {
         strokeWidth: 2,
-        stroke: typeStyle.stroke || '#555',
+        stroke: typeStyle.stroke || '#333',
+        strokeDasharray: typeStyle.strokeDasharray || 'none',
         ...(typeStyle || {}),
         ...(edge.style || {})
+      },
+      pathOptions: {
+        curvature: edgeType === 'smoothstep' ? 0.15 : 0, // Slight curvature for smooth edges
+        offset: 0
       }
     };
   }).filter(Boolean);
@@ -205,8 +221,51 @@ const ModelWithAI = () => {
     getEdgeType
   } = useDiagramNodes(nodes, edges, setNodes, setEdges);
 
+  // After the viewModeChange function definition, add these helper functions before prepareNodesForDiagram
+  // Helper functions for node editing
+  const handleEditNode = (id, label) => {
+    console.log(`Editing node: ${id} (${label})`);
+
+    // Find the node
+    const targetNode = nodes.find(node => node.id === id);
+
+    if (targetNode) {
+      setCurrentEditNode({
+        id,
+        label: targetNode.data?.label || '',
+        description: targetNode.data?.description || ''
+      });
+      setEditNodeDialogOpen(true);
+    }
+  };
+
+  const handleDeleteNode = (id) => {
+    console.log(`Deleting node: ${id}`);
+
+    // Find the node to be deleted to show its name in the toast
+    const nodeToDelete = nodes.find(node => node.id === id);
+
+    // Remove the node
+    setNodes(nds => nds.filter(node => node.id !== id));
+
+    // Remove any edges connected to this node
+    setEdges(eds => eds.filter(edge => edge.source !== id && edge.target !== id));
+
+    // Show a toast notification
+    if (nodeToDelete) {
+      const nodeLabel = nodeToDelete.data?.label || 'Unnamed node';
+
+      toast({
+        title: "Node Deleted",
+        description: `Node "${nodeLabel}" has been removed`
+      });
+    }
+  };
+
   // Apply custom node preparation that preserves sticky notes and comment nodes
   const prepareNodesForDiagram = useCallback((inputNodes, inputEdges) => {
+    console.log('Preparing nodes for diagram, input nodes:', inputNodes.length);
+    
     // Get the base prepareNodes function from the useDiagramNodes hook
     // But filter out comment/sticky note nodes first to handle them specially
     const regularNodes = inputNodes.filter(node => 
@@ -219,9 +278,34 @@ const ModelWithAI = () => {
     // Process regular nodes using the hook's prepareNodes function
     const processedRegularNodes = prepareNodes(regularNodes, inputEdges);
     
+    // Add additional check for missing icons/styling and fix if needed
+    const enhancedNodes = processedRegularNodes.map(node => {
+      // If node doesn't have explicit icon data but has a nodeType, add the icon URL
+      if (!node.data.iconUrl && node.data.nodeType) {
+        // Check if we can get an icon URL for this node type
+        const iconUrl = mapNodeTypeToIcon(node.data.nodeType);
+        
+        if (iconUrl) {
+          // Store the icon URL directly in node data rather than creating a renderer
+          node.data.iconUrl = iconUrl;
+          console.log(`Added missing iconUrl for node ${node.id} (${node.data.nodeType})`);
+        }
+      }
+      
+      // Ensure all nodes have the standard callbacks
+      if (!node.data.onEdit) {
+        node.data.onEdit = handleEditNode;
+      }
+      if (!node.data.onDelete) {
+        node.data.onDelete = handleDeleteNode;
+      }
+      
+      return node;
+    });
+    
     // Combine both types of nodes 
-    return [...processedRegularNodes, ...stickyNotes];
-  }, [prepareNodes]);
+    return [...enhancedNodes, ...stickyNotes];
+  }, [prepareNodes, handleEditNode, handleDeleteNode]);
 
   // Memoize the edges to prevent unnecessary updates
   const stableEdges = useMemo(() => {
@@ -325,16 +409,16 @@ const ModelWithAI = () => {
     // Get current state directly from refs to avoid stale closures
     const currentNodes = nodesRef.current;
     const currentEdges = edgesRef.current;
-
+  
     // Use the isLayouting state directly
     if (isLayouting || currentNodes.length === 0) {
       console.log(`[ModelWithAI] Layout skipped (isLayouting: ${isLayouting}, nodes: ${currentNodes.length})`);
       return;
     }
-
+  
     console.log('[ModelWithAI] Setting isLayouting = true');
     setIsLayouting(true);
-
+  
     try {
       // Filter out any existing layer group nodes and save them separately
       const regularNodes = currentNodes.filter(node => node.type !== 'layerGroup');
@@ -345,45 +429,52 @@ const ModelWithAI = () => {
       const preparedNodes = prepareNodesForDiagram(regularNodes, currentEdges);
       console.log(`[ModelWithAI] Processing ${currentEdges.length} edges.`);
       const processedEdges = processEdges(currentEdges, preparedNodes);
-
-      console.log('[ModelWithAI] Calling getLayoutedElements with forceLayout: true');
+  
+      console.log('[ModelWithAI] Calling getLayoutedElements with LR flow (maintaining existing behavior)');
+      
+      // Keep existing left-to-right flow with proper spacing
       const { nodes: layoutedNodes, edges: layoutedEdges } = getLayoutedElements(
         preparedNodes,
         processedEdges,
-        'TB', 172, 36, true
+        'LR', // Maintain left-to-right flow as requested
+        172,  // Keep existing horizontal spacing
+        36,   // Keep existing vertical spacing
+        true  // Force layout
       );
-
-      if (layoutedNodes && layoutedNodes.length > 0) {
-        console.log(`[ModelWithAI] Calculated ${layoutedNodes.length} layouted nodes. Updating state.`);
-
+  
+      // Apply backend positioning rules to layouted nodes
+      const backendPositionedNodes = applyBackendPositioning(layoutedNodes);
+  
+      if (backendPositionedNodes && backendPositionedNodes.length > 0) {
+        console.log(`[ModelWithAI] Calculated ${backendPositionedNodes.length} positioned nodes. Updating state.`);
+  
         // Create new layer containers if there were none previously
         const layerContainers = existingLayerContainers.length > 0 
-          ? updateExistingLayerContainers(existingLayerContainers, layoutedNodes)
-          : createLayerContainers(layoutedNodes);
+          ? updateExistingLayerContainers(existingLayerContainers, backendPositionedNodes)
+          : createLayerContainers(backendPositionedNodes);
           
         console.log(`[ModelWithAI] Using ${layerContainers.length} layer containers.`);
-
+  
         // Combine layer containers with regular nodes
         // Layer containers come first so they render underneath
-        const finalNodes = [...layerContainers, ...layoutedNodes];
-
+        const finalNodes = [...layerContainers, ...backendPositionedNodes];
+  
         // Set nodes first
         setNodes(finalNodes);
         console.log('[ModelWithAI] setNodes called with layer containers.');
-
+  
         // Set edges immediately after nodes (React batches these)
         if (layoutedEdges) {
           setEdges(layoutedEdges);
           console.log('[ModelWithAI] setEdges called.');
         }
-
+  
         // Reset layouting flag slightly later using timeout
-        // This allows React Flow time to potentially re-render with new node positions
         setTimeout(() => {
           console.log('[ModelWithAI] Resetting isLayouting = false after timeout.');
           setIsLayouting(false);
-        }, 50); // Short delay
-
+        }, 50);
+  
       } else {
         console.log('[ModelWithAI] No layouted nodes returned. Resetting layouting flag immediately.');
         setIsLayouting(false);
@@ -393,6 +484,58 @@ const ModelWithAI = () => {
       setIsLayouting(false); // Ensure flag is reset on error
     }
   }, [isLayouting, prepareNodesForDiagram, processEdges, setNodes, setEdges, setIsLayouting]);
+
+  // New function to apply backend positioning rules for LEFT-TO-RIGHT flow
+const applyBackendPositioning = useCallback((nodes: Node[]): Node[] => {
+  console.log('[ModelWithAI] Applying backend positioning rules for LR flow');
+  
+  // Define backend layer X ranges for LEFT-TO-RIGHT flow
+  const layerXRanges = {
+    client: { min: 50, max: 250, centerX: 150 },        // CLIENT ZONE (X: 50-250) - LEFTMOST
+    network: { min: 300, max: 500, centerX: 400 },      // DMZ LAYER (X: 300-500) - LEFT-CENTER
+    application: { min: 550, max: 800, centerX: 675 },  // APPLICATION LAYER (X: 550-800) - CENTER
+    data: { min: 850, max: 1100, centerX: 975 },        // DATA LAYER (X: 850-1100) - RIGHTMOST
+    aws: { min: 550, max: 800, centerX: 675 },          // AWS positioned by service type
+    azure: { min: 550, max: 800, centerX: 675 },        // Azure positioned by service type
+    gcp: { min: 550, max: 800, centerX: 675 },          // GCP positioned by service type
+    default: { min: 550, max: 800, centerX: 675 }       // Default to application layer
+  };
+
+  // Group nodes by layer
+  const nodesByLayer: Record<string, Node[]> = {};
+  nodes.forEach(node => {
+    const nodeType = node.data?.nodeType || 'default';
+    const layer = determineNodeLayer(nodeType as string);
+    
+    if (!nodesByLayer[layer]) nodesByLayer[layer] = [];
+    nodesByLayer[layer].push(node);
+  });
+
+  // Position nodes within their respective layers for LR flow
+  const positionedNodes: Node[] = [];
+  
+  Object.entries(nodesByLayer).forEach(([layer, layerNodes]) => {
+    const xRange = layerXRanges[layer] || layerXRanges.default;
+    
+    // Calculate Y positioning with proper spacing (vertical spread within layer)
+    const baseY = 100; // Start Y position for each layer
+    const ySpacing = 140; // Vertical spacing between nodes in same layer
+
+    layerNodes.forEach((node, index) => {
+      const positionedNode = {
+        ...node,
+        position: {
+          x: xRange.centerX, // Position at layer center X
+          y: baseY + (index * ySpacing) // Spread vertically within layer
+        }
+      };
+      positionedNodes.push(positionedNode);
+    });
+  });
+
+  console.log(`[ModelWithAI] Applied LR backend positioning to ${positionedNodes.length} nodes`);
+  return positionedNodes;
+}, [determineNodeLayer]);
 
   // Helper function to update existing layer containers based on new node positions
   const updateExistingLayerContainers = useCallback((existingContainers: Node[], nodes: Node[]) => {
@@ -456,24 +599,29 @@ const ModelWithAI = () => {
       const existingContainer = layerToContainerMap[layer];
       const layerStyle = getLayerStyle(layer);
       
-      // Calculate new boundaries based on node positions
+      // Calculate new boundaries based on node positions with improved padding
       const positions = layerNodes.map(n => n.position);
-      const minX = Math.min(...positions.map(p => p.x)) - 40;
-      const minY = Math.min(...positions.map(p => p.y)) - 40;
+      const minX = Math.min(...positions.map(p => p.x)) - 60; // Increased left padding
+      const minY = Math.min(...positions.map(p => p.y)) - 50; // Increased top padding
       
-      // Calculate maximum extents
+      // Calculate maximum extents with more space
       const maxX = Math.max(...layerNodes.map(node => {
-        const nodeWidth = node.width || 100;
+        const nodeWidth = node.width || 120; // Default to larger width if not specified
         return node.position.x + nodeWidth;
-      })) + 40;
+      })) + 60; // Increased right padding
       
       const maxY = Math.max(...layerNodes.map(node => {
-        const nodeHeight = node.height || 100;
+        const nodeHeight = node.height || 120; // Default to larger height if not specified
         return node.position.y + nodeHeight;
-      })) + 40;
+      })) + 50; // Increased bottom padding
       
       const width = maxX - minX;
       const height = maxY - minY;
+      
+      // Apply additional size adjustments for data layer
+      const isDataLayer = layer === 'data' || layer === 'database';
+      const widthAdjustment = isDataLayer ? 40 : 0; // Extra width for data layer
+      const heightAdjustment = isDataLayer ? 30 : 0; // Extra height for data layer
       
       // If we have an existing container, update it, otherwise create a new one
       if (existingContainer) {
@@ -482,8 +630,10 @@ const ModelWithAI = () => {
           position: { x: minX, y: minY },
           style: {
             ...existingContainer.style,
-            width,
-            height,
+            width: width + widthAdjustment,
+            height: height + heightAdjustment,
+            backgroundColor: 'transparent', // Make background transparent
+            zIndex: -10, // Lower zIndex to ensure nodes appear above containers
           },
           data: {
             ...existingContainer.data,
@@ -497,16 +647,16 @@ const ModelWithAI = () => {
           type: 'layerGroup',
           position: { x: minX, y: minY },
           style: {
-            width,
-            height,
-            backgroundColor: layerStyle.bgColor,
+            width: width + widthAdjustment,
+            height: height + heightAdjustment,
+            backgroundColor: 'transparent', // Make background transparent
             borderColor: layerStyle.borderColor,
             color: layerStyle.color,
             borderWidth: 2,
             borderStyle: 'dashed',
             borderRadius: 10,
-            zIndex: -5,
-            boxShadow: '0 0 10px rgba(0,0,0,0.05)',
+            zIndex: -10, // Lower zIndex to ensure nodes appear above containers
+            boxShadow: 'none', // Remove box shadow for cleaner look
           },
           data: {
             label: layerStyle.label,
@@ -765,47 +915,6 @@ const ModelWithAI = () => {
     }
   }, [viewMode, nodes, edges, sessionId, projectId, processAndDisplayThreatModel, toast]);
 
-  // Helper functions for node editing
-  const handleEditNode = (id, label) => {
-    console.log(`Editing node: ${id} (${label})`);
-
-    // Find the node
-    const targetNode = nodes.find(node => node.id === id);
-
-    if (targetNode) {
-      setCurrentEditNode({
-        id,
-        label: targetNode.data?.label || '',
-        description: targetNode.data?.description || ''
-      });
-      setEditNodeDialogOpen(true);
-    }
-  };
-
-  const handleDeleteNode = (id) => {
-    console.log(`Deleting node: ${id}`);
-
-    // Find the node to be deleted to show its name in the toast
-    const nodeToDelete = nodes.find(node => node.id === id);
-
-    // Remove the node
-    setNodes(nds => nds.filter(node => node.id !== id));
-
-    // Remove any edges connected to this node
-    setEdges(eds => eds.filter(edge => edge.source !== id && edge.target !== id));
-
-    // Show a toast notification
-    if (nodeToDelete) {
-      const nodeLabel = nodeToDelete.data?.label || 'Unnamed node';
-
-      toast({
-        title: "Node Deleted",
-        description: `Node "${nodeLabel}" has been removed`
-      });
-    }
-  };
-
-
   // Load project data
   const load = useCallback(
     async (projectIdToLoad) => {
@@ -881,6 +990,19 @@ const ModelWithAI = () => {
           hasLoadedDiagramData.current = true;
           setProjectLoaded(true);
 
+          // ADDED: Automatically apply layout after project is loaded (with slight delay to ensure rendering)
+          setTimeout(() => {
+            console.log('Auto-applying layout after project load');
+            applyLayout();
+            
+            // Fit view to show all elements
+            setTimeout(() => {
+              if (mainReactFlowInstance.current) {
+                mainReactFlowInstance.current.fitView({ padding: 0.2 });
+              }
+            }, 300);
+          }, 500);
+
           // Check if project has threat model data
           if (projectData.dfd_data) {
             console.log('Project has existing threat model data:', projectData.dfd_data);
@@ -936,7 +1058,7 @@ const ModelWithAI = () => {
         setIsProjectLoading(false);
       }
     },
-    [toast, prepareNodesForDiagram, handleEditNode, handleDeleteNode, processEdges, setNodes, setEdges]
+    [toast, prepareNodesForDiagram, handleEditNode, handleDeleteNode, processEdges, setNodes, setEdges, applyLayout]  // Added applyLayout to dependencies
   );
 
   const save = async () => {
@@ -1218,47 +1340,45 @@ const ModelWithAI = () => {
   // Handle architecture response from AI
   const handleArchitectureResponse = useCallback(
     (response) => {
-      console.log('Handling Architecture Response');
+      console.log('Handling Architecture Response with backend positioning');
       setIsLayouting(true); // Indicate layout process starts
-
+  
       const diagramUpdates = response.diagram_updates || {};
       const nodesToAdd = response.nodes_to_add || [];
       const edgesToAdd = response.edges_to_add || [];
       const elementsToRemove = response.elements_to_remove || [];
-
+  
       // --- Use current state directly ---
-      // Note: We rely on the state being reasonably up-to-date here.
       // Separate regular nodes and layer containers
       const currentLayerContainers = [...nodes].filter(node => node.type === 'layerGroup');
       let currentNodes = [...nodes].filter(node => node.type !== 'layerGroup');
       let currentEdges = [...edges]; // Create a copy to prevent reference issues
-
+  
       // --- Start Calculation Phase ---
       let nextNodes = [...currentNodes];
       let nextEdges = [...currentEdges];
-
+  
       // 1. Apply removals first
       if (elementsToRemove.length > 0) {
         console.log('Calculating removals:', elementsToRemove);
         const elementsToRemoveSet = new Set(elementsToRemove);
         const removedNodeIds = new Set(nextNodes.filter(n => elementsToRemoveSet.has(n.id)).map(n => n.id));
-
+  
         nextNodes = nextNodes.filter((node) => !elementsToRemoveSet.has(node.id));
         nextEdges = nextEdges.filter(
           (edge) =>
             !elementsToRemoveSet.has(edge.id) &&
-            !removedNodeIds.has(edge.source) && // Also remove edges connected to removed nodes
+            !removedNodeIds.has(edge.source) && 
             !removedNodeIds.has(edge.target)
         );
       }
-
+  
       // 2. Apply updates to remaining nodes
       if (Object.keys(diagramUpdates).length > 0) {
         console.log('Calculating updates:', diagramUpdates);
         nextNodes = nextNodes.map((node) => {
           const updates = diagramUpdates[node.id];
           if (updates) {
-            // Merge updates intelligently
             return {
               ...node,
               ...(updates.position && { position: updates.position }),
@@ -1266,78 +1386,55 @@ const ModelWithAI = () => {
                 ...node.data,
                 ...(updates.data || {}),
                 ...(updates.type && { nodeType: updates.type }),
-                // Ensure essential callbacks are preserved if not explicitly updated
                 onEdit: node.data.onEdit || handleEditNode,
                 onDelete: node.data.onDelete || handleDeleteNode,
               },
-              ...(updates.type && { type: 'default' }), // Use 'default' type for rendering
+              ...(updates.type && { type: 'default' }),
             };
           }
           return node;
         });
       }
-
-      // 3. Prepare the basic structure of nodes to add
-      const basicNodesToAdd = nodesToAdd.map((node) => ({
+  
+      // 3. Prepare nodes to add with LR flow positioning hints
+      const basicNodesToAdd = nodesToAdd.map((node, index) => ({
         id: node.id,
-        type: 'default', // Use 'default' for our custom node rendering
-        position: node.position || { x: Math.random() * 500, y: Math.random() * 300 }, // Ensure position
+        type: 'default',
+        position: node.position || { 
+          x: 400 + (index * 160), // Horizontal spacing for LR flow
+          y: 100 + (index * 140)  // Vertical spread within layer
+        }, 
         data: {
           label: node.data?.label || node.id || 'Node',
           description: node.data?.description || '',
-          nodeType: node.type || 'default', // Store original type in data
-          // onEdit/onDelete will be added during the final prepareNodes call
+          nodeType: node.type || 'default',
         },
       }));
       let finalNodesListUnprepared = [...nextNodes, ...basicNodesToAdd];
-
-      // 4. Prepare the final list of edges *using the final UNPREPARED node list for validation*
+  
+      // 4. Process edges
       let finalEdgesList = [...nextEdges];
-      
-      // Keep track of all node connections for edge validation
-      const nodeConnectionMap = new Map();
-      
-      // Build a connection map from existing edges
-      finalEdgesList.forEach(edge => {
-        // Create a unique key for this connection
-        const connectionKey = `${edge.source}->${edge.target}`;
-        nodeConnectionMap.set(connectionKey, edge);
-      });
       
       if (edgesToAdd.length > 0) {
         console.log('Processing edges to add:', edgesToAdd.length);
         
-        // First validate all edges to add
         const validEdgesToAdd = edgesToAdd.filter(edge => {
           if (!edge.source || !edge.target) {
             console.warn(`Skipping edge ${edge.id || 'new'}: Missing source or target.`);
             return false;
           }
           
-          // Check if this edge's nodes exist in our final node list
           const sourceExists = finalNodesListUnprepared.some(n => n.id === edge.source);
           const targetExists = finalNodesListUnprepared.some(n => n.id === edge.target);
           
           if (!sourceExists || !targetExists) {
-            console.warn(`Skipping edge ${edge.id || 'new'}: ${!sourceExists ? 'source' : 'target'} node ${!sourceExists ? edge.source : edge.target} not found in final list.`);
+            console.warn(`Skipping edge ${edge.id || 'new'}: ${!sourceExists ? 'source' : 'target'} node not found.`);
             return false;
           }
           
-          // Check if we already have this exact connection (avoid duplicates)
-          const connectionKey = `${edge.source}->${edge.target}`;
-          const existingConnection = nodeConnectionMap.get(connectionKey);
-          
-          if (existingConnection) {
-            console.log(`Connection from ${edge.source} to ${edge.target} already exists, using existing edge.`);
-            return false; // Skip this edge since connection already exists
-          }
-          
-          // Add to our connection map
-          nodeConnectionMap.set(connectionKey, edge);
           return true;
         });
         
-        // Process valid edges to add
         if (validEdgesToAdd.length > 0) {
           console.log(`Adding ${validEdgesToAdd.length} new valid edges`);
           const processedEdgesToAdd = processEdges(validEdgesToAdd, finalNodesListUnprepared);
@@ -1345,7 +1442,7 @@ const ModelWithAI = () => {
         }
       }
       
-      // 5. Validate edge consistency - check if there are any edges referencing nodes that don't exist
+      // 5. Validate edge consistency
       const allNodeIds = new Set(finalNodesListUnprepared.map(node => node.id));
       finalEdgesList = finalEdgesList.filter(edge => {
         if (!allNodeIds.has(edge.source) || !allNodeIds.has(edge.target)) {
@@ -1354,54 +1451,35 @@ const ModelWithAI = () => {
         }
         return true;
       });
-      
-      // 6. Check for any logical connections that might be missing
-      // This can be enhanced based on your domain knowledge about which nodes should always be connected
-      console.log('Validating edge consistency across all nodes...');
-
-      // --- Final Preparation & Layout ---
-
-      // 7. Prepare ALL nodes using the FINAL nodes and FINAL edges list
-      console.log('Preparing final node list with final edges...');
+  
+      // 6. Prepare ALL nodes
+      console.log('Preparing final node list...');
       let finalNodesListPrepared = prepareNodesForDiagram(finalNodesListUnprepared, finalEdgesList);
-
-      // 8. Apply layout to the fully prepared final nodes and edges
-      console.log('Applying layout...');
-      const { nodes: layoutedNodes, edges: layoutedEdges } = getLayoutedElements(
-        finalNodesListPrepared, 
-        finalEdgesList,
-        'TB',
-        172,
-        36,
-        true // Force layout to ensure proper positioning
-      );
-
-      // 9. Generate updated layer containers or use existing ones
-      const updatedLayerContainers = updateExistingLayerContainers(currentLayerContainers, layoutedNodes);
-
-      // 10. Combine layer containers with regular nodes
-      const combinedNodes = [...updatedLayerContainers, ...layoutedNodes];
-
-      // --- State Update ---
-      // 11. Set state directly with the final calculated lists
+  
+      // 7. Apply LR flow positioning
+      console.log('Applying LR flow positioning...');
+      const backendPositionedNodes = applyBackendPositioning(finalNodesListPrepared);
+  
+      // 8. Generate updated layer containers
+      const updatedLayerContainers = updateExistingLayerContainers(currentLayerContainers, backendPositionedNodes);
+  
+      // 9. Combine layer containers with regular nodes
+      const combinedNodes = [...updatedLayerContainers, ...backendPositionedNodes];
+  
+      // 10. Set state
       console.log('Setting final state...');
+      console.log(`Final node count: ${backendPositionedNodes.length}, Final edge count: ${finalEdgesList.length}`);
       
-      // Log before setting state to help with debugging
-      console.log(`Final node count: ${layoutedNodes.length}, Final edge count: ${layoutedEdges.length}`);
-      
-      // Update both in the correct order to ensure proper rendering
-      setEdges(layoutedEdges);
+      setEdges(finalEdgesList);
       setNodes(combinedNodes);
-
+  
       setArchitectureUpdated(true);
-      setIsLayouting(false); // Indicate layout process ends
+      setIsLayouting(false);
       
-      // Log success message
-      console.log('Architecture response processed successfully');
+      console.log('Architecture response processed successfully with LR flow positioning');
     },
-    // Include nodes and edges for correct reference but make sure useDiagramNodes is properly memoized
-    [setNodes, setEdges, prepareNodesForDiagram, processEdges, getLayoutedElements, handleEditNode, handleDeleteNode, 
-     setIsLayouting, nodes, edges, updateExistingLayerContainers]
+    [setNodes, setEdges, prepareNodesForDiagram, processEdges, handleEditNode, handleDeleteNode, 
+     setIsLayouting, nodes, edges, updateExistingLayerContainers, applyBackendPositioning]
   );
 
   const handleExpertResponse = (fullResponse) => {
@@ -1704,7 +1782,7 @@ const ModelWithAI = () => {
               const { nodes: layoutedNodes, edges: layoutedEdges } = getLayoutedElements(
                 finalNodes,
                 processedEdges,
-                'TB',
+                'LR', // Change from TB to LR for left-to-right flow
                 172,
                 36,
                 false // Don't force layout to preserve positions where possible

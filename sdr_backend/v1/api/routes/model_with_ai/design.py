@@ -274,7 +274,8 @@ async def design_endpoint(
                     llm_response = await llm_service.generate_llm_response(
                         prompt=prompt,
                         model_provider="anthropic",
-                        model_name="claude-3.7-sonnet",
+                        model_name="claude-4-sonnet",
+                        # model_name="claude-4-opus",
                         temperature=0.4,
                         timeout=timeout
                     )
@@ -294,7 +295,8 @@ async def design_endpoint(
                     llm_response = await llm_service.generate_llm_response(
                         prompt=prompt,
                         model_provider="anthropic",
-                        model_name="claude-3.7-sonnet",
+                        model_name="claude-4-sonnet",
+                        # model_name="claude-4-opus",
                         temperature=0.4,
                         stream=False,
                         timeout=timeout

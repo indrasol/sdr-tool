@@ -4,6 +4,7 @@ import { motion } from 'framer-motion';
 import { useTypingEffect } from '@/hooks/useTypingEffect';
 import { Bot } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 
 export interface Message {
   role: 'user' | 'assistant';
@@ -29,15 +30,14 @@ const messageVariants = {
 };
 
 // Helper function to enhance text formatting for AI messages
-const enhanceTextFormatting = (text) => {
+const enhanceTextFormatting = (text: string) => {
   if (!text) return '';
-  return text
-    .replace(/(\d+)\.\s+([^\n]+)/g, '$1. $2') // Numbered lists
-    .replace(/(-|\*)\s+([^\n]+)/g, '* $2') // Bullet points
-    .replace(/(\d+)\.\s+([^:]+):\s*/g, '### $1. $2\n') // Headers
-    .replace(/\*\*([^*]+)\*\*/g, '**$1**') // Bold with **
-    .replace(/__([^_]+)__/g, '**$1**') // Bold with __
-    .replace(/^([A-Z][^:]+):/gm, '### $1'); // Section titles
+  // Only minimal cleanup: ensure newlines before list items and headers
+  let formatted = text
+    .replace(/([^-\n])\n(\s*[-*] )/g, '$1\n\n$2') // Ensure blank line before bullet
+    .replace(/([^-\n])\n(\s*\d+\. )/g, '$1\n\n$2') // Ensure blank line before numbered list
+    .replace(/([^-\n])\n(\s*#+ )/g, '$1\n\n$2'); // Ensure blank line before header
+  return formatted;
 };
 
 const ChatMessage: React.FC<ChatMessageProps> = ({ message, index, isLoadedProject = false }) => {
@@ -131,6 +131,7 @@ const ChatMessage: React.FC<ChatMessageProps> = ({ message, index, isLoadedProje
     return (
       <div className="markdown-content typing-content">
         <ReactMarkdown
+          remarkPlugins={[remarkGfm]}
           components={{
             h3: ({ children }) => <h3 className="text-md font-semibold mt-2 mb-1">{children}</h3>,
             ul: ({ children }) => <ul className="list-disc pl-5 mb-2">{children}</ul>,
@@ -205,6 +206,7 @@ const ChatMessage: React.FC<ChatMessageProps> = ({ message, index, isLoadedProje
           hasTyped ? (
             // Render full message after typing completes with ReactMarkdown
             <ReactMarkdown
+              remarkPlugins={[remarkGfm]}
               className="markdown-content"
               components={{
                 h3: ({ children }) => <h3 className="text-md font-semibold mt-2 mb-1">{children}</h3>,

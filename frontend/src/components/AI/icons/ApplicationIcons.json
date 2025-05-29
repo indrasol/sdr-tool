@@ -59,11 +59,6 @@
         "name": "application_proxy",
         "description": "Application Ication Proxy service.",
         "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/application-icons/proxy.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhcHBsaWNhdGlvbi1pY29ucy9wcm94eS5zdmciLCJpYXQiOjE3NDU1NDQ5ODAsImV4cCI6MzUyMjYyNTk2MH0.zfsw2VPEx8U-VyplB9t7h3i4ByoENO4UNrWvBsiC18o"
-      },
-      {
-        "name": "application_load_balancer",
-        "description": "Application Ication Load Balancer service.",
-        "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/application-icons/load_balancer.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhcHBsaWNhdGlvbi1pY29ucy9sb2FkX2JhbGFuY2VyLnN2ZyIsImlhdCI6MTc0NTU0NDk4MCwiZXhwIjozNTIyNjI1OTYwfQ.gqysuJk6PrMInVKn6oMDa8wOCjSSORCRqM0NhKuvg84"
       }
     ]
   }

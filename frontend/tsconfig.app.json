@@ -26,5 +26,5 @@
       "@/*": ["./src/*"]
     }
   },
-  "include": ["src"]
+  "include": ["src", "supabase.ts", "env.d.ts", "vite-env.d.ts"]
 }

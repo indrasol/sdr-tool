@@ -7,6 +7,7 @@ export interface CustomNodeData {
   description?: string;
   nodeType?: string;
   iconRenderer?: () => { component: React.ElementType; props: any; bgColor: string };
+  iconUrl?: string; // Add iconUrl property for direct HTML icon content
   onEdit?: (id: string, label: string) => void;
   onDelete?: (id: string) => void;
   isComment?: boolean;

@@ -8,6 +8,7 @@ import { cn } from '@/lib/utils';
 import { WallpaperOption } from './types/chatTypes';
 import ThinkingDisplay from './ThinkingDisplay'
 import { X } from 'lucide-react';
+import SpeechOverlay from './SpeechOverlay';
 
 export interface Message {
   role: 'user' | 'assistant';
@@ -97,6 +98,10 @@ const AIChat: React.FC<AIChatProps> = ({
   // Add new state for handling the suggestion UI
   const [internalShowSuggestion, setInternalShowSuggestion] = useState(showSuggestion);
   const [internalSuggestion, setInternalSuggestion] = useState(suggestion);
+
+  // Add state for speech recognition overlay
+  const [showSpeechOverlay, setShowSpeechOverlay] = useState(false);
+  const [speechTranscript, setSpeechTranscript] = useState('');
 
   // Update internal state when props change
   useEffect(() => {
@@ -498,6 +503,21 @@ const AIChat: React.FC<AIChatProps> = ({
     }
   };
 
+  // Handle microphone click from ChatInput
+  const handleMicrophoneClick = () => {
+    if (!isLoading) {
+      setShowSpeechOverlay(true);
+    }
+  };
+
+  // Handle speech recognition transcript
+  const handleTranscriptComplete = (transcript: string) => {
+    if (transcript) {
+      setSpeechTranscript(transcript);
+      onSendMessage(transcript);
+    }
+  };
+
   return (
     <div className={cn("flex flex-col h-full relative overflow-hidden", currentWallpaper.textClass)}>
       {/* Add the background with the selected wallpaper */}
@@ -507,6 +527,15 @@ const AIChat: React.FC<AIChatProps> = ({
         activeTab={activeTab} 
         onTabChange={handleTabChange} 
       />
+      
+      {/* Speech Recognition Overlay - Positioned relative to this component */}
+      {activeTab === 'guardian' && (
+        <SpeechOverlay
+          isOpen={showSpeechOverlay}
+          onClose={() => setShowSpeechOverlay(false)}
+          onTranscriptComplete={handleTranscriptComplete}
+        />
+      )}
       
       {activeTab === 'guardian' ? (
         <>
@@ -570,11 +599,10 @@ const AIChat: React.FC<AIChatProps> = ({
             onGenerateReport={onGenerateReport}
             onSaveProject={onSaveProject}
             hasMessages={messages.length > 0}
-            onWallpaperChange={handleWallpaperChange}
-            // isDisabled={isLoading}
             isThinking={isLoading}
             projectId={projectId}
             isLoadedProject={isLoadedProject}
+            onMicrophoneClick={handleMicrophoneClick}
           />
         </>
       ) : (

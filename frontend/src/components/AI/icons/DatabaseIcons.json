@@ -66,6 +66,21 @@
       "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/database-icons/database_mariadb.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJkYXRhYmFzZS1pY29ucy9kYXRhYmFzZV9tYXJpYWRiLnN2ZyIsImlhdCI6MTc0NzM1MzQyOSwiZXhwIjozNTI2MjQyODU3fQ.3TS7jlBF5AVFIrz_WmkOpCewoemS9unHI0atxl6m_zA"
     },
     {
+      "name": "database_pinecone_vector_database",
+      "description": "Pinecone is a vector database that allows you to store and query vectors, which are a type of data structure that can be used to represent complex data like images, text, and audio.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/database-icons/database_pinecone.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJkYXRhYmFzZS1pY29ucy9kYXRhYmFzZV9waW5lY29uZS5zdmciLCJpYXQiOjE3NDc2MzQ3OTAsImV4cCI6MTc3OTE3MDc5MH0.wBSL4FoZI3Pkp9BoO1knEjvhS_VWRxr8Ok8IOMsmsxE"
+    },
+    {
+      "name": "database_weaviate_vector_database",
+      "description": "Weaviate is a vector database that allows you to store and query vectors, which are a type of data structure that can be used to represent complex data like images, text, and audio.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/database-icons/database_weaviate_vector_database.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJkYXRhYmFzZS1pY29ucy9kYXRhYmFzZV93ZWF2aWF0ZV92ZWN0b3JfZGF0YWJhc2Uuc3ZnIiwiaWF0IjoxNzQ3NjM2MTk4LCJleHAiOjE3NzkxNzIxOTh9.TtTLzCIvKttDJQGCjAgjbRTHf2uJqhbSUzJmCENwEE0"
+    },
+    {
+      "name": "database_milvus_vector_database",
+      "description": "Milvus is a vector database that allows you to store and query vectors, which are a type of data structure that can be used to represent complex data like images, text, and audio.",
+      "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/database-icons/database_milvus_vector_database.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJkYXRhYmFzZS1pY29ucy9kYXRhYmFzZV9taWx2dXNfdmVjdG9yX2RhdGFiYXNlLnN2ZyIsImlhdCI6MTc0NzYzNjQ2MCwiZXhwIjoxNzc5MTcyNDYwfQ.pFAhiTN_0Xz56Kp8RrT5Tnjuwe2EVOGjGPGtw1KkinQ"
+    },
+    {
       "name": "database_timescaledb",
       "description": "TimescaleDB is an open-source time-series database designed to scale smoothly for time-series data, built as an extension on PostgreSQL.",
       "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/database-icons/database_timescaledb.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJkYXRhYmFzZS1pY29ucy9kYXRhYmFzZV90aW1lc2NhbGVkYi5zdmciLCJpYXQiOjE3NDczNTM0MjksImV4cCI6MzUyNjI0Mjg1OH0.Wm24qbKMhRJ7eX-ZBib4rbg1VA-M8HV9EasS_0DFPBo"
