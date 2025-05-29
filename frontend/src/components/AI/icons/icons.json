@@ -3080,11 +3080,6 @@
         "name": "application_proxy",
         "description": "Application Ication Proxy service.",
         "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/application-icons/proxy.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhcHBsaWNhdGlvbi1pY29ucy9wcm94eS5zdmciLCJpYXQiOjE3NDU1NDQ5ODAsImV4cCI6MzUyMjYyNTk2MH0.zfsw2VPEx8U-VyplB9t7h3i4ByoENO4UNrWvBsiC18o"
-      },
-      {
-        "name": "application_load_balancer",
-        "description": "Application Ication Load Balancer service.",
-        "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/application-icons/load_balancer.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhcHBsaWNhdGlvbi1pY29ucy9sb2FkX2JhbGFuY2VyLnN2ZyIsImlhdCI6MTc0NTU0NDk4MCwiZXhwIjozNTIyNjI1OTYwfQ.gqysuJk6PrMInVKn6oMDa8wOCjSSORCRqM0NhKuvg84"
       }
     ],
 
@@ -3093,6 +3088,11 @@
         "name": "network_traffic_manager",
         "description": "Ork Network Traffic Manager Network.",
         "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/network-icons/network_traffic_manager.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJuZXR3b3JrLWljb25zL25ldHdvcmtfdHJhZmZpY19tYW5hZ2VyLnN2ZyIsImlhdCI6MTc0NTYxNzcwNywiZXhwIjozNTIyNzcxNDE0fQ.r-ugkZAS6pB8Iov0OuZuvgfnkXgO0M87pkIDqb1FaGw"
+      },
+      {
+        "name": "network_load_balancer",
+        "description": "Distributes incoming traffic across multiple servers for scalability and reliability",
+        "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/application-icons/load_balancer.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhcHBsaWNhdGlvbi1pY29ucy9sb2FkX2JhbGFuY2VyLnN2ZyIsImlhdCI6MTc0NTU0NDk4MCwiZXhwIjozNTIyNjI1OTYwfQ.gqysuJk6PrMInVKn6oMDa8wOCjSSORCRqM0NhKuvg84"
       },
       {
         "name": "network_firewall",
@@ -5821,6 +5821,21 @@
     "name": "database_postgresql",
     "description": "PostgreSQL is a powerful, open-source object-relational database system that uses and extends the SQL language. It is highly extensible and standards-compliant, suitable for a variety of applications.",
     "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/database-icons/database_postgresql.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJkYXRhYmFzZS1pY29ucy9kYXRhYmFzZV9wb3N0Z3Jlc3FsLnN2ZyIsImlhdCI6MTc0NzQwOTQwNSwiZXhwIjoxNzc4OTQ1NDA1fQ.BEQlbaNHz2ih0DW6ouzy1Hw0_7fg8n9PQh4CLL3ejn0"
+  },
+  {
+    "name": "database_pinecone_vector_database",
+    "description": "Pinecone is a vector database that allows you to store and query vectors, which are a type of data structure that can be used to represent complex data like images, text, and audio.",
+    "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/database-icons/database_pinecone.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJkYXRhYmFzZS1pY29ucy9kYXRhYmFzZV9waW5lY29uZS5zdmciLCJpYXQiOjE3NDc2MzQ3OTAsImV4cCI6MTc3OTE3MDc5MH0.wBSL4FoZI3Pkp9BoO1knEjvhS_VWRxr8Ok8IOMsmsxE"
+  },
+  {
+    "name": "database_weaviate_vector_database",
+    "description": "Weaviate is a vector database that allows you to store and query vectors, which are a type of data structure that can be used to represent complex data like images, text, and audio.",
+    "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/database-icons/database_weaviate_vector_database.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJkYXRhYmFzZS1pY29ucy9kYXRhYmFzZV93ZWF2aWF0ZV92ZWN0b3JfZGF0YWJhc2Uuc3ZnIiwiaWF0IjoxNzQ3NjM2MTk4LCJleHAiOjE3NzkxNzIxOTh9.TtTLzCIvKttDJQGCjAgjbRTHf2uJqhbSUzJmCENwEE0"
+  },
+  {
+    "name": "database_milvus_vector_database",
+    "description": "Milvus is a vector database that allows you to store and query vectors, which are a type of data structure that can be used to represent complex data like images, text, and audio.",
+    "icon_url": "https://yinltryamlaidmexpvnx.supabase.co/storage/v1/object/sign/database-icons/database_milvus_vector_database.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJkYXRhYmFzZS1pY29ucy9kYXRhYmFzZV9taWx2dXNfdmVjdG9yX2RhdGFiYXNlLnN2ZyIsImlhdCI6MTc0NzYzNjQ2MCwiZXhwIjoxNzc5MTcyNDYwfQ.pFAhiTN_0Xz56Kp8RrT5Tnjuwe2EVOGjGPGtw1KkinQ"
   },
   {
     "name": "database_cockroachdb",

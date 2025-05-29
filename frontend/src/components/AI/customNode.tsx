@@ -367,7 +367,7 @@ const CustomNode = ({
     border: '2px solid #000000',
     width: '12px',
     height: '12px',
-    bottom: '-6px',
+    right: '-6px',
     borderRadius: '50%',
     zIndex: 10,
   };
@@ -378,7 +378,7 @@ const CustomNode = ({
     border: '2px solid #000000',
     width: '12px',
     height: '12px',
-    top: '-6px',
+    left: '-6px',
     borderRadius: '50%',
     zIndex: 10,
   };
@@ -408,23 +408,23 @@ const CustomNode = ({
       data-is-network={isNetwork ? 'true' : 'false'}
       data-is-client={isClient ? 'true' : 'false'}
     >
-      {/* Source handle (bottom) - Only render when there's a connection or node is selected */}
+      {/* Source handle (right) - Only render when there's a connection or node is selected */}
       {(hasSourceConnection || selected) && (
         <Handle
           type="source"
-          position={Position.Bottom}
-          id="bottom"
+          position={Position.Right}
+          id="right"
           className="custom-handle source-handle"
           style={sourceHandleStyle}
         />
       )}
       
-      {/* Target handle (top) - Only render when there's a connection or node is selected */}
+      {/* Target handle (left) - Only render when there's a connection or node is selected */}
       {(hasTargetConnection || selected) && (
         <Handle
           type="target"
-          position={Position.Top}
-          id="top"
+          position={Position.Left}
+          id="left"
           className="custom-handle target-handle"
           style={targetHandleStyle}
         />
@@ -450,7 +450,7 @@ const CustomNode = ({
               {/* Icon container with shadow for better visibility */}
               <div 
                 className={classNames(
-                  "flex items-center justify-center mb-1",
+                  "flex flex-col items-center justify-center mb-1 gap-6", // Use gap-6 for wide, equal vertical spacing between icons
                   selected ? "ring-2 ring-blue-400 rounded-md" : "",
                   isDatabase ? "database-node" : 
                   isApplication ? "application-node" : 
@@ -480,13 +480,28 @@ const CustomNode = ({
                       />
                     );
                   })()
+                ) : safeData.iconUrl ? (
+                  // Use the iconUrl if it exists
+                  <div 
+                    dangerouslySetInnerHTML={{ __html: safeData.iconUrl as string }} 
+                    style={{
+                      width: `${iconSize}px`,
+                      height: `${iconSize}px`,
+                      display: 'flex',
+                      justifyContent: 'center',
+                      alignItems: 'center'
+                    }}
+                    className={nodeStyle.iconClass || ''}
+                  />
                 ) : (
                   mapNodeTypeToIcon(nodeType)
                 )}
               </div>
               
+              {/* Add extra vertical spacing between icon and label for clarity */}
+              <div style={{ height: '0px' }} />
               {/* Label underneath */}
-              <div className="text-center mt-2 max-w-[140px]">
+              <div className="text-center mt-2 max-w-[160px]">
                 <div className="font-semibold text-sm node-label bg-transparent">
                   {label}
                 </div>

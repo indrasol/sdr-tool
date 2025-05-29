@@ -95,22 +95,26 @@ export const ThreatBadges: React.FC<ThreatBadgesProps> = ({
     boxShadow: '0 0 0 1.5px white, 0 2px 4px rgba(0,0,0,0.3)',
     cursor: 'pointer',
     transition: 'transform 0.2s ease, box-shadow 0.2s ease',
+    opacity: 1,
   };
 
   // Severity-specific styles
   const highStyle: React.CSSProperties = {
     ...badgeStyle,
     backgroundColor: '#ef4444',
+    color: 'white',
   };
 
   const mediumStyle: React.CSSProperties = {
     ...badgeStyle,
     backgroundColor: '#f59e0b',
+    color: 'white',
   };
 
   const lowStyle: React.CSSProperties = {
     ...badgeStyle,
     backgroundColor: '#3b82f6',
+    color: 'white',
   };
 
   // Get current active threats based on badge type
@@ -590,14 +594,38 @@ export const ThreatBadges: React.FC<ThreatBadgesProps> = ({
           }
           
           @keyframes pulse {
-            0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.3), 0 0 0 1.5px white, 0 2px 4px rgba(0,0,0,0.3); }
-            70% { box-shadow: 0 0 0 5px rgba(239, 68, 68, 0), 0 0 0 1.5px white, 0 2px 4px rgba(0,0,0,0.3); }
-            100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0), 0 0 0 1.5px white, 0 2px 4px rgba(0,0,0,0.3); }
+            0% { 
+              transform: scale(0.95);
+              box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7), 0 0 0 1.5px white, 0 2px 4px rgba(0,0,0,0.3); 
+            }
+            70% { 
+              transform: scale(1.05);
+              box-shadow: 0 0 0 10px rgba(239, 68, 68, 0), 0 0 0 1.5px white, 0 2px 4px rgba(0,0,0,0.3); 
+            }
+            100% { 
+              transform: scale(0.95);
+              box-shadow: 0 0 0 0 rgba(239, 68, 68, 0), 0 0 0 1.5px white, 0 2px 4px rgba(0,0,0,0.3); 
+            }
           }
           
           .threat-badge:hover {
             transform: scale(1.1);
             transition: transform 0.2s ease;
+          }
+          
+          .threat-badge-high {
+            background-color: #ef4444 !important;
+            color: white !important;
+          }
+          
+          .threat-badge-medium {
+            background-color: #f59e0b !important;
+            color: white !important;
+          }
+          
+          .threat-badge-low {
+            background-color: #3b82f6 !important;
+            color: white !important;
           }
         `}
       </style>

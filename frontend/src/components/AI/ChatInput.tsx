@@ -1,19 +1,18 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { Textarea } from '@/components/ui/textarea';
 import BotIcon from './elements/BotIcon';
 import ActionBar from './ActionBar';
 import PlaceholderText, { getStaticPlaceholderText } from './PlaceholderText';
-import { WallpaperOption } from './types/chatTypes';
 
 interface ChatInputProps {
   onSendMessage: (message: string) => void;
   hasMessages?: boolean;
   onGenerateReport?: () => void;
   onSaveProject?: () => void;
-  onWallpaperChange?: (wallpaper: WallpaperOption) => void;
   isThinking?: boolean;
   projectId?: string;
   isLoadedProject?: boolean;
+  onMicrophoneClick?: () => void;
 }
 
 const ChatInput: React.FC<ChatInputProps> = ({ 
@@ -21,15 +20,16 @@ const ChatInput: React.FC<ChatInputProps> = ({
   hasMessages = false,
   onGenerateReport,
   onSaveProject,
-  onWallpaperChange,
   isThinking = false,
   projectId = '',
-  isLoadedProject = false
+  isLoadedProject = false,
+  onMicrophoneClick
 }) => {
   const [input, setInput] = useState('');
   const [hasInteracted, setHasInteracted] = useState(false);
   const [messagesSent, setMessagesSent] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
+  const chatInputRef = useRef<HTMLDivElement>(null);
   const isTyping = input.trim().length > 0;
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -60,6 +60,13 @@ const ChatInput: React.FC<ChatInputProps> = ({
     }
   };
 
+  // This function is now just a pass-through to the parent's handler
+  const handleMicrophoneClick = () => {
+    if (!isThinking && onMicrophoneClick) {
+      onMicrophoneClick();
+    }
+  };
+
   // Get placeholder text props
   const placeholderProps = { 
     hasMessages, 
@@ -77,7 +84,7 @@ const ChatInput: React.FC<ChatInputProps> = ({
   const staticPlaceholder = showTypingPlaceholder ? "" : (isThinking ? "" : (showBotIcon ? "" : getStaticPlaceholderText(placeholderProps)));
 
   return (
-    <div className="p-3 bg-white border-t sticky bottom-0 z-10 shadow-sm">
+    <div className="p-3 bg-white border-t sticky bottom-0 z-10 shadow-sm" ref={chatInputRef}>
       <form onSubmit={handleSubmit} className="space-y-2">
         <div className="relative">
           <Textarea
@@ -121,8 +128,8 @@ const ChatInput: React.FC<ChatInputProps> = ({
           <ActionBar 
             isInputEmpty={!input.trim()} 
             isProcessing={isProcessing || isThinking}
-            onWallpaperChange={onWallpaperChange}
             projectId={projectId}
+            onMicrophoneClick={handleMicrophoneClick}
           />
         </div>
       </form>
