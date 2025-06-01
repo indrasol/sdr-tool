@@ -53,20 +53,20 @@ jobs:
           tenant-id:  ${{ secrets.AZUREAPPSERVICE_TENANTID }}
           subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID }}
 
-      # Make sure Run‑From‑Package flag exists (idempotent)
-      - name: Ensure WEBSITE_RUN_FROM_PACKAGE = 1
+       # 🔓 Unlock the file‑system by removing the flag
+      - name: Disable WEBSITE_RUN_FROM_PACKAGE
         run: |
-          az webapp config appsettings set \
-             -g ${{ env.RESOURCE_GROUP }} -n ${{ env.APP_NAME }} \
-             --settings WEBSITE_RUN_FROM_PACKAGE=1
+          az webapp config appsettings delete \
+             --name ${{ env.APP_NAME }} \
+             --resource-group ${{ env.RESOURCE_GROUP }} \
+             --setting-names WEBSITE_RUN_FROM_PACKAGE || true
 
-      # ❷ Deploy the tiny ZIP
+      # --- normal OneDeploy upload ---
       - uses: azure/webapps-deploy@v3
         with:
           app-name: ${{ env.APP_NAME }}
           package: site.zip
-          clean: true          # wipe old files to avoid clashes
-          deployment-method: runFromPackage
+          clean: true
         timeout-minutes: 15
 
       # ❸ Smoke test
