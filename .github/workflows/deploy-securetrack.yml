@@ -59,7 +59,8 @@ jobs:
 
     - name: Deploy to Web App
       id: deploy
-      uses: azure/webapps-deploy@v3
+      uses: azure/webapps-deploy@v2
       with:
         app-name:   ${{ env.APP_NAME }}
+        resource-group-name: RG-EU-STB-PRD-01
         package:    site.zip             # <── a single ZIP file
