@@ -19,6 +19,10 @@ jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
 
+    concurrency:
+      group: deploy-${{ github.ref }}
+      cancel-in-progress: true
+
     steps:
     - name: Checkout
       uses: actions/checkout@v4
@@ -45,7 +49,7 @@ jobs:
         cd deploy
         zip -r ../site.zip .
 
-    - name: Upload artifact (for troubleshooting)
+    - name: Upload artifact
       uses: actions/upload-artifact@v4
       with:
         name: build-output
@@ -88,57 +92,41 @@ jobs:
         else
           echo "No active deployment found. Proceeding..."
         fi
-        
-    # FIX: Remove the blocking app setting
-    - name: Remove WEBSITE_RUN_FROM_PACKAGE setting
-      run: |
-        echo "Removing WEBSITE_RUN_FROM_PACKAGE setting..."
-        az webapp config appsettings delete \
-          --name ${{ env.APP_NAME }} \
-          --resource-group ${{ env.RESOURCE_GROUP }} \
-          --setting-names WEBSITE_RUN_FROM_PACKAGE || true
-        
-        echo "Restarting app to clear any deployment locks..."
-        az webapp restart \
-          --name ${{ env.APP_NAME }} \
-          --resource-group ${{ env.RESOURCE_GROUP }}
-        
-        sleep 30
 
     # FIX: Use the new non-deprecated command
-    - name: Deploy to Web App
-      uses: nick-invision/retry@v2
+    - name: Deploy to Azure Web App
+      uses: azure/webapps-deploy@v3
       with:
-        timeout_minutes: 20
-        max_attempts: 3
-        retry_wait_seconds: 60
-        command: |
-          az webapp deploy \
-            --name ${{ env.APP_NAME }} \
-            --resource-group ${{ env.RESOURCE_GROUP }} \
-            --src-path site.zip \
-            --type zip \
-            --timeout 600
+        app-name: ${{ env.APP_NAME }}
+        package: site.zip
+        clean: true  # Clean deployment
+      timeout-minutes: 15
 
     # FALLBACK: If retry fails, use alternative deployment method
-    - name: Fallback Deploy (if needed)
+    - name: Alternative Deployment (if needed)
       if: failure()
       run: |
-        echo "Primary deployment failed, trying alternative method..."
+        echo "Primary deployment failed, trying Kudu API directly..."
         
-        # Stop the app first
-        az webapp stop --name ${{ env.APP_NAME }} --resource-group ${{ env.RESOURCE_GROUP }}
-        sleep 10
-        
-        # Deploy using FTP method
-        az webapp deployment source config-zip \
+        # Get publish profile
+        PUBLISH_PROFILE=$(az webapp deployment list-publishing-profiles \
           --name ${{ env.APP_NAME }} \
           --resource-group ${{ env.RESOURCE_GROUP }} \
-          --src site.zip \
-          --timeout 900
+          --xml)
         
-        # Start the app
-        az webapp start --name ${{ env.APP_NAME }} --resource-group ${{ env.RESOURCE_GROUP }}
+        # Extract Kudu credentials
+        KUDU_URL=$(echo "$PUBLISH_PROFILE" | grep -o 'publishUrl="[^"]*\.scm\.[^"]*"' | sed 's/publishUrl="//;s/"//' | head -1)
+        KUDU_USER=$(echo "$PUBLISH_PROFILE" | grep -o 'userName="[^"]*"' | sed 's/userName="//;s/"//' | head -1)
+        KUDU_PASS=$(echo "$PUBLISH_PROFILE" | grep -o 'userPWD="[^"]*"' | sed 's/userPWD="//;s/"//' | head -1)
+        
+        echo "Deploying via Kudu API..."
+        curl -X POST \
+          -u "$KUDU_USER:$KUDU_PASS" \
+          -H "Content-Type: application/zip" \
+          --data-binary @site.zip \
+          "https://$KUDU_URL/api/zipdeploy?isAsync=false" \
+          --max-time 600 \
+          -v
 
     - name: Verify Deployment
       run: |
