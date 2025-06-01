@@ -89,18 +89,35 @@ jobs:
           echo "No active deployment found. Proceeding..."
         fi
         
-    # NEW: Deploy with retry logic
-    - name: Deploy to Web App with Retry
+    # FIX: Remove the blocking app setting
+    - name: Remove WEBSITE_RUN_FROM_PACKAGE setting
+      run: |
+        echo "Removing WEBSITE_RUN_FROM_PACKAGE setting..."
+        az webapp config appsettings delete \
+          --name ${{ env.APP_NAME }} \
+          --resource-group ${{ env.RESOURCE_GROUP }} \
+          --setting-names WEBSITE_RUN_FROM_PACKAGE || true
+        
+        echo "Restarting app to clear any deployment locks..."
+        az webapp restart \
+          --name ${{ env.APP_NAME }} \
+          --resource-group ${{ env.RESOURCE_GROUP }}
+        
+        sleep 30
+
+    # FIX: Use the new non-deprecated command
+    - name: Deploy to Web App
       uses: nick-invision/retry@v2
       with:
         timeout_minutes: 20
         max_attempts: 3
         retry_wait_seconds: 60
         command: |
-          az webapp deployment source config-zip \
+          az webapp deploy \
             --name ${{ env.APP_NAME }} \
             --resource-group ${{ env.RESOURCE_GROUP }} \
-            --src site.zip \
+            --src-path site.zip \
+            --type zip \
             --timeout 600
 
     # FALLBACK: If retry fails, use alternative deployment method
