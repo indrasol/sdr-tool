@@ -5,6 +5,10 @@ on:
     branches: [ main ]
   workflow_dispatch:
 
+permissions:
+  contents: read
+  id-token: write
+
 env:
   APP_NAME: securetrack
   RESOURCE_GROUP: RG-EU-STB-PRD-01
