@@ -12,6 +12,8 @@ permissions:
 env:
   APP_NAME: securetrack
   PYTHON_VERSION: '3.11'
+  RESOURCE_GROUP: RG-EU-STB-PRD-01
+  APP_URL: https://securetrack-fwcjcdffbug2g9fc.eastus-01.azurewebsites.net
 
 jobs:
   build-and-deploy:
@@ -57,11 +59,84 @@ jobs:
         tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID }}
         subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID }}
 
-    - name: Deploy to Web App
-      id: deploy
-      uses: azure/webapps-deploy@v3
+    - name: Check and clear existing deployments
+      run: |
+        echo "Checking for existing deployments..."
+        
+        # Get current deployment status
+        DEPLOYMENT_STATUS=$(az webapp deployment list \
+          --name ${{ env.APP_NAME }} \
+          --resource-group ${{ env.RESOURCE_GROUP }} \
+          --query "[0].status" -o tsv 2>/dev/null || echo "none")
+        
+        echo "Current deployment status: $DEPLOYMENT_STATUS"
+        
+        # If there's an active deployment, try to stop it
+        if [ "$DEPLOYMENT_STATUS" = "Running" ] || [ "$DEPLOYMENT_STATUS" = "Building" ]; then
+          echo "Found active deployment, attempting to stop..."
+          
+          # Method 1: Restart the app service to clear locks
+          echo "Restarting app service..."
+          az webapp restart \
+            --name ${{ env.APP_NAME }} \
+            --resource-group ${{ env.RESOURCE_GROUP }}
+          
+          # Wait a bit for restart to complete
+          sleep 30
+          
+          echo "App service restarted. Proceeding with deployment..."
+        else
+          echo "No active deployment found. Proceeding..."
+        fi
+        
+    # NEW: Deploy with retry logic
+    - name: Deploy to Web App with Retry
+      uses: nick-invision/retry@v2
       with:
-        app-name:   ${{ env.APP_NAME }}
-        resource-group-name: RG-EU-STB-PRD-01
-        package:    site.zip
-        deployment-method: zipDeploy
+        timeout_minutes: 20
+        max_attempts: 3
+        retry_wait_seconds: 60
+        command: |
+          az webapp deployment source config-zip \
+            --name ${{ env.APP_NAME }} \
+            --resource-group ${{ env.RESOURCE_GROUP }} \
+            --src site.zip \
+            --timeout 600
+
+    # FALLBACK: If retry fails, use alternative deployment method
+    - name: Fallback Deploy (if needed)
+      if: failure()
+      run: |
+        echo "Primary deployment failed, trying alternative method..."
+        
+        # Stop the app first
+        az webapp stop --name ${{ env.APP_NAME }} --resource-group ${{ env.RESOURCE_GROUP }}
+        sleep 10
+        
+        # Deploy using FTP method
+        az webapp deployment source config-zip \
+          --name ${{ env.APP_NAME }} \
+          --resource-group ${{ env.RESOURCE_GROUP }} \
+          --src site.zip \
+          --timeout 900
+        
+        # Start the app
+        az webapp start --name ${{ env.APP_NAME }} --resource-group ${{ env.RESOURCE_GROUP }}
+
+    - name: Verify Deployment
+      run: |
+        echo "Waiting for app to start..."
+        sleep 30
+        
+        # Check if the app is responding
+        APP_URL=${{ env.APP_URL }}
+        
+        for i in {1..5}; do
+          if curl -f -s "$APP_URL" > /dev/null; then
+            echo "✅ App is responding successfully!"
+            break
+          else
+            echo "⏳ Attempt $i: App not responding yet, waiting..."
+            sleep 30
+          fi
+        done
