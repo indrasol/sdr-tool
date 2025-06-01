@@ -1,147 +1,76 @@
-name: Build & Deploy – securetrack
+name: Build & Deploy – securetrack
 
 on:
   push:
     branches: [ main ]
   workflow_dispatch:
 
-permissions:
-  contents: read
-  id-token: write     # for azure/login OIDC
-
 env:
   APP_NAME: securetrack
-  PYTHON_VERSION: '3.11'
   RESOURCE_GROUP: RG-EU-STB-PRD-01
+  PYTHON_VERSION: "3.11"
   APP_URL: https://securetrack-fwcjcdffbug2g9fc.eastus-01.azurewebsites.net
 
 jobs:
-  build-and-deploy:
+  build:
     runs-on: ubuntu-latest
+    steps:
+      # 1. Checkout code
+      - uses: actions/checkout@v4
 
+      # 2. (Optional) lint / unit‑test here …
+
+      # 3. Zip ONLY source + requirements
+      - name: Create deployment bundle
+        run: |
+          zip -r site.zip sdr_backend requirements.txt \
+              -x "**/__pycache__/*" ".git/*"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: build-output
+          path: site.zip
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
     concurrency:
       group: deploy-${{ github.ref }}
       cancel-in-progress: true
-
     steps:
-    - name: Checkout
-      uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: build-output
 
-    # ─── BUILD (local) ───────────────────────────────────────────────────────────
-    - name: Set up Python
-      uses: actions/setup-python@v5
-      with:
-        python-version: ${{ env.PYTHON_VERSION }}
+      # Login with OIDC
+      - uses: azure/login@v2
+        with:
+          client-id:  ${{ secrets.AZUREAPPSERVICE_CLIENTID }}
+          tenant-id:  ${{ secrets.AZUREAPPSERVICE_TENANTID }}
+          subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID }}
 
-    - name: Prepare deployment folder
-      run: |
-        # 1.  make a clean folder for everything that must go to the server
-        mkdir deploy
-    
-        # 2.  copy your source package exactly as-is
-        cp -r sdr_backend deploy/
-    
-        # 3.  vendor all dependencies **into the deploy root**
-        pip install --upgrade pip
-        pip install --no-cache-dir -r sdr_backend/requirements.txt -t deploy
-    
-        # 4.  create the zip from inside deploy/
-        cd deploy
-        zip -r ../site.zip .
-
-    - name: Upload artifact
-      uses: actions/upload-artifact@v4
-      with:
-        name: build-output
-        path: site.zip
-
-    # ─── DEPLOY ─────────────────────────────────────────────────────────────────
-    - name: Azure login (OIDC)
-      uses: azure/login@v2
-      with:
-        client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID }}
-        tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID }}
-        subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID }}
-
-    - name: Check and clear existing deployments
-      run: |
-        echo "Checking for existing deployments..."
-        
-        # Get current deployment status
-        DEPLOYMENT_STATUS=$(az webapp deployment list \
-          --name ${{ env.APP_NAME }} \
-          --resource-group ${{ env.RESOURCE_GROUP }} \
-          --query "[0].status" -o tsv 2>/dev/null || echo "none")
-        
-        echo "Current deployment status: $DEPLOYMENT_STATUS"
-        
-        # If there's an active deployment, try to stop it
-        if [ "$DEPLOYMENT_STATUS" = "Running" ] || [ "$DEPLOYMENT_STATUS" = "Building" ]; then
-          echo "Found active deployment, attempting to stop..."
-          
-          # Method 1: Restart the app service to clear locks
-          echo "Restarting app service..."
-          az webapp restart \
+      # ❶ Ensure server‑side build is ON (one‑liner; no harm if it already exists)
+      - name: Enable Oryx build on App Service
+        run: |
+          az webapp config appsettings set \
             --name ${{ env.APP_NAME }} \
-            --resource-group ${{ env.RESOURCE_GROUP }}
-          
-          # Wait a bit for restart to complete
-          sleep 30
-          
-          echo "App service restarted. Proceeding with deployment..."
-        else
-          echo "No active deployment found. Proceeding..."
-        fi
+            --resource-group ${{ env.RESOURCE_GROUP }} \
+            --settings SCM_DO_BUILD_DURING_DEPLOYMENT=true
 
-    # FIX: Use the new non-deprecated command
-    - name: Deploy to Azure Web App
-      uses: azure/webapps-deploy@v3
-      with:
-        app-name: ${{ env.APP_NAME }}
-        package: site.zip
-        clean: true  # Clean deployment
-      timeout-minutes: 15
+      # ❷ Deploy the tiny ZIP
+      - uses: azure/webapps-deploy@v3
+        with:
+          app-name: ${{ env.APP_NAME }}
+          package: site.zip
+          clean: true          # wipe old files to avoid clashes
+        timeout-minutes: 15
 
-    # FALLBACK: If retry fails, use alternative deployment method
-    - name: Alternative Deployment (if needed)
-      if: failure()
-      run: |
-        echo "Primary deployment failed, trying Kudu API directly..."
-        
-        # Get publish profile
-        PUBLISH_PROFILE=$(az webapp deployment list-publishing-profiles \
-          --name ${{ env.APP_NAME }} \
-          --resource-group ${{ env.RESOURCE_GROUP }} \
-          --xml)
-        
-        # Extract Kudu credentials
-        KUDU_URL=$(echo "$PUBLISH_PROFILE" | grep -o 'publishUrl="[^"]*\.scm\.[^"]*"' | sed 's/publishUrl="//;s/"//' | head -1)
-        KUDU_USER=$(echo "$PUBLISH_PROFILE" | grep -o 'userName="[^"]*"' | sed 's/userName="//;s/"//' | head -1)
-        KUDU_PASS=$(echo "$PUBLISH_PROFILE" | grep -o 'userPWD="[^"]*"' | sed 's/userPWD="//;s/"//' | head -1)
-        
-        echo "Deploying via Kudu API..."
-        curl -X POST \
-          -u "$KUDU_USER:$KUDU_PASS" \
-          -H "Content-Type: application/zip" \
-          --data-binary @site.zip \
-          "https://$KUDU_URL/api/zipdeploy?isAsync=false" \
-          --max-time 600 \
-          -v
+      # ❸ Smoke test
+      - name: Verify app is up
+        run: |
+          for i in {1..5}; do
+            curl -fsSL "${{ env.APP_URL }}" && exit 0
+            echo "Waiting for app… ($i/5)"; sleep 30
+          done
+          echo "App did not start!" && exit 1
 
-    - name: Verify Deployment
-      run: |
-        echo "Waiting for app to start..."
-        sleep 30
-        
-        # Check if the app is responding
-        APP_URL=${{ env.APP_URL }}
-        
-        for i in {1..5}; do
-          if curl -f -s "$APP_URL" > /dev/null; then
-            echo "✅ App is responding successfully!"
-            break
-          else
-            echo "⏳ Attempt $i: App not responding yet, waiting..."
-            sleep 30
-          fi
-        done
