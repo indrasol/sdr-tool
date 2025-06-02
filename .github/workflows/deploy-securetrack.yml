@@ -53,22 +53,56 @@ jobs:
           tenant-id:  ${{ secrets.AZUREAPPSERVICE_TENANTID }}
           subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID }}
 
-       # 🔓 Unlock the file‑system by removing the flag
-      # - name: Disable WEBSITE_RUN_FROM_PACKAGE
-      #   run: |
-      #     az webapp config appsettings delete \
-      #        --name ${{ env.APP_NAME }} \
-      #        --resource-group ${{ env.RESOURCE_GROUP }} \
-      #        --setting-names WEBSITE_RUN_FROM_PACKAGE || true
+     # ─── 1️⃣ Stop the web app (releases locks) ─────────
+      - name: Stop App Service
+        run: |
+          az webapp stop \
+            --name ${{ env.APP_NAME }} \
+            --resource-group ${{ env.RESOURCE_GROUP }}
 
-      # --- normal OneDeploy upload ---
+      # ─── 2️⃣ Clean wwwroot via Kudu API (region‑aware) ───────
+      - name: Clean wwwroot (Kudu DELETE)
+        env:
+          APP_NAME:       ${{ env.APP_NAME }}
+          RESOURCE_GROUP: ${{ env.RESOURCE_GROUP }}
+        run: |
+          # Fetch publishing profile XML
+          PROFILE=$(az webapp deployment list-publishing-profiles \
+                    --name "$APP_NAME" \
+                    --resource-group "$RESOURCE_GROUP" --xml)
+      
+          # Extract creds & the full publishUrl (e.g. securetrack‑fwcjcdffbug2g9fc.scm.eastus-01.azurewebsites.net:443)
+          KUDU_USER=$(echo "$PROFILE" | grep -oP '(?<=userName=")[^"]+' | head -1)
+          KUDU_PASS=$(echo "$PROFILE" | grep -oP '(?<=userPWD=")[^"]+'  | head -1)
+          PUBLISH_URL=$(echo "$PROFILE" | grep -oP '(?<=publishUrl=")[^"]+' | head -1)
+      
+          # Mask secrets
+          echo "::add-mask::$KUDU_USER"
+          echo "::add-mask::$KUDU_PASS"
+      
+          # Strip port if present and build base URL
+          KUDU_HOST=${PUBLISH_URL%%:*}                    # everything before the first colon
+          KUDU_URL="https://${KUDU_HOST}/api/vfs/site/wwwroot/"
+      
+          echo "🧹 Deleting existing files at $KUDU_URL"
+          curl -sS -u "$KUDU_USER:$KUDU_PASS" -X DELETE "$KUDU_URL" -H "If-Match: *"
+
+      # ─── 3️⃣ Deploy package ────────────────────────────
       - uses: azure/webapps-deploy@v3
         with:
           app-name: ${{ env.APP_NAME }}
           package: site.zip
+          # keep `clean: true` – harmless after our manual wipe
           clean: true
         timeout-minutes: 15
 
+      # ─── 4️⃣ Restart & smoke‑test ──────────────────────
+      - name: Start App Service
+        run: |
+          az webapp start \
+            --name ${{ env.APP_NAME }} \
+            --resource-group ${{ env.RESOURCE_GROUP }}
+            
       # ❸ Smoke test
       - name: Verify app is up
         run: |
