@@ -22,18 +22,46 @@ jobs:
       # 1. Checkout code
       - uses: actions/checkout@v4
 
-      # 2. (Optional) lint / unit‑test here …
-
-      # 3. Zip ONLY source + requirements
-      - name: Create deployment bundle
+      # ─── BUILD (local) ───────────────────────────────────────────────────────────
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+  
+      - name: Prepare deployment folder
         run: |
-          zip -r site.zip sdr_backend requirements.txt \
-              -x "**/__pycache__/*" ".git/*"
-
-      - uses: actions/upload-artifact@v4
+          # 1.  make a clean folder for everything that must go to the server
+          mkdir deploy
+      
+          # 2.  copy your source package exactly as-is
+          cp -r sdr_backend deploy/
+      
+          # 3.  vendor all dependencies **into the deploy root**
+          pip install --upgrade pip
+          pip install --no-cache-dir -r sdr_backend/requirements.txt -t deploy
+      
+          # 4.  create the zip from inside deploy/
+          cd deploy
+          zip -r ../site.zip .
+  
+      - name: Upload artifact (for troubleshooting)
+        uses: actions/upload-artifact@v4
         with:
           name: build-output
           path: site.zip
+
+      # 2. (Optional) lint / unit‑test here …
+
+      # 3. Zip ONLY source + requirements
+      # - name: Create deployment bundle
+      #   run: |
+      #     zip -r site.zip sdr_backend requirements.txt \
+      #         -x "**/__pycache__/*" ".git/*"
+
+      # - uses: actions/upload-artifact@v4
+      #   with:
+      #     name: build-output
+      #     path: site.zip
 
   deploy:
     needs: build
@@ -88,11 +116,13 @@ jobs:
       #     curl -sS -u "$KUDU_USER:$KUDU_PASS" -X DELETE "$KUDU_URL" -H "If-Match: *"
 
       # ─── 3️⃣ Deploy package ────────────────────────────
-      - uses: azure/webapps-deploy@v3
+      - name: Deploy to Web App
+        id: deploy
+        uses: azure/webapps-deploy@v3
         with:
-          app-name: ${{ env.APP_NAME }}
-          package: site.zip
-          # keep `clean: true` – harmless after our manual wipe
+          app-name:   ${{ env.APP_NAME }}
+          package:    site.zip   
+            # keep `clean: true` – harmless after our manual wipe
           clean: true
         timeout-minutes: 15
 
