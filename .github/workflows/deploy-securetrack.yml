@@ -1,4 +1,4 @@
-name: Build & Deploy – securetrack
+name: Build & Deploy – securetrack01
 
 on:
   push:
@@ -10,10 +10,10 @@ permissions:
   id-token: write
 
 env:
-  APP_NAME: securetrack
+  APP_NAME: securetrack01
   RESOURCE_GROUP: RG-EU-STB-PRD-01
   PYTHON_VERSION: "3.11"
-  APP_URL: https://securetrack-fwcjcdffbug2g9fc.eastus-01.azurewebsites.net
+  APP_URL: https://securetrack01-e5g4endda5aebxcx.eastus-01.azurewebsites.net
 
 jobs:
   build:
