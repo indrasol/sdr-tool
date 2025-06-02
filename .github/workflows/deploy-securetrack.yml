@@ -1,80 +1,80 @@
-# name: Build & Deploy – securetrack
+name: Build & Deploy – securetrack
 
-# on:
-#   push:
-#     branches: [ main ]
-#   workflow_dispatch:
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
 
-# permissions:
-#   contents: read
-#   id-token: write
+permissions:
+  contents: read
+  id-token: write
 
-# env:
-#   APP_NAME: securetrack
-#   RESOURCE_GROUP: RG-EU-STB-PRD-01
-#   PYTHON_VERSION: "3.11"
-#   APP_URL: https://securetrack-fwcjcdffbug2g9fc.eastus-01.azurewebsites.net
+env:
+  APP_NAME: securetrack
+  RESOURCE_GROUP: RG-EU-STB-PRD-01
+  PYTHON_VERSION: "3.11"
+  APP_URL: https://securetrack-fwcjcdffbug2g9fc.eastus-01.azurewebsites.net
 
-# jobs:
-#   build:
-#     runs-on: ubuntu-latest
-#     steps:
-#       # 1. Checkout code
-#       - uses: actions/checkout@v4
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      # 1. Checkout code
+      - uses: actions/checkout@v4
 
-#       # 2. (Optional) lint / unit‑test here …
+      # 2. (Optional) lint / unit‑test here …
 
-#       # 3. Zip ONLY source + requirements
-#       - name: Create deployment bundle
-#         run: |
-#           zip -r site.zip sdr_backend requirements.txt \
-#               -x "**/__pycache__/*" ".git/*"
+      # 3. Zip ONLY source + requirements
+      - name: Create deployment bundle
+        run: |
+          zip -r site.zip sdr_backend requirements.txt \
+              -x "**/__pycache__/*" ".git/*"
 
-#       - uses: actions/upload-artifact@v4
-#         with:
-#           name: build-output
-#           path: site.zip
+      - uses: actions/upload-artifact@v4
+        with:
+          name: build-output
+          path: site.zip
 
-#   deploy:
-#     needs: build
-#     runs-on: ubuntu-latest
-#     concurrency:
-#       group: deploy-${{ github.ref }}
-#       cancel-in-progress: true
-#     steps:
-#       - uses: actions/download-artifact@v4
-#         with:
-#           name: build-output
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    concurrency:
+      group: deploy-${{ github.ref }}
+      cancel-in-progress: true
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: build-output
 
-#       # Login with OIDC
-#       - uses: azure/login@v2
-#         with:
-#           client-id:  ${{ secrets.AZUREAPPSERVICE_CLIENTID }}
-#           tenant-id:  ${{ secrets.AZUREAPPSERVICE_TENANTID }}
-#           subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID }}
+      # Login with OIDC
+      - uses: azure/login@v2
+        with:
+          client-id:  ${{ secrets.AZUREAPPSERVICE_CLIENTID }}
+          tenant-id:  ${{ secrets.AZUREAPPSERVICE_TENANTID }}
+          subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID }}
 
-#        # 🔓 Unlock the file‑system by removing the flag
-#       - name: Disable WEBSITE_RUN_FROM_PACKAGE
-#         run: |
-#           az webapp config appsettings delete \
-#              --name ${{ env.APP_NAME }} \
-#              --resource-group ${{ env.RESOURCE_GROUP }} \
-#              --setting-names WEBSITE_RUN_FROM_PACKAGE || true
+       # 🔓 Unlock the file‑system by removing the flag
+      # - name: Disable WEBSITE_RUN_FROM_PACKAGE
+      #   run: |
+      #     az webapp config appsettings delete \
+      #        --name ${{ env.APP_NAME }} \
+      #        --resource-group ${{ env.RESOURCE_GROUP }} \
+      #        --setting-names WEBSITE_RUN_FROM_PACKAGE || true
 
-#       # --- normal OneDeploy upload ---
-#       - uses: azure/webapps-deploy@v3
-#         with:
-#           app-name: ${{ env.APP_NAME }}
-#           package: site.zip
-#           clean: true
-#         timeout-minutes: 15
+      # --- normal OneDeploy upload ---
+      - uses: azure/webapps-deploy@v3
+        with:
+          app-name: ${{ env.APP_NAME }}
+          package: site.zip
+          clean: true
+        timeout-minutes: 15
 
-#       # ❸ Smoke test
-#       - name: Verify app is up
-#         run: |
-#           for i in {1..5}; do
-#             curl -fsSL "${{ env.APP_URL }}" && exit 0
-#             echo "Waiting for app… ($i/5)"; sleep 30
-#           done
-#           echo "App did not start!" && exit 1
+      # ❸ Smoke test
+      - name: Verify app is up
+        run: |
+          for i in {1..5}; do
+            curl -fsSL "${{ env.APP_URL }}" && exit 0
+            echo "Waiting for app… ($i/5)"; sleep 30
+          done
+          echo "App did not start!" && exit 1
 
