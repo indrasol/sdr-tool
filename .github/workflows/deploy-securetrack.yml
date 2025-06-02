@@ -94,6 +94,8 @@ jobs:
           package: site.zip
           # keep `clean: true` – harmless after our manual wipe
           clean: true
+          deployment-method: zipDeploy
+          enable-commit-metadata: false   # avoid 8 KB header bug
         timeout-minutes: 15
 
       # ─── 4️⃣ Restart & smoke‑test ──────────────────────
