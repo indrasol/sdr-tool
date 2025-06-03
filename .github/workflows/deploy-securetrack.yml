@@ -32,19 +32,12 @@ jobs:
       # 3. Prepare deployment package
       - name: Prepare deployment folder
         run: |
-          # clean work dir
-          rm -rf deploy && mkdir -p deploy
-      
-          # ⇢ 1. copy ONLY the inner contents of sdr_backend to deploy root
-          rsync -av --exclude='__pycache__' --exclude='*.pyc' sdr_backend/ deploy/
-      
-          # ⇢ 2. copy requirements.txt to the root of deploy
-          cp requirements.txt deploy/
-      
-          # ⇢ 3. zip it up (without vendored dependencies)
-          cd deploy
-          zip -r ../site.zip . -x "*.git*" "*__pycache__*" "*.pyc"
-          cd ..
+          # Simply zip the sdr_backend directory as-is
+          zip -r site.zip sdr_backend -x "*.git*" "*__pycache__*" "*.pyc" "*.env"
+          
+          # Show package contents for debugging
+          echo "Package contents:"
+          unzip -l site.zip | head -30
       
       # 4. Upload artifact
       - name: Upload artifact
