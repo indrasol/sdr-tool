@@ -38,16 +38,10 @@ jobs:
           # ⇢ 1. copy ONLY the inner contents of sdr_backend to deploy root
           rsync -av --exclude='__pycache__' --exclude='*.pyc' sdr_backend/ deploy/
       
-          # ⇢ 2. (optional) copy dot‑files if you need them
-          shopt -s dotglob
-          cp -r sdr_backend/.* deploy/ || true
-          shopt -u dotglob
+          # ⇢ 2. copy requirements.txt to the root of deploy
+          cp requirements.txt deploy/
       
-          # ⇢ 3. vendor dependencies into the same directory
-          python -m pip install --upgrade pip
-          python -m pip install --no-cache-dir -r requirements.txt -t deploy
-      
-          # ⇢ 4. zip it up
+          # ⇢ 3. zip it up (without vendored dependencies)
           cd deploy
           zip -r ../site.zip . -x "*.git*" "*__pycache__*" "*.pyc"
           cd ..
