@@ -32,43 +32,26 @@ jobs:
       # 3. Prepare deployment package
       - name: Prepare deployment folder
         run: |
-          # Create a clean deployment directory
-          mkdir -p deploy
-          
-          # Copy your application code
-          cp -r sdr_backend deploy/
-          
-          # Copy requirements.txt to ROOT
-          cp sdr_backend/requirements.txt deploy/
-          
-          # Install dependencies locally to .python_packages
-          pip install --target="deploy/.python_packages" -r deploy/requirements.txt
-          
-          # Create startup script that uses pre-installed packages
-          cat > deploy/startup.sh << 'EOF'
-          #!/bin/bash
-          export PYTHONPATH="/home/site/wwwroot/.python_packages:$PYTHONPATH"
-          cd /home/site/wwwroot
-          python3 -m gunicorn --workers 2 --threads 4 --timeout 600 --bind=0.0.0.0:8000 sdr_backend.main:app
-          EOF
-          
-          chmod +x deploy/startup.sh
-          
-          # Disable Oryx build since we pre-installed
-          cat > deploy/.deployment << 'EOF'
-          [config]
-          SCM_DO_BUILD_DURING_DEPLOYMENT=false
-          EOF
-          
-          # Create the deployment package
+          # clean work dir
+          rm -rf deploy && mkdir -p deploy
+      
+          # ⇢ 1. copy ONLY the inner contents of sdr_backend to deploy root
+          rsync -av --exclude='__pycache__' --exclude='*.pyc' sdr_backend/ deploy/
+      
+          # ⇢ 2. (optional) copy dot‑files if you need them
+          shopt -s dotglob
+          cp -r sdr_backend/.* deploy/ || true
+          shopt -u dotglob
+      
+          # ⇢ 3. vendor dependencies into the same directory
+          python -m pip install --upgrade pip
+          python -m pip install --no-cache-dir -r requirements.txt -t deploy
+      
+          # ⇢ 4. zip it up
           cd deploy
           zip -r ../site.zip . -x "*.git*" "*__pycache__*" "*.pyc"
           cd ..
-          
-          echo "Package size: $(du -h site.zip)"
-          echo "Package contents:"
-          unzip -l site.zip | head -20
-
+      
       # 4. Upload artifact
       - name: Upload artifact
         uses: actions/upload-artifact@v4
@@ -96,63 +79,15 @@ jobs:
           tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID }}
           subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID }}
 
-      # Stop the app before deployment to avoid file locks
-      # - name: Stop App Service
-      #   run: |
-      #     az webapp stop \
-      #       --name ${{ env.APP_NAME }} \
-      #       --resource-group ${{ env.RESOURCE_GROUP }}
-      #   continue-on-error: true
-
-      # # Wait for app to fully stop
-      # - name: Wait for app to stop
-      #   run: sleep 30
-
-      # Clean up existing deployment
-      # - name: Clean deployment slot
-      #   run: |
-      #     az webapp deployment clean \
-      #       --name ${{ env.APP_NAME }} \
-      #       --resource-group ${{ env.RESOURCE_GROUP }} \
-      #       --target-status 'Failed' || true
-      #   continue-on-error: true
-
       # Deploy the package
       - name: Deploy to App Service
-      #   run: |
-      #       # Use Azure CLI deployment which handles conflicts better
-      #       az webapp deployment source config-zip \
-      #         --name ${{ env.APP_NAME }} \
-      #         --resource-group ${{ env.RESOURCE_GROUP }} \
-      #         --src ${{ env.PACKAGE_PATH }} \
-      #         --timeout 3600
-      #       timeout-minutes: 30
         uses: azure/webapps-deploy@v3
         with:
           app-name: ${{ env.APP_NAME }}
           package: ${{ env.PACKAGE_PATH }}
           clean: true
           # Remove startup-command from here - set it in App Service configuration instead
-        timeout-minutes: 30
-
-      # Configure startup command separately
-      # - name: Configure App Service
-      #   run: |
-      #     az webapp config set \
-      #       --name ${{ env.APP_NAME }} \
-      #       --resource-group ${{ env.RESOURCE_GROUP }} \
-      #       --startup-file "gunicorn --workers 2 --worker-class uvicorn.workers.UvicornWorker --bind 0.0.0.0:8000 --timeout 600 sdr_backend.main:app"
-
-      # Start the app
-      # - name: Start App Service
-      #   run: |
-      #     az webapp start \
-      #       --name ${{ env.APP_NAME }} \
-      #       --resource-group ${{ env.RESOURCE_GROUP }}
-
-      # Wait for app to start
-      # - name: Wait for app startup
-      #   run: sleep 60
+        timeout-minutes: 40
 
       # Verify deployment
       - name: Verify app is up
