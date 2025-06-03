@@ -38,16 +38,11 @@ jobs:
           # Copy your application code
           cp -r sdr_backend deploy/
           
-          # Install dependencies into a temp directory first
-          pip install --upgrade pip
-          pip install --no-cache-dir -r sdr_backend/requirements.txt -t temp_deps/
+          # Create requirements.txt in the root of deployment
+          cp sdr_backend/requirements.txt deploy/
           
-          # Copy only the necessary dependency files (exclude duplicates)
-          cp -r temp_deps/* deploy/sdr_backend/ 2>/dev/null || true
-          
-          # Clean up unnecessary files
-          find deploy -type d -name "__pycache__" -exec rm -rf {} + 2>/dev/null || true
-          find deploy -type f -name "*.pyc" -delete 2>/dev/null || true
+          # For Linux App Service, we don't vendor dependencies
+          # They will be installed by Oryx build system
           
           # Create the deployment package
           cd deploy
@@ -86,35 +81,43 @@ jobs:
           subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID }}
 
       # Stop the app before deployment to avoid file locks
-      - name: Stop App Service
-        run: |
-          az webapp stop \
-            --name ${{ env.APP_NAME }} \
-            --resource-group ${{ env.RESOURCE_GROUP }}
-        continue-on-error: true
+      # - name: Stop App Service
+      #   run: |
+      #     az webapp stop \
+      #       --name ${{ env.APP_NAME }} \
+      #       --resource-group ${{ env.RESOURCE_GROUP }}
+      #   continue-on-error: true
 
-      # Wait for app to fully stop
-      - name: Wait for app to stop
-        run: sleep 30
+      # # Wait for app to fully stop
+      # - name: Wait for app to stop
+      #   run: sleep 30
 
       # Clean up existing deployment
-      - name: Clean deployment slot
-        run: |
-          az webapp deployment clean \
-            --name ${{ env.APP_NAME }} \
-            --resource-group ${{ env.RESOURCE_GROUP }} \
-            --target-status 'Failed' || true
-        continue-on-error: true
+      # - name: Clean deployment slot
+      #   run: |
+      #     az webapp deployment clean \
+      #       --name ${{ env.APP_NAME }} \
+      #       --resource-group ${{ env.RESOURCE_GROUP }} \
+      #       --target-status 'Failed' || true
+      #   continue-on-error: true
 
       # Deploy the package
       - name: Deploy to App Service
-        uses: azure/webapps-deploy@v3
-        with:
-          app-name: ${{ env.APP_NAME }}
-          package: ${{ env.PACKAGE_PATH }}
-          clean: true
-          # Remove startup-command from here - set it in App Service configuration instead
-        timeout-minutes: 30
+        run: |
+            # Use Azure CLI deployment which handles conflicts better
+            az webapp deployment source config-zip \
+              --name ${{ env.APP_NAME }} \
+              --resource-group ${{ env.RESOURCE_GROUP }} \
+              --src ${{ env.PACKAGE_PATH }} \
+              --timeout 3600
+            timeout-minutes: 30
+        # uses: azure/webapps-deploy@v3
+        # with:
+        #   app-name: ${{ env.APP_NAME }}
+        #   package: ${{ env.PACKAGE_PATH }}
+        #   clean: true
+        #   # Remove startup-command from here - set it in App Service configuration instead
+        # timeout-minutes: 30
 
       # Configure startup command separately
       - name: Configure App Service
@@ -125,15 +128,15 @@ jobs:
             --startup-file "gunicorn --workers 2 --worker-class uvicorn.workers.UvicornWorker --bind 0.0.0.0:8000 --timeout 600 sdr_backend.main:app"
 
       # Start the app
-      - name: Start App Service
-        run: |
-          az webapp start \
-            --name ${{ env.APP_NAME }} \
-            --resource-group ${{ env.RESOURCE_GROUP }}
+      # - name: Start App Service
+      #   run: |
+      #     az webapp start \
+      #       --name ${{ env.APP_NAME }} \
+      #       --resource-group ${{ env.RESOURCE_GROUP }}
 
       # Wait for app to start
-      - name: Wait for app startup
-        run: sleep 60
+      # - name: Wait for app startup
+      #   run: sleep 60
 
       # Verify deployment
       - name: Verify app is up
