@@ -24,33 +24,33 @@ jobs:
       - uses: actions/checkout@v4
 
       # ─── BUILD (local) ───────────────────────────────────────────────────────────
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: ${{ env.PYTHON_VERSION }}
+      # - name: Set up Python
+      #   uses: actions/setup-python@v5
+      #   with:
+      #     python-version: ${{ env.PYTHON_VERSION }}
           
-      # - name: Zip source (exclude big / dev stuff)
-      #   run: |
-      #     zip -r ${{ env.PACKAGE_PATH }} \
-      #         sdr_backend requirements.txt .deployment \
-      #         -x "*/__pycache__/*" "tests/**" "uploads/**" \
-      #            "outputs/**" "*.pyc" ".git/**"
-  
-      - name: Prepare deployment folder
+      - name: Zip source (exclude big / dev stuff)
         run: |
-          # 1.  make a clean folder for everything that must go to the server
-          mkdir deploy
+          zip -r ${{ env.PACKAGE_PATH }} \
+              sdr_backend requirements.txt \
+              -x "*/__pycache__/*" "tests/**" "uploads/**" \
+                 "outputs/**" "*.pyc" ".git/**"
+  
+      # - name: Prepare deployment folder
+      #   run: |
+      #     # 1.  make a clean folder for everything that must go to the server
+      #     mkdir deploy
       
-          # 2.  copy your source package exactly as-is
-          cp -r sdr_backend deploy/
+      #     # 2.  copy your source package exactly as-is
+      #     cp -r sdr_backend deploy/
       
-          # 3.  vendor all dependencies **into the deploy root**
-          pip install --upgrade pip
-          pip install --no-cache-dir -r sdr_backend/requirements.txt -t deploy
+      #     # 3.  vendor all dependencies **into the deploy root**
+      #     pip install --upgrade pip
+      #     pip install --no-cache-dir -r sdr_backend/requirements.txt -t deploy
       
-          # 4.  create the zip from inside deploy/
-          cd deploy
-          zip -r ../site.zip .
+      #     # 4.  create the zip from inside deploy/
+      #     cd deploy
+      #     zip -r ../site.zip .
   
       - name: Upload artifact (for troubleshooting)
         uses: actions/upload-artifact@v4
