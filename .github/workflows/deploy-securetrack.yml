@@ -103,29 +103,29 @@ jobs:
 
       # Deploy the package
       - name: Deploy to App Service
-        run: |
-            # Use Azure CLI deployment which handles conflicts better
-            az webapp deployment source config-zip \
-              --name ${{ env.APP_NAME }} \
-              --resource-group ${{ env.RESOURCE_GROUP }} \
-              --src ${{ env.PACKAGE_PATH }} \
-              --timeout 3600
-            timeout-minutes: 30
-        # uses: azure/webapps-deploy@v3
-        # with:
-        #   app-name: ${{ env.APP_NAME }}
-        #   package: ${{ env.PACKAGE_PATH }}
-        #   clean: true
-        #   # Remove startup-command from here - set it in App Service configuration instead
-        # timeout-minutes: 30
+      #   run: |
+      #       # Use Azure CLI deployment which handles conflicts better
+      #       az webapp deployment source config-zip \
+      #         --name ${{ env.APP_NAME }} \
+      #         --resource-group ${{ env.RESOURCE_GROUP }} \
+      #         --src ${{ env.PACKAGE_PATH }} \
+      #         --timeout 3600
+      #       timeout-minutes: 30
+        uses: azure/webapps-deploy@v3
+        with:
+          app-name: ${{ env.APP_NAME }}
+          package: ${{ env.PACKAGE_PATH }}
+          clean: true
+          # Remove startup-command from here - set it in App Service configuration instead
+        timeout-minutes: 30
 
       # Configure startup command separately
-      - name: Configure App Service
-        run: |
-          az webapp config set \
-            --name ${{ env.APP_NAME }} \
-            --resource-group ${{ env.RESOURCE_GROUP }} \
-            --startup-file "gunicorn --workers 2 --worker-class uvicorn.workers.UvicornWorker --bind 0.0.0.0:8000 --timeout 600 sdr_backend.main:app"
+      # - name: Configure App Service
+      #   run: |
+      #     az webapp config set \
+      #       --name ${{ env.APP_NAME }} \
+      #       --resource-group ${{ env.RESOURCE_GROUP }} \
+      #       --startup-file "gunicorn --workers 2 --worker-class uvicorn.workers.UvicornWorker --bind 0.0.0.0:8000 --timeout 600 sdr_backend.main:app"
 
       # Start the app
       # - name: Start App Service
