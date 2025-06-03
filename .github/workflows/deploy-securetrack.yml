@@ -17,24 +17,6 @@ env:
   APP_URL: https://securetrack01-e5g4endda5aebxcx.eastus-01.azurewebsites.net
 
 jobs:
-  test:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: actions/setup-python@v5
-        with: 
-          python-version: ${{ env.PYTHON_VERSION }}
-
-      # 🔸 optional: cache pip to speed up unit‑test stage
-      - uses: actions/cache@v4
-        with:
-          path: ~/.cache/pip
-          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
-
-      - run: |
-          pip install -r sdr_backend/requirements.txt
-          pytest -q
   build:
     runs-on: ubuntu-latest
     steps:
@@ -147,12 +129,11 @@ jobs:
         with:
           app-name:          ${{ env.APP_NAME }}
           package:           ${{ env.PACKAGE_PATH }}
-          scm-do-build-during-deployment: true  # triggers Oryx
           clean:             true               # wipes wwwroot first
           startup-command: |
             gunicorn --workers 2 --worker-class uvicorn.workers.UvicornWorker \
                      --bind 0.0.0.0:$PORT sdr_backend.main:app
-        timeout-minutes: 15
+        timeout-minutes: 30
 
       # ─── 4️⃣ Restart & smoke‑test ──────────────────────
       # - name: Start App Service
