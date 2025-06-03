@@ -23,60 +23,56 @@ jobs:
       # 1. Checkout code
       - uses: actions/checkout@v4
 
-      # ─── BUILD (local) ───────────────────────────────────────────────────────────
+      # 2. Set up Python
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: ${{ env.PYTHON_VERSION }}
           
-      # - name: Zip source (exclude big / dev stuff)
-      #   run: |
-      #     zip -r ${{ env.PACKAGE_PATH }} \
-      #         sdr_backend requirements.txt \
-      #         -x "*/__pycache__/*" "tests/**" "uploads/**" \
-      #            "outputs/**" "*.pyc" ".git/**"
-  
+      # 3. Prepare deployment package
       - name: Prepare deployment folder
         run: |
-          # 1.  make a clean folder for everything that must go to the server
-          mkdir deploy
-      
-          # 2.  copy your source package exactly as-is
+          # Create a clean deployment directory
+          mkdir -p deploy
+          
+          # Copy your application code
           cp -r sdr_backend deploy/
-      
-          # 3.  vendor all dependencies **into the deploy root**
+          
+          # Install dependencies into a temp directory first
           pip install --upgrade pip
-          pip install --no-cache-dir -r sdr_backend/requirements.txt -t deploy/sdr_backend
-      
-          # 4.  create the zip from inside deploy/
+          pip install --no-cache-dir -r sdr_backend/requirements.txt -t temp_deps/
+          
+          # Copy only the necessary dependency files (exclude duplicates)
+          cp -r temp_deps/* deploy/sdr_backend/ 2>/dev/null || true
+          
+          # Clean up unnecessary files
+          find deploy -type d -name "__pycache__" -exec rm -rf {} + 2>/dev/null || true
+          find deploy -type f -name "*.pyc" -delete 2>/dev/null || true
+          
+          # Create the deployment package
           cd deploy
-          zip -r ../site.zip sdr_backend
-  
-      - name: Upload artifact (for troubleshooting)
+          zip -r ../site.zip . -x "*.git*" "*__pycache__*" "*.pyc"
+          cd ..
+          
+          # Log package contents for debugging
+          echo "Package contents:"
+          unzip -l site.zip | head -20
+
+      # 4. Upload artifact
+      - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: build-output
           path: ${{ env.PACKAGE_PATH }}
 
-      # 2. (Optional) lint / unit‑test here …
-
-      # 3. Zip ONLY source + requirements
-      # - name: Create deployment bundle
-      #   run: |
-      #     zip -r site.zip sdr_backend requirements.txt \
-      #         -x "**/__pycache__/*" ".git/*"
-
-      # - uses: actions/upload-artifact@v4
-      #   with:
-      #     name: build-output
-      #     path: site.zip
-
   deploy:
     needs: build
     runs-on: ubuntu-latest
+    # Prevent concurrent deployments
     concurrency:
       group: deploy-${{ github.ref }}
-      cancel-in-progress: true
+      cancel-in-progress: false  # Changed from true to avoid interrupting deployments
+    
     steps:
       - uses: actions/download-artifact@v4
         with:
@@ -85,41 +81,70 @@ jobs:
       # Login with OIDC
       - uses: azure/login@v2
         with:
-          client-id:  ${{ secrets.AZUREAPPSERVICE_CLIENTID }}
-          tenant-id:  ${{ secrets.AZUREAPPSERVICE_TENANTID }}
+          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID }}
+          tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID }}
           subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID }}
 
-      # ─── 3️⃣ Deploy package ────────────────────────────
+      # Stop the app before deployment to avoid file locks
+      - name: Stop App Service
+        run: |
+          az webapp stop \
+            --name ${{ env.APP_NAME }} \
+            --resource-group ${{ env.RESOURCE_GROUP }}
+        continue-on-error: true
+
+      # Wait for app to fully stop
+      - name: Wait for app to stop
+        run: sleep 30
+
+      # Clean up existing deployment
+      - name: Clean deployment slot
+        run: |
+          az webapp deployment clean \
+            --name ${{ env.APP_NAME }} \
+            --resource-group ${{ env.RESOURCE_GROUP }} \
+            --target-status 'Failed' || true
+        continue-on-error: true
+
+      # Deploy the package
       - name: Deploy to App Service
         uses: azure/webapps-deploy@v3
         with:
-          app-name:          ${{ env.APP_NAME }}
-          package:           ${{ env.PACKAGE_PATH }}
-          clean:             true               # wipes wwwroot first
-          startup-command: >
-            # ────── prepend sdr_backend/ onto PYTHONPATH ──────
-            export PYTHONPATH=/home/site/wwwroot/sdr_backend:$PYTHONPATH &&
-
-            # ───────── launch Gunicorn pointing at your FastAPI app ─────────
-            gunicorn --workers 2 \
-                     --worker-class uvicorn.workers.UvicornWorker \
-                     --bind 0.0.0.0:$PORT \
-                     sdr_backend.main:app
+          app-name: ${{ env.APP_NAME }}
+          package: ${{ env.PACKAGE_PATH }}
+          clean: true
+          # Remove startup-command from here - set it in App Service configuration instead
         timeout-minutes: 30
 
-      # ─── 4️⃣ Restart & smoke‑test ──────────────────────
-      # - name: Start App Service
-      #   run: |
-      #     az webapp start \
-      #       --name ${{ env.APP_NAME }} \
-      #       --resource-group ${{ env.RESOURCE_GROUP }}
-            
-      # ❸ Smoke test
+      # Configure startup command separately
+      - name: Configure App Service
+        run: |
+          az webapp config set \
+            --name ${{ env.APP_NAME }} \
+            --resource-group ${{ env.RESOURCE_GROUP }} \
+            --startup-file "gunicorn --workers 2 --worker-class uvicorn.workers.UvicornWorker --bind 0.0.0.0:8000 --timeout 600 sdr_backend.main:app"
+
+      # Start the app
+      - name: Start App Service
+        run: |
+          az webapp start \
+            --name ${{ env.APP_NAME }} \
+            --resource-group ${{ env.RESOURCE_GROUP }}
+
+      # Wait for app to start
+      - name: Wait for app startup
+        run: sleep 60
+
+      # Verify deployment
       - name: Verify app is up
         run: |
-          for i in {1..5}; do
-            curl -fsSL "${{ env.APP_URL }}" && exit 0
-            echo "Waiting for app… ($i/5)"; sleep 30
+          for i in {1..10}; do
+            echo "Attempt $i/10..."
+            if curl -fsSL "${{ env.APP_URL }}/docs" -o /dev/null; then
+              echo "App is running successfully!"
+              exit 0
+            fi
+            echo "Waiting for app to respond..."
+            sleep 30
           done
-          echo "App did not start!" && exit 1
-
+          echo "App did not start within timeout!" && exit 1
