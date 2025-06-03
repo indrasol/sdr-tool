@@ -38,18 +38,34 @@ jobs:
           # Copy your application code
           cp -r sdr_backend deploy/
           
-          # Create requirements.txt in the root of deployment
+          # Copy requirements.txt to ROOT
           cp sdr_backend/requirements.txt deploy/
           
-          # For Linux App Service, we don't vendor dependencies
-          # They will be installed by Oryx build system
+          # Install dependencies locally to .python_packages
+          pip install --target="deploy/.python_packages" -r deploy/requirements.txt
+          
+          # Create startup script that uses pre-installed packages
+          cat > deploy/startup.sh << 'EOF'
+          #!/bin/bash
+          export PYTHONPATH="/home/site/wwwroot/.python_packages:$PYTHONPATH"
+          cd /home/site/wwwroot
+          python3 -m gunicorn --workers 2 --threads 4 --timeout 600 --bind=0.0.0.0:8000 sdr_backend.main:app
+          EOF
+          
+          chmod +x deploy/startup.sh
+          
+          # Disable Oryx build since we pre-installed
+          cat > deploy/.deployment << 'EOF'
+          [config]
+          SCM_DO_BUILD_DURING_DEPLOYMENT=false
+          EOF
           
           # Create the deployment package
           cd deploy
           zip -r ../site.zip . -x "*.git*" "*__pycache__*" "*.pyc"
           cd ..
           
-          # Log package contents for debugging
+          echo "Package size: $(du -h site.zip)"
           echo "Package contents:"
           unzip -l site.zip | head -20
 
