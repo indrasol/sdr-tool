@@ -89,6 +89,7 @@ jobs:
         with:
           app-name: ${{ env.APP_NAME }}
           package:  ${{ env.PACKAGE_PATH }}
+          type:     runFromPackage
           clean:    true
         timeout-minutes: 40
 
