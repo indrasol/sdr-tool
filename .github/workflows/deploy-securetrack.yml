@@ -5,28 +5,29 @@ on:
   workflow_dispatch:
 
 env:
-  ACR_NAME: securetrack-dzc8a3deejhje7d4   # ACR name (omit .azurecr.io suffix)
-  IMAGE_NAME: securetrack/sdr-backend      # Repository/name inside ACR
+  ACR_NAME: securetrack-dzc8a3deejhje7d4
+  IMAGE_NAME: securetrack/sdr-backend
   RESOURCE_GROUP: RG-EU-STB-PRD-01
   APP_NAME: securetrack1
   APP_URL: https://securetrack1-h7hqejg8gjegfthn.eastus-01.azurewebsites.net
 
 permissions:
   contents: read
-  id-token: write      # Allows azure/login to use OIDC (no SP secret needed)
+  id-token: write
 
 jobs:
-  # ── Build & Push to ACR ─────────────────────────────────────────────────
   build-push:
     runs-on: ubuntu-latest
+    outputs:
+      image-digest: ${{ steps.build.outputs.digest }}
     steps:
       - uses: actions/checkout@v4
 
       - name: Azure login (OIDC)
         uses: azure/login@v2
         with:
-          client-id:      ${{ secrets.AZUREAPPSERVICE_CLIENTID }}
-          tenant-id:      ${{ secrets.AZUREAPPSERVICE_TENANTID }}
+          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID }}
+          tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID }}
           subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID }}
 
       - name: Log in to ACR
@@ -37,6 +38,7 @@ jobs:
           password: ${{ secrets.ACR_ADMIN_PASSWORD }}
 
       - name: Build & push
+        id: build
         uses: docker/build-push-action@v5
         with:
           context: .
@@ -45,7 +47,6 @@ jobs:
             ${{ env.ACR_NAME }}.azurecr.io/${{ env.IMAGE_NAME }}:${{ github.sha }}
             ${{ env.ACR_NAME }}.azurecr.io/${{ env.IMAGE_NAME }}:latest
 
-  # ── Deploy to App Service (Container Mode) ───────────────────────────────
   deploy:
     needs: build-push
     runs-on: ubuntu-latest
@@ -53,11 +54,15 @@ jobs:
       - name: Azure login (OIDC)
         uses: azure/login@v2
         with:
-          client-id:      ${{ secrets.AZUREAPPSERVICE_CLIENTID }}
-          tenant-id:      ${{ secrets.AZUREAPPSERVICE_TENANTID }}
+          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID }}
+          tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID }}
           subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID }}
 
-      - name: Point web-app to :latest image
+      - name: Stop App Service (for clean restart)
+        run: |
+          az webapp stop --name $APP_NAME --resource-group $RESOURCE_GROUP
+
+      - name: Update container configuration
         run: |
           az webapp config container set \
             --name $APP_NAME \
@@ -67,13 +72,60 @@ jobs:
             --container-registry-user securetrack \
             --container-registry-password ${{ secrets.ACR_ADMIN_PASSWORD }}
 
-      - name: Warm-up check
+      - name: Configure App Service settings
         run: |
-          for i in {1..10}; do
-            if curl -fsSL "${{ env.APP_URL }}/docs" -o /dev/null; then
-              echo "✅ App is live"; exit 0
+          # Set the port that App Service should expect
+          az webapp config appsettings set \
+            --name $APP_NAME \
+            --resource-group $RESOURCE_GROUP \
+            --settings WEBSITES_PORT=8000 \
+                      WEBSITES_CONTAINER_START_TIME_LIMIT=1800 \
+                      DOCKER_ENABLE_CI=true
+
+      - name: Start App Service
+        run: |
+          az webapp start --name $APP_NAME --resource-group $RESOURCE_GROUP
+
+      - name: Wait for container to be ready
+        run: |
+          echo "Waiting for container to start..."
+          sleep 60
+
+      - name: Check deployment logs
+        run: |
+          echo "=== Recent deployment logs ==="
+          az webapp log tail --name $APP_NAME --resource-group $RESOURCE_GROUP --provider kudu | head -50 || true
+
+      - name: Health check with detailed output
+        run: |
+          echo "Starting health checks..."
+          for i in {1..15}; do
+            echo "Health check attempt $i/15..."
+            
+            # Check if the container is running
+            CONTAINER_STATUS=$(az webapp show --name $APP_NAME --resource-group $RESOURCE_GROUP --query "state" -o tsv)
+            echo "App Service state: $CONTAINER_STATUS"
+            
+            # Try to reach the health endpoint
+            HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" "${{ env.APP_URL }}/docs" || echo "000")
+            echo "HTTP response code: $HTTP_CODE"
+            
+            if [ "$HTTP_CODE" = "200" ]; then
+              echo "✅ App is healthy and responding!"
+              exit 0
+            elif [ "$HTTP_CODE" = "000" ]; then
+              echo "❌ No response from app (connection failed)"
+            else
+              echo "⚠️  App responded with HTTP $HTTP_CODE"
             fi
-            echo "…still waiting (attempt $i/10)…"
-            sleep 15
+            
+            if [ $i -lt 15 ]; then
+              echo "Waiting 20 seconds before next attempt..."
+              sleep 20
+            fi
           done
-          echo "❌ App did not start in time"; exit 1
+          
+          echo "❌ App failed to become healthy after 15 attempts"
+          echo "=== Final logs check ==="
+          az webapp log tail --name $APP_NAME --resource-group $RESOURCE_GROUP --provider application | head -100 || true
+          exit 1
