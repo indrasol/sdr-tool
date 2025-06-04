@@ -1,106 +1,70 @@
-# name: Build & Deploy – securetrack1
+name: Build & Deploy container to securetrack1
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
 
-# on:
-#   push:
-#     branches: [ main ]
-#   workflow_dispatch:
+env:
+  ACR_NAME: securetrack                  # <── registry name (no .azurecr.io)
+  IMAGE_NAME: securetrack/sdr-backend    # <── repo name inside ACR
+  RESOURCE_GROUP: RG-EU-STB-PRD-01
+  APP_NAME: securetrack1
 
-# permissions:
-#   contents: read
-#   id-token: write
+permissions:
+  contents: read
+  id-token: write            # OIDC
 
-# env:
-#   APP_NAME: securetrack1
-#   RESOURCE_GROUP: RG-EU-STB-PRD-01
-#   PYTHON_VERSION: "3.11"
-#   PACKAGE_PATH: site.zip
-#   APP_URL: https://securetrack1-h7hqejg8gjegfthn.eastus-01.azurewebsites.net
+jobs:
+# ── Build & push image ──────────────────────────────────────────────────────
+  build-push:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
 
-# jobs:
-# # ─────────────────────────── BUILD (on the runner) ────────────────────────────
-#   build:
-#     runs-on: ubuntu-latest
-#     steps:
-#       - uses: actions/checkout@v4
+    - uses: azure/login@v2
+      with:
+        client-id:      ${{ secrets.AZUREAPPSERVICE_CLIENTID }}
+        tenant-id:      ${{ secrets.AZUREAPPSERVICE_TENANTID }}
+        subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID }}
 
-#       - name: Set up Python
-#         uses: actions/setup-python@v5
-#         with:
-#           python-version: ${{ env.PYTHON_VERSION }}
+    - name: ACR login
+      run: az acr login -n $ACR_NAME
 
-#       - name: Create deployment package
-#         run: |
-#           rm -rf deploy && mkdir -p deploy/pypkg
+    - name: Build & push
+      uses: docker/build-push-action@v5
+      with:
+        context: .
+        push: true
+        tags: |
+          ${{ env.ACR_NAME }}.azurecr.io/${{ env.IMAGE_NAME }}:${{ github.sha }}
+          ${{ env.ACR_NAME }}.azurecr.io/${{ env.IMAGE_NAME }}:latest
 
-#           # 1. vendor all deps into pypkg (wheel cache speeds this up next run)
-#           pip install --disable-pip-version-check -r sdr_backend/requirements.txt -t deploy/pypkg
+# ── Update web‑app to pull the new tag ──────────────────────────────────────
+  deploy:
+    needs: build-push
+    runs-on: ubuntu-latest
+    steps:
+    - uses: azure/login@v2
+      with:
+        client-id:      ${{ secrets.AZUREAPPSERVICE_CLIENTID }}
+        tenant-id:      ${{ secrets.AZUREAPPSERVICE_TENANTID }}
+        subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID }}
 
-#           # 2. copy app source to deploy root (flat layout)
-#           cp -r sdr_backend/* deploy/
-#           cp -r sdr_backend/.[!.]* deploy/ 2>/dev/null || true    # dot‑files if any
+    - name: Point web‑app to :latest image
+      run: |
+        az webapp config container set \
+          --name $APP_NAME \
+          --resource-group $RESOURCE_GROUP \
+          --docker-custom-image-name $ACR_NAME.azurecr.io/${IMAGE_NAME}:latest \
+          --docker-registry-server-url https://$ACR_NAME.azurecr.io \
+          --docker-registry-server-user securetrack \
+          --docker-registry-server-password ${{ secrets.ACR_ADMIN_PASSWORD }}
 
-#           # 3. create ZIP
-#           cd deploy
-#           zip -r ../${{ env.PACKAGE_PATH }} . -x "*.git*" "*__pycache__*"
-#           cd ..
-
-#           # sanity‑check
-#           unzip -l ${{ env.PACKAGE_PATH }} | head -30
-
-#       - uses: actions/upload-artifact@v4
-#         with:
-#           name: build-output
-#           path: ${{ env.PACKAGE_PATH }}
-
-# # ─────────────────────────── DEPLOY ───────────────────────────────────────────
-#   deploy:
-#     needs: build
-#     runs-on: ubuntu-latest
-#     concurrency:
-#       group: deploy-${{ github.ref }}
-#       cancel-in-progress: false
-
-#     steps:
-#       - uses: actions/download-artifact@v4
-#         with:
-#           name: build-output
-
-#       - name: Azure login (OIDC)
-#         uses: azure/login@v2
-#         with:
-#           client-id:    ${{ secrets.AZUREAPPSERVICE_CLIENTID }}
-#           tenant-id:    ${{ secrets.AZUREAPPSERVICE_TENANTID }}
-#           subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID }}
-
-#       # ── OPTIONAL: update settings, then pause ───────────────────────────────
-#       # Uncomment if you need to change settings from CI/CD.
-#       # - name: Set app settings
-#       #   run: |
-#       #     az webapp config appsettings set \
-#       #       --name ${{ env.APP_NAME }} \
-#       #       --resource-group ${{ env.RESOURCE_GROUP }} \
-#       #       --settings WEBSITE_RUN_FROM_PACKAGE=1 SCM_DO_BUILD_DURING_DEPLOYMENT=false
-#       #
-#       # - name: Wait for SCM recycle
-#       #   run: sleep 60
-
-#       - name: Deploy to App Service
-#         uses: azure/webapps-deploy@v3
-#         with:
-#           app-name: ${{ env.APP_NAME }}
-#           package:  ${{ env.PACKAGE_PATH }}
-#           type:     runFromPackage
-#           clean:    true
-#         timeout-minutes: 40
-
-#       - name: Verify app is up
-#         run: |
-#           for i in {1..10}; do
-#             echo "Attempt $i/10..."
-#             if curl -fsSL "${{ env.APP_URL }}/docs" -o /dev/null; then
-#               echo "✅ App is running!"
-#               exit 0
-#             fi
-#             sleep 30
-#           done
-#           echo "❌ App did not start in time" && exit 1
+    - name: Warm‑up check
+      run: |
+        for i in {1..10}; do
+          if curl -fsSL "https://${{ env.APP_NAME }}.azurewebsites.net/docs" -o /dev/null; then
+            echo "✅ App is live"; exit 0; fi
+          sleep 15
+        done
+        echo "❌ App did not start in time"; exit 1
