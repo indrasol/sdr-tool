@@ -1,4 +1,4 @@
-name: Build & Deploy – securetrack1
+name: Build & Deploy – securetrack1
 
 on:
   push:
@@ -17,111 +17,89 @@ env:
   APP_URL: https://securetrack1-h7hqejg8gjegfthn.eastus-01.azurewebsites.net
 
 jobs:
+# ─────────────────────────── BUILD (on the runner) ────────────────────────────
   build:
     runs-on: ubuntu-latest
     steps:
-      # 1. Checkout code
       - uses: actions/checkout@v4
 
-      # 2. Set up Python
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: ${{ env.PYTHON_VERSION }}
-          
-      # 3. Prepare deployment package
+
       - name: Create deployment package
         run: |
-          # Create a flat structure that Azure expects
-          rm -rf deploy && mkdir -p deploy
-          
-          # Copy all Python files from sdr_backend to deploy root (flat)
-          cp -r sdr_backend/* deploy/ 2>/dev/null || true
-          cp -r sdr_backend/.* deploy/ 2>/dev/null || true
-          
-          # Ensure requirements.txt is in the root
-          if [ -f "sdr_backend/requirements.txt" ]; then
-            cp sdr_backend/requirements.txt deploy/
-          elif [ -f "requirements.txt" ]; then
-            cp requirements.txt deploy/
-          else
-            echo "ERROR: No requirements.txt found!"
-            exit 1
-          fi
-          
-          # Create the zip from the flat structure
+          rm -rf deploy && mkdir -p deploy/pypkg
+
+          # 1. vendor all deps into pypkg (wheel cache speeds this up next run)
+          pip install --disable-pip-version-check -r sdr_backend/requirements.txt -t deploy/pypkg
+
+          # 2. copy app source to deploy root (flat layout)
+          cp -r sdr_backend/* deploy/
+          cp -r sdr_backend/.[!.]* deploy/ 2>/dev/null || true    # dot‑files if any
+
+          # 3. create ZIP
           cd deploy
-          zip -r ../site.zip . -x "*.git*" "*__pycache__*" "*.pyc" "*.env"
+          zip -r ../${{ env.PACKAGE_PATH }} . -x "*.git*" "*__pycache__*"
           cd ..
-          
-          # Debug output
-          echo "=== Package contents ==="
-          unzip -l site.zip | head -30
-          echo "=== Checking for key files ==="
-          unzip -l site.zip | grep -E "(main\.py|requirements\.txt)"
-      
-      # 4. Upload artifact
-      - name: Upload artifact
-        uses: actions/upload-artifact@v4
+
+          # sanity‑check
+          unzip -l ${{ env.PACKAGE_PATH }} | head -30
+
+      - uses: actions/upload-artifact@v4
         with:
           name: build-output
           path: ${{ env.PACKAGE_PATH }}
 
+# ─────────────────────────── DEPLOY ───────────────────────────────────────────
   deploy:
     needs: build
     runs-on: ubuntu-latest
-    # Prevent concurrent deployments
     concurrency:
       group: deploy-${{ github.ref }}
-      cancel-in-progress: false  # Changed from true to avoid interrupting deployments
-    
+      cancel-in-progress: false
+
     steps:
       - uses: actions/download-artifact@v4
         with:
           name: build-output
 
-      # Login with OIDC
-      - uses: azure/login@v2
+      - name: Azure login (OIDC)
+        uses: azure/login@v2
         with:
-          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID }}
-          tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID }}
+          client-id:    ${{ secrets.AZUREAPPSERVICE_CLIENTID }}
+          tenant-id:    ${{ secrets.AZUREAPPSERVICE_TENANTID }}
           subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID }}
 
-      # Deploy the package
-      - name: Deploy to App Service
+      # ── OPTIONAL: update settings, then pause ───────────────────────────────
+      # Uncomment if you need to change settings from CI/CD.
+      # - name: Set app settings
+      #   run: |
+      #     az webapp config appsettings set \
+      #       --name ${{ env.APP_NAME }} \
+      #       --resource-group ${{ env.RESOURCE_GROUP }} \
+      #       --settings WEBSITE_RUN_FROM_PACKAGE=1 SCM_DO_BUILD_DURING_DEPLOYMENT=false
+      #
+      # - name: Wait for SCM recycle
+      #   run: sleep 60
+
+      - name: Deploy to App Service
         uses: azure/webapps-deploy@v3
         with:
           app-name: ${{ env.APP_NAME }}
-          package: ${{ env.PACKAGE_PATH }}
-          clean: true
-          # Remove startup-command from here - set it in App Service configuration instead
+          package:  ${{ env.PACKAGE_PATH }}
+          clean:    true
         timeout-minutes: 40
 
-      # Wait for Oryx build to complete
-      - name: Wait for deployment to complete
-        run: |
-          echo "Waiting for Oryx build to complete..."
-          sleep 60  # Give Oryx time to build
-
-      # Check deployment logs
-      - name: Check deployment status
-        run: |
-          echo "Fetching deployment logs..."
-          az webapp log deployment show \
-            --name ${{ env.APP_NAME }} \
-            --resource-group ${{ env.RESOURCE_GROUP }} \
-            --query "[0].message" || true
-            
-      # Verify deployment
       - name: Verify app is up
         run: |
           for i in {1..10}; do
             echo "Attempt $i/10..."
             if curl -fsSL "${{ env.APP_URL }}/docs" -o /dev/null; then
-              echo "App is running successfully!"
+              echo "✅ App is running!"
               exit 0
             fi
-            echo "Waiting for app to respond..."
             sleep 30
           done
-          echo "App did not start within timeout!" && exit 1
+          echo "❌ App did not start in time" && exit 1
