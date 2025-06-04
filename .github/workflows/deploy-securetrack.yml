@@ -1,106 +1,106 @@
-name: Build & Deploy – securetrack1
+# name: Build & Deploy – securetrack1
 
-on:
-  push:
-    branches: [ main ]
-  workflow_dispatch:
+# on:
+#   push:
+#     branches: [ main ]
+#   workflow_dispatch:
 
-permissions:
-  contents: read
-  id-token: write
+# permissions:
+#   contents: read
+#   id-token: write
 
-env:
-  APP_NAME: securetrack1
-  RESOURCE_GROUP: RG-EU-STB-PRD-01
-  PYTHON_VERSION: "3.11"
-  PACKAGE_PATH: site.zip
-  APP_URL: https://securetrack1-h7hqejg8gjegfthn.eastus-01.azurewebsites.net
+# env:
+#   APP_NAME: securetrack1
+#   RESOURCE_GROUP: RG-EU-STB-PRD-01
+#   PYTHON_VERSION: "3.11"
+#   PACKAGE_PATH: site.zip
+#   APP_URL: https://securetrack1-h7hqejg8gjegfthn.eastus-01.azurewebsites.net
 
-jobs:
-# ─────────────────────────── BUILD (on the runner) ────────────────────────────
-  build:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
+# jobs:
+# # ─────────────────────────── BUILD (on the runner) ────────────────────────────
+#   build:
+#     runs-on: ubuntu-latest
+#     steps:
+#       - uses: actions/checkout@v4
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: ${{ env.PYTHON_VERSION }}
+#       - name: Set up Python
+#         uses: actions/setup-python@v5
+#         with:
+#           python-version: ${{ env.PYTHON_VERSION }}
 
-      - name: Create deployment package
-        run: |
-          rm -rf deploy && mkdir -p deploy/pypkg
+#       - name: Create deployment package
+#         run: |
+#           rm -rf deploy && mkdir -p deploy/pypkg
 
-          # 1. vendor all deps into pypkg (wheel cache speeds this up next run)
-          pip install --disable-pip-version-check -r sdr_backend/requirements.txt -t deploy/pypkg
+#           # 1. vendor all deps into pypkg (wheel cache speeds this up next run)
+#           pip install --disable-pip-version-check -r sdr_backend/requirements.txt -t deploy/pypkg
 
-          # 2. copy app source to deploy root (flat layout)
-          cp -r sdr_backend/* deploy/
-          cp -r sdr_backend/.[!.]* deploy/ 2>/dev/null || true    # dot‑files if any
+#           # 2. copy app source to deploy root (flat layout)
+#           cp -r sdr_backend/* deploy/
+#           cp -r sdr_backend/.[!.]* deploy/ 2>/dev/null || true    # dot‑files if any
 
-          # 3. create ZIP
-          cd deploy
-          zip -r ../${{ env.PACKAGE_PATH }} . -x "*.git*" "*__pycache__*"
-          cd ..
+#           # 3. create ZIP
+#           cd deploy
+#           zip -r ../${{ env.PACKAGE_PATH }} . -x "*.git*" "*__pycache__*"
+#           cd ..
 
-          # sanity‑check
-          unzip -l ${{ env.PACKAGE_PATH }} | head -30
+#           # sanity‑check
+#           unzip -l ${{ env.PACKAGE_PATH }} | head -30
 
-      - uses: actions/upload-artifact@v4
-        with:
-          name: build-output
-          path: ${{ env.PACKAGE_PATH }}
+#       - uses: actions/upload-artifact@v4
+#         with:
+#           name: build-output
+#           path: ${{ env.PACKAGE_PATH }}
 
-# ─────────────────────────── DEPLOY ───────────────────────────────────────────
-  deploy:
-    needs: build
-    runs-on: ubuntu-latest
-    concurrency:
-      group: deploy-${{ github.ref }}
-      cancel-in-progress: false
+# # ─────────────────────────── DEPLOY ───────────────────────────────────────────
+#   deploy:
+#     needs: build
+#     runs-on: ubuntu-latest
+#     concurrency:
+#       group: deploy-${{ github.ref }}
+#       cancel-in-progress: false
 
-    steps:
-      - uses: actions/download-artifact@v4
-        with:
-          name: build-output
+#     steps:
+#       - uses: actions/download-artifact@v4
+#         with:
+#           name: build-output
 
-      - name: Azure login (OIDC)
-        uses: azure/login@v2
-        with:
-          client-id:    ${{ secrets.AZUREAPPSERVICE_CLIENTID }}
-          tenant-id:    ${{ secrets.AZUREAPPSERVICE_TENANTID }}
-          subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID }}
+#       - name: Azure login (OIDC)
+#         uses: azure/login@v2
+#         with:
+#           client-id:    ${{ secrets.AZUREAPPSERVICE_CLIENTID }}
+#           tenant-id:    ${{ secrets.AZUREAPPSERVICE_TENANTID }}
+#           subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID }}
 
-      # ── OPTIONAL: update settings, then pause ───────────────────────────────
-      # Uncomment if you need to change settings from CI/CD.
-      # - name: Set app settings
-      #   run: |
-      #     az webapp config appsettings set \
-      #       --name ${{ env.APP_NAME }} \
-      #       --resource-group ${{ env.RESOURCE_GROUP }} \
-      #       --settings WEBSITE_RUN_FROM_PACKAGE=1 SCM_DO_BUILD_DURING_DEPLOYMENT=false
-      #
-      # - name: Wait for SCM recycle
-      #   run: sleep 60
+#       # ── OPTIONAL: update settings, then pause ───────────────────────────────
+#       # Uncomment if you need to change settings from CI/CD.
+#       # - name: Set app settings
+#       #   run: |
+#       #     az webapp config appsettings set \
+#       #       --name ${{ env.APP_NAME }} \
+#       #       --resource-group ${{ env.RESOURCE_GROUP }} \
+#       #       --settings WEBSITE_RUN_FROM_PACKAGE=1 SCM_DO_BUILD_DURING_DEPLOYMENT=false
+#       #
+#       # - name: Wait for SCM recycle
+#       #   run: sleep 60
 
-      - name: Deploy to App Service
-        uses: azure/webapps-deploy@v3
-        with:
-          app-name: ${{ env.APP_NAME }}
-          package:  ${{ env.PACKAGE_PATH }}
-          type:     runFromPackage
-          clean:    true
-        timeout-minutes: 40
+#       - name: Deploy to App Service
+#         uses: azure/webapps-deploy@v3
+#         with:
+#           app-name: ${{ env.APP_NAME }}
+#           package:  ${{ env.PACKAGE_PATH }}
+#           type:     runFromPackage
+#           clean:    true
+#         timeout-minutes: 40
 
-      - name: Verify app is up
-        run: |
-          for i in {1..10}; do
-            echo "Attempt $i/10..."
-            if curl -fsSL "${{ env.APP_URL }}/docs" -o /dev/null; then
-              echo "✅ App is running!"
-              exit 0
-            fi
-            sleep 30
-          done
-          echo "❌ App did not start in time" && exit 1
+#       - name: Verify app is up
+#         run: |
+#           for i in {1..10}; do
+#             echo "Attempt $i/10..."
+#             if curl -fsSL "${{ env.APP_URL }}/docs" -o /dev/null; then
+#               echo "✅ App is running!"
+#               exit 0
+#             fi
+#             sleep 30
+#           done
+#           echo "❌ App did not start in time" && exit 1
