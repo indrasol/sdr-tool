@@ -5,7 +5,7 @@ on:
   workflow_dispatch:
 
 env:
-  ACR_NAME: securetrack                  # <── registry name (no .azurecr.io)
+  ACR_NAME: securetrack-dzc8a3deejhje7d4                  # <── registry name (no .azurecr.io)
   IMAGE_NAME: securetrack/sdr-backend    # <── repo name inside ACR
   RESOURCE_GROUP: RG-EU-STB-PRD-01
   APP_NAME: securetrack1
@@ -27,8 +27,12 @@ jobs:
         tenant-id:      ${{ secrets.AZUREAPPSERVICE_TENANTID }}
         subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID }}
 
-    - name: ACR login
-      run: az acr login -n $ACR_NAME
+    - name: Log in to ACR
+      uses: docker/login-action@v3
+      with:
+        registry: ${{ env.ACR_NAME }}.azurecr.io
+        username: securetrack                       
+        password: ${{ secrets.ACR_ADMIN_PASSWORD }} 
 
     - name: Build & push
       uses: docker/build-push-action@v5
