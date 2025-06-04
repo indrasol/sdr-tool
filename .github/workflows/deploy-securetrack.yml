@@ -5,71 +5,75 @@ on:
   workflow_dispatch:
 
 env:
-  ACR_NAME: securetrack-dzc8a3deejhje7d4                  # <── registry name (no .azurecr.io)
-  IMAGE_NAME: securetrack/sdr-backend    # <── repo name inside ACR
+  ACR_NAME: securetrack-dzc8a3deejhje7d4   # ACR name (omit .azurecr.io suffix)
+  IMAGE_NAME: securetrack/sdr-backend      # Repository/name inside ACR
   RESOURCE_GROUP: RG-EU-STB-PRD-01
   APP_NAME: securetrack1
   APP_URL: https://securetrack1-h7hqejg8gjegfthn.eastus-01.azurewebsites.net
 
 permissions:
   contents: read
-  id-token: write            # OIDC
+  id-token: write      # Allows azure/login to use OIDC (no SP secret needed)
 
 jobs:
-# ── Build & push image ──────────────────────────────────────────────────────
+  # ── Build & Push to ACR ─────────────────────────────────────────────────
   build-push:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-    - uses: azure/login@v2
-      with:
-        client-id:      ${{ secrets.AZUREAPPSERVICE_CLIENTID }}
-        tenant-id:      ${{ secrets.AZUREAPPSERVICE_TENANTID }}
-        subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID }}
+      - name: Azure login (OIDC)
+        uses: azure/login@v2
+        with:
+          client-id:      ${{ secrets.AZUREAPPSERVICE_CLIENTID }}
+          tenant-id:      ${{ secrets.AZUREAPPSERVICE_TENANTID }}
+          subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID }}
 
-    - name: Log in to ACR
-      uses: docker/login-action@v3
-      with:
-        registry: ${{ env.ACR_NAME }}.azurecr.io
-        username: securetrack                       
-        password: ${{ secrets.ACR_ADMIN_PASSWORD }} 
+      - name: Log in to ACR
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.ACR_NAME }}.azurecr.io
+          username: securetrack
+          password: ${{ secrets.ACR_ADMIN_PASSWORD }}
 
-    - name: Build & push
-      uses: docker/build-push-action@v5
-      with:
-        context: .
-        push: true
-        tags: |
-          ${{ env.ACR_NAME }}.azurecr.io/${{ env.IMAGE_NAME }}:${{ github.sha }}
-          ${{ env.ACR_NAME }}.azurecr.io/${{ env.IMAGE_NAME }}:latest
+      - name: Build & push
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: |
+            ${{ env.ACR_NAME }}.azurecr.io/${{ env.IMAGE_NAME }}:${{ github.sha }}
+            ${{ env.ACR_NAME }}.azurecr.io/${{ env.IMAGE_NAME }}:latest
 
-# ── Update web‑app to pull the new tag ──────────────────────────────────────
+  # ── Deploy to App Service (Container Mode) ───────────────────────────────
   deploy:
     needs: build-push
     runs-on: ubuntu-latest
     steps:
-    - uses: azure/login@v2
-      with:
-        client-id:      ${{ secrets.AZUREAPPSERVICE_CLIENTID }}
-        tenant-id:      ${{ secrets.AZUREAPPSERVICE_TENANTID }}
-        subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID }}
+      - name: Azure login (OIDC)
+        uses: azure/login@v2
+        with:
+          client-id:      ${{ secrets.AZUREAPPSERVICE_CLIENTID }}
+          tenant-id:      ${{ secrets.AZUREAPPSERVICE_TENANTID }}
+          subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID }}
 
-    - name: Point web‑app to :latest image
-      run: |
-        az webapp config container set \
-          --name $APP_NAME \
-          --resource-group $RESOURCE_GROUP \
-          --docker-custom-image-name $ACR_NAME.azurecr.io/${IMAGE_NAME}:latest \
-          --docker-registry-server-url https://$ACR_NAME.azurecr.io \
-          --docker-registry-server-user securetrack \
-          --docker-registry-server-password ${{ secrets.ACR_ADMIN_PASSWORD }}
+      - name: Point web-app to :latest image
+        run: |
+          az webapp config container set \
+            --name $APP_NAME \
+            --resource-group $RESOURCE_GROUP \
+            --container-image-name $ACR_NAME.azurecr.io/${IMAGE_NAME}:latest \
+            --container-registry-url https://$ACR_NAME.azurecr.io \
+            --container-registry-user securetrack \
+            --container-registry-password ${{ secrets.ACR_ADMIN_PASSWORD }}
 
-    - name: Warm‑up check
-      run: |
-        for i in {1..10}; do
-          if curl -fsSL "${{ env.APP_URL }}/docs" -o /dev/null; then
-            echo "✅ App is live"; exit 0; fi
-          sleep 15
-        done
-        echo "❌ App did not start in time"; exit 1
+      - name: Warm-up check
+        run: |
+          for i in {1..10}; do
+            if curl -fsSL "${{ env.APP_URL }}/docs" -o /dev/null; then
+              echo "✅ App is live"; exit 0
+            fi
+            echo "…still waiting (attempt $i/10)…"
+            sleep 15
+          done
+          echo "❌ App did not start in time"; exit 1
