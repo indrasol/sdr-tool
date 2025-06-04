@@ -9,6 +9,7 @@ env:
   IMAGE_NAME: securetrack/sdr-backend    # <── repo name inside ACR
   RESOURCE_GROUP: RG-EU-STB-PRD-01
   APP_NAME: securetrack1
+  APP_URL: https://securetrack1-h7hqejg8gjegfthn.eastus-01.azurewebsites.net
 
 permissions:
   contents: read
@@ -67,7 +68,7 @@ jobs:
     - name: Warm‑up check
       run: |
         for i in {1..10}; do
-          if curl -fsSL "https://${{ env.APP_NAME }}.azurewebsites.net/docs" -o /dev/null; then
+          if curl -fsSL "${{ env.APP_URL }}/docs" -o /dev/null; then
             echo "✅ App is live"; exit 0; fi
           sleep 15
         done
