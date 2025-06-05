@@ -1,131 +1,73 @@
-name: Build & Deploy container to securetrack1
+name: Build and Deploy to Azure Web App
+
 on:
   push:
-    branches: [ main ]
-  workflow_dispatch:
+    branches:
+      - main
 
 env:
-  ACR_NAME: securetrack-dzc8a3deejhje7d4
-  IMAGE_NAME: securetrack/sdr-backend
-  RESOURCE_GROUP: RG-EU-STB-PRD-01
-  APP_NAME: securetrack1
-  APP_URL: https://securetrack1-h7hqejg8gjegfthn.eastus-01.azurewebsites.net
+  # Match your ACR name and Azure Web App name
+  ACR_NAME: securetrack
+  WEBAPP_NAME: securetrackv1
+  RG_NAME: RG-EU-STB-PRD-01
+  IMAGE_NAME: sdr_backend
 
 permissions:
   contents: read
   id-token: write
 
 jobs:
-  build-push:
+  build-and-deploy:
     runs-on: ubuntu-latest
-    outputs:
-      image-digest: ${{ steps.build.outputs.digest }}
     steps:
-      - uses: actions/checkout@v4
+      # 1) Checkout the repo
+      - name: "Checkout GitHub repository"
+        uses: actions/checkout@v4
 
-      - name: Azure login (OIDC)
+      # 2) Login to Azure using the service principal
+      - name: "Login to Azure"
         uses: azure/login@v2
         with:
           client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID }}
           tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID }}
           subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID }}
 
-      - name: Log in to ACR
-        uses: docker/login-action@v3
-        with:
-          registry: ${{ env.ACR_NAME }}.azurecr.io
-          username: securetrack
-          password: ${{ secrets.ACR_ADMIN_PASSWORD }}
+      # 3) Set up Docker Buildx (for multi-arch builds, but standard works too)
+      # - name: "Set up Docker Buildx"
+      #   uses: docker/setup-buildx-action@v2
 
-      - name: Build & push
-        id: build
-        uses: docker/build-push-action@v5
-        with:
-          context: .
-          push: true
-          tags: |
-            ${{ env.ACR_NAME }}.azurecr.io/${{ env.IMAGE_NAME }}:${{ github.sha }}
-            ${{ env.ACR_NAME }}.azurecr.io/${{ env.IMAGE_NAME }}:latest
-
-  deploy:
-    needs: build-push
-    runs-on: ubuntu-latest
-    steps:
-      - name: Azure login (OIDC)
-        uses: azure/login@v2
-        with:
-          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID }}
-          tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID }}
-          subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID }}
-
-      - name: Stop App Service (for clean restart)
+      # 4) Log in to ACR
+      - name: "Log in to ACR"
         run: |
-          az webapp stop --name $APP_NAME --resource-group $RESOURCE_GROUP
+          az acr login --name ${{ env.ACR_NAME }}
 
-      - name: Update container configuration
+      # 5) Build the Docker image and push to ACR
+      - name: "Build and push Docker image to ACR"
         run: |
-          az webapp config container set \
-            --name $APP_NAME \
-            --resource-group $RESOURCE_GROUP \
-            --container-image-name $ACR_NAME.azurecr.io/${IMAGE_NAME}:latest \
-            --container-registry-url https://$ACR_NAME.azurecr.io \
-            --container-registry-user securetrack \
-            --container-registry-password ${{ secrets.ACR_ADMIN_PASSWORD }}
+          # Tag format: <loginServer>/<imageName>:<tag>
+          ACR_LOGIN_SERVER=$(az acr show --name ${{ env.ACR_NAME }} --query loginServer --output tsv)
+          IMAGE_TAG="$ACR_LOGIN_SERVER/${{ env.IMAGE_NAME }}:latest"
 
-      - name: Configure App Service settings
-        run: |
-          # Set the port that App Service should expect
-          az webapp config appsettings set \
-            --name $APP_NAME \
-            --resource-group $RESOURCE_GROUP \
-            --settings WEBSITES_PORT=8000 \
-                      WEBSITES_CONTAINER_START_TIME_LIMIT=1800 \
-                      DOCKER_ENABLE_CI=true
+          # Build the image (context is repo root)
+          docker build -f Dockerfile -t $IMAGE_TAG .
 
-      - name: Start App Service
-        run: |
-          az webapp start --name $APP_NAME --resource-group $RESOURCE_GROUP
+          # Push to ACR
+          docker push $IMAGE_TAG
 
-      - name: Wait for container to be ready
+      # 6) Deploy the new image to Azure Web App
+      - name: "Deploy to Azure Web App"
         run: |
-          echo "Waiting for container to start..."
-          sleep 60
-
-      - name: Check deployment logs
-        run: |
-          echo "=== Recent deployment logs ==="
-          az webapp log tail --name $APP_NAME --resource-group $RESOURCE_GROUP --provider kudu | head -50 || true
-
-      - name: Health check with detailed output
-        run: |
-          echo "Starting health checks..."
-          for i in {1..15}; do
-            echo "Health check attempt $i/15..."
+            ACR_LOGIN_SERVER=$(az acr show --name ${{ env.ACR_NAME }} --query loginServer --output tsv)
             
-            # Check if the container is running
-            CONTAINER_STATUS=$(az webapp show --name $APP_NAME --resource-group $RESOURCE_GROUP --query "state" -o tsv)
-            echo "App Service state: $CONTAINER_STATUS"
-            
-            # Try to reach the health endpoint
-            HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" "${{ env.APP_URL }}/docs" || echo "000")
-            echo "HTTP response code: $HTTP_CODE"
-            
-            if [ "$HTTP_CODE" = "200" ]; then
-              echo "✅ App is healthy and responding!"
-              exit 0
-            elif [ "$HTTP_CODE" = "000" ]; then
-              echo "❌ No response from app (connection failed)"
-            else
-              echo "⚠️  App responded with HTTP $HTTP_CODE"
-            fi
-            
-            if [ $i -lt 15 ]; then
-              echo "Waiting 20 seconds before next attempt..."
-              sleep 20
-            fi
-          done
-          
-          echo "❌ App failed to become healthy after 15 attempts"
-          echo "=== Final logs check ==="
-          az webapp log tail --name $APP_NAME --resource-group $RESOURCE_GROUP --provider application | head -100 || true
-          exit 1
+            # Configure ACR authentication
+            az webapp config container set \
+              --name ${{ env.WEBAPP_NAME }} \
+              --resource-group ${{ env.RG_NAME }} \
+              --docker-custom-image-name "$ACR_LOGIN_SERVER/${{ env.IMAGE_NAME }}:latest" \
+              --docker-registry-server-url "https://$ACR_LOGIN_SERVER"
+        # uses: azure/webapps-deploy@v2
+        # with:
+        #   app-name: ${{ env.WEBAPP_NAME }}
+        #   # slot-name: production
+        #   images: |
+        #     ${{ env.ACR_NAME }}-dzc8a3deejhje7d4.azurecr.io/${{ env.IMAGE_NAME }}:latest
