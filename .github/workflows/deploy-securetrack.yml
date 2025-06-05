@@ -56,18 +56,17 @@ jobs:
 
       # 6) Deploy the new image to Azure Web App
       - name: "Deploy to Azure Web App"
-        run: |
-            ACR_LOGIN_SERVER=$(az acr show --name ${{ env.ACR_NAME }} --query loginServer --output tsv)
+        # run: |
+        #     ACR_LOGIN_SERVER=$(az acr show --name ${{ env.ACR_NAME }} --query loginServer --output tsv)
             
-            # Configure ACR authentication
-            az webapp config container set \
-              --name ${{ env.WEBAPP_NAME }} \
-              --resource-group ${{ env.RG_NAME }} \
-              --docker-custom-image-name "$ACR_LOGIN_SERVER/${{ env.IMAGE_NAME }}:latest" \
-              --docker-registry-server-url "https://$ACR_LOGIN_SERVER"
-        # uses: azure/webapps-deploy@v2
-        # with:
-        #   app-name: ${{ env.WEBAPP_NAME }}
-        #   # slot-name: production
-        #   images: |
-        #     ${{ env.ACR_NAME }}-dzc8a3deejhje7d4.azurecr.io/${{ env.IMAGE_NAME }}:latest
+        #     # Configure ACR authentication
+        #     az webapp config container set \
+        #       --name ${{ env.WEBAPP_NAME }} \
+        #       --resource-group ${{ env.RG_NAME }} \
+        #       --container-image-name "$ACR_LOGIN_SERVER/${{ env.IMAGE_NAME }}:latest" \
+        #       --container-registry-url "https://$ACR_LOGIN_SERVER"
+        uses: azure/webapps-deploy@v2
+        with:
+          app-name: ${{ env.WEBAPP_NAME }}
+          # slot-name: production
+          images: ${{ env.ACR_NAME }}-dzc8a3deejhje7d4.azurecr.io/${{ env.IMAGE_NAME }}:latest
