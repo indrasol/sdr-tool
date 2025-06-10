@@ -1,6 +1,6 @@
 # ────────── build image ──────────
 # 1) Force amd64 so Azure Web App (x86_64) can run it
-FROM --platform=linux/amd64 python:3.11-slim AS base
+FROM python:3.11-slim AS base
 WORKDIR /app
 
 # Install system dependencies that might be needed
