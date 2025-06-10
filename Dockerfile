@@ -1,5 +1,6 @@
 # ────────── build image ──────────
-FROM python:3.11-slim AS base
+# 1) Force amd64 so Azure Web App (x86_64) can run it
+FROM --platform=linux/amd64 python:3.11-slim AS base
 WORKDIR /app
 
 # Install system dependencies that might be needed
@@ -28,4 +29,4 @@ EXPOSE 8000
 
 # Simplified startup command with better error handling
 # CMD ["gunicorn", "--workers", "2", "--worker-class", "uvicorn.workers.UvicornWorker", "--bind", "0.0.0.0:8000", "--timeout", "120", "--access-logfile", "-", "--error-logfile", "-", "--log-level", "info", "main:app"]
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "2", "--access-log", "--log-level", "info"]
+CMD ["python", "-m", "uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "2", "--access-log", "--log-level", "info"]
