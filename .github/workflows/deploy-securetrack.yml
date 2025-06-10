@@ -40,17 +40,21 @@ jobs:
         run: |
           az acr login --name ${{ env.ACR_NAME }}
 
+      - name: Fetch ACR loginServer
+        id: acr
+        run: |
+          echo "LOGIN_SERVER=$(az acr show --name ${{ env.ACR_NAME }} \
+                            --query loginServer --output tsv)" >> $GITHUB_ENV
+
       # 5) Build+push multi-arch (we only target amd64 here)
-      - name: Build and push
-        uses: docker/build-push-action@v4
-        with:
-          context: .
-          file: Dockerfile
-          push: true
-          platforms: linux/amd64
-          tags: |
-            ${{ env.ACR_NAME }}.azurecr.io/${{ env.IMAGE_NAME }}:latest
-            ${{ env.ACR_NAME }}.azurecr.io/${{ env.IMAGE_NAME }}:${{ github.sha }}
+      - name: Build & push amd64 image
+        run: |
+          docker buildx build \
+            --platform linux/amd64 \
+            --push \
+            --tag $LOGIN_SERVER/${{ env.IMAGE_NAME }}:latest \
+            --tag $LOGIN_SERVER/${{ env.IMAGE_NAME }}:${{ github.sha }} \
+            .
 
       # 5) Build the Docker image and push to ACR
       # - name: "Build and push Docker image to ACR"
@@ -71,4 +75,5 @@ jobs:
         with:
           app-name: ${{ env.WEBAPP_NAME }}
           # slot-name: production
-          images: ${{ env.ACR_NAME }}-dzc8a3deejhje7d4.azurecr.io/${{ env.IMAGE_NAME }}:latest
+          # images: ${{ env.ACR_NAME }}-dzc8a3deejhje7d4.azurecr.io/${{ env.IMAGE_NAME }}:latest
+          images: ${{ env.LOGIN_SERVER }}/${{ env.IMAGE_NAME }}:latest
