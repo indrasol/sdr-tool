@@ -1,125 +1,79 @@
-# # Docs for the Azure Web Apps Deploy action: https://github.com/Azure/webapps-deploy
-# # More GitHub Actions for Azure: https://github.com/Azure/actions
-# # More info on Python, GitHub Actions, and Azure App Service: https://aka.ms/python-webapps-actions
+name: Build and Deploy to Azure Web App
 
-# name: Build and deploy Python app to Azure Web App - securetrack
+on:
+  push:
+    branches:
+      - main
 
-# concurrency:
-#   group: deploy-securetrack
-#   cancel-in-progress: true
-  
-# env:
-#   AZURE_WEBAPP_NAME: securetrack  # Name of your Azure Web App
-#   PYTHON_VERSION: '3.11'          # Python version to use
-#   ACTIONS_STEP_DEBUG: true        # Enable debug logs
-#   WEBSITE_RUN_FROM_PACKAGE: 1
+env:
+  # Match your ACR name and Azure Web App name
+  ACR_NAME: securetrack
+  WEBAPP_NAME: securetrackv1
+  RG_NAME: RG-EU-STB-PRD-01
+  IMAGE_NAME: sdr_backend
 
-# on:
-#   push:
-#     branches: ["development"]
-#   workflow_dispatch:
+permissions:
+  contents: read
+  id-token: write
 
-# permissions:
-#   contents: read  # Required for actions/checkout
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      # 1) Checkout the repo
+      - name: "Checkout GitHub repository"
+        uses: actions/checkout@v4
 
-# jobs:
-#   build:
-#     runs-on: ubuntu-latest
-#     # defaults:
-#     #   run:
-#     #     working-directory: ./sdr_backend  # Set default working directory to sdr_backend
+      # 2) Login to Azure using the service principal
+      - name: "Login to Azure"
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID }}
+          tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID }}
+          subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID }}
 
-#     steps:
-#       - uses: actions/checkout@v4
+      # 3) Setup buildx
+      - uses: docker/setup-buildx-action@v2
 
-#       - name: List workspace root
-#         run: ls -la
+      # 4) Log in to ACR
+      - name: "Log in to ACR"
+        run: |
+          az acr login --name ${{ env.ACR_NAME }}
 
-#       # - name: Set up Python version
-#       #   uses: actions/setup-python@v5
-#       #   with:
-#       #     python-version: ${{ env.PYTHON_VERSION }}
-#       #     cache: 'pip'
-#       #     cache-dependency-path: 'sdr_backend/requirements.txt'
+      - name: Fetch ACR loginServer
+        id: acr
+        run: |
+          echo "LOGIN_SERVER=$(az acr show --name ${{ env.ACR_NAME }} \
+                            --query loginServer --output tsv)" >> $GITHUB_ENV
 
-#       # - name: Create and start virtual environment
-#       #   run: |
-#       #     python -m venv venv
-#       #     source venv/bin/activate
-#       #     pip install -r requirements.txt  # Relative to sdr_backend
+      # 5) Build+push multi-arch (we only target amd64 here)
+      - name: Build & push amd64 image
+        run: |
+          docker buildx build \
+            --platform linux/amd64 \
+            --push \
+            --tag $LOGIN_SERVER/${{ env.IMAGE_NAME }}:latest \
+            --tag $LOGIN_SERVER/${{ env.IMAGE_NAME }}:${{ github.sha }} \
+            .
 
-#       # - name: Install dependencies
-#       #   run: pip install -r requirements.txt
+      # 5) Build the Docker image and push to ACR
+      # - name: "Build and push Docker image to ACR"
+      #   run: |
+      #     # Tag format: <loginServer>/<imageName>:<tag>
+      #     ACR_LOGIN_SERVER=$(az acr show --name ${{ env.ACR_NAME }} --query loginServer --output tsv)
+      #     IMAGE_TAG="$ACR_LOGIN_SERVER/${{ env.IMAGE_NAME }}:latest"
 
-#       # Optional: Add step to run tests here (PyTest, Django test suites, etc.)
+      #     # Build the image (context is repo root)
+      #     docker build -f Dockerfile -t $IMAGE_TAG .
 
-#       - name: Upload backend
-#         uses: actions/upload-artifact@v4
-#         with:
-#           name: backend
-#           path: sdr_backend
+      #     # Push to ACR
+      #     docker push $IMAGE_TAG
 
-#       # Optional: Add step to run tests here (e.g., pytest)
-#       # - name: Run tests
-#       #   run: pytest
-
-#       # - name: Zip artifact for deployment
-#       #   run: |
-#       #     echo "Current directory: $(pwd)"
-#       #     ls -la
-#       #     zip -r release.zip .
-#       #     echo "Zip command exit code: $?"
-#       #     ls -la  # Zip the contents of sdr_backend
-
-#       # - name: Upload artifact for deployment jobs
-#       #   uses: actions/upload-artifact@v4
-#       #   with:
-#       #     name: python-app
-#       #     path: release.zip
-
-#   deploy:
-#     runs-on: ubuntu-latest
-#     needs: build
-#     environment:
-#       name: Production
-#       url: ${{ steps.deploy-to-webapp.outputs.webapp-url }}
-#     permissions:
-#       id-token: write  # Required for OIDC authentication
-#       contents: read   # Required for actions/checkout
-
-#     steps:
-#       # - name: Download artifact from build job
-#       #   uses: actions/download-artifact@v4
-#       #   with:
-#       #     name: python-app
-#       #     path: .
-#       - uses: actions/download-artifact@v4
-#         with:
-#           name: backend
-#           path: .
-#       - name: List after download (debug)
-#         run: |
-#           echo "Workspace: $GITHUB_WORKSPACE"
-#           ls -R
-
-
-#       # - name: Unzip artifact for deployment
-#       #   run: unzip release.zip -d ./sdr_backend_deploy
-
-#       - name: Login to Azure
-#         uses: azure/login@v2
-#         with:
-#           client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID }}
-#           tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID }}
-#           subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID }}
-
-#       - name: Deploy to Azure Web App
-#         id: deploy-to-webapp
-#         uses: azure/webapps-deploy@v3
-#         # id: deploy-to-webapp
-#         with:
-#           app-name: ${{ env.AZURE_WEBAPP_NAME }}
-#           # publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
-#           package: "."  # Deploy the unzipped sdr_backend contents
-#           startup-command: |
-#             uvicorn main:app --host 0.0.0.0 --port $PORT
+      # 6) Deploy the new image to Azure Web App
+      - name: "Deploy to Azure Web App"
+        uses: azure/webapps-deploy@v2
+        with:
+          app-name: ${{ env.WEBAPP_NAME }}
+          # slot-name: production
+          # images: ${{ env.ACR_NAME }}-dzc8a3deejhje7d4.azurecr.io/${{ env.IMAGE_NAME }}:latest
+          images: ${{ env.LOGIN_SERVER }}/${{ env.IMAGE_NAME }}:latest

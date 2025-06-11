@@ -8,6 +8,7 @@ interface NodeData {
   label: string;
   description?: string;
   nodeType?: string;
+  pinned?: boolean;
 }
 
 interface NodeContextToolbarProps {
@@ -86,9 +87,9 @@ const NodeContextToolbar: React.FC<NodeContextToolbarProps> = ({
           size="icon"
           className="h-8 w-8 text-indigo-800 hover:bg-indigo-100/50"
           onClick={() => onLock(id)}
-          title="Lock/Unlock node"
+          title={data.pinned ? 'Unlock Position' : 'Lock Position'}
         >
-          <Lock size={16} />
+          {data.pinned ? <Unlock size={16} /> : <Lock size={16} />}
         </Button>
       )}
 

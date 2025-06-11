@@ -113,12 +113,19 @@ class LLMService:
                 )
                 
                 for chunk in stream_obj:
-                    if chunk.type == 'content_block_start' and hasattr(chunk.content_block, 'type') and chunk.content_block.type == 'text':
-                        continue
-                    elif chunk.type == 'content_block_delta' and chunk.delta.type == 'text':
-                        text_chunk = chunk.delta.text
-                        full_response += text_chunk
-                        response_chunks.append(text_chunk)
+                    # Accumulate text from both the initial start block and subsequent delta blocks.
+                    if chunk.type in ("content_block_start", "content_block_delta"):
+                        text_chunk = ""
+                        # For the first chunk the text lives in `content_block.text`
+                        if hasattr(chunk, "content_block") and hasattr(chunk.content_block, "text"):
+                            text_chunk = chunk.content_block.text or ""
+                        # For subsequent chunks the text lives in `delta.text`
+                        if hasattr(chunk, "delta") and hasattr(chunk.delta, "text"):
+                            text_chunk = chunk.delta.text or text_chunk
+
+                        if text_chunk:
+                            full_response += text_chunk
+                            response_chunks.append(text_chunk)
                     
                     # Capture usage if present in the chunk
                     if hasattr(chunk, 'usage'):
@@ -913,14 +920,19 @@ class LLMService:
                 
                 
                 for chunk in stream_obj:
-                    if chunk.type == 'content_block_start' and hasattr(chunk.content_block, 'type') and chunk.content_block.type == 'text':
-                        continue
-                    elif chunk.type == 'content_block_delta' and chunk.delta.type == 'text':
-                        text_chunk = chunk.delta.text
-                        full_response += text_chunk
-                        response_chunks.append(text_chunk)
-                    
-                    # log_info(f"streaming reponse : {full_response}")
+                    # Accumulate text from both the initial start block and subsequent delta blocks.
+                    if chunk.type in ("content_block_start", "content_block_delta"):
+                        text_chunk = ""
+                        # For the first chunk the text lives in `content_block.text`
+                        if hasattr(chunk, "content_block") and hasattr(chunk.content_block, "text"):
+                            text_chunk = chunk.content_block.text or ""
+                        # For subsequent chunks the text lives in `delta.text`
+                        if hasattr(chunk, "delta") and hasattr(chunk.delta, "text"):
+                            text_chunk = chunk.delta.text or text_chunk
+
+                        if text_chunk:
+                            full_response += text_chunk
+                            response_chunks.append(text_chunk)
                     
                     # Capture usage if present in the chunk
                     if hasattr(chunk, 'usage'):

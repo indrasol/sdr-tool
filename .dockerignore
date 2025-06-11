@@ -1,0 +1,6 @@
+.git
+__pycache__/
+*.pyc
+frontend/           # not needed in backend image
+deploy/
+site.zip

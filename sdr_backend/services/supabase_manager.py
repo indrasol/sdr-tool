@@ -1,7 +1,7 @@
 import string
 from fastapi import HTTPException
 from typing import Dict, Any, List, Optional
-from datetime import date, datetime
+from datetime import date, datetime, timezone
 import random
 from utils.logger import log_info
 from core.db.supabase_db import get_supabase_client, safe_supabase_operation
@@ -331,3 +331,148 @@ class SupabaseManager:
             "dfd_data": project.get("dfd_data"),
             "threat_model_id": project.get("threat_model_id")
         }
+    
+    # —– Template —–
+    def _generate_template_id(self, length: int = 4) -> str:
+        """Generate a unique ID like 'T4G7Z' (T + 4 alphanumeric chars)."""
+        suffix = ''.join(random.choices(string.digits, k=length))
+        return f"T{suffix}"
+
+    async def create_template(
+        self,
+        tenant_id: int,
+        tenant_name: str,
+        diagram_state: Dict[str, Any],
+        template_name: str,
+        template_description: Optional[str] = None,
+        template_tags: Optional[List[str]] = None,
+        template_visibility: Optional[List[str]] = None,
+    ) -> str:
+        """
+        Insert a new template record into Supabase, generating
+        a unique 4-char template_id.
+        Returns the template_id.
+        """
+        # — generate & check uniqueness (retry up to 5x) —
+        template_id = self._generate_template_id()
+        for _ in range(5):
+            check = lambda: self.supabase \
+                .from_("templates") \
+                .select("template_id") \
+                .eq("template_id", template_id) \
+                .execute()
+            resp = await safe_supabase_operation(check, "Failed checking template_id")
+            if not resp.data:
+                break
+            template_id = self._generate_template_id()
+        else:
+            raise HTTPException(
+                status_code=500,
+                detail="Could not generate unique template_id"
+            )
+
+        # — prepare payload —
+        now = datetime.now(timezone.utc).isoformat()
+        payload = {
+            "template_id": template_id,
+            "tenant_id": tenant_id,
+            "tenant_name": tenant_name,
+            "diagram_state": diagram_state,
+            "template_name": template_name,
+            "template_description": template_description,
+            "template_tags": template_tags or [],
+            "template_visibility": template_visibility or [],
+            "created_at": now,
+        }
+
+        # — insert into Supabase —
+        insert_op = lambda: self.supabase.from_("templates").insert(payload).execute()
+        await safe_supabase_operation(insert_op, "Failed to create template")
+
+        return template_id
+    
+    async def get_template(
+        self,
+        template_id: str,
+        tenant_id: int
+    ) -> Dict[str, Any]:
+        """
+        Fetch a single template by its public ID and tenant.
+        Raises HTTPException(404) if not found.
+        """
+        def fetch():
+            return (
+                self.supabase
+                .from_("templates")
+                .select("*")
+                .eq("template_id", template_id)
+                .eq("tenant_id", tenant_id)
+                .single()
+                .execute()
+            )
+
+        resp = await safe_supabase_operation(fetch, f"Failed to fetch template {template_id}")
+        if not resp.data:
+            raise HTTPException(status_code=404, detail="Template not found")
+        return resp.data
+    
+    async def update_template(
+        self,
+        template_id: str,
+        tenant_id: int,
+        diagram_info: Optional[Dict[str, Any]] = None,
+        template_name: Optional[str] = None,
+        template_description: Optional[str] = None,
+        template_tags: Optional[List[str]] = None,
+        template_visibility: Optional[List[str]] = None,
+    ) -> None:
+        """
+        Partially update a template. Raises 404 if not found.
+        """
+        # 1️⃣ Ensure it exists (and belongs to tenant)
+        def fetch():
+            return (
+                self.supabase
+                    .from_("templates")
+                    .select("template_id")
+                    .eq("template_id", template_id)
+                    .eq("tenant_id", tenant_id)
+                    .execute()
+            )
+        resp = await safe_supabase_operation(fetch, f"Failed to fetch template {template_id}")
+        if not resp.data:
+            raise HTTPException(status_code=404, detail="Template not found")
+
+        # 2️⃣ Build update payload
+        update_data: Dict[str, Any] = {}
+        if diagram_info is not None:
+            update_data["diagram_info"] = diagram_info
+        if template_name is not None:
+            update_data["template_name"] = template_name
+        if template_description is not None:
+            update_data["template_description"] = template_description
+        if template_tags is not None:
+            update_data["template_tags"] = template_tags
+        if template_visibility is not None:
+            update_data["template_visibility"] = template_visibility
+
+        if not update_data:
+            # nothing to update
+            raise HTTPException(status_code=400, detail="No updatable fields provided")
+
+        # always bump updated_at
+        update_data["updated_at"] = datetime.utcnow().isoformat()
+
+        # 3️⃣ Perform the update
+        def do_update():
+            return (
+                self.supabase
+                    .from_("templates")
+                    .update(update_data)
+                    .eq("template_id", template_id)
+                    .eq("tenant_id", tenant_id)
+                    .execute()
+            )
+        upd_resp = await safe_supabase_operation(do_update, f"Failed to update template {template_id}")
+        if upd_resp.error:
+            raise HTTPException(status_code=500, detail=f"DB error: {upd_resp.error.message}")

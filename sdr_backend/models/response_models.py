@@ -1,6 +1,7 @@
 from pydantic import BaseModel, Field
 from typing import Dict, Optional, Any, List, Literal
 from enum import Enum
+from datetime import datetime
 
 
 class ResponseType(str, Enum):
@@ -56,3 +57,29 @@ class DesignResponse(BaseModel):
     response: BaseResponse
     show_thinking: Optional[bool] = Field(True, description="Whether to show thinking in the UI")
     response_id: Optional[str] = Field(None, description="Unique identifier for feedback reference")
+
+
+class SaveTemplateResponse(BaseModel):
+    success: bool
+    template_id: str
+    message: str
+
+class GetTemplateResponse(BaseModel):
+    success: bool
+    template_id: str
+    tenant_id: int
+    tenant_name: str
+    diagram_state: Dict               # alias for diagram_info in DB
+    template_name: str
+    template_description: Optional[str]
+    template_tags: List[str]
+    template_visibility: List[str]
+    created_at: datetime
+    updated_at: datetime
+
+
+class UpdateTemplateResponse(BaseModel):
+    success: bool
+    template_id: str
+    updated_at: datetime
+    message: str

@@ -31,6 +31,9 @@ const CustomNode = ({
   const threats = safeData.threats || [];
   const activeSeverityFilter = safeData.activeSeverityFilter || 'ALL';
 
+  // Check pinned state
+  const isPinned = safeData.pinned === true;
+
   const handleEdit = (nodeId: string) => {
     if (safeData.onEdit) {
       safeData.onEdit(nodeId, label);
@@ -40,6 +43,12 @@ const CustomNode = ({
   const handleDelete = (nodeId: string) => {
     if (safeData.onDelete) {
       safeData.onDelete(nodeId);
+    }
+  };
+
+  const handleLockToggle = (nodeId: string) => {
+    if (safeData.onLock) {
+      safeData.onLock(nodeId);
     }
   };
 
@@ -438,6 +447,11 @@ const CustomNode = ({
           data={safeData}
           onEdit={() => handleEdit(id)} 
           onDelete={() => handleDelete(id)}
+          onLock={() => {
+            if (safeData.onLock) {
+              safeData.onLock(id);
+            }
+          }}
           onInfoToggle={() => handleInfoToggle(id)}
         />
       )}
@@ -447,6 +461,10 @@ const CustomNode = ({
         <Tooltip>
           <TooltipTrigger asChild>
             <div className={`flex flex-col items-center ${selected ? 'outline-2 outline-blue-400 outline-offset-2 rounded-md' : ''}`}>
+              {/* Pinned badge */}
+              {isPinned && (
+                <div className="pinned-badge absolute -top-1 -left-1 text-red-500 text-sm select-none" title="Pinned">📌</div>
+              )}
               {/* Icon container with shadow for better visibility */}
               <div 
                 className={classNames(
