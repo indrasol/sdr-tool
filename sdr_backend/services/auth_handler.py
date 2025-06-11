@@ -41,7 +41,7 @@ async def verify_token(authorization: str = Header(None), is_registration: bool 
         # log_info(f"Authorization: {authorization}")
         token = authorization.split(" ")[1]
         token = str(token)
-        log_info(f"Token: {token}")
+        # log_info(f"Token: {token}")
 
         # Log current server time for debugging
         current_timestamp = int(time.time())

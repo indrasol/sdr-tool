@@ -20,7 +20,6 @@ import { AIFlowDiagramProps } from './types/diagramTypes';
 import { useDiagramNodes } from './hooks/useDiagramNodes';
 import { edgeStyles } from './utils/edgeStyles';
 import DiagramActions from './DiagramActions';
-import dagre from 'dagre';
 import './AIFlowDiagram.css';
 import { AlertTriangle, Loader2, EyeOff, Eye } from 'lucide-react';
 import { runThreatAnalysis } from '@/services/designService';
@@ -67,144 +66,7 @@ const areArraysEqual = (arr1: any[], arr2: any[], isNodes = true) => {
   });
 };
 
-// Layout algorithm function - uses dagre to calculate node positions
-export const getLayoutedElements = (nodes, edges, direction = 'TB', nodeWidth = 172, nodeHeight = 36, forceLayout = false) => {
-  console.log(`[getLayoutedElements] Called with ${nodes?.length} nodes, ${edges?.length} edges. forceLayout: ${forceLayout}`); // Log function call
-  if (!nodes || nodes.length === 0) {
-    console.warn('[getLayoutedElements] No nodes provided');
-    return { nodes: [], edges: [] };
-  }
-
-  try {
-    // Create a new graph
-    const dagreGraph = new dagre.graphlib.Graph();
-    dagreGraph.setDefaultEdgeLabel(() => ({}));
-    
-    // Configure for flow-oriented layout
-    dagreGraph.setGraph({ 
-      rankdir: 'LR', // Left to right flow
-      ranksep: 150, // Increase horizontal separation between ranks for better spacing
-      nodesep: 60,  // Vertical separation between nodes in the same rank
-      marginx: 50,  // Larger margin at the left/right 
-      marginy: 40,  // Margin at the top/bottom
-      align: 'DL', // Down-left alignment for clearer hierarchy
-      acyclicer: 'greedy', // Handle cycles
-      edgesep: 30, // Increase edge separation
-    });
-
-    // First, group nodes by their logical layers (if available)
-    const nodesByLayer = {};
-    nodes.forEach(node => {
-      // Try to determine the node's layer from its data or type
-      let layer = 'default';
-      if (node.data && node.data.nodeType) {
-        const nodeType = node.data.nodeType.toLowerCase();
-        if (nodeType.includes('client') || nodeType.includes('user')) {
-          layer = 'client';
-        } else if (nodeType.includes('database')) {
-          layer = 'database';
-        } else if (nodeType.includes('service') || nodeType.includes('application')) {
-          layer = 'service';
-        }
-      }
-      
-      if (!nodesByLayer[layer]) {
-        nodesByLayer[layer] = [];
-      }
-      nodesByLayer[layer].push(node);
-    });
-
-    // Add nodes to the graph with dimensions
-    // Process nodes layer by layer to improve alignment
-    const layerOrder = ['client', 'service', 'database', 'default'];
-    let currentRank = 0;
-    
-    layerOrder.forEach(layer => {
-      const layerNodes = nodesByLayer[layer] || [];
-      
-      if (layerNodes.length > 0) {
-        // Place nodes in this layer at the same rank
-        layerNodes.forEach(node => {
-          dagreGraph.setNode(node.id, { 
-            width: node.data?.width || nodeWidth, 
-            height: node.data?.height || nodeHeight,
-            rank: currentRank
-          });
-        });
-        
-        currentRank += 1; // Increment rank for next layer
-      }
-    });
-    
-    // Add any remaining nodes
-    nodes.forEach(node => {
-      if (!dagreGraph.node(node.id)) {
-        dagreGraph.setNode(node.id, { 
-          width: node.data?.width || nodeWidth, 
-          height: node.data?.height || nodeHeight
-        });
-      }
-    });
-
-    // Add edges to the graph with weights to influence layout
-    if (edges && edges.length > 0) {
-      edges.forEach((edge) => {
-        if (edge.source && edge.target) {
-          dagreGraph.setEdge(edge.source, edge.target, {
-            weight: 1,
-            minlen: 1
-          });
-        }
-      });
-    }
-
-    // Run the layout algorithm
-    dagre.layout(dagreGraph);
-    console.log('[getLayoutedElements] Dagre layout complete');
-
-    // Get the positions from the layout algorithm
-    const layoutedNodes = nodes.map((node) => {
-      const nodeWithPosition = dagreGraph.node(node.id);
-      
-      if (!nodeWithPosition) {
-        console.warn(`[getLayoutedElements] Node ${node.id} not found in layout results`);
-        return node;
-      }
-
-      const useExistingPosition = node.position && 
-                                  node.position.x !== 0 && 
-                                  node.position.y !== 0 &&
-                                  !forceLayout; // Consider forceLayout flag
-      
-      // Apply new position, adjusting for the center based on the default node dimensions passed as args
-      return {
-        ...node,
-        position: useExistingPosition 
-          ? node.position 
-          : {
-              x: nodeWithPosition.x - nodeWidth / 2, // Use function arg width
-              y: nodeWithPosition.y - nodeHeight / 2, // Use function arg height
-            },
-      };
-    });
-
-    // Apply simple default edge styling for all edges
-    const simplifiedEdges = edges.map(edge => ({
-      ...edge,
-      type: 'bezier', // Use bezier curves with minimal curvature
-      pathOptions: {
-        curvature: 0.1, // Minimal curvature for clean appearance
-        offset: 0
-      }
-    }));
-
-    // Return the nodes with their calculated positions and edges
-    return { nodes: layoutedNodes, edges: simplifiedEdges }; 
-  } catch (error) {
-    console.error('Error in layout algorithm:', error);
-    return { nodes, edges }; // Return original nodes and edges on error
-  }
-};
+// getLayoutedElements removed – layout is now owned by the parent component
 
 const AIFlowDiagram: React.FC<AIFlowDiagramProps> = ({
   nodes: initialNodes,
@@ -273,7 +135,7 @@ const AIFlowDiagram: React.FC<AIFlowDiagramProps> = ({
 
   // Default edge options
   const defaultEdgeOptions = useMemo(() => ({
-    type: 'bezier', // Use bezier with minimal curvature
+    type: 'smoothstep',
     markerEnd: {
       type: MarkerType.ArrowClosed,
       width: 12, 
@@ -420,6 +282,13 @@ const AIFlowDiagram: React.FC<AIFlowDiagramProps> = ({
     // First, directly apply changes to update node positions immediately for smooth UI
     onNodesChange(changes);
     
+    // Gather IDs of nodes whose position is being changed
+    const movedNodeIds = new Set(
+      changes
+        .filter(change => change.type === 'position')
+        .map(change => change.id)
+    );
+    
     // Find drag-related change by inspecting the changes array
     const positionChanges = changes.filter(change => change.type === 'position');
     const dragStartChange = positionChanges.find(change => change.dragging === true);
@@ -435,6 +304,11 @@ const AIFlowDiagram: React.FC<AIFlowDiagramProps> = ({
       // Drag just ended
       console.log('Node dragging ended');
       
+      // Mark affected nodes as pinned
+      setNodes(prevNodes => prevNodes.map(n =>
+        movedNodeIds.has(n.id) ? { ...n, data: { ...n.data, pinned: true } } : n
+      ));
+      
       // Use a timeout to ensure React Flow internal state is updated first
       setTimeout(() => {
         isDragging.current = false;
@@ -446,7 +320,7 @@ const AIFlowDiagram: React.FC<AIFlowDiagramProps> = ({
         }
       }, 100);
     }
-  }, [onNodesChange, nodes, setNodesExternal]);
+  }, [onNodesChange, nodes, setNodesExternal, setNodes]);
 
   // Use custom hook to manage nodes and their interactions
   const {
@@ -457,7 +331,7 @@ const AIFlowDiagram: React.FC<AIFlowDiagramProps> = ({
     handleConnect: hookHandleConnect,
     handleAddNode,
     handleSaveNodeEdit,
-  } = useDiagramNodes(nodes, edges, setNodes, setEdges);
+  } = useDiagramNodes(nodes, edges, setNodes, setEdges, onLayout);
 
   // Process edge data to ensure proper rendering
   const processEdges = useCallback((edgesToProcess) => {
@@ -480,7 +354,7 @@ const AIFlowDiagram: React.FC<AIFlowDiagramProps> = ({
       return {
         ...edge,
         id: edge.id || `edge-${edge.source}-${edge.target}-${Date.now()}`,
-        type: 'straight', // Force straight edges for top-to-bottom flow
+        type: 'smoothstep',
         animated: edgeType === 'dataFlow' || edgeType === 'database',
         // Enhanced arrow marker for better visibility
         markerEnd: {
@@ -538,69 +412,6 @@ const AIFlowDiagram: React.FC<AIFlowDiagramProps> = ({
     }
   }, [initialNodes, initialEdges, prepareNodes, processEdges, setNodes, setEdges]);
 
-  // Apply layout when nodes or edges change significantly - but NOT on initial render
-  useEffect(() => {
-    // Skip if not yet synced initial data, or no nodes, or currently layouting
-    if (
-      !hasSyncedInitialData.current || 
-      initialNodes.length === 0 || 
-      effectiveIsLayouting ||
-      initialRenderRef.current
-    ) {
-      return;
-    }
-    
-    // Check if nodes or edges count changed (something added or removed)
-    const nodesCountChanged = initialNodes.length !== previousNodesLengthRef.current;
-    const edgesCountChanged = initialEdges.length !== previousEdgesLengthRef.current;
-    
-    // Update the refs with current counts
-    previousNodesLengthRef.current = initialNodes.length;
-    previousEdgesLengthRef.current = initialEdges.length;
-    
-    // If something changed, apply layout with a delay
-    if ((nodesCountChanged || edgesCountChanged)) {
-      // Clear any existing timeout
-      if (layoutTimeoutRef.current) {
-        clearTimeout(layoutTimeoutRef.current);
-      }
-      
-      if (setInternalIsLayouting) setInternalIsLayouting(true);
-      
-      // Apply layout with a slight delay to batch changes
-      layoutTimeoutRef.current = setTimeout(() => {
-        // First prepare nodes with proper styles, passing current edges
-        const preparedNodes = prepareNodes(initialNodes, initialEdges);
-        // Then process edges with proper styling
-        const processedEdges = processEdges(initialEdges);
-        
-        // Now apply layout
-        const { nodes: layoutedNodes, edges: layoutedEdges } = getLayoutedElements(
-          preparedNodes,
-          processedEdges
-        );
-        
-        // Update the nodes with new positions
-        setNodes(layoutedNodes);
-        setEdges(layoutedEdges);
-        
-        // Wait a bit and then fit view to show all elements
-        setTimeout(() => {
-          if (reactFlowInstance.current) {
-            reactFlowInstance.current.fitView({ padding: 0.2 });
-          }
-          if (setInternalIsLayouting) setInternalIsLayouting(false);
-        }, 300);
-      }, 200);
-    }
-    
-    return () => {
-      if (layoutTimeoutRef.current) {
-        clearTimeout(layoutTimeoutRef.current);
-      }
-    };
-  }, [initialNodes, initialEdges, effectiveIsLayouting, prepareNodes, processEdges, setNodes, setEdges]);
-
   // Edge sync - don't update during layouting or dragging
   useEffect(() => {
     // Skip if we're updating from props to internal state
@@ -621,60 +432,10 @@ const AIFlowDiagram: React.FC<AIFlowDiagramProps> = ({
     }
   }, [edges, setEdgesExternal, effectiveIsLayouting, initialEdges, isDragging]);
 
-  // Internal layout function if no external one is provided
-  const internalOnLayout = useCallback(() => {
-    // Prevent unnecessary processing if no nodes
-    if (nodes.length === 0) return;
-    
-    // Use functional update to get the latest state
-    setNodes((currentNodes) => {
-      setEdges((currentEdges) => {
-        // Prevent layout if already layouting or no nodes exist
-        if (effectiveIsLayouting || currentNodes.length === 0) {
-          return currentEdges; // Return unchanged edges
-        }
-        
-        if (setInternalIsLayouting) {
-          setInternalIsLayouting(true);
-        }
-        
-        // Apply layout
-        const { nodes: layoutedNodes, edges: layoutedEdges } = getLayoutedElements(
-          currentNodes,
-          currentEdges,
-          'TB',  // Direction
-          172,   // Node width
-          36,    // Node height
-          true   // Force layout to override existing positions
-        );
-        
-        // Update state
-        setNodes(layoutedNodes); // Update nodes immediately
-        
-        // Fit view and reset layout flag after a delay
-        setTimeout(() => {
-          if (reactFlowInstance.current) {
-            reactFlowInstance.current.fitView({ padding: 0.2 });
-          }
-          if (setInternalIsLayouting) {
-            setInternalIsLayouting(false);
-          }
-        }, 300);
-        
-        return layoutedEdges; // Return the layouted edges for the setEdges update
-      });
-      return currentNodes; // Return unchanged nodes initially, update happens inside
-    });
-  }, [effectiveIsLayouting, setInternalIsLayouting, setNodes, setEdges, nodes.length]);
-
-  // Handle external layout function if provided, otherwise use internal
+  // Handle layout button – delegate to parent component which owns layout
   const handleLayout = useCallback(() => {
-    if (onLayout) {
-      onLayout();
-    } else {
-      internalOnLayout();
-    }
-  }, [onLayout, internalOnLayout]);
+    onLayout?.();
+  }, [onLayout]);
 
   // Handle connect event
   const handleConnect = useCallback(
@@ -682,7 +443,7 @@ const AIFlowDiagram: React.FC<AIFlowDiagramProps> = ({
       // Create the new edge with simple, directional styling
       const newEdge = {
         ...params,
-        type: 'bezier', 
+        type: 'smoothstep', 
         markerEnd: {
           type: MarkerType.ArrowClosed,
           width: 12,
@@ -1354,3 +1115,11 @@ const AIFlowDiagram: React.FC<AIFlowDiagramProps> = ({
 };
 
 export default AIFlowDiagram;
+
+/*
+ * TODO – Manual Test Steps for Node Pinning (A–D)
+ * A. Drag a single node and release – it should keep its new position after auto-layout runs (data.pinned === true). A 📌 badge must appear.
+ * B. Select a node, click the lock button in the floating toolbar – the badge toggles and the next "Auto-arrange" must move it when unlocked.
+ * C. Multi-select or lasso-drag several nodes; move them as a group – all moved nodes become pinned (badge visible).
+ * D. Save the project, reload the page – nodes that were pinned before should still be pinned and stay fixed after a new layout.
+ */

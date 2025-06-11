@@ -10,11 +10,13 @@ export interface CustomNodeData {
   iconUrl?: string; // Add iconUrl property for direct HTML icon content
   onEdit?: (id: string, label: string) => void;
   onDelete?: (id: string) => void;
+  onLock?: (id: string) => void; // Toggle pinned
   isComment?: boolean;
   threats?: ThreatItem[];
   activeSeverityFilter?: string;
   hasSourceConnection?: boolean;
   hasTargetConnection?: boolean;
+  pinned?: boolean; // Indicates if node position is locked
   [key: string]: unknown; // Add index signature to satisfy Record<string, unknown>
 }
 
