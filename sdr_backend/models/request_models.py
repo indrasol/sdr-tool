@@ -23,7 +23,7 @@ class SaveProjectRequest(BaseModel):
 class SaveTemplateRequest(BaseModel):
     tenant_id: int
     tenant_name: str
-    diagram_info: Dict
+    diagram_state: Dict
     template_name: str
     template_description: str | None = None
     template_tags: List[str] = Field(default_factory=list)
