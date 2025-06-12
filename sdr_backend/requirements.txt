@@ -17,8 +17,10 @@ tenacity==8.2.3
 # langchain-community>=0.0.19
 openai==1.75.0
 anthropic==0.49.0
-# torch==2.0.1
-# --find-links https://download.pytorch.org/whl/torch_stable.html
+torch>=2.3.0
+--find-links https://download.pytorch.org/whl/torch_stable.html
+transformers>=4.41.0
+huggingface-hub>=0.20.0
 faiss-cpu==1.7.4
 scikit-learn==1.2.2
 accelerate==0.26.1

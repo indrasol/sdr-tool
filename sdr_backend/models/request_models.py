@@ -18,3 +18,22 @@ class SaveProjectRequest(BaseModel):
     session_id: str
     diagram_state: Optional[Dict[str, Any]] = None
     project_code: Optional[str] = None
+
+
+class SaveTemplateRequest(BaseModel):
+    tenant_id: int
+    tenant_name: str
+    diagram_state: Dict
+    template_name: str
+    template_description: str | None = None
+    template_tags: List[str] = Field(default_factory=list)
+    template_visibility: List[str] = Field(default_factory=list)
+
+class UpdateTemplateRequest(BaseModel):
+    template_id: str
+    tenant_id: int
+    diagram_info: Optional[Dict]            = None
+    template_name: Optional[str]            = None
+    template_description: Optional[str]     = None
+    template_tags: Optional[List[str]]      = None
+    template_visibility: Optional[List[str]]= None

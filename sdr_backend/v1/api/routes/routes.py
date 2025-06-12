@@ -33,6 +33,9 @@ from v1.api.routes.health import router as health_router
 # from v1.api.routes.model_with_ai.dfd import router as dfd_router
 from v1.api.routes.model_with_ai.threat_model import router as threat_model_router
 
+# Templates
+from v1.api.routes.templates import router as templates_router
+
 
 router = APIRouter()
 
@@ -60,6 +63,8 @@ router.include_router(threat_model_router, tags=["model_with_ai - threat_model_r
 
 # Projects
 router.include_router(project_router, tags=["Projects - project_router"])
+# Templates
+router.include_router(templates_router, tags=["Templates - templates_router"])
 
 # Redis Cache
 router.include_router(redis_cache_router, tags=["Redis Cache - redis_cache_router"])

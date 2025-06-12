@@ -80,7 +80,8 @@ export function useDiagramNodes(
   initialNodes: Node<CustomNodeData>[] = [],
   initialEdges: Edge[] = [],
   externalSetNodes = null,
-  externalSetEdges = null
+  externalSetEdges = null,
+  externalOnLayout: (() => void) | null = null
 ) {
   const { toast } = useToast();
   const [editNodeDialogOpen, setEditNodeDialogOpen] = useState(false);
@@ -270,6 +271,19 @@ export function useDiagramNodes(
       // Determine if this node should be excluded from layers (client nodes)
       const shouldExcludeFromLayers = isClientNode();
       
+      // === NEW: attach onLock toggle callback & keep pinned flag ===
+      const togglePin = (id: string) => {
+        if (!externalSetNodes) return;
+        externalSetNodes((nds: Node[]) => nds.map(n => n.id === id ? { ...n, data: { ...n.data, pinned: !(n.data?.pinned === true) } } : n));
+        // Trigger layout if provided
+        if (externalOnLayout) {
+          externalOnLayout();
+        }
+      };
+
+      // Preserve existing pinned flag (default false)
+      const isPinnedFlag = data.pinned === true;
+      
       // Always force draggable to be true, never override with false
       return {
         ...node,
@@ -277,11 +291,16 @@ export function useDiagramNodes(
         position: position as XYPosition, // Assert position type
         dragging: node.dragging || false, // Preserve dragging state if it exists
         draggable: true, // Always draggable
-        data: { // Ensure data matches CustomNodeData structure
+        data: {
+          ...data,
+          // Preserve existing pinned flag or default
+          pinned: isPinnedFlag,
+          // Add callbacks for edit/delete
+          onEdit: data.onEdit || handleEditNode,
+          onDelete: data.onDelete || handleDeleteNode,
+          // NEW: onLock callback to toggle pinned
+          onLock: data.onLock || togglePin,
           label: formattedLabel, // Use the newly formatted label
-          onEdit: handleEditNode,
-          onDelete: handleDeleteNode,
-          description: data.description || '',
           nodeType: nodeType,
           section: section,
           isMicroservice: isMicroserviceNode,

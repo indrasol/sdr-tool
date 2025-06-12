@@ -25,8 +25,8 @@ import projectService from '@/services/projectService';
 import { useDiagramNodes } from '@/components/AI/hooks/useDiagramNodes';
 import { edgeStyles, determineEdgeType } from '@/components/AI/utils/edgeStyles';
 // Import getLayoutedElements directly from AIFlowDiagram to ensure consistency
-import AIFlowDiagram, { getLayoutedElements } from '@/components/AI/AIFlowDiagram';
-import dagre, { layout } from 'dagre';
+import AIFlowDiagram from '@/components/AI/AIFlowDiagram';
+import { layoutWithELK } from '@/components/AI/utils/elkLayout';
 import axios from 'axios';
 import { Button } from '@/components/ui/button';
 import DFDVisualization from '@/components/AI/DFDVisualization';
@@ -169,6 +169,8 @@ const ModelWithAI = () => {
   // Layout state
   const [isLayouting, setIsLayouting] = useState(false);
   const layoutTimeoutRef = useRef(null);
+  // Ref to allow layout triggering from deeply nested callbacks before applyLayout is declared
+  const applyLayoutRef = useRef<() => void>(() => {});
   const previousNodesLengthRef = useRef(0);
   const previousEdgesLengthRef = useRef(0);
 
@@ -299,13 +301,26 @@ const ModelWithAI = () => {
       if (!node.data.onDelete) {
         node.data.onDelete = handleDeleteNode;
       }
+      if (!node.data.onLock) {
+        node.data.onLock = (id: string) => {
+          setNodes(nds => nds.map(n => n.id === id ? { ...n, data: { ...n.data, pinned: !(n.data?.pinned === true) } } : n));
+          // trigger layout if node unlocked
+          if (!isLayouting) {
+            setTimeout(() => {
+              if (applyLayoutRef.current) {
+                applyLayoutRef.current();
+              }
+            }, 50);
+          }
+        };
+      }
       
       return node;
     });
     
     // Combine both types of nodes 
     return [...enhancedNodes, ...stickyNotes];
-  }, [prepareNodes, handleEditNode, handleDeleteNode]);
+  }, [prepareNodes, handleEditNode, handleDeleteNode, isLayouting, applyLayoutRef]);
 
   // Memoize the edges to prevent unnecessary updates
   const stableEdges = useMemo(() => {
@@ -404,7 +419,7 @@ const ModelWithAI = () => {
 
   // -----------------------------------------------------------------------------------------
   // Apply layout function
-  const applyLayout = useCallback(() => {
+  const applyLayout = useCallback(async () => {
     console.log('[ModelWithAI] applyLayout triggered.');
     // Get current state directly from refs to avoid stale closures
     const currentNodes = nodesRef.current;
@@ -433,17 +448,14 @@ const ModelWithAI = () => {
       console.log('[ModelWithAI] Calling getLayoutedElements with LR flow (maintaining existing behavior)');
       
       // Keep existing left-to-right flow with proper spacing
-      const { nodes: layoutedNodes, edges: layoutedEdges } = getLayoutedElements(
+      const { nodes: layoutedNodes, edges: layoutedEdges } = await layoutWithELK(
         preparedNodes,
         processedEdges,
-        'LR', // Maintain left-to-right flow as requested
-        172,  // Keep existing horizontal spacing
-        36,   // Keep existing vertical spacing
-        true  // Force layout
+        { direction: 'LR', nodeWidth: 172, nodeHeight: 36 }
       );
   
       // Apply backend positioning rules to layouted nodes
-      const backendPositionedNodes = applyBackendPositioning(layoutedNodes);
+      const backendPositionedNodes = layoutedNodes; // ELK already positioned
   
       if (backendPositionedNodes && backendPositionedNodes.length > 0) {
         console.log(`[ModelWithAI] Calculated ${backendPositionedNodes.length} positioned nodes. Updating state.`);
@@ -484,6 +496,11 @@ const ModelWithAI = () => {
       setIsLayouting(false); // Ensure flag is reset on error
     }
   }, [isLayouting, prepareNodesForDiagram, processEdges, setNodes, setEdges, setIsLayouting]);
+
+  // Keep ref updated
+  useEffect(() => {
+    applyLayoutRef.current = applyLayout;
+  }, [applyLayout]);
 
   // New function to apply backend positioning rules for LEFT-TO-RIGHT flow
 const applyBackendPositioning = useCallback((nodes: Node[]): Node[] => {
@@ -1458,7 +1475,7 @@ const applyBackendPositioning = useCallback((nodes: Node[]): Node[] => {
   
       // 7. Apply LR flow positioning
       console.log('Applying LR flow positioning...');
-      const backendPositionedNodes = applyBackendPositioning(finalNodesListPrepared);
+      const backendPositionedNodes = finalNodesListPrepared; // keep ELK coordinates
   
       // 8. Generate updated layer containers
       const updatedLayerContainers = updateExistingLayerContainers(currentLayerContainers, backendPositionedNodes);
@@ -1779,18 +1796,20 @@ const applyBackendPositioning = useCallback((nodes: Node[]): Node[] => {
             // Apply layout to ensure proper positioning
             setTimeout(() => {
               // Apply layout with soft positioning (don't force layout)
-              const { nodes: layoutedNodes, edges: layoutedEdges } = getLayoutedElements(
-                finalNodes,
-                processedEdges,
-                'LR', // Change from TB to LR for left-to-right flow
-                172,
-                36,
-                false // Don't force layout to preserve positions where possible
-              );
-              
-              // Update with layouted positions
-              setNodes(layoutedNodes);
-              setEdges(layoutedEdges);
+              (async () => {
+                try {
+                  const { nodes: layoutedNodes, edges: layoutedEdges } = await layoutWithELK(
+                    finalNodes,
+                    processedEdges,
+                    { direction: 'LR', nodeWidth: 172, nodeHeight: 36 }
+                  );
+
+                  setNodes(layoutedNodes as any);
+                  setEdges(layoutedEdges as any);
+                } catch (err) {
+                  console.error('ELK layout error during revert', err);
+                }
+              })();
               
               // Reset layouting state
               setIsLayouting(false);

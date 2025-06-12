@@ -174,7 +174,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       if (!data.session) throw new Error('No session returned from Supabase');
   
       const token = data.session.access_token;
-      console.log(`Token : ${token}`)
+      // console.log(`Token : ${token}`)
   
       // Step 2: Call backend /login endpoint
       const response = await fetch(`${BASE_API_URL}/login`, {

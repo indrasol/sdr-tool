@@ -10,7 +10,7 @@ from uuid import uuid4
 from enum import Enum
 from datetime import datetime, timezone
 from typing import Optional, List, Dict, Any, Union
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 
 # Base class for declarative models
 Base = declarative_base()
@@ -94,6 +94,7 @@ class Tenant(Base):
     name = Column(String, nullable=False, unique=True)  
     users = relationship("User", secondary="user_tenant_association", back_populates="tenants")
     projects = relationship("Project", back_populates="tenant")
+    templates = relationship("Template", back_populates="tenant")
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     roles = relationship("Role", back_populates="tenant")
 
@@ -147,9 +148,9 @@ class Sessions(BaseModel):
     last_accessed: datetime = Field(default_factory=lambda: datetime.now(timezone.utc), description="Last time the session was accessed")
     is_active: bool = Field(default=True, description="Whether the session is still active")
     
-    class Config:
-        orm_mode = True
-        schema_extra = {
+    model_config = ConfigDict(
+        from_attributes=True,         # was orm_mode
+        json_schema_extra={           # was schema_extra
             "example": {
                 "session_id": "550e8400-e29b-41d4-a716-446655440000",
                 "user_id": "user123",
@@ -159,3 +160,38 @@ class Sessions(BaseModel):
                 "is_active": True
             }
         }
+    )
+
+class Template(Base):
+    __tablename__ = "templates"
+
+    # internal PK
+    id = Column(Integer, primary_key=True, index=True)
+
+    # user‐facing 4-char alphanumeric ID
+    template_id = Column(String(4), unique=True, nullable=False, index=True)
+
+    # who created it
+    tenant_id   = Column(Integer, ForeignKey("tenants.id", ondelete="CASCADE"), nullable=False)
+    tenant_name = Column(String, nullable=False)
+
+    # the actual diagram JSON + metadata
+    diagram_state = Column(JSONB, nullable=False)
+    template_name       = Column(String, nullable=False)
+    template_description= Column(Text, nullable=True)
+
+    # tags & visibility flags
+    template_tags       = Column(ARRAY(String), server_default="{}", nullable=False)
+    template_visibility = Column(ARRAY(String), server_default="{}", nullable=False)
+
+    # timestamps
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    updated_at = Column(
+        DateTime(timezone=True),
+        server_default=func.now(),
+        onupdate=func.now(),
+        nullable=False,
+    )
+
+    # relationship back to Tenant
+    tenant = relationship("Tenant", back_populates="templates")
