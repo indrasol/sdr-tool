@@ -13,6 +13,7 @@ import Login from "./pages/Login";
 import Register from "./pages/Register";
 import { AuthProvider, useAuth } from "./components/Auth/AuthContext";
 import ProtectedRoute from "./components/Auth/ProtectedRoute";
+import { OrgTemplatesProvider } from "./hooks/useOrgTemplates";
 import GenerateReport from "./pages/GenerateReport";
 import Dashboard from "./pages/Dashboard";
 import Documents from "./pages/Documents";
@@ -33,7 +34,8 @@ const App = () => (
           <Toaster />
           <Sonner />
           <AuthProvider>
-            <Routes>
+            <OrgTemplatesProvider>
+              <Routes>
               {/* Developer Routes - Direct access with username/password */}
               <Route path="/dev" element={<DeveloperLogin />} />
               <Route path="/dev-dash" element={<DeveloperDashboard />} />
@@ -77,6 +79,7 @@ const App = () => (
                 <Route path="*" element={<NotFound />} />
               </Route>
             </Routes>
+            </OrgTemplatesProvider>
           </AuthProvider>
         </div>
       </Router>

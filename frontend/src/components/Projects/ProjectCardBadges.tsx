@@ -21,7 +21,7 @@ const getTemplateIcon = (templateType?: ProjectTemplateType) => {
       return <Cpu className="h-3 w-3 mr-1" />;
     case 'Import Existing':
       return <FileUp className="h-3 w-3 mr-1" />;
-    case 'Solutions Hub':
+    case 'From Template':
       return <Puzzle className="h-3 w-3 mr-1" />;
     default:
       return null;

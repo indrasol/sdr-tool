@@ -44,7 +44,7 @@ export const useThinkingIndicator = () => {
 
   // Simulate progress increasing over time
   useEffect(() => {
-    let startTime = Date.now();
+    const startTime = Date.now();
     const targetTime = 20000; // 20 seconds (reduced from 60 seconds)
     
     const interval = setInterval(() => {

@@ -3,6 +3,7 @@ import Layout from '@/components/layout/Layout';
 import { useEffect, useState } from 'react';
 import { Project } from '@/interfaces/projectInterfaces';
 import { useProjects } from '@/hooks/useProjects';
+import { useOrgTemplates } from '@/hooks/useOrgTemplates';
 import { Puzzle, Sparkles, Bot, ChevronRight, Search, Filter, Zap, Lock, Cloud, Shield, Server, Database, Globe, Star, X, Calendar, Users, ArrowRight, Clock, AlertCircle, ChevronDown, Check, ChevronsUpDown, GitBranchPlus, Workflow } from 'lucide-react';
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -17,6 +18,11 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { format } from "date-fns";
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
+import CreateProjectFromTemplateDialog from '@/components/Projects/CreateProjectFromTemplateDialog';
+import templateApiService from '@/services/templateApiService';
+import { useProjectCRUD } from '@/components/Projects/ProjectListPage/hooks/useProjectCRUD';
+import projectService from '@/services/projectService';
+import { useToast } from "@/hooks/use-toast";
 
 // Solution template interfaces
 interface SolutionTemplate {
@@ -346,25 +352,37 @@ const SolutionsHub = () => {
   const projectId = location.state?.projectId;
   const [project, setProject] = useState<Project | null>(null);
   const { allProjects } = useProjects();
+  const { orgTemplates, removeOrgTemplate, isLoading: orgTemplatesLoading } = useOrgTemplates();
+  const { addProject, isSubmitting } = useProjectCRUD();
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [hoveredSolution, setHoveredSolution] = useState<string | null>(null);
   const [isSearchFocused, setIsSearchFocused] = useState(false);
-  
+
   // Workflow sidebar state
   const [isWorkflowSidebarOpen, setIsWorkflowSidebarOpen] = useState(false);
   const [activeSolution, setActiveSolution] = useState<string | null>(null);
   const [workflowTasks, setWorkflowTasks] = useState<WorkflowTask[]>([]);
   const [selectedOrchestrator, setSelectedOrchestrator] = useState("jira");
   const [orchestratorOpen, setOrchestratorOpen] = useState(false);
-  
+
   // Task edit states
   const [taskAssignees, setTaskAssignees] = useState<Record<string, string>>({});
   const [taskDeadlines, setTaskDeadlines] = useState<Record<string, string>>({});
-  
+
   // Popover states for different elements
   const [assigneePopovers, setAssigneePopovers] = useState<Record<string, boolean>>({});
   const [deadlinePopovers, setDeadlinePopovers] = useState<Record<string, boolean>>({});
+
+  // Template preview modal state
+  const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false);
+  const [selectedTemplate, setSelectedTemplate] = useState<any>(null);
+
+  // Template creation dialog state
+  const [isTemplateCreateDialogOpen, setIsTemplateCreateDialogOpen] = useState(false);
+  const [selectedTemplateForCreation, setSelectedTemplateForCreation] = useState<any>(null);
+
+  const { toast } = useToast();
 
   useEffect(() => {
     if (projectId && allProjects) {
@@ -377,30 +395,156 @@ const SolutionsHub = () => {
 
   // Handle launching workflow
   const handleLaunchWorkflow = (solutionId: string) => {
+    // Check if this is a template-based solution
+    if (solutionId.startsWith('template-')) {
+      const templateId = solutionId.replace('template-', '');
+      const template = orgTemplates.find(t => t.template_id === templateId);
+      if (template) {
+        handleUseTemplate(template);
+        return;
+      }
+    }
+
     setActiveSolution(solutionId);
     const tasks = mockWorkflowTasks[solutionId] || [];
     setWorkflowTasks(tasks);
-    
+
     // Initialize assignees and deadlines state
     const assignees: Record<string, string> = {};
     const deadlines: Record<string, string> = {};
-    
+
     tasks.forEach(task => {
       assignees[task.id] = task.assignee.id;
       deadlines[task.id] = task.deadline;
     });
-    
+
     setTaskAssignees(assignees);
     setTaskDeadlines(deadlines);
     setIsWorkflowSidebarOpen(true);
   };
-  
+
+  // Handle "Use It" button click for templates
+  const handleUseTemplate = (template: any) => {
+    setSelectedTemplateForCreation(template);
+    setIsTemplateCreateDialogOpen(true);
+  };
+
+  // Handle project creation from template
+  const handleCreateProjectFromTemplate = async (projectData: any) => {
+    try {
+      // First, get the template diagram state from backend API if available
+      let diagramStateToInject = projectData.diagramState;
+
+      if (projectData.templateId && !diagramStateToInject) {
+        try {
+          // Call GET /get_template with template_id and tenant_id
+          const templateResponse = await templateApiService.getTemplate(
+            projectData.templateId,
+            selectedTemplateForCreation?.tenantId || 1
+          );
+
+          if (templateResponse.success) {
+            diagramStateToInject = templateResponse.diagram_state;
+          }
+        } catch (error) {
+          console.warn('Could not fetch template from backend, using stored diagram state:', error);
+          // Fall back to stored diagram state from Supabase storage
+          diagramStateToInject = selectedTemplateForCreation?.diagramState;
+        }
+      }
+
+      // Create project with diagram state injected
+      const projectPayload = {
+        name: projectData.name,
+        description: projectData.description,
+        priority: projectData.priority,
+        status: projectData.status,
+        dueDate: projectData.dueDate,
+        templateType: 'AI Assisted' as const,
+        tags: projectData.tags
+      };
+
+      const newProject = await addProject(projectPayload);
+
+      if (newProject) {
+        // If we have diagram state to inject, save it to the newly created project
+        if (diagramStateToInject) {
+          try {
+            console.log('Injecting diagram state into newly created project:', diagramStateToInject);
+            
+            // First, load the project to get a session ID
+            const loadedProject = await projectService.loadProject(newProject.id);
+            
+            if (loadedProject && loadedProject.session_id) {
+              // Now save the diagram state using the session ID
+              const saveSuccess = await projectService.saveProject(
+                loadedProject.session_id,
+                diagramStateToInject,
+                newProject.id
+
+              );
+              
+              if (saveSuccess) {
+                console.log('Successfully injected template diagram state into project');
+                toast({
+                  title: "Template Applied",
+                  description: "Project created with template diagram successfully",
+                  duration: 3000,
+                });
+              } else {
+                console.warn('Failed to inject diagram state, but project was created');
+                toast({
+                  title: "Project Created",
+                  description: "Project created but template diagram could not be applied",
+                  variant: "default",
+                  duration: 3000,
+                });
+              }
+            } else {
+              console.warn('Could not load project session for diagram injection');
+              toast({
+                title: "Project Created",
+                description: "Project created but template diagram could not be applied",
+                variant: "default",
+                duration: 3000,
+              });
+            }
+          } catch (error) {
+            console.error('Error injecting diagram state:', error);
+            toast({
+              title: "Project Created",
+              description: "Project created but template diagram could not be applied",
+              variant: "default",
+              duration: 3000,
+            });
+          }
+        } else {
+          toast({
+            title: "Project Created",
+            description: "Project created successfully",
+            duration: 3000,
+          });
+        }
+
+        setIsTemplateCreateDialogOpen(false);
+        setSelectedTemplateForCreation(null);
+      }
+    } catch (error) {
+      console.error('Error creating project from template:', error);
+      toast({
+        title: "Error",
+        description: "Failed to create project from template",
+        variant: "destructive",
+      });
+    }
+  };
+
   // Handle orchestrator change
   const handleOrchestratorChange = (value: string) => {
     setSelectedOrchestrator(value);
     setOrchestratorOpen(false);
   };
-  
+
   // Handle assignee change
   const handleAssigneeChange = (taskId: string, assigneeId: string) => {
     setTaskAssignees(prev => ({
@@ -410,7 +554,7 @@ const SolutionsHub = () => {
     // Auto-close the popover
     handleAssigneePopoverChange(taskId, false);
   };
-  
+
   // Handle deadline change
   const handleDeadlineChange = (taskId: string, deadline: string) => {
     setTaskDeadlines(prev => ({
@@ -439,12 +583,12 @@ const SolutionsHub = () => {
 
   // Filter solutions based on search term and category
   const filteredSolutions = solutionTemplates.filter((solution) => {
-    const matchesSearch = solution.title.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                         solution.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         solution.tags.some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase()));
-    
+    const matchesSearch = solution.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      solution.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      solution.tags.some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase()));
+
     const matchesCategory = !selectedCategory || solution.category === selectedCategory;
-    
+
     return matchesSearch && matchesCategory;
   });
 
@@ -452,13 +596,13 @@ const SolutionsHub = () => {
   const categories = Array.from(new Set(solutionTemplates.map(s => s.category)));
 
   // Get active solution details
-  const activeSolutionDetails = activeSolution ? 
+  const activeSolutionDetails = activeSolution ?
     solutionTemplates.find(s => s.id === activeSolution) : null;
 
   // Function to parse deadline string to date
   const parseDeadlineToDate = (deadline: string): Date => {
     const today = new Date();
-    
+
     // If deadline is in format "X days", convert to actual date
     if (deadline.includes('day')) {
       const days = parseInt(deadline.split(' ')[0], 10);
@@ -466,19 +610,25 @@ const SolutionsHub = () => {
       result.setDate(today.getDate() + days);
       return result;
     }
-    
+
     // For any other format, try to parse or return today
     return new Date(deadline) || today;
   };
-  
+
   // Function to convert date to deadline string
   const formatDateToDeadline = (date: Date): string => {
     const today = new Date();
     const diffTime = Math.abs(date.getTime() - today.getTime());
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    
+
     // Always return the formatted date
     return format(date, 'MMM d, yyyy');
+  };
+
+  // Handle template preview
+  const handleTemplatePreview = (template: any) => {
+    setSelectedTemplate(template);
+    setIsPreviewModalOpen(true);
   };
 
   return (
@@ -488,39 +638,39 @@ const SolutionsHub = () => {
         <Card className="col-span-full bg-gradient-to-r from-blue-500/20 via-teal-500/20 to-emerald-500/20 border-none overflow-hidden animate-fade-in shadow-sm hover:shadow-md transition-all duration-300 relative">
           <div className="absolute inset-0 overflow-hidden pointer-events-none">
             <div className="absolute -right-1 top-1/2 transform -translate-y-1/2 opacity-75">
-              <img 
-                src="/keys_image.png" 
-                alt="Security Keys" 
+              <img
+                src="/keys_image.png"
+                alt="Security Keys"
                 className="h-40 w-auto object-contain"
               />
             </div>
-            
+
             {/* Subtle solution icons with animation */}
             <div className="absolute inset-0 flex justify-center items-center pointer-events-none overflow-hidden">
               <div className="flex translate-x-60">
-                <motion.div 
-                  className="mx-8" 
-                  animate={{ 
+                <motion.div
+                  className="mx-8"
+                  animate={{
                     y: [0, -2, 0]
-                  }} 
-                  transition={{ 
-                    duration: 20, 
-                    repeat: Infinity, 
+                  }}
+                  transition={{
+                    duration: 20,
+                    repeat: Infinity,
                     repeatType: "reverse",
                     ease: "easeInOut"
                   }}
                 >
                   <Shield className="h-14 w-14 text-blue-500/20" />
                 </motion.div>
-                
-                <motion.div 
-                  className="mx-14" 
-                  animate={{ 
+
+                <motion.div
+                  className="mx-14"
+                  animate={{
                     y: [0, -1.5, 0]
-                  }} 
-                  transition={{ 
-                    duration: 25, 
-                    repeat: Infinity, 
+                  }}
+                  transition={{
+                    duration: 25,
+                    repeat: Infinity,
                     repeatType: "reverse",
                     delay: 1.5,
                     ease: "easeInOut"
@@ -528,15 +678,15 @@ const SolutionsHub = () => {
                 >
                   <Database className="h-12 w-12 text-teal-500/20" />
                 </motion.div>
-                
-                <motion.div 
-                  className="mx-10" 
-                  animate={{ 
+
+                <motion.div
+                  className="mx-10"
+                  animate={{
                     y: [0, -1, 0]
-                  }} 
-                  transition={{ 
-                    duration: 18, 
-                    repeat: Infinity, 
+                  }}
+                  transition={{
+                    duration: 18,
+                    repeat: Infinity,
                     repeatType: "reverse",
                     delay: 0.8,
                     ease: "easeInOut"
@@ -546,12 +696,12 @@ const SolutionsHub = () => {
                 </motion.div>
               </div>
             </div>
-            
+
             <div className="absolute right-0 top-1/2 transform -translate-y-1/4 opacity-10">
               {/* Placeholder for the mascot image */}
             </div>
           </div>
-          
+
           <CardHeader className="flex flex-row items-center justify-between pb-2 relative z-10">
             <div className="flex items-center">
               <div className="bg-gradient-to-r from-blue-500 to-teal-500 p-2 rounded-lg mr-3 shadow-inner">
@@ -562,9 +712,9 @@ const SolutionsHub = () => {
                   Solutions Hub
                 </h3>
                 <div className="h-10 flex items-center">
-                  <img 
-                    src="/indrabot-mascot.png" 
-                    alt="Indrasol Mascot" 
+                  <img
+                    src="/indrabot-mascot.png"
+                    alt="Indrasol Mascot"
                     className="h-20 w-auto object-contain opacity-35 ml-2 -my-10"
                   />
                 </div>
@@ -585,8 +735,8 @@ const SolutionsHub = () => {
             <div className={`relative flex-1 transition-all duration-300 ease-in-out ${isSearchFocused ? 'md:flex-grow-[1.2]' : ''}`}>
               <div className={`bg-gradient-to-r from-blue-50/70 to-purple-50/70 border border-blue-100 hover:border-blue-200 rounded-xl transition-all duration-300 shadow-sm ${isSearchFocused ? 'shadow-md border-blue-200' : 'hover:shadow-md'} flex items-center overflow-hidden`}>
                 <Search className={`absolute left-4 top-1/2 transform -translate-y-1/2 h-4 w-4 transition-all duration-300 ${isSearchFocused ? 'text-blue-600 left-3 scale-110' : 'text-blue-500'}`} />
-                <Input 
-                  placeholder="Search solutions..." 
+                <Input
+                  placeholder="Search solutions..."
                   className={`pl-12 py-6 w-full border-0 ring-0 focus:ring-0 focus-visible:ring-0 focus-visible:ring-offset-0 font-light text-base placeholder:text-gray-400 bg-transparent transition-all duration-300 ${isSearchFocused ? 'pl-10' : ''}`}
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
@@ -594,9 +744,9 @@ const SolutionsHub = () => {
                   onBlur={() => setIsSearchFocused(false)}
                 />
                 {searchTerm && (
-                  <Button 
-                    variant="ghost" 
-                    size="sm" 
+                  <Button
+                    variant="ghost"
+                    size="sm"
                     className="absolute right-2 top-1/2 transform -translate-y-1/2 h-8 w-8 p-0 rounded-full text-gray-400 hover:text-blue-600 hover:bg-gray-100"
                     onClick={() => setSearchTerm("")}
                   >
@@ -605,7 +755,7 @@ const SolutionsHub = () => {
                 )}
               </div>
             </div>
-            
+
             <div className="flex flex-col md:flex-row items-start md:items-center gap-3 self-start md:self-auto min-w-[250px]">
               <div className="flex items-center gap-2">
                 <Filter className="h-4 w-4 text-blue-600" />
@@ -613,22 +763,22 @@ const SolutionsHub = () => {
               </div>
               <div className="flex flex-wrap gap-2 w-full md:w-auto">
                 {/* Updated filter buttons with ProjectContent styling */}
-                <Button 
-                  variant="outline" 
+                <Button
+                  variant="outline"
                   size="sm"
                   onClick={() => setSelectedCategory(null)}
                   className={cn(
                     "text-xs rounded-full px-4",
-                    filterButtonStyles, 
+                    filterButtonStyles,
                     selectedCategory === null ? activeButtonStyles : ""
                   )}
                 >
                   All
                 </Button>
                 {categories.map(category => (
-                  <Button 
+                  <Button
                     key={category}
-                    variant="outline" 
+                    variant="outline"
                     size="sm"
                     onClick={() => setSelectedCategory(category)}
                     className={cn(
@@ -665,7 +815,7 @@ const SolutionsHub = () => {
                 Based on your project requirements and previous activities, our AI suggests these security solutions:
               </p>
             </div>
-            
+
             <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-5">
               {solutionTemplates
                 .filter(solution => recommendedSolutions.includes(solution.id))
@@ -676,29 +826,29 @@ const SolutionsHub = () => {
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.3, delay: index * 0.1 }}
-                    whileHover={{ 
+                    whileHover={{
                       scale: 1.02,
                       y: -5
                     }}
                   >
                     {/* Glowing background effect */}
                     <div className="absolute -inset-0.5 bg-gradient-to-r from-purple-600 to-blue-500 rounded-xl opacity-0 group-hover:opacity-70 blur-lg transition-all duration-300 -z-10"></div>
-                    
+
                     {/* Star badge */}
-                    <motion.div 
+                    <motion.div
                       className="absolute -top-2 -right-2 bg-gradient-to-r from-yellow-400 to-orange-500 text-white p-1 rounded-full z-10 shadow-lg"
                       animate={{ rotate: [0, 10, 0, -10, 0] }}
                       transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
                     >
                       <Star className="h-3.5 w-3.5 text-white" fill="white" />
                     </motion.div>
-                    
+
                     {/* AI recommendation indicator */}
                     <div className="absolute top-2 left-2 bg-blue-600/90 text-white text-xs font-medium py-0.5 px-2 rounded-full z-10 flex items-center gap-1 backdrop-blur-sm">
                       <Bot className="h-2.5 w-2.5" />
                       <span>AI Recommended</span>
                     </div>
-                    
+
                     {/* Main card */}
                     <div className="bg-white backdrop-blur-xl border-0 rounded-xl overflow-hidden shadow-md h-full flex flex-col relative">
                       {/* Card top background gradient */}
@@ -710,7 +860,7 @@ const SolutionsHub = () => {
                           {React.cloneElement(solution.icon as React.ReactElement, { className: "h-10 w-10 text-white" })}
                         </div>
                       </div>
-                      
+
                       {/* Card content */}
                       <div className="p-4 flex-1">
                         <div className="flex items-center gap-2 mb-2">
@@ -719,9 +869,9 @@ const SolutionsHub = () => {
                             {solution.category}
                           </div>
                         </div>
-                        
+
                         <p className="text-xs text-gray-600 mb-3 line-clamp-2">{solution.description}</p>
-                        
+
                         <div className="flex flex-wrap gap-1.5 mb-3">
                           {solution.tags.map(tag => (
                             <span key={tag} className="text-xs bg-blue-50 text-blue-600 px-2 py-0.5 rounded-full font-medium">
@@ -730,14 +880,14 @@ const SolutionsHub = () => {
                           ))}
                         </div>
                       </div>
-                      
+
                       {/* Card footer */}
                       <div className="p-3 border-t border-gray-100">
                         <div className="flex gap-2">
                           <Button className="flex-1 gap-1 bg-securetrack-purple/10 text-securetrack-purple hover:bg-securetrack-purple/20 border border-securetrack-purple/30 hover:border-securetrack-purple/50 transition-all duration-200 font-medium text-sm py-1">
                             Preview <ChevronRight className="h-3.5 w-3.5" />
                           </Button>
-                          <Button 
+                          <Button
                             className="flex-1 gap-1 bg-blue-500/10 text-blue-600 hover:bg-blue-500/20 border border-blue-400/30 hover:border-blue-500/50 transition-all duration-200 font-medium text-sm py-1"
                             onClick={() => handleLaunchWorkflow(solution.id)}
                           >
@@ -768,7 +918,7 @@ const SolutionsHub = () => {
                 Explore our comprehensive collection of security solutions designed for various cloud platforms and use cases.
               </p>
             </div>
-            
+
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {filteredSolutions.map((solution) => (
                 <motion.div
@@ -777,14 +927,14 @@ const SolutionsHub = () => {
                   initial={{ opacity: 0, scale: 0.9 }}
                   animate={{ opacity: 1, scale: 1 }}
                   transition={{ duration: 0.4 }}
-                  whileHover={{ 
+                  whileHover={{
                     z: 10,
                     transition: { duration: 0.2 }
                   }}
                   onHoverStart={() => setHoveredSolution(solution.id)}
                   onHoverEnd={() => setHoveredSolution(null)}
                 >
-                  <div 
+                  <div
                     className={`
                       bg-white rounded-xl overflow-hidden border transform transition-all duration-300
                       ${hoveredSolution === solution.id ? 'shadow-xl rotate-y-10 scale-105 border-securetrack-purple' : 'shadow-md'}
@@ -806,9 +956,9 @@ const SolutionsHub = () => {
                             {solution.icon}
                           </div>
                         </div>
-                        
+
                         {/* Animated elements to simulate 3D movement */}
-                        <div 
+                        <div
                           className={`
                             absolute grid grid-cols-4 grid-rows-4 gap-2 w-full h-full p-3
                             transition-transform duration-300
@@ -816,12 +966,12 @@ const SolutionsHub = () => {
                           `}
                         >
                           {[...Array(16)].map((_, i) => (
-                            <div 
-                              key={i} 
+                            <div
+                              key={i}
                               className="opacity-30 bg-white/10 rounded-sm"
                               style={{
-                                transform: hoveredSolution === solution.id ? 
-                                  `translateZ(${Math.random() * 20}px) rotate(${Math.random() * 10 - 5}deg)` : 
+                                transform: hoveredSolution === solution.id ?
+                                  `translateZ(${Math.random() * 20}px) rotate(${Math.random() * 10 - 5}deg)` :
                                   'none',
                                 transition: `transform ${0.2 + Math.random() * 0.3}s ease-out`
                               }}
@@ -829,12 +979,12 @@ const SolutionsHub = () => {
                           ))}
                         </div>
                       </div>
-                      
+
                       <div className="relative z-10 text-white text-xl font-bold">
                         {solution.title}
                       </div>
                     </div>
-                    
+
                     <div className="p-4">
                       <div className="flex justify-between items-start mb-2">
                         <h3 className="font-semibold">{solution.title}</h3>
@@ -843,7 +993,7 @@ const SolutionsHub = () => {
                         </div>
                       </div>
                       <p className="text-sm text-gray-600 mb-3">{solution.description}</p>
-                      
+
                       <div className="flex flex-wrap gap-1.5 mb-3">
                         {solution.tags.map(tag => (
                           <span key={tag} className="text-xs bg-blue-50 text-blue-600 px-2 py-0.5 rounded-full font-medium">
@@ -851,12 +1001,12 @@ const SolutionsHub = () => {
                           </span>
                         ))}
                       </div>
-                      
+
                       <div className="flex items-center justify-between mt-4">
                         <div className="flex items-center gap-1">
                           <div className="bg-blue-100 rounded-full h-2 w-32 overflow-hidden">
-                            <div 
-                              className="bg-blue-600 h-full" 
+                            <div
+                              className="bg-blue-600 h-full"
                               style={{ width: `${solution.popularity}%` }}
                             ></div>
                           </div>
@@ -866,7 +1016,7 @@ const SolutionsHub = () => {
                           <Button className="gap-1 bg-securetrack-purple/10 text-securetrack-purple hover:bg-securetrack-purple/20 border border-securetrack-purple/30 hover:border-securetrack-purple/50 transition-all duration-200 font-medium text-sm py-1 px-3">
                             Preview
                           </Button>
-                          <Button 
+                          <Button
                             className="gap-1 bg-blue-500/10 text-blue-600 hover:bg-blue-500/20 border border-blue-400/30 hover:border-blue-500/50 transition-all duration-200 font-medium text-sm py-1 px-3"
                             onClick={() => handleLaunchWorkflow(solution.id)}
                           >
@@ -898,109 +1048,322 @@ const SolutionsHub = () => {
                 Custom security templates created specifically within your organization.
               </p>
             </div>
-            
+
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {/* Organization template examples - typically would be loaded from API */}
-              {[1, 2, 3].map((_, index) => (
-                <motion.div
-                  key={`org-template-${index}`}
-                  className="relative perspective-1000"
-                  initial={{ opacity: 0, scale: 0.9 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  transition={{ duration: 0.4 }}
-                  whileHover={{ 
-                    z: 10,
-                    transition: { duration: 0.2 }
-                  }}
-                >
-                  <div className="bg-white rounded-xl overflow-hidden border shadow-md transform transition-all duration-300 hover:shadow-xl hover:rotate-y-10 hover:scale-105 hover:border-securetrack-purple">
-                    {/* Template header with organization branding */}
-                    <div className="relative h-48 bg-gradient-to-r from-blue-600 to-purple-700 overflow-hidden flex items-center justify-center">
-                      <div className="absolute inset-0 opacity-20">
-                        <div className="absolute inset-0 bg-grid-pattern"></div>
-                      </div>
-                      
-                      {/* Template icon */}
-                      <div className="relative z-10 flex flex-col items-center justify-center p-4">
-                        {index === 0 ? (
-                          <Database className="h-10 w-10 text-white mb-2" />
-                        ) : index === 1 ? (
-                          <Server className="h-10 w-10 text-white mb-2" />
-                        ) : (
-                          <Globe className="h-10 w-10 text-white mb-2" />
-                        )}
-                        <div className="text-white text-xl font-bold text-center">
-                          {index === 0 ? "Internal DB Security" : index === 1 ? "Corporate Network" : "Employee Access"}
-                        </div>
-                      </div>
-                    </div>
-                    
-                    <div className="p-4">
-                      <div className="flex justify-between items-start mb-2">
-                        <h3 className="font-semibold">
-                          {index === 0 ? "Internal DB Security" : index === 1 ? "Corporate Network" : "Employee Access Controls"}
-                        </h3>
-                        <div className="bg-blue-100 text-blue-800 text-xs px-2 py-0.5 rounded-full">
-                          {index === 0 ? "Data Security" : index === 1 ? "Network" : "Access Control"}
-                        </div>
-                      </div>
-                      <p className="text-sm text-gray-600 mb-3">
-                        {index === 0 
-                          ? "Custom database security controls with organization-specific policies and encryption settings." 
-                          : index === 1 
-                            ? "Network security configuration tailored to your corporate infrastructure and requirements."
-                            : "Employee access management template with role-based permissions and multi-factor authentication."
-                        }
-                      </p>
-                      
-                      <div className="flex flex-wrap gap-1.5 mb-3">
-                        {index === 0 ? (
-                          <>
-                            <span className="text-xs bg-blue-50 text-blue-600 px-2 py-0.5 rounded-full font-medium">Internal</span>
-                            <span className="text-xs bg-blue-50 text-blue-600 px-2 py-0.5 rounded-full font-medium">Database</span>
-                            <span className="text-xs bg-blue-50 text-blue-600 px-2 py-0.5 rounded-full font-medium">Encryption</span>
-                          </>
-                        ) : index === 1 ? (
-                          <>
-                            <span className="text-xs bg-blue-50 text-blue-600 px-2 py-0.5 rounded-full font-medium">Network</span>
-                            <span className="text-xs bg-blue-50 text-blue-600 px-2 py-0.5 rounded-full font-medium">Firewall</span>
-                            <span className="text-xs bg-blue-50 text-blue-600 px-2 py-0.5 rounded-full font-medium">VPN</span>
-                          </>
-                        ) : (
-                          <>
-                            <span className="text-xs bg-blue-50 text-blue-600 px-2 py-0.5 rounded-full font-medium">Access</span>
-                            <span className="text-xs bg-blue-50 text-blue-600 px-2 py-0.5 rounded-full font-medium">RBAC</span>
-                            <span className="text-xs bg-blue-50 text-blue-600 px-2 py-0.5 rounded-full font-medium">MFA</span>
-                          </>
-                        )}
-                      </div>
-                      
-                      <div className="flex items-center justify-between mt-4">
-                        <div className="flex items-center gap-1">
-                          <div className="h-5 w-5 rounded-full bg-green-100 flex items-center justify-center">
-                            <Check className="h-3 w-3 text-green-600" />
-                          </div>
-                          <span className="text-xs text-gray-500">Organization approved</span>
-                        </div>
-                        <div className="flex gap-2">
-                          <Button className="gap-1 bg-securetrack-purple/10 text-securetrack-purple hover:bg-securetrack-purple/20 border border-securetrack-purple/30 hover:border-securetrack-purple/50 transition-all duration-200 font-medium text-sm py-1 px-3">
-                            Preview
-                          </Button>
-                          <Button 
-                            className="gap-1 bg-blue-500/10 text-blue-600 hover:bg-blue-500/20 border border-blue-400/30 hover:border-blue-500/50 transition-all duration-200 font-medium text-sm py-1 px-3"
-                          >
-                            Deploy
-                          </Button>
-                        </div>
+              {orgTemplatesLoading ? (
+                // Loading skeleton for templates
+                Array.from({ length: 3 }).map((_, index) => (
+                  <div key={`loading-${index}`} className="bg-white rounded-xl overflow-hidden border shadow-md animate-pulse">
+                    <div className="h-48 bg-gradient-to-r from-gray-200 to-gray-300"></div>
+                    <div className="p-4 space-y-3">
+                      <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+                      <div className="h-3 bg-gray-200 rounded w-full"></div>
+                      <div className="h-3 bg-gray-200 rounded w-1/2"></div>
+                      <div className="flex gap-2">
+                        <div className="h-6 bg-gray-200 rounded-full w-16"></div>
+                        <div className="h-6 bg-gray-200 rounded-full w-20"></div>
                       </div>
                     </div>
                   </div>
-                </motion.div>
-              ))}
+                ))
+              ) : orgTemplates.length > 0 ? (
+                orgTemplates.map((template, index) => (
+                  <motion.div
+                    key={template.template_id}
+                    className="relative perspective-1000"
+                    initial={{ opacity: 0, scale: 0.9 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ duration: 0.4 }}
+                    whileHover={{
+                      z: 10,
+                      transition: { duration: 0.2 }
+                    }}
+                  >
+                    <div className="bg-white rounded-xl overflow-hidden border shadow-md transform transition-all duration-300 hover:shadow-xl hover:rotate-y-10 hover:scale-105 hover:border-securetrack-purple group">
+                      {/* Template header with organization branding */}
+                      <div className="relative h-48 bg-gradient-to-r from-blue-500 to-teal-500 overflow-hidden flex items-center justify-center">
+                        <div className="absolute inset-0 opacity-20">
+                          <div className="absolute inset-0 bg-grid-pattern"></div>
+                        </div>
+
+                        {/* Template icon */}
+                        <div className="relative z-10 flex flex-col items-center justify-center p-4">
+                          <Shield className="h-10 w-10 text-white mb-2" />
+                          <div className="text-white text-xl font-bold text-center">
+                            {template.title}
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="p-4">
+                        <div className="flex justify-between items-start mb-2">
+                          <h3 className="font-semibold">
+                            {template.description}
+                          </h3>
+                          <div className="bg-gradient-to-r from-purple-100 to-pink-100 text-purple-700 text-xs px-2 py-0.5 rounded-full border border-purple-200 font-medium">
+                            {template.template_id}
+                          </div>
+                          <div className="bg-blue-100 text-blue-800 text-xs px-2 py-0.5 rounded-full">
+                            {template.category}
+                          </div>
+                        </div>
+
+
+                        <div className="flex flex-wrap gap-1.5 mb-3">
+                          {template.tags.map((tag, tagIndex) => (
+                            <span
+                              key={tagIndex}
+                              className="text-xs bg-blue-50 text-blue-600 px-2 py-0.5 rounded-full font-medium"
+                            >
+                              {tag}
+                            </span>
+                          ))}
+                        </div>
+
+                        <div className="flex flex-wrap gap-2 mb-3">
+                          <div className="flex items-center gap-1.5 bg-gradient-to-r from-emerald-50 to-teal-50 border border-emerald-200 text-emerald-700 px-3 py-1.5 rounded-full">
+                            <Users className="h-3 w-3" />
+                            <span className="text-xs font-medium">{template.creator}</span>
+                          </div>
+                          <div className="flex items-center gap-1.5 bg-gradient-to-r from-indigo-50 to-blue-50 border border-indigo-200 text-indigo-700 px-3 py-1.5 rounded-full">
+                            <Calendar className="h-3 w-3" />
+                            <span className="text-xs font-medium">{new Date(template.createdDate).toLocaleDateString()}</span>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center justify-between mt-4">
+                          <div className="flex items-center gap-1">
+                            <div className="h-5 w-5 rounded-full bg-green-100 flex items-center justify-center">
+                              <Check className="h-3 w-3 text-green-600" />
+                            </div>
+                            <span className="text-xs text-gray-500">Organization template</span>
+                          </div>
+                          <div className="flex gap-2">
+                            <Button
+                              className="gap-1 bg-securetrack-purple/10 text-securetrack-purple hover:bg-securetrack-purple/20 border border-securetrack-purple/30 hover:border-securetrack-purple/50 transition-all duration-200 font-medium text-sm py-1 px-3"
+                              onClick={() => handleTemplatePreview(template)}
+                            >
+                              Preview
+                            </Button>
+                            <Button
+                              className="gap-1 bg-blue-500/10 text-blue-600 hover:bg-blue-500/20 border border-blue-400/30 hover:border-blue-500/50 transition-all duration-200 font-medium text-sm py-1 px-3"
+                              onClick={() => handleUseTemplate(template)}
+                            >
+                              Use It
+                            </Button>
+                            <Button
+                              size="sm"
+                              className="gap-1 bg-red-500/10 text-red-600 hover:bg-red-500/20 border border-red-400/30 hover:border-red-500/50 transition-all duration-200 font-medium text-xs py-0.5 px-2 opacity-0 group-hover:opacity-100"
+                              onClick={() => {
+                                if (window.confirm(`Are you sure you want to delete the template "${template.title}"? This action cannot be undone.`)) {
+                                  removeOrgTemplate(template.template_id);
+                                  toast({
+                                    title: "Template Deleted",
+                                    description: `Template "${template.title}" has been deleted successfully.`,
+                                    duration: 3000,
+                                  });
+                                }
+                              }}
+                            >
+                              <X className="h-3 w-3" />
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </motion.div>
+                ))
+              ) : (
+                <div className="col-span-full text-center py-12">
+                  <Shield className="h-16 w-16 text-gray-300 mx-auto mb-4" />
+                  <h3 className="text-lg font-medium text-gray-600 mb-2">No Organization Templates</h3>
+                  <p className="text-gray-500 mb-4">
+                    Save your first architecture as a template to see it here.
+                  </p>
+                  <p className="text-sm text-gray-400">
+                    Go to any project diagram and click "Save as Template" to get started.
+                  </p>
+                </div>
+              )}
             </div>
           </div>
         </div>
       </div>
+
+      {/* Template Preview Modal */}
+      <AnimatePresence>
+        {isPreviewModalOpen && selectedTemplate && (
+          <>
+            {/* Overlay */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.3 }}
+              className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+              onClick={() => setIsPreviewModalOpen(false)}
+            >
+              {/* Modal Content */}
+              <motion.div
+                initial={{ opacity: 0, scale: 0.8 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.8 }}
+                transition={{ duration: 0.3 }}
+                className="bg-white rounded-xl shadow-2xl max-w-5xl max-h-[90vh] overflow-hidden w-full"
+                onClick={(e) => e.stopPropagation()}
+              >
+                {/* Modal Header */}
+                <div className="border-b border-gray-100 bg-gradient-to-r from-blue-50 to-purple-50 p-6">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="bg-gradient-to-r from-blue-500 to-purple-600 p-2 rounded-lg">
+                        <Shield className="h-5 w-5 text-white" />
+                      </div>
+                      <div>
+                        <h2 className="text-xl font-semibold text-gray-800">
+                          {selectedTemplate.title}
+                        </h2>
+                        <p className="text-sm text-gray-500">Template Preview</p>
+                      </div>
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => setIsPreviewModalOpen(false)}
+                      className="rounded-full hover:bg-gray-100"
+                    >
+                      <X className="h-5 w-5 text-gray-500" />
+                    </Button>
+                  </div>
+                </div>
+
+                {/* Modal Body */}
+                <div className="overflow-y-auto max-h-[calc(90vh-180px)]">
+                  {/* Template Info */}
+                  <div className="p-6 border-b border-gray-100">
+                    <div className="flex flex-wrap gap-2 mb-4">
+                      <Badge className="bg-blue-100 text-blue-800 px-3 py-1">
+                        {selectedTemplate.category}
+                      </Badge>
+                      {selectedTemplate.tags.map((tag: string, index: number) => (
+                        <Badge key={index} variant="outline" className="bg-blue-50 text-blue-600 border-blue-200 px-3 py-1">
+                          {tag}
+                        </Badge>
+                      ))}
+                    </div>
+                    <p className="text-gray-600 mb-4">{selectedTemplate.description}</p>
+
+                    {/* Template ID, Creator and Date Tags */}
+                    <div className="flex flex-wrap gap-2">
+                      <div className="flex items-center gap-1.5 bg-gradient-to-r from-purple-50 to-pink-50 border border-purple-200 text-purple-700 px-3 py-1.5 rounded-full">
+                        <Puzzle className="h-3 w-3" />
+                        <span className="text-xs font-medium"> {selectedTemplate.template_id}</span>
+                      </div>
+                      <div className="flex items-center gap-1.5 bg-gradient-to-r from-emerald-50 to-teal-50 border border-emerald-200 text-emerald-700 px-3 py-1.5 rounded-full">
+                        <Users className="h-3 w-3" />
+                        <span className="text-xs font-medium">{selectedTemplate.creator}</span>
+                      </div>
+                      <div className="flex items-center gap-1.5 bg-gradient-to-r from-indigo-50 to-blue-50 border border-indigo-200 text-indigo-700 px-3 py-1.5 rounded-full">
+                        <Calendar className="h-3 w-3" />
+                        <span className="text-xs font-medium">{new Date(selectedTemplate.createdDate).toLocaleDateString()}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Template Diagram Image */}
+                  <div className="p-6">
+                    <h3 className="text-lg font-medium text-gray-800 mb-4 flex items-center gap-2">
+                      <Puzzle className="h-5 w-5 text-blue-600" />
+                      Architecture Diagram
+                    </h3>
+
+                    <div className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-lg overflow-hidden border border-gray-200">
+                      {selectedTemplate.diagramImage || selectedTemplate.image || selectedTemplate.screenshot ? (
+                        <div className="p-4">
+                          <img
+                            src={selectedTemplate.diagramImage || selectedTemplate.image || selectedTemplate.screenshot}
+                            alt={`${selectedTemplate.title} diagram preview`}
+                            className="w-full h-auto max-h-[500px] object-contain mx-auto rounded-lg shadow-sm border border-gray-200/50"
+                            style={{ backgroundColor: 'white' }}
+                          />
+                        </div>
+                      ) : (
+                        <div className="flex flex-col items-center justify-center py-16 px-8">
+                          <div className="bg-gradient-to-r from-blue-500 to-purple-600 p-4 rounded-full mb-4">
+                            <Shield className="h-8 w-8 text-white" />
+                          </div>
+                          <h4 className="text-lg font-medium text-gray-700 mb-2">Diagram Preview</h4>
+                          <p className="text-gray-500 text-sm max-w-md text-center mb-6">
+                            This template represents a comprehensive security architecture for {selectedTemplate.category.toLowerCase()}.
+                            The actual implementation will be configured based on your specific requirements.
+                          </p>
+
+                          {/* Components Overview */}
+                          <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-200 max-w-lg w-full">
+                            <div className="flex items-center justify-center space-x-2 text-blue-600 mb-4">
+                              <Puzzle className="h-5 w-5" />
+                              <span className="text-sm font-medium">Template Components</span>
+                            </div>
+                            <div className="grid grid-cols-2 gap-3 text-sm">
+                              <div className="flex items-center gap-2">
+                                <Check className="h-4 w-4 text-green-500" />
+                                <span className="text-gray-700">Security Policies</span>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <Check className="h-4 w-4 text-green-500" />
+                                <span className="text-gray-700">Access Controls</span>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <Check className="h-4 w-4 text-green-500" />
+                                <span className="text-gray-700">Monitoring Setup</span>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <Check className="h-4 w-4 text-green-500" />
+                                <span className="text-gray-700">Compliance Rules</span>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <Check className="h-4 w-4 text-green-500" />
+                                <span className="text-gray-700">Network Architecture</span>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <Check className="h-4 w-4 text-green-500" />
+                                <span className="text-gray-700">Data Protection</span>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Modal Footer */}
+                <div className="border-t border-gray-100 bg-gray-50 px-6 py-4">
+                  <div className="flex justify-end gap-3">
+                    <Button
+                      variant="outline"
+                      onClick={() => setIsPreviewModalOpen(false)}
+                      className="border-gray-200 text-gray-600 hover:text-gray-800"
+                    >
+                      Close
+                    </Button>
+                    <Button
+                      className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white flex items-center gap-2"
+                      onClick={() => {
+                        setIsPreviewModalOpen(false);
+                        handleLaunchWorkflow(`template-${selectedTemplate.id}`);
+                      }}
+                    >
+                      <Workflow className="h-4 w-4" />
+                      Use This Template
+                    </Button>
+                  </div>
+                </div>
+              </motion.div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
 
       {/* Workflow Sidebar */}
       <AnimatePresence>
@@ -1015,9 +1378,9 @@ const SolutionsHub = () => {
               className="fixed inset-0 bg-black/30 backdrop-blur-sm z-40"
               onClick={() => setIsWorkflowSidebarOpen(false)}
             />
-            
+
             {/* Sidebar */}
-            <motion.div 
+            <motion.div
               className="fixed right-0 top-0 h-full w-full md:w-2/3 lg:w-2/5 max-w-3xl bg-white shadow-xl z-50 overflow-hidden flex flex-col"
               initial={{ x: "100%" }}
               animate={{ x: 0 }}
@@ -1040,16 +1403,16 @@ const SolutionsHub = () => {
                       <p className="text-sm text-gray-500">Workflow Configuration</p>
                     </div>
                   </div>
-                  <Button 
-                    variant="ghost" 
-                    size="icon" 
+                  <Button
+                    variant="ghost"
+                    size="icon"
                     onClick={() => setIsWorkflowSidebarOpen(false)}
                     className="rounded-full hover:bg-gray-100"
                   >
                     <X className="h-5 w-5 text-gray-500" />
                   </Button>
                 </div>
-                
+
                 {/* Progress Bar */}
                 <div className="px-5 pb-4">
                   <div className="flex items-center justify-between mb-2">
@@ -1061,7 +1424,7 @@ const SolutionsHub = () => {
                   </div>
                 </div>
               </div>
-              
+
               {/* Sidebar Content */}
               <div className="flex-1 overflow-y-auto px-4 pb-20">
                 {/* Introduction */}
@@ -1075,7 +1438,7 @@ const SolutionsHub = () => {
                     <span className="font-medium">{activeSolutionDetails?.title}</span>. Review and assign tasks, then launch the workflow.
                   </p>
                 </div>
-                
+
                 {/* Orchestrator Section */}
                 <div className="mt-6 mb-8">
                   <div className="flex items-center gap-2 mb-4">
@@ -1085,9 +1448,9 @@ const SolutionsHub = () => {
                     <h3 className="font-medium text-gray-800">Tracker&nbsp;: </h3>
                     <Popover open={orchestratorOpen} onOpenChange={setOrchestratorOpen}>
                       <PopoverTrigger asChild>
-                        <Button 
-                          variant="outline" 
-                          role="combobox" 
+                        <Button
+                          variant="outline"
+                          role="combobox"
                           className="h-7 w-auto justify-between px-3 rounded-md bg-gradient-to-r from-blue-50/80 to-purple-50/80 border-blue-200 hover:from-blue-100/80 hover:to-purple-100/80 hover:border-blue-300 text-left transition-all duration-200 -ml-1"
                         >
                           <div className="flex items-center gap-2">
@@ -1095,8 +1458,8 @@ const SolutionsHub = () => {
                               <>
                                 <div className="w-5 h-5 rounded-sm bg-blue-600 flex items-center justify-center">
                                   <svg viewBox="0 0 24 24" width="14" height="14" fill="white" xmlns="http://www.w3.org/2000/svg">
-                                    <path d="M11.571 11.513H0a5.218 5.218 0 0 0 5.232 5.215h2.13v2.057A5.215 5.215 0 0 0 12.575 24V12.518a1.005 1.005 0 0 0-1.005-1.005Z"/>
-                                    <path d="M16.807 6.299h-2.13V4.243A5.215 5.215 0 0 0 9.46 0v11.478a1.005 1.005 0 0 0 1.004 1.005h11.572A5.218 5.218 0 0 0 16.807 6.3Z" fill="#2684FF"/>
+                                    <path d="M11.571 11.513H0a5.218 5.218 0 0 0 5.232 5.215h2.13v2.057A5.215 5.215 0 0 0 12.575 24V12.518a1.005 1.005 0 0 0-1.005-1.005Z" />
+                                    <path d="M16.807 6.299h-2.13V4.243A5.215 5.215 0 0 0 9.46 0v11.478a1.005 1.005 0 0 0 1.004 1.005h11.572A5.218 5.218 0 0 0 16.807 6.3Z" fill="#2684FF" />
                                   </svg>
                                 </div>
                                 <span className="font-medium text-sm text-blue-700">Jira</span>
@@ -1105,7 +1468,7 @@ const SolutionsHub = () => {
                               <>
                                 <div className="w-5 h-5 rounded-full bg-gray-800 flex items-center justify-center">
                                   <svg viewBox="0 0 16 16" width="12" height="12" fill="white" xmlns="http://www.w3.org/2000/svg">
-                                    <path fillRule="evenodd" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/>
+                                    <path fillRule="evenodd" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z" />
                                   </svg>
                                 </div>
                                 <span className="font-medium text-sm text-gray-700">GitHub</span>
@@ -1126,8 +1489,8 @@ const SolutionsHub = () => {
                               >
                                 <div className="w-5 h-5 rounded-sm bg-blue-600 flex items-center justify-center">
                                   <svg viewBox="0 0 24 24" width="14" height="14" fill="white" xmlns="http://www.w3.org/2000/svg">
-                                    <path d="M11.571 11.513H0a5.218 5.218 0 0 0 5.232 5.215h2.13v2.057A5.215 5.215 0 0 0 12.575 24V12.518a1.005 1.005 0 0 0-1.005-1.005Z"/>
-                                    <path d="M16.807 6.299h-2.13V4.243A5.215 5.215 0 0 0 9.46 0v11.478a1.005 1.005 0 0 0 1.004 1.005h11.572A5.218 5.218 0 0 0 16.807 6.3Z" fill="#2684FF"/>
+                                    <path d="M11.571 11.513H0a5.218 5.218 0 0 0 5.232 5.215h2.13v2.057A5.215 5.215 0 0 0 12.575 24V12.518a1.005 1.005 0 0 0-1.005-1.005Z" />
+                                    <path d="M16.807 6.299h-2.13V4.243A5.215 5.215 0 0 0 9.46 0v11.478a1.005 1.005 0 0 0 1.004 1.005h11.572A5.218 5.218 0 0 0 16.807 6.3Z" fill="#2684FF" />
                                   </svg>
                                 </div>
                                 <div className="flex flex-col">
@@ -1145,7 +1508,7 @@ const SolutionsHub = () => {
                               >
                                 <div className="w-5 h-5 rounded-full bg-gray-800 flex items-center justify-center">
                                   <svg viewBox="0 0 16 16" width="12" height="12" fill="white" xmlns="http://www.w3.org/2000/svg">
-                                    <path fillRule="evenodd" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/>
+                                    <path fillRule="evenodd" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z" />
                                   </svg>
                                 </div>
                                 <div className="flex flex-col">
@@ -1162,7 +1525,7 @@ const SolutionsHub = () => {
                       </PopoverContent>
                     </Popover>
                   </div>
-                  
+
                   <div className="px-3">
                     <div className="mt-4 text-xs text-blue-600 px-4 py-3 bg-blue-50/50 rounded-md border border-blue-100/80">
                       <p className="flex items-center gap-1.5">
@@ -1172,7 +1535,7 @@ const SolutionsHub = () => {
                     </div>
                   </div>
                 </div>
-                
+
                 {/* Tasks Section */}
                 <div className="mt-6">
                   <div className="flex items-center gap-2 mb-4">
@@ -1181,21 +1544,21 @@ const SolutionsHub = () => {
                     </div>
                     <h3 className="font-medium text-gray-800">Workflow Tasks</h3>
                   </div>
-                  
+
                   <div className="space-y-4">
                     {workflowTasks.map((task) => {
                       // Find dependent tasks
-                      const dependencyTasks = task.dependencies.map(depId => 
+                      const dependencyTasks = task.dependencies.map(depId =>
                         workflowTasks.find(t => t.id === depId)?.title
                       ).filter(Boolean);
-                      
+
                       // Get current assignee from state or task default
                       const currentAssigneeId = taskAssignees[task.id] || task.assignee.id;
                       const currentAssignee = assigneeOptions.find(a => a.id === currentAssigneeId) || task.assignee;
-                      
+
                       // Get current deadline from state or task default
                       const currentDeadline = taskDeadlines[task.id] || task.deadline;
-                      
+
                       return (
                         <div key={task.id} className="border border-gray-200 rounded-lg overflow-hidden hover:shadow-sm transition-all duration-200 bg-white">
                           <div className="flex items-start p-4">
@@ -1203,7 +1566,7 @@ const SolutionsHub = () => {
                             <div className="ml-3 flex-1">
                               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
                                 <label htmlFor={task.id} className="font-medium text-gray-800 cursor-pointer">{task.title}</label>
-                                
+
                                 {/* Deadline Popover */}
                                 <Popover>
                                   <PopoverTrigger asChild>
@@ -1227,7 +1590,7 @@ const SolutionsHub = () => {
                                       classNames={calendarStyles}
                                     />
                                     <div className="p-3 border-t border-blue-100 bg-gradient-to-r from-blue-50/50 to-purple-50/50">
-                                      <Button 
+                                      <Button
                                         className="w-full text-xs h-8 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700"
                                         onClick={() => {
                                           const today = new Date();
@@ -1241,16 +1604,16 @@ const SolutionsHub = () => {
                                 </Popover>
                               </div>
                               <p className="text-sm text-gray-600 mt-1">{task.description}</p>
-                              
+
                               {/* Assignee Dropdown */}
                               <div className="flex items-start mt-3 gap-2">
                                 <span className="text-xs text-black mt-1 font-medium">Assignee:</span>
                                 <div className="flex-1">
                                   <Popover>
                                     <PopoverTrigger asChild>
-                                      <Button 
-                                        variant="outline" 
-                                        role="combobox" 
+                                      <Button
+                                        variant="outline"
+                                        role="combobox"
                                         className="h-8 w-auto justify-between px-3 rounded-md bg-gradient-to-r from-blue-50/80 to-purple-50/80 border-blue-200 hover:from-blue-100/80 hover:to-purple-100/80 hover:border-blue-300 text-left transition-all duration-200"
                                       >
                                         <div className="flex items-center gap-1.5">
@@ -1272,9 +1635,9 @@ const SolutionsHub = () => {
                                         <div className="bg-gradient-to-r from-blue-100/60 to-purple-100/60 px-2 py-2 border-b border-blue-100/80">
                                           <div className="relative">
                                             <Search className="h-3.5 w-3.5 absolute left-2.5 top-1/2 transform -translate-y-1/2 text-blue-400" />
-                                            <CommandInput 
-                                              placeholder="Search assignee..." 
-                                              className="h-8 text-sm bg-white/80 backdrop-blur-sm rounded-md text-blue-700 placeholder:text-blue-400/80 border-blue-200/80 pl-8 transition-all duration-300 w-[97%] focus:w-full focus:bg-white focus:border-blue-300 focus:ring-1 focus:ring-blue-300/50" 
+                                            <CommandInput
+                                              placeholder="Search assignee..."
+                                              className="h-8 text-sm bg-white/80 backdrop-blur-sm rounded-md text-blue-700 placeholder:text-blue-400/80 border-blue-200/80 pl-8 transition-all duration-300 w-[97%] focus:w-full focus:bg-white focus:border-blue-300 focus:ring-1 focus:ring-blue-300/50"
                                             />
                                           </div>
                                         </div>
@@ -1317,7 +1680,7 @@ const SolutionsHub = () => {
                                   </Popover>
                                 </div>
                               </div>
-                              
+
                               {/* Dependencies */}
                               {dependencyTasks.length > 0 && (
                                 <div className="mt-3">
@@ -1339,19 +1702,19 @@ const SolutionsHub = () => {
                   </div>
                 </div>
               </div>
-              
+
               {/* Footer Actions */}
               <div className="border-t border-gray-100 p-4 bg-white shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)]">
                 <div className="flex justify-between items-center">
-                  <Button 
-                    variant="outline" 
+                  <Button
+                    variant="outline"
                     className="border-gray-200 text-gray-600 hover:text-gray-800"
                     onClick={() => setIsWorkflowSidebarOpen(false)}
                   >
                     Cancel
                   </Button>
                   <div className="flex gap-2">
-                    <Button 
+                    <Button
                       className="bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white transition-all duration-200"
                     >
                       Launch Workflow
@@ -1363,6 +1726,15 @@ const SolutionsHub = () => {
           </>
         )}
       </AnimatePresence>
+
+      {/* Create Project from Template Dialog */}
+      <CreateProjectFromTemplateDialog
+        open={isTemplateCreateDialogOpen}
+        onOpenChange={setIsTemplateCreateDialogOpen}
+        template={selectedTemplateForCreation}
+        onCreateProject={handleCreateProjectFromTemplate}
+        isSubmitting={isSubmitting}
+      />
     </Layout>
   );
 };
