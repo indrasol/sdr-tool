@@ -33,6 +33,7 @@ interface CreateProjectDialogProps {
     creator: string;
     templateType: ProjectTemplateType;
     importedFile?: string;
+    tags?: string[];
   }) => void;
   isSubmitting?: boolean;
 }
@@ -91,10 +92,10 @@ const CreateProjectDialog = ({
 }: CreateProjectDialogProps) => {
   const [selectedTemplate, setSelectedTemplate] = useState<ProjectTemplateType | null>(null);
   const [projectName, setProjectName] = useState('');
+  const [projectTags, setProjectTags] = useState('');
   const [projectDescription, setProjectDescription] = useState('');
   const [projectPriority, setProjectPriority] = useState<ProjectPriority>('MEDIUM');
   const [projectStatus, setProjectStatus] = useState<ProjectStatus>('NOT_STARTED');
-  const [projectDomain, setProjectDomain] = useState('');
   const [projectDueDate, setProjectDueDate] = useState('');
   const [importedFileName, setImportedFileName] = useState('');
   const { toast } = useToast();
@@ -107,10 +108,10 @@ const CreateProjectDialog = ({
       setTimeout(() => {
         setSelectedTemplate(null);
         setProjectName('');
+        setProjectTags('');
         setProjectDescription('');
         setProjectPriority('MEDIUM');
         setProjectStatus('NOT_STARTED');
-        setProjectDomain('');
         setProjectDueDate('');
         setImportedFileName('');
       }, 300);
@@ -127,6 +128,28 @@ const CreateProjectDialog = ({
 
   const handleFileImport = (fileName: string) => {
     setImportedFileName(fileName);
+  };
+
+  // Validate and format tags
+  const validateTags = (tagsString: string): string[] => {
+    if (!tagsString.trim()) return [];
+    
+    const tags = tagsString.split(',').map(tag => tag.trim()).filter(tag => tag.length > 0);
+    const validTags: string[] = [];
+    
+    for (const tag of tags) {
+      // Only allow alphanumeric characters and underscores
+      if (/^[a-zA-Z0-9_]+$/.test(tag)) {
+        validTags.push(tag);
+      }
+    }
+    
+    return validTags;
+  };
+
+  const handleTagsChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setProjectTags(value);
   };
 
   const handleStartProject = () => {
@@ -165,17 +188,32 @@ const CreateProjectDialog = ({
       });
       return;
     }
+
+    // Validate tags
+    const validatedTags = validateTags(projectTags);
+    const invalidTags = projectTags.split(',')
+      .map(tag => tag.trim())
+      .filter(tag => tag.length > 0 && !/^[a-zA-Z0-9_]+$/.test(tag));
+
+    if (invalidTags.length > 0) {
+      toast({
+        title: "Invalid Tags",
+        description: `Tags can only contain letters, numbers, and underscores. Invalid tags: ${invalidTags.join(', ')}`,
+        variant: "destructive"
+      });
+      return;
+    }
     
     onCreateProject({
       name: projectName,
       description: projectDescription,
       priority: projectPriority,
       status: projectStatus,
-      domain: projectDomain || undefined,
       dueDate: projectDueDate || undefined,
       creator: user.username || user.email || 'Unknown User',
       templateType: selectedTemplate,
-      importedFile: importedFileName || undefined
+      importedFile: importedFileName || undefined,
+      tags: validatedTags.length > 0 ? validatedTags : undefined
     });
   };
 
@@ -298,18 +336,21 @@ const CreateProjectDialog = ({
               />
             </div>
             <div className="space-y-2 animate-fadeIn" style={{ animationDelay: "300ms" }}>
-              <Label htmlFor="project-domain" className="font-medium text-gray-700">Domain/URL (Optional)</Label>
+              <Label htmlFor="project-tags" className="font-medium text-gray-700">Tags</Label>
               <Input 
-                id="project-domain" 
-                placeholder="e.g. example.com" 
-                value={projectDomain}
-                onChange={(e) => setProjectDomain(e.target.value)}
+                id="project-tags" 
+                placeholder="Enter tags separated by commas (e.g. security, web_app, api)" 
+                value={projectTags}
+                onChange={handleTagsChange}
                 disabled={isSubmitting}
                 className={cn(
                   inputStyles,
                   "border-blue-100 rounded-md shadow-sm"
                 )}
               />
+              <p className="text-xs text-gray-500 mt-1">
+                Separate tags with commas. Only letters, numbers, and underscores are allowed.
+              </p>
             </div>
           </div>
 

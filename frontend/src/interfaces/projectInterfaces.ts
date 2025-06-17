@@ -33,6 +33,7 @@ export interface ProjectCardProps {
     templateType?: ProjectTemplateType;
     importedFile?: string;
     tenantId: number;
+    tags?: string[];
     diagramState?: {
       nodes: any[];
       edges: any[];
@@ -52,6 +53,7 @@ export interface ProjectCardProps {
     template_type: ProjectTemplateType;
     imported_file?: string;
     tenant_id: number;
+    tags?: string[];
   }
   
   // Interface for project update payload
