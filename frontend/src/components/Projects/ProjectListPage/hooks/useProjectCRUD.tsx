@@ -30,6 +30,7 @@ export const useProjectCRUD = () => {
     dueDate?: string;
     templateType: ProjectTemplateType;
     importedFile?: string;
+    tags?: string[];
   }): Promise<Project | null> => {
     setIsSubmitting(true);
     
@@ -45,7 +46,8 @@ export const useProjectCRUD = () => {
         creator: currentUserName,
         template_type: projectData.templateType,
         imported_file: projectData.importedFile,
-        tenant_id: tenantId
+        tenant_id: tenantId,
+        tags: projectData.tags
       };
       
       // Call service to create project
@@ -290,6 +292,7 @@ export const useProjectCRUD = () => {
       dueDate?: string;
       templateType: ProjectTemplateType;
       importedFile?: string;
+      tags?: string[];
     },
     setCreateDialogOpen: (open: boolean) => void,
     onProjectCreated?: (project: Project) => void

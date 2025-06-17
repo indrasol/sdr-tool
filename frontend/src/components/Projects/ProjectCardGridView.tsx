@@ -48,6 +48,7 @@ const ProjectCardGridView: React.FC<ProjectCardProps> = ({
           <div className="flex justify-between items-start mb-3">
             <div>
               <h3 className="font-poppins font-semibold text-lg mb-2 text-gray-800">{name}</h3>
+              
               <ProjectCardBadges 
                 status={status} 
                 priority={priority} 
@@ -60,10 +61,13 @@ const ProjectCardGridView: React.FC<ProjectCardProps> = ({
               <div className="text-xs font-inter text-muted-foreground bg-gray-100 rounded px-2 py-1 w-16 text-center">
                 {id}
               </div>
+              
               <ProjectCardActions 
                 id={id}
+
                 onDelete={onDelete}
                 onEdit={onEdit}
+                
               />
             </div>
           </div>
@@ -96,3 +100,7 @@ const ProjectCardGridView: React.FC<ProjectCardProps> = ({
 };
 
 export default ProjectCardGridView;
+
+
+
+

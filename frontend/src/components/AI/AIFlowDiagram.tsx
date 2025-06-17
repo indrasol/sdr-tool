@@ -884,6 +884,8 @@ const AIFlowDiagram: React.FC<AIFlowDiagramProps> = ({
         onSave={handleSave}
         projectId={projectId || ''}
         diagramRef={diagramContainerRef}
+        nodes={nodes}
+        edges={edges}
       />
       <div className="flex-1 overflow-hidden relative" ref={diagramContainerRef}>
         {/* Modern gradient background */}

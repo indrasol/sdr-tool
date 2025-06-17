@@ -50,6 +50,10 @@ import {
 } from "../ui/dropdown-menu";
 import { Badge } from "../ui/badge";
 import { toPng } from 'html-to-image';
+import { useOrgTemplates } from '@/hooks/useOrgTemplates';
+import { useAuth } from '@/components/Auth/AuthContext';
+import { useProjects } from '@/hooks/useProjects';
+import templateApiService from '@/services/templateApiService';
 
 // Add custom button hover styles
 const buttonHoverStyles = `
@@ -87,6 +91,8 @@ interface DiagramActionsProps {
   onSave?: () => void;
   projectId?: string;
   diagramRef?: React.RefObject<HTMLDivElement>;
+  nodes?: any[]; // Add nodes for diagram state
+  edges?: any[]; // Add edges for diagram state
 }
 
 const DiagramActions: React.FC<DiagramActionsProps> = ({
@@ -105,8 +111,13 @@ const DiagramActions: React.FC<DiagramActionsProps> = ({
   onToggleDataFlow,
   onSave,
   projectId,
-  diagramRef
+  diagramRef,
+  nodes = [],
+  edges = []
 }) => {
+  const { addOrgTemplate } = useOrgTemplates();
+  const { user } = useAuth();
+  const { allProjects } = useProjects();
   const [copied, setCopied] = useState(false);
   const [isTemplateModalOpen, setIsTemplateModalOpen] = useState(false);
   const [isImageModalOpen, setIsImageModalOpen] = useState(false);
@@ -125,13 +136,7 @@ const DiagramActions: React.FC<DiagramActionsProps> = ({
     description: ''
   });
 
-  // Define available tags
-  const availableTags = [
-    "Cloud - AWS",
-    "Cloud - Azure", 
-    "Cloud - GCP",
-    "App"
-  ];
+
 
   const handleSwitchToAD = () => {
     if (viewMode !== 'AD' && onSwitchView) {
@@ -159,10 +164,15 @@ const DiagramActions: React.FC<DiagramActionsProps> = ({
   };
 
   const handleOpenTemplateModal = () => {
+    // Find the current project to pre-populate the form
+    const currentProject = allProjects?.find(p => p.id === projectId);
+    
     setTemplateForm({
-      name: `Architecture Template - ${new Date().toLocaleDateString()}`,
-      description: 'Secure architecture design with detailed components and connections.',
-      tags: ["Cloud - AWS"],
+      name: currentProject 
+        ? `${currentProject.name} - Template` 
+        : `Architecture Template - ${new Date().toLocaleDateString()}`,
+      description: currentProject?.description || 'Secure architecture design with detailed components and connections.',
+      tags: [], // Will use project tags instead
       visibility: {
         private: true,
         team: false,
@@ -189,50 +199,273 @@ const DiagramActions: React.FC<DiagramActionsProps> = ({
     }));
   };
 
-  const handleSaveTemplate = () => {
-    console.log('Saving template:', templateForm);
+  // Function to generate diagram image (reusable logic from handleSaveImage)
+  const generateDiagramImage = async (): Promise<string | null> => {
+    const reactFlowWrapper = document.querySelector('.react-flow') as HTMLElement;
+    const viewport = document.querySelector('.react-flow__viewport') as HTMLElement;
     
-    toast({
-      title: "Template Saved",
-      description: `"${templateForm.name}" has been saved successfully.`,
-      duration: 3000,
+    if (!reactFlowWrapper || !viewport) {
+      throw new Error('Could not find diagram elements');
+    }
+    
+    // Get all nodes and edges to calculate proper bounds
+    const nodes = viewport.querySelectorAll('.react-flow__node');
+    const edges = viewport.querySelectorAll('.react-flow__edge');
+    
+    if (nodes.length === 0) {
+      throw new Error('No diagram content found');
+    }
+    
+    // Calculate the actual bounds of all content
+    let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+    
+    // Process nodes to get their actual positions
+    nodes.forEach(node => {
+      const style = window.getComputedStyle(node);
+      const transform = style.transform;
+      
+      if (transform && transform !== 'none') {
+        // Parse transform matrix to get x, y coordinates
+        const matrix = transform.match(/matrix.*\((.+)\)/);
+        if (matrix) {
+          const values = matrix[1].split(', ');
+          const x = parseFloat(values[4]) || 0;
+          const y = parseFloat(values[5]) || 0;
+          
+          // Get node dimensions
+          const rect = node.getBoundingClientRect();
+          const width = parseFloat(style.width) || rect.width;
+          const height = parseFloat(style.height) || rect.height;
+          
+          minX = Math.min(minX, x);
+          minY = Math.min(minY, y);
+          maxX = Math.max(maxX, x + width);
+          maxY = Math.max(maxY, y + height);
+        }
+      }
     });
     
-    setIsTemplateModalOpen(false);
+    // Also check edges for complete bounds
+    edges.forEach(edge => {
+      const pathElement = edge.querySelector('path');
+      if (pathElement) {
+        const bbox = pathElement.getBBox();
+        const edgeTransform = window.getComputedStyle(edge).transform;
+        
+        let edgeX = 0, edgeY = 0;
+        if (edgeTransform && edgeTransform !== 'none') {
+          const matrix = edgeTransform.match(/matrix.*\((.+)\)/);
+          if (matrix) {
+            const values = matrix[1].split(', ');
+            edgeX = parseFloat(values[4]) || 0;
+            edgeY = parseFloat(values[5]) || 0;
+          }
+        }
+        
+        minX = Math.min(minX, bbox.x + edgeX);
+        minY = Math.min(minY, bbox.y + edgeY);
+        maxX = Math.max(maxX, bbox.x + bbox.width + edgeX);
+        maxY = Math.max(maxY, bbox.y + bbox.height + edgeY);
+      }
+    });
     
-    if (onSave) {
-      onSave();
+    // Add padding around the content
+    const padding = 50;
+    const contentWidth = maxX - minX + (padding * 2);
+    const contentHeight = maxY - minY + (padding * 2);
+    
+    // Store original styles
+    const originalViewportTransform = viewport.style.transform;
+    const originalWrapperStyles = {
+      width: reactFlowWrapper.style.width,
+      height: reactFlowWrapper.style.height,
+      overflow: reactFlowWrapper.style.overflow
+    };
+    
+    // Calculate new transform to center the content
+    const newTranslateX = -minX + padding;
+    const newTranslateY = -minY + padding;
+    
+    // Apply new transform to viewport
+    viewport.style.transform = `translate(${newTranslateX}px, ${newTranslateY}px) scale(1)`;
+    
+    // Adjust wrapper size to fit content
+    reactFlowWrapper.style.width = contentWidth + 'px';
+    reactFlowWrapper.style.height = contentHeight + 'px';
+    reactFlowWrapper.style.overflow = 'hidden';
+    
+    // Hide UI elements
+    const elementsToHide = [
+      '.react-flow__minimap',
+      '.react-flow__controls',
+      '.react-flow__attribution',
+      '.react-flow__panel'
+    ];
+    
+    const hiddenElements: { element: HTMLElement, originalDisplay: string }[] = [];
+    
+    elementsToHide.forEach(selector => {
+      const elements = document.querySelectorAll(selector);
+      elements.forEach(el => {
+        const element = el as HTMLElement;
+        hiddenElements.push({
+          element,
+          originalDisplay: element.style.display
+        });
+        element.style.display = 'none';
+      });
+    });
+    
+    // Wait for layout changes to take effect
+    await new Promise(resolve => setTimeout(resolve, 300));
+    
+    try {
+      // Capture the image with exact dimensions
+      const dataUrl = await toPng(reactFlowWrapper, {
+        quality: 1.0,
+        backgroundColor: '#ffffff',
+        pixelRatio: 2,
+        width: contentWidth,
+        height: contentHeight,
+        skipAutoScale: true,
+        cacheBust: true,
+        style: {
+          transform: 'scale(1)',
+          transformOrigin: 'top left'
+        }
+      });
+      
+      // Restore all original styles
+      viewport.style.transform = originalViewportTransform;
+      reactFlowWrapper.style.width = originalWrapperStyles.width;
+      reactFlowWrapper.style.height = originalWrapperStyles.height;
+      reactFlowWrapper.style.overflow = originalWrapperStyles.overflow;
+      
+      // Restore hidden elements
+      hiddenElements.forEach(({ element, originalDisplay }) => {
+        element.style.display = originalDisplay;
+      });
+      
+      return dataUrl;
+    } catch (error) {
+      // Restore all original styles even if capture failed
+      viewport.style.transform = originalViewportTransform;
+      reactFlowWrapper.style.width = originalWrapperStyles.width;
+      reactFlowWrapper.style.height = originalWrapperStyles.height;
+      reactFlowWrapper.style.overflow = originalWrapperStyles.overflow;
+      
+      // Restore hidden elements
+      hiddenElements.forEach(({ element, originalDisplay }) => {
+        element.style.display = originalDisplay;
+      });
+      
+      throw error;
     }
   };
 
-  // Add a function to handle tag selection
-  const handleTagSelection = (tag: string) => {
-    setTemplateForm(prev => {
-      const isSelected = prev.tags.includes(tag);
-      let newTags: string[];
+  const handleSaveTemplate = async () => {
+    try {
+      // Find the current project
+      const currentProject = allProjects?.find(p => p.id === projectId);
       
-      if (isSelected) {
-        // Remove tag if already selected
-        newTags = prev.tags.filter(t => t !== tag);
-      } else {
-        // Add tag if not selected
-        newTags = [...prev.tags, tag];
+      if (!currentProject) {
+        toast({
+          title: "Error",
+          description: "Current project not found. Please save the project first.",
+          variant: "destructive",
+        });
+        return;
       }
-      
-      return {
-        ...prev,
-        tags: newTags
+
+      toast({
+        title: "Processing",
+        description: "Capturing diagram and saving template...",
+        duration: 2000,
+      });
+
+      // Generate diagram image for the template
+      let diagramImage = null;
+      try {
+        diagramImage = await generateDiagramImage();
+      } catch (imageError) {
+        console.warn('Could not capture diagram image:', imageError);
+        // Continue with template save even if image capture fails
+      }
+
+      // Capture current diagram info (same format used in create project)
+      const currentDiagramState = {
+        nodes: nodes.filter(node => node.type !== 'layerGroup'), // Filter out layer containers
+        edges: edges
       };
-    });
+
+      // Convert visibility to array format for backend
+      const visibilityArray = [];
+      if (templateForm.visibility.private) visibilityArray.push('private');
+      if (templateForm.visibility.team) visibilityArray.push('team');
+      if (templateForm.visibility.organization) visibilityArray.push('organization');
+
+      // Prepare payload for backend API
+      const backendPayload = {
+        tenant_id: user?.tenantId || 1,
+        tenant_name: user?.tenantId?.toString() || 'default',
+        diagram_state: currentDiagramState,
+        template_name: templateForm.name,
+        template_description: templateForm.description,
+        template_tags: currentProject.tags || [],
+        template_visibility: visibilityArray
+      };
+
+      // Send POST request to /save_template
+      const backendResponse = await templateApiService.saveTemplate(backendPayload);
+      
+      if (!backendResponse.success) {
+        throw new Error(backendResponse.message || 'Failed to save template to backend');
+      }
+
+      // On successful response, use saveTemplate() from templateStorageService.ts
+      const templateData = {
+        template_id: backendResponse.template_id,
+        title: templateForm.name,
+        description: templateForm.description,
+        category: "Architecture Template",
+        tags: currentProject.tags || [],
+        visibility: templateForm.visibility,
+        projectData: {
+          name: currentProject.name,
+          description: currentProject.description,
+          tags: currentProject.tags || [],
+        },
+        creator: user?.username || user?.email || 'Unknown User',
+        tenantId: user?.tenantId || 1,
+        diagramImage: diagramImage,
+        diagramState: currentDiagramState, // Include diagram state for backend integration
+      };
+
+      // Save to Supabase storage (maintains existing template storage logic)
+      await addOrgTemplate(templateData);
+      
+      setIsTemplateModalOpen(false);
+      
+      toast({
+        title: "Template Saved",
+        description: `"${templateForm.name}" has been saved successfully. Template ID: ${backendResponse.template_id}`,
+        duration: 3000,
+      });
+      
+      if (onSave) {
+        onSave();
+      }
+    } catch (error) {
+      console.error('Error saving template:', error);
+      toast({
+        title: "Error",
+        description: "Failed to save template. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
-  // Add a function to remove a tag
-  const removeTag = (tag: string) => {
-    setTemplateForm(prev => ({
-      ...prev,
-      tags: prev.tags.filter(t => t !== tag)
-    }));
-  };
+
 
   const handleOpenImageModal = () => {
     setImageForm({
@@ -695,53 +928,35 @@ const DiagramActions: React.FC<DiagramActionsProps> = ({
             <div className="grid gap-2">
               <Label htmlFor="template-tags" className="text-gray-700 font-medium flex items-center gap-1">
                 <Tag className="h-3.5 w-3.5 text-blue-500" />
-                Tags
+                Tags (from project)
               </Label>
               
               <div className="flex flex-col gap-2">
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button 
-                      variant="outline" 
-                      className="w-full justify-between border-blue-200 hover:border-blue-300 focus:ring-blue-300/40 bg-white/70 text-left font-normal"
-                    >
-                      <span className="text-gray-700">Select tags</span>
-                      <ChevronDown className="h-4 w-4 text-gray-500" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent className="w-full min-w-[200px] bg-white border border-blue-100 p-1">
-                    <DropdownMenuGroup>
-                      {availableTags.map(tag => (
-                        <DropdownMenuCheckboxItem
-                          key={tag}
-                          checked={templateForm.tags.includes(tag)}
-                          onCheckedChange={() => handleTagSelection(tag)}
-                          className="cursor-pointer focus:bg-blue-50 focus:text-blue-800"
+                {(() => {
+                  const currentProject = allProjects?.find(p => p.id === projectId);
+                  const projectTags = currentProject?.tags || [];
+                  
+                  return projectTags.length > 0 ? (
+                    <div className="flex flex-wrap gap-1.5 p-3 bg-blue-50/50 border border-blue-100/80 rounded-md">
+                      {projectTags.map((tag, index) => (
+                        <Badge 
+                          key={index} 
+                          className="bg-blue-100 text-blue-700 border border-blue-200 font-medium py-1 px-2"
                         >
                           {tag}
-                        </DropdownMenuCheckboxItem>
+                        </Badge>
                       ))}
-                    </DropdownMenuGroup>
-                  </DropdownMenuContent>
-                </DropdownMenu>
+                    </div>
+                  ) : (
+                    <div className="p-3 bg-gray-50/50 border border-gray-100/80 rounded-md text-sm text-gray-500 italic">
+                      No tags were added to this project
+                    </div>
+                  );
+                })()}
                 
-                {/* Display selected tags */}
-                {templateForm.tags.length > 0 && (
-                  <div className="flex flex-wrap gap-1.5 mt-1">
-                    {templateForm.tags.map(tag => (
-                      <Badge 
-                        key={tag} 
-                        className="bg-blue-100 text-blue-700 hover:bg-blue-200 border border-blue-200 font-medium py-1 px-2 flex items-center"
-                      >
-                        {tag}
-                        <X 
-                          className="h-3 w-3 ml-1 cursor-pointer text-blue-600 hover:text-blue-800" 
-                          onClick={() => removeTag(tag)}
-                        />
-                      </Badge>
-                    ))}
-                  </div>
-                )}
+                <p className="text-xs text-blue-600/80 mt-1">
+                  These tags were defined when the project was created and will be used for this template.
+                </p>
               </div>
             </div>
             

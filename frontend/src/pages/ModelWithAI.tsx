@@ -1368,8 +1368,8 @@ const applyBackendPositioning = useCallback((nodes: Node[]): Node[] => {
       // --- Use current state directly ---
       // Separate regular nodes and layer containers
       const currentLayerContainers = [...nodes].filter(node => node.type === 'layerGroup');
-      let currentNodes = [...nodes].filter(node => node.type !== 'layerGroup');
-      let currentEdges = [...edges]; // Create a copy to prevent reference issues
+      const currentNodes = [...nodes].filter(node => node.type !== 'layerGroup');
+      const currentEdges = [...edges]; // Create a copy to prevent reference issues
   
       // --- Start Calculation Phase ---
       let nextNodes = [...currentNodes];
@@ -1427,7 +1427,7 @@ const applyBackendPositioning = useCallback((nodes: Node[]): Node[] => {
           nodeType: node.type || 'default',
         },
       }));
-      let finalNodesListUnprepared = [...nextNodes, ...basicNodesToAdd];
+      const finalNodesListUnprepared = [...nextNodes, ...basicNodesToAdd];
   
       // 4. Process edges
       let finalEdgesList = [...nextEdges];
@@ -1471,7 +1471,7 @@ const applyBackendPositioning = useCallback((nodes: Node[]): Node[] => {
   
       // 6. Prepare ALL nodes
       console.log('Preparing final node list...');
-      let finalNodesListPrepared = prepareNodesForDiagram(finalNodesListUnprepared, finalEdgesList);
+      const finalNodesListPrepared = prepareNodesForDiagram(finalNodesListUnprepared, finalEdgesList);
   
       // 7. Apply LR flow positioning
       console.log('Applying LR flow positioning...');
@@ -1740,7 +1740,7 @@ const applyBackendPositioning = useCallback((nodes: Node[]): Node[] => {
       
       try {
         // 1. Extract nodes and edges from the stored state
-        let revertNodes = [...diagramState.nodes || []];
+        const revertNodes = [...diagramState.nodes || []];
         let revertEdges = [...diagramState.edges || []];
         
         // 2. Validate that all edges reference valid nodes
