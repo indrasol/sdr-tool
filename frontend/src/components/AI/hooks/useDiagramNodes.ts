@@ -6,6 +6,7 @@ import { edgeStyles } from '../utils/edgeStyles';
 import { mapNodeTypeToIcon } from '../utils/mapNodeTypeToIcon';
 import RemoteSvgIcon from '../icons/RemoteSvgIcon';
 import { CustomNodeData } from '../types/diagramTypes';
+import { DEFAULT_NODE_WIDTH, DEFAULT_NODE_HEIGHT } from '../utils/layerUtils';
 
 
 const determineEdgeType = (sourceId, targetId, nodes: Node[] = []) => {
@@ -224,8 +225,12 @@ export function useDiagramNodes(
         }
       }
       
-      // Ensure position is not undefined
-      const position = node.position || { x: Math.random() * 500, y: Math.random() * 300 };
+      // Ensure position is not undefined – use deterministic origin to avoid scattered flash before layout
+      const position = node.position || { x: 0, y: 0 };
+      
+      // Assign safe width/height defaults until React Flow measures the real values
+      const safeWidth = (node.width ?? DEFAULT_NODE_WIDTH);
+      const safeHeight = (node.height ?? DEFAULT_NODE_HEIGHT);
       
       // Ensure data object exists and type it
       const data: Partial<CustomNodeData> = node.data || {};
@@ -289,6 +294,8 @@ export function useDiagramNodes(
         ...node,
         type: 'default', // Always use our custom node
         position: position as XYPosition, // Assert position type
+        width: safeWidth,
+        height: safeHeight,
         dragging: node.dragging || false, // Preserve dragging state if it exists
         draggable: true, // Always draggable
         data: {

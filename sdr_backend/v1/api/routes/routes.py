@@ -36,6 +36,12 @@ from v1.api.routes.model_with_ai.threat_model import router as threat_model_rout
 # Templates
 from v1.api.routes.templates import router as templates_router
 
+# Reports
+from v1.api.routes.model_with_ai.reports.generate_report import router as report_router
+
+# Data Flow
+from v1.api.routes.model_with_ai.data_flow import router as data_flow_router
+
 
 router = APIRouter()
 
@@ -55,11 +61,7 @@ router.include_router(design_router, tags=["model_with_ai - design_router"])
 router.include_router(threat_model_router, tags=["model_with_ai - threat_model_router"])
 
 # Model With AI - Reports
-# router.include_router(generate_report_router, tags=["model_with_ai - generate_report_router"])
-# router.include_router(update_report_router, tags=["model_with_ai - update_report_router"])
-# router.include_router(get_report_router, tags=["model_with_ai - get_report_router"])
-# router.include_router(get_report_versions_router, tags=["model_with_ai - get_report_versions_router"])
-
+router.include_router(report_router, tags=["Reports - generate report"])
 
 # Projects
 router.include_router(project_router, tags=["Projects - project_router"])
@@ -71,3 +73,6 @@ router.include_router(redis_cache_router, tags=["Redis Cache - redis_cache_route
 
 # Health
 router.include_router(health_router, tags=["Health - health_router"])
+
+# Data Flow
+router.include_router(data_flow_router, tags=["model_with_ai - data_flow_router"])

@@ -12,6 +12,7 @@ import {
   FileText,
   Maximize2,
   Network,
+  Workflow,
   LayoutDashboard,
   Check,
   Lock,
@@ -54,6 +55,7 @@ import { useOrgTemplates } from '@/hooks/useOrgTemplates';
 import { useAuth } from '@/components/Auth/AuthContext';
 import { useProjects } from '@/hooks/useProjects';
 import templateApiService from '@/services/templateApiService';
+import { captureDiagramImage } from '@/utils/diagramUtils';
 
 // Add custom button hover styles
 const buttonHoverStyles = `
@@ -88,11 +90,14 @@ interface DiagramActionsProps {
   onGenerateReport?: () => void;
   onComment?: () => void;
   onToggleDataFlow?: () => void;
+  onToggleFlowchart?: () => void;
   onSave?: () => void;
   projectId?: string;
   diagramRef?: React.RefObject<HTMLDivElement>;
   nodes?: any[]; // Add nodes for diagram state
   edges?: any[]; // Add edges for diagram state
+  isDataFlowActive?: boolean;
+  isFlowchartActive?: boolean;
 }
 
 const DiagramActions: React.FC<DiagramActionsProps> = ({
@@ -109,11 +114,14 @@ const DiagramActions: React.FC<DiagramActionsProps> = ({
   onGenerateReport,
   onComment,
   onToggleDataFlow,
+  onToggleFlowchart,
   onSave,
   projectId,
   diagramRef,
   nodes = [],
-  edges = []
+  edges = [],
+  isDataFlowActive,
+  isFlowchartActive
 }) => {
   const { addOrgTemplate } = useOrgTemplates();
   const { user } = useAuth();
@@ -201,164 +209,27 @@ const DiagramActions: React.FC<DiagramActionsProps> = ({
 
   // Function to generate diagram image (reusable logic from handleSaveImage)
   const generateDiagramImage = async (): Promise<string | null> => {
-    const reactFlowWrapper = document.querySelector('.react-flow') as HTMLElement;
-    const viewport = document.querySelector('.react-flow__viewport') as HTMLElement;
-    
-    if (!reactFlowWrapper || !viewport) {
-      throw new Error('Could not find diagram elements');
-    }
-    
-    // Get all nodes and edges to calculate proper bounds
-    const nodes = viewport.querySelectorAll('.react-flow__node');
-    const edges = viewport.querySelectorAll('.react-flow__edge');
-    
-    if (nodes.length === 0) {
-      throw new Error('No diagram content found');
-    }
-    
-    // Calculate the actual bounds of all content
-    let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
-    
-    // Process nodes to get their actual positions
-    nodes.forEach(node => {
-      const style = window.getComputedStyle(node);
-      const transform = style.transform;
-      
-      if (transform && transform !== 'none') {
-        // Parse transform matrix to get x, y coordinates
-        const matrix = transform.match(/matrix.*\((.+)\)/);
-        if (matrix) {
-          const values = matrix[1].split(', ');
-          const x = parseFloat(values[4]) || 0;
-          const y = parseFloat(values[5]) || 0;
-          
-          // Get node dimensions
-          const rect = node.getBoundingClientRect();
-          const width = parseFloat(style.width) || rect.width;
-          const height = parseFloat(style.height) || rect.height;
-          
-          minX = Math.min(minX, x);
-          minY = Math.min(minY, y);
-          maxX = Math.max(maxX, x + width);
-          maxY = Math.max(maxY, y + height);
-        }
-      }
-    });
-    
-    // Also check edges for complete bounds
-    edges.forEach(edge => {
-      const pathElement = edge.querySelector('path');
-      if (pathElement) {
-        const bbox = pathElement.getBBox();
-        const edgeTransform = window.getComputedStyle(edge).transform;
-        
-        let edgeX = 0, edgeY = 0;
-        if (edgeTransform && edgeTransform !== 'none') {
-          const matrix = edgeTransform.match(/matrix.*\((.+)\)/);
-          if (matrix) {
-            const values = matrix[1].split(', ');
-            edgeX = parseFloat(values[4]) || 0;
-            edgeY = parseFloat(values[5]) || 0;
-          }
-        }
-        
-        minX = Math.min(minX, bbox.x + edgeX);
-        minY = Math.min(minY, bbox.y + edgeY);
-        maxX = Math.max(maxX, bbox.x + bbox.width + edgeX);
-        maxY = Math.max(maxY, bbox.y + bbox.height + edgeY);
-      }
-    });
-    
-    // Add padding around the content
-    const padding = 50;
-    const contentWidth = maxX - minX + (padding * 2);
-    const contentHeight = maxY - minY + (padding * 2);
-    
-    // Store original styles
-    const originalViewportTransform = viewport.style.transform;
-    const originalWrapperStyles = {
-      width: reactFlowWrapper.style.width,
-      height: reactFlowWrapper.style.height,
-      overflow: reactFlowWrapper.style.overflow
-    };
-    
-    // Calculate new transform to center the content
-    const newTranslateX = -minX + padding;
-    const newTranslateY = -minY + padding;
-    
-    // Apply new transform to viewport
-    viewport.style.transform = `translate(${newTranslateX}px, ${newTranslateY}px) scale(1)`;
-    
-    // Adjust wrapper size to fit content
-    reactFlowWrapper.style.width = contentWidth + 'px';
-    reactFlowWrapper.style.height = contentHeight + 'px';
-    reactFlowWrapper.style.overflow = 'hidden';
-    
-    // Hide UI elements
-    const elementsToHide = [
-      '.react-flow__minimap',
-      '.react-flow__controls',
-      '.react-flow__attribution',
-      '.react-flow__panel'
-    ];
-    
-    const hiddenElements: { element: HTMLElement, originalDisplay: string }[] = [];
-    
-    elementsToHide.forEach(selector => {
-      const elements = document.querySelectorAll(selector);
-      elements.forEach(el => {
-        const element = el as HTMLElement;
-        hiddenElements.push({
-          element,
-          originalDisplay: element.style.display
-        });
-        element.style.display = 'none';
-      });
-    });
-    
-    // Wait for layout changes to take effect
-    await new Promise(resolve => setTimeout(resolve, 300));
-    
     try {
-      // Capture the image with exact dimensions
-      const dataUrl = await toPng(reactFlowWrapper, {
-        quality: 1.0,
+      const dataUrl = await captureDiagramImage({
         backgroundColor: '#ffffff',
         pixelRatio: 2,
-        width: contentWidth,
-        height: contentHeight,
-        skipAutoScale: true,
-        cacheBust: true,
-        style: {
-          transform: 'scale(1)',
-          transformOrigin: 'top left'
+        quality: 1.0,
+        padding: 50
+      });
+      
+      // Automatically save to localStorage for report generation
+      if (projectId && projectId !== 'default-project' && dataUrl) {
+        try {
+          localStorage.setItem(`diagram_image_${projectId}`, dataUrl);
+          console.log('Diagram image automatically saved for project:', projectId);
+        } catch (storageError) {
+          console.warn('Could not save diagram image to localStorage:', storageError);
         }
-      });
-      
-      // Restore all original styles
-      viewport.style.transform = originalViewportTransform;
-      reactFlowWrapper.style.width = originalWrapperStyles.width;
-      reactFlowWrapper.style.height = originalWrapperStyles.height;
-      reactFlowWrapper.style.overflow = originalWrapperStyles.overflow;
-      
-      // Restore hidden elements
-      hiddenElements.forEach(({ element, originalDisplay }) => {
-        element.style.display = originalDisplay;
-      });
+      }
       
       return dataUrl;
     } catch (error) {
-      // Restore all original styles even if capture failed
-      viewport.style.transform = originalViewportTransform;
-      reactFlowWrapper.style.width = originalWrapperStyles.width;
-      reactFlowWrapper.style.height = originalWrapperStyles.height;
-      reactFlowWrapper.style.overflow = originalWrapperStyles.overflow;
-      
-      // Restore hidden elements
-      hiddenElements.forEach(({ element, originalDisplay }) => {
-        element.style.display = originalDisplay;
-      });
-      
+      console.error('Error generating diagram image:', error);
       throw error;
     }
   };
@@ -675,7 +546,7 @@ const DiagramActions: React.FC<DiagramActionsProps> = ({
     <div className="bg-white border-b border-gray-200 px-3 flex items-center justify-between w-full flex-shrink-0 h-12">
       <TooltipProvider>
         <div className="flex items-center space-x-1">
-          {projectId && (
+          {projectId && projectId !== 'default-project' && (
             <Tooltip>
               <TooltipTrigger asChild>
                 <div
@@ -848,6 +719,35 @@ const DiagramActions: React.FC<DiagramActionsProps> = ({
             <TooltipContent side="bottom">Switch to Data Flow Diagram</TooltipContent>
           </Tooltip>
           */}
+
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                className={`h-8 w-8 ${buttonHoverStyles} ${isDataFlowActive ? 'bg-blue-100' : ''}`}
+                onClick={onToggleDataFlow}
+              >
+                <Network size={16} />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="bottom">Toggle Sequence Diagram</TooltipContent>
+          </Tooltip>
+
+          {/* NEW: Toggle Flowchart button */}
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                className={`h-8 w-8 ${buttonHoverStyles} ${isFlowchartActive ? 'bg-blue-100' : ''}`}
+                onClick={onToggleFlowchart}
+              >
+                <Workflow size={16} />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="bottom">Toggle Data Flow Graph</TooltipContent>
+          </Tooltip>
 
         </div>
 

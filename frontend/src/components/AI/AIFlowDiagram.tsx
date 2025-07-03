@@ -29,6 +29,10 @@ import ThreatPanel from './ThreatPanel';
 import RemoteSvgIcon from './icons/RemoteSvgIcon';
 import { mapNodeTypeToIcon } from '../AI/utils/mapNodeTypeToIcon';
 import LayerGroupNode from './LayerGroupNode';
+import { createLayerContainers } from './utils/layerUtils';
+import MermaidCanvas from './MermaidCanvas';
+import { fetchDataFlow, fetchFlowchart } from '@/services/dataFlowService';
+import { DataFlowRequest } from '@/types/dataFlowTypes';
 
 // Helper function to check if two arrays of nodes or edges are deeply equal by comparing their essential properties
 const areArraysEqual = (arr1: any[], arr2: any[], isNodes = true) => {
@@ -98,7 +102,16 @@ const AIFlowDiagram: React.FC<AIFlowDiagramProps> = ({
   const effectiveIsLayouting = externalIsLayouting !== undefined ? externalIsLayouting : internalIsLayouting;
   
   // Add state for data flow diagram toggle
-  const [isDataFlowActive, setIsDataFlowActive] = useState(false);
+  const [isSequenceActive, setIsSequenceActive] = useState(false);
+  const [sequenceMermaid, setSequenceMermaid] = useState<string>('');
+  const [isGeneratingSequence, setIsGeneratingSequence] = useState(false);
+
+  // State for Mermaid flowchart diagram toggle
+  const [isFlowchartActive, setIsFlowchartActive] = useState(false);
+  const [flowchartMermaid, setFlowchartMermaid] = useState<string>('');
+  const [isGeneratingFlowchart, setIsGeneratingFlowchart] = useState(false);
+
+  const [diagramDirty, setDiagramDirty] = useState(false);
   // Add state to control empty canvas view visibility
   const [showEmptyCanvas, setShowEmptyCanvas] = useState(true);
   // Add state for minimap visibility with localStorage persistence
@@ -178,7 +191,7 @@ const AIFlowDiagram: React.FC<AIFlowDiagramProps> = ({
     
     // Only log during development and with fewer details
     if (process.env.NODE_ENV === 'development') {
-      console.log('[AIFlowDiagram] initialNodes received:', initialNodes?.length);
+      // console.log('[AIFlowDiagram] initialNodes received:', initialNodes?.length);
     }
     
     // CRITICAL FIX: Only update internal state when the prop changes and differs from current state
@@ -202,7 +215,7 @@ const AIFlowDiagram: React.FC<AIFlowDiagramProps> = ({
     
     // Only log during development 
     if (process.env.NODE_ENV === 'development') {
-      console.log('[AIFlowDiagram] initialEdges received:', initialEdges?.length);
+      // console.log('[AIFlowDiagram] initialEdges received:', initialEdges?.length);
     }
     
     // CRITICAL FIX: Only update internal state when the prop changes and differs from current state
@@ -277,10 +290,98 @@ const AIFlowDiagram: React.FC<AIFlowDiagramProps> = ({
     };
   }, [nodes, setNodesExternal, effectiveIsLayouting, initialNodes]);
 
+  // --- Layer-container refresh logic (debounced & merge to avoid flicker) ---
+  const REFRESH_DEBOUNCE_MS = 300; // wait before refreshing to avoid thrashing
+  const refreshTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  const scheduleContainerRefresh = useCallback(() => {
+    // Debounce successive calls
+    if (refreshTimeoutRef.current) {
+      clearTimeout(refreshTimeoutRef.current);
+    }
+
+    refreshTimeoutRef.current = setTimeout(() => {
+      setNodes((curr) => {
+        const regular = curr.filter((n: any) => n.type !== 'layerGroup');
+        const existingContainers = curr.filter((n: any) => n.type === 'layerGroup');
+
+        const freshContainers = createLayerContainers(regular as any);
+
+        const TOLERANCE = 1; // px – ignore tiny float jitter
+
+        let didUpdate = false;
+
+        // Merge – reuse unchanged containers to retain React identity
+        const mergedContainers = freshContainers.map((fc) => {
+          const match = existingContainers.find((ec) => ec.id === fc.id);
+          if (!match) {
+            didUpdate = true; // brand-new container
+            return fc;
+          }
+
+          const widthEq =
+            Math.abs(Number(match.style?.width ?? 0) - Number(fc.style?.width ?? 0)) <= TOLERANCE;
+          const heightEq =
+            Math.abs(Number(match.style?.height ?? 0) - Number(fc.style?.height ?? 0)) <= TOLERANCE;
+          const xEq = Math.abs(match.position.x - fc.position.x) <= TOLERANCE;
+          const yEq = Math.abs(match.position.y - fc.position.y) <= TOLERANCE;
+
+          if (widthEq && heightEq && xEq && yEq) {
+            // Nothing important changed – keep the old object to prevent re-mount
+            return match;
+          }
+
+          // Significant change – mark and update necessary fields while preserving other props
+          didUpdate = true;
+          return {
+            ...match,
+            position: fc.position,
+            style: {
+              ...match.style,
+              width: fc.style?.width,
+              height: fc.style?.height,
+            },
+            data: {
+              ...match.data,
+              childNodeIds: fc.data?.childNodeIds,
+            },
+          } as any;
+        });
+
+        // Also detect removed containers (present previously but not in fresh list)
+        if (!didUpdate && existingContainers.length !== mergedContainers.length) {
+          didUpdate = true;
+        }
+
+        // If nothing meaningfully changed, bail out to avoid needless state churn
+        if (!didUpdate) {
+          return curr;
+        }
+
+        return [...mergedContainers, ...regular] as any;
+      });
+    }, REFRESH_DEBOUNCE_MS);
+  }, [setNodes]);
+
+  // Clean up debounce timer on unmount
+  useEffect(() => {
+    return () => {
+      if (refreshTimeoutRef.current) {
+        clearTimeout(refreshTimeoutRef.current);
+      }
+    };
+  }, []);
+
   // Improved node change handler for better dragging performance
   const handleNodesChange = useCallback((changes) => {
     // First, directly apply changes to update node positions immediately for smooth UI
     onNodesChange(changes);
+    
+    // NOTE: We intentionally skip reacting to "dimensions" change events because they are
+    // emitted every render for many nodes (especially layer containers). Reacting to them by
+    // rebuilding layer containers creates an infinite update loop which floods the console and
+    // causes visible flicker. Refresh layer containers is now triggered only after explicit
+    // user-driven actions such as drag-end, layout, or other deliberate updates.
     
     // Gather IDs of nodes whose position is being changed
     const movedNodeIds = new Set(
@@ -298,11 +399,11 @@ const AIFlowDiagram: React.FC<AIFlowDiagramProps> = ({
     
     if (dragStartChange && !isDragging.current) {
       // Drag just started
-      console.log('Node dragging started');
+      // console.log('Node dragging started');
       isDragging.current = true;
     } else if (dragEndChange && isDragging.current) {
       // Drag just ended
-      console.log('Node dragging ended');
+      // console.log('Node dragging ended');
       
       // Mark affected nodes as pinned
       setNodes(prevNodes => prevNodes.map(n =>
@@ -312,15 +413,18 @@ const AIFlowDiagram: React.FC<AIFlowDiagramProps> = ({
       // Use a timeout to ensure React Flow internal state is updated first
       setTimeout(() => {
         isDragging.current = false;
-        
+
+        // Refresh layer containers once after dragging stops to reflect new node placement
+        scheduleContainerRefresh();
+
         // Only sync back to parent after drag is completely done
         if (setNodesExternal && nodes.length > 0 && !isUpdatingNodesRef.current) {
-          console.log('Syncing node positions after drag ended');
+          // console.log('Syncing node positions after drag ended');
           setNodesExternal(nodes);
         }
       }, 100);
     }
-  }, [onNodesChange, nodes, setNodesExternal, setNodes]);
+  }, [onNodesChange, nodes, setNodesExternal, setNodes, scheduleContainerRefresh]);
 
   // Use custom hook to manage nodes and their interactions
   const {
@@ -381,7 +485,7 @@ const AIFlowDiagram: React.FC<AIFlowDiagramProps> = ({
   // Handle initial sync of nodes and edges - ONCE only
   useEffect(() => {
     if (initialRenderRef.current && initialNodes && initialNodes.length > 0) {
-      console.log('Initial sync of nodes and edges');
+      // console.log('Initial sync of nodes and edges');
       // First process nodes, passing the initial edges
       const preparedNodes = prepareNodes(initialNodes, initialEdges);
       
@@ -510,33 +614,68 @@ const AIFlowDiagram: React.FC<AIFlowDiagramProps> = ({
   }, [didFitView, handleLayout, nodes.length, reactFlowInstanceRef]);
 
   // handler for toggling data flow diagram view
-  const handleToggleDataFlow = useCallback(() => {
-    // Toggle the state
-    setIsDataFlowActive(prevState => {
-      const newState = !prevState;
-      console.log('Toggling data flow diagram view:', newState ? 'ON' : 'OFF');
-      
-      if (newState) {
-        // Save current diagram state if needed
-        if (!isDataFlowActive && nodes.length > 0) {
-          originalDiagramRef.current = {
-            nodes: [...nodes],
-            edges: [...edges]
+  const handleToggleSequence = useCallback(async () => {
+    if (!isSequenceActive) {
+      deactivateOtherViews('sequence');
+      // about to enable data flow view
+      if (diagramDirty || !sequenceMermaid) {
+        try {
+          setIsGeneratingSequence(true);
+          // Build request body excluding layerGroup nodes
+          const cleanNodes = nodes.filter((n) => n.type !== 'layerGroup');
+          const requestBody: DataFlowRequest = {
+            project_id: projectId || 'default-project',
+            nodes: cleanNodes,
+            edges: edges,
           };
+
+          console.log('Sequence DataFlowRequest payload:', requestBody);
+          const { mermaid_code } = await fetchDataFlow(requestBody, undefined, toast);
+          console.log('Sequence DataFlowResponse:', mermaid_code);
+          setSequenceMermaid(mermaid_code);
+          setDiagramDirty(false);
+        } catch (error) {
+          console.error('Sequence diagram generation failed:', error);
+          return;
+        } finally {
+          setIsGeneratingSequence(false);
         }
-        
-        // Switch to data flow diagram (empty)
-        setNodes([]);
-        setEdges([]);
-      } else {
-        // Switch back to original diagram
-        setNodes(originalDiagramRef.current.nodes);
-        setEdges(originalDiagramRef.current.edges);
       }
-      
-      return newState;
-    });
-  }, [isDataFlowActive, nodes, edges, setNodes, setEdges]);
+    }
+
+    setIsSequenceActive((prev) => !prev);
+  }, [isSequenceActive, diagramDirty, sequenceMermaid, nodes, edges, projectId, toast]);
+
+  // NEW: handler for flowchart generation toggle
+  const handleToggleFlowchart = useCallback(async () => {
+    if (!isFlowchartActive) {
+      deactivateOtherViews('flowchart');
+      if (diagramDirty || !flowchartMermaid) {
+        try {
+          setIsGeneratingFlowchart(true);
+          const cleanNodes = nodes.filter((n) => n.type !== 'layerGroup');
+          const requestBody: DataFlowRequest = {
+            project_id: projectId || 'default-project',
+            nodes: cleanNodes,
+            edges: edges,
+          };
+
+          console.log('Flowchart DataFlowRequest payload:', requestBody);
+          const { mermaid_code } = await fetchFlowchart(requestBody, undefined, toast);
+          console.log('Flowchart DataFlowResponse:', mermaid_code);
+          setFlowchartMermaid(mermaid_code);
+          setDiagramDirty(false);
+        } catch (error) {
+          console.error('Flowchart generation failed:', error);
+          return;
+        } finally {
+          setIsGeneratingFlowchart(false);
+        }
+      }
+    }
+
+    setIsFlowchartActive((prev) => !prev);
+  }, [isFlowchartActive, diagramDirty, flowchartMermaid, nodes, edges, projectId, toast]);
 
   // Run threat analysis function
   const handleRunThreatAnalysis = useCallback(async () => {
@@ -659,11 +798,11 @@ const AIFlowDiagram: React.FC<AIFlowDiagramProps> = ({
   // Add effect to update nodes when threats or filter changes
   useEffect(() => {
     if (threats && threats.length > 0) {
-      console.log(`Processing ${threats.length} threats with filter: ${activeSeverityFilter}`);
+      // console.log(`Processing ${threats.length} threats with filter: ${activeSeverityFilter}`);
       
       // Log unique nodes that are targeted by threats
       const targetedNodeIds = new Set(threats.flatMap(t => t.target_elements || []));
-      console.log(`Threats target ${targetedNodeIds.size} unique nodes: ${Array.from(targetedNodeIds).join(', ')}`);
+      // console.log(`Threats target ${targetedNodeIds.size} unique nodes: ${Array.from(targetedNodeIds).join(', ')}`);
     }
     
     // Use this temporary function to check if nodes were updated with threats
@@ -673,9 +812,9 @@ const AIFlowDiagram: React.FC<AIFlowDiagramProps> = ({
       );
       
       if (nodesWithThreats.length > 0) {
-        console.log(`Successfully updated ${nodesWithThreats.length} nodes with threats`);
+        // console.log(`Successfully updated ${nodesWithThreats.length} nodes with threats`);
       } else if (threats && threats.length > 0) {
-        console.warn('No nodes were updated with threats despite having threats available');
+        // console.warn('No nodes were updated with threats despite having threats available');
       }
       
       return updatedNodes;
@@ -706,7 +845,7 @@ const AIFlowDiagram: React.FC<AIFlowDiagramProps> = ({
     // Create a padding value to give some space around the nodes
     const padding = 0.2; // 20% padding
     
-    console.log('Auto-zooming to threat target nodes:', targetNodeIds);
+    // console.log('Auto-zooming to threat target nodes:', targetNodeIds);
     
     // Zoom to the target nodes with animation
     setTimeout(() => {
@@ -775,13 +914,13 @@ const AIFlowDiagram: React.FC<AIFlowDiagramProps> = ({
     if (nodes && nodes.length > 0) {
       // If we have nodes, never show the empty canvas
       if (showEmptyCanvas) {
-        console.log('Hiding empty canvas because nodes are present:', nodes.length);
+        // console.log('Hiding empty canvas because nodes are present:', nodes.length);
         setShowEmptyCanvas(false);
       }
     } else if (initialNodes?.length === 0 && nodes.length === 0) {
       // Only show empty canvas when we truly have no nodes
       if (!showEmptyCanvas) {
-        console.log('Showing empty canvas because no nodes are present');
+        // console.log('Showing empty canvas because no nodes are present');
         setShowEmptyCanvas(true);
       }
     }
@@ -795,7 +934,7 @@ const AIFlowDiagram: React.FC<AIFlowDiagramProps> = ({
     // If we have nodes, don't show the welcome message
     if (nodes && nodes.length > 0) {
       if (showWelcomeMessage) {
-        console.log('Hiding welcome message because nodes are present:', nodes.length);
+        // console.log('Hiding welcome message because nodes are present:', nodes.length);
         setShowWelcomeMessage(false);
       }
       return;
@@ -857,13 +996,28 @@ const AIFlowDiagram: React.FC<AIFlowDiagramProps> = ({
     // Safety timeout to reset dragging state if it gets stuck
     const safetyTimeout = setTimeout(() => {
       if (isDragging.current) {
-        console.log('Safety: Resetting stuck drag state');
+        // console.log('Safety: Resetting stuck drag state');
         isDragging.current = false;
       }
     }, 3000); // 3 seconds timeout - should be longer than any reasonable drag operation
     
     return () => clearTimeout(safetyTimeout);
   }, [nodes]); // Run this check whenever nodes change
+
+  useEffect(() => {
+    if (!isSequenceActive) {
+      setDiagramDirty(true);
+    }
+  }, [nodes, edges]);
+
+  // Helper to reset other diagram views when one is activated
+  const deactivateOtherViews = (view: 'sequence' | 'flowchart') => {
+    if (view === 'sequence') {
+      setIsFlowchartActive(false);
+    } else if (view === 'flowchart') {
+      setIsSequenceActive(false);
+    }
+  };
 
   // AIFlowDiagram.tsx
   return (
@@ -879,13 +1033,16 @@ const AIFlowDiagram: React.FC<AIFlowDiagramProps> = ({
         onUndo={onUndo}
         onRedo={onRedo}
         onComment={onComment}
-        onToggleDataFlow={handleToggleDataFlow}
+        onToggleDataFlow={handleToggleSequence}
+        onToggleFlowchart={handleToggleFlowchart}
         onGenerateReport={handleGenerateReport}
         onSave={handleSave}
         projectId={projectId || ''}
         diagramRef={diagramContainerRef}
         nodes={nodes}
         edges={edges}
+        isDataFlowActive={isSequenceActive}
+        isFlowchartActive={isFlowchartActive}
       />
       <div className="flex-1 overflow-hidden relative" ref={diagramContainerRef}>
         {/* Modern gradient background */}
@@ -981,111 +1138,123 @@ const AIFlowDiagram: React.FC<AIFlowDiagramProps> = ({
           </div>
         )}
         
-        <ReactFlow
-          nodes={nodes}
-          edges={edges}
-          onNodesChange={viewMode === 'AD' ? handleNodesChange : undefined}
-          onEdgesChange={viewMode === 'AD' ? onEdgesChange : undefined}
-          onConnect={viewMode === 'AD' ? handleConnect : undefined}
-          nodeTypes={nodeTypes}
-          defaultEdgeOptions={defaultEdgeOptions}
-          onInit={onInit}
-          fitView
-          attributionPosition="bottom-right"
-          panOnScroll
-          zoomOnScroll
-          selectionOnDrag={viewMode === 'AD'}
-          nodesDraggable={true}
-          nodesConnectable={viewMode === 'AD'}
-          elementsSelectable={viewMode === 'AD'}
-          proOptions={{ hideAttribution: true }}
-          style={{ position: 'relative', zIndex: 20 }}
-          onNodeClick={viewMode === 'AD' ? onNodeClick : undefined}
-          onPaneClick={viewMode === 'AD' ? onPaneClick : undefined}
-        >
-          {showMinimap && (
-            <MiniMap
-              nodeStrokeColor={(n) => (n.selected ? '#ff0072' : '#7C65F6')}
-              nodeColor={(n) => {
-                const nodeType = n.data?.nodeType;
-                return nodeType ? '#FF9900' : '#ffffff';
-              }}
-              nodeBorderRadius={8}
-              style={{ 
-                width: 160, 
-                height: 100,
-                backgroundColor: '#f8f9fb',
-                border: '1px solid rgba(124, 101, 246, 0.2)',
-                borderRadius: '6px',
-                zIndex: 5
-              }}
-              maskColor="rgba(124, 101, 246, 0.07)"
-            />
-          )}
-          
-          {/* Minimap toggle button - positioned above the minimap */}
-          <Panel position="bottom-right" className="mr-2 mb-2">
-            <button
-              onClick={toggleMinimap}
-              className="minimap-toggle-button"
-              title={showMinimap ? "Hide minimap" : "Show minimap"}
-            >
-              {showMinimap ? (
-                <EyeOff size={16} className="text-securetrack-purple opacity-80" />
-              ) : (
-                <Eye size={16} className="text-securetrack-purple opacity-80" />
-              )}
-            </button>
-          </Panel>
-          
-          <Background gap={12} size={1} color="#f8f8f8" />
-          
-          {/* Add a left-side panel for the Run Threat Analysis button */}
-          {viewMode === 'AD' && (
-            <Panel position="top-left" className="ml-4 mt-3">
+        {isSequenceActive || isFlowchartActive ? (
+          <div className="w-full h-full" style={{ position: 'relative', zIndex: 20 }}>
+            {isGeneratingSequence || isGeneratingFlowchart ? (
+              <div className="w-full h-full flex items-center justify-center">
+                <Loader2 className="h-8 w-8 animate-spin text-securetrack-purple" />
+              </div>
+            ) : (
+              <MermaidCanvas code={isSequenceActive ? sequenceMermaid : flowchartMermaid} />
+            )}
+          </div>
+        ) : (
+          <ReactFlow
+            nodes={nodes}
+            edges={edges}
+            onNodesChange={viewMode === 'AD' ? handleNodesChange : undefined}
+            onEdgesChange={viewMode === 'AD' ? onEdgesChange : undefined}
+            onConnect={viewMode === 'AD' ? handleConnect : undefined}
+            nodeTypes={nodeTypes}
+            defaultEdgeOptions={defaultEdgeOptions}
+            onInit={onInit}
+            fitView
+            attributionPosition="bottom-right"
+            panOnScroll
+            zoomOnScroll
+            selectionOnDrag={viewMode === 'AD'}
+            nodesDraggable={true}
+            nodesConnectable={viewMode === 'AD'}
+            elementsSelectable={viewMode === 'AD'}
+            proOptions={{ hideAttribution: true }}
+            style={{ position: 'relative', zIndex: 20 }}
+            onNodeClick={viewMode === 'AD' ? onNodeClick : undefined}
+            onPaneClick={viewMode === 'AD' ? onPaneClick : undefined}
+          >
+            {showMinimap && (
+              <MiniMap
+                nodeStrokeColor={(n) => (n.selected ? '#ff0072' : '#7C65F6')}
+                nodeColor={(n) => {
+                  const nodeType = n.data?.nodeType;
+                  return nodeType ? '#FF9900' : '#ffffff';
+                }}
+                nodeBorderRadius={8}
+                style={{ 
+                  width: 160, 
+                  height: 100,
+                  backgroundColor: '#f8f9fb',
+                  border: '1px solid rgba(124, 101, 246, 0.2)',
+                  borderRadius: '6px',
+                  zIndex: 5
+                }}
+                maskColor="rgba(124, 101, 246, 0.07)"
+              />
+            )}
+            
+            {/* Minimap toggle button - positioned above the minimap */}
+            <Panel position="bottom-right" className="mr-2 mb-2">
               <button
-                onClick={handleRunThreatAnalysis}
-                disabled={runningThreatAnalysis}
-                className="p-2 bg-gradient-to-r from-red-100 to-red-200 rounded shadow-sm text-xs hover:from-red-200 hover:to-red-300 text-red-700 transition-all font-medium flex items-center gap-1 border border-red-200"
+                onClick={toggleMinimap}
+                className="minimap-toggle-button"
+                title={showMinimap ? "Hide minimap" : "Show minimap"}
               >
-                {runningThreatAnalysis ? (
-                  <>
-                    <Loader2 size={14} className="inline animate-spin" />
-                    Running Analysis...
-                  </>
+                {showMinimap ? (
+                  <EyeOff size={16} className="text-securetrack-purple opacity-80" />
                 ) : (
-                  <>
-                    <AlertTriangle size={14} className="inline" />
-                    Run Threat Analysis
-                  </>
+                  <Eye size={16} className="text-securetrack-purple opacity-80" />
                 )}
               </button>
             </Panel>
-          )}
-          
-          {/* Keep the original panel but remove the threat analysis button */}
-          <Panel position="top-right" className="flex gap-2">
+            
+            <Background gap={12} size={1} color="#f8f8f8" />
+            
+            {/* Add a left-side panel for the Run Threat Analysis button */}
             {viewMode === 'AD' && (
-              <>
-                <div className="p-2 bg-white rounded shadow-sm text-xs">
-                  <span className="font-bold">{edges.length}</span> connections
-                </div>
+              <Panel position="top-left" className="ml-4 mt-3">
                 <button
-                  onClick={handleLayout}
-                  className="p-2 bg-white rounded shadow-sm text-xs hover:bg-gray-100 transition-colors"
-                  disabled={effectiveIsLayouting}
+                  onClick={handleRunThreatAnalysis}
+                  disabled={runningThreatAnalysis}
+                  className="p-2 bg-gradient-to-r from-red-100 to-red-200 rounded shadow-sm text-xs hover:from-red-200 hover:to-red-300 text-red-700 transition-all font-medium flex items-center gap-1 border border-red-200"
                 >
-                  {effectiveIsLayouting ? 'Arranging...' : 'Auto-arrange'}
+                  {runningThreatAnalysis ? (
+                    <>
+                      <Loader2 size={14} className="inline animate-spin" />
+                      Running Analysis...
+                    </>
+                  ) : (
+                    <>
+                      <AlertTriangle size={14} className="inline" />
+                      Run Threat Analysis
+                    </>
+                  )}
                 </button>
-              </>
+              </Panel>
             )}
-            {viewMode === 'DFD' && (
-              <div className="p-2 bg-securetrack-lightpurple/15 rounded shadow-sm text-xs text-securetrack-purple">
-                Threat Model View Active
-              </div>
-            )}
-          </Panel>
-        </ReactFlow>
+            
+            {/* Keep the original panel but remove the threat analysis button */}
+            <Panel position="top-right" className="flex gap-2">
+              {viewMode === 'AD' && (
+                <>
+                  <div className="p-2 bg-white rounded shadow-sm text-xs">
+                    <span className="font-bold">{edges.length}</span> connections
+                  </div>
+                  <button
+                    onClick={handleLayout}
+                    className="p-2 bg-white rounded shadow-sm text-xs hover:bg-gray-100 transition-colors"
+                    disabled={effectiveIsLayouting}
+                  >
+                    {effectiveIsLayouting ? 'Arranging...' : 'Auto-arrange'}
+                  </button>
+                </>
+              )}
+              {viewMode === 'DFD' && (
+                <div className="p-2 bg-securetrack-lightpurple/15 rounded shadow-sm text-xs text-securetrack-purple">
+                  Threat Model View Active
+                </div>
+              )}
+            </Panel>
+          </ReactFlow>
+        )}
         
         {/* Add Threat Panel when threats are available */}
         {threats.length > 0 && (

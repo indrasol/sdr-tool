@@ -10,21 +10,16 @@ interface PlaceholderTextProps {
 
 // Extended set of placeholders for more engaging experience
 const placeholders = [
-  "Describe your security infrastructure requirements...",
-  "Add a firewall between the internet and internal network",
-  "I need a secure database with encryption",
-  "Create a DMZ for my web servers",
-  "Implement zero-trust architecture",
-  "How can I secure AWS S3 buckets?",
-  "Show me secure cloud architecture for a banking app",
-  "Design a microservices architecture with API gateway",
-  "What's the best approach for container security?",
-  "Design a secure VPN architecture for remote workers",
-  "Help me set up network segmentation",
-  "How should I implement defense in depth?",
-  "Secure my API endpoints",
-  "Show me a GDPR-compliant architecture",
-  "Create a threat model for my application"
+  "Ask Guardian AI to design a secure cloud architecture…",
+  "Generate a data-flow diagram for my payment system",
+  "Identify key risks in this Kubernetes deployment",
+  "Suggest zero-trust controls for a SaaS platform",
+  "How do I secure my API gateway?",
+  "Create SOC 2 ready infrastructure",
+  "Design a microservices layout with least-privilege access",
+  "Propose encryption strategy for user data at rest",
+  "Show mitigations for OWASP Top 10",
+  "Generate threat model for this fintech app"
 ];
 
 // Custom placeholder with Guardian AI icon

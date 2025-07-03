@@ -78,7 +78,7 @@ const ChatMessage: React.FC<ChatMessageProps> = ({ message, index, isLoadedProje
   // Use typing effect with medium speed
   const typingResult = useTypingEffect({
     text: safeContent,
-    typingSpeed: 8, // Medium speed
+    typingSpeed: 3, // Faster speed
     blinkCursor: shouldAnimate,
     shouldType: shouldAnimate
   });
@@ -133,12 +133,43 @@ const ChatMessage: React.FC<ChatMessageProps> = ({ message, index, isLoadedProje
         <ReactMarkdown
           remarkPlugins={[remarkGfm]}
           components={{
-            h3: ({ children }) => <h3 className="text-md font-semibold mt-2 mb-1">{children}</h3>,
-            ul: ({ children }) => <ul className="list-disc pl-5 mb-2">{children}</ul>,
-            ol: ({ children }) => <ol className="list-decimal pl-5 mb-2">{children}</ol>,
-            li: ({ children }) => <li className="mb-1">{children}</li>,
-            p: ({ children }) => <p className="mb-2">{children}</p>,
-            strong: ({ children }) => <strong className="font-semibold">{children}</strong>,
+            h1: ({ children }) => <h1 className="text-lg font-bold text-gray-900 mt-3 mb-2 border-b border-gray-200 pb-1">{children}</h1>,
+            h2: ({ children }) => <h2 className="text-md font-semibold text-gray-800 mt-3 mb-2">{children}</h2>,
+            h3: ({ children }) => <h3 className="text-md font-semibold text-gray-700 mt-2 mb-1">{children}</h3>,
+            h4: ({ children }) => <h4 className="text-sm font-semibold text-gray-700 mt-2 mb-1">{children}</h4>,
+            ul: ({ children }) => <ul className="list-disc pl-5 mb-3 space-y-1">{children}</ul>,
+            ol: ({ children }) => <ol className="list-decimal pl-5 mb-3 space-y-1">{children}</ol>,
+            li: ({ children }) => <li className="mb-1 leading-relaxed">{children}</li>,
+            p: ({ children }) => <p className="mb-2 leading-relaxed">{children}</p>,
+            strong: ({ children }) => <strong className="font-semibold text-gray-900 bg-yellow-50/50 px-1 rounded">{children}</strong>,
+            em: ({ children }) => <em className="italic text-gray-700">{children}</em>,
+            code: ({ children, className }) => {
+              const isInline = !className;
+              return isInline ? (
+                <code className="bg-gray-100 px-1.5 py-0.5 rounded text-sm font-mono text-gray-800 border">{children}</code>
+              ) : (
+                <pre className="bg-gray-100 p-3 rounded-md text-sm font-mono text-gray-800 whitespace-pre-wrap overflow-x-auto border mb-2">
+                  <code>{children}</code>
+                </pre>
+              );
+            },
+            blockquote: ({ children }) => (
+              <blockquote className="border-l-4 border-blue-400 pl-4 italic text-gray-700 mb-2 bg-blue-50/30 py-2 rounded-r-md">{children}</blockquote>
+            ),
+            table: ({ children }) => (
+              <div className="overflow-x-auto mb-3">
+                <table className="min-w-full border border-gray-200 rounded-md">{children}</table>
+              </div>
+            ),
+            thead: ({ children }) => <thead className="bg-gray-50">{children}</thead>,
+            th: ({ children }) => <th className="px-3 py-2 text-left text-sm font-semibold text-gray-700 border-b border-gray-200">{children}</th>,
+            td: ({ children }) => <td className="px-3 py-2 text-sm text-gray-700 border-b border-gray-100">{children}</td>,
+            hr: () => <hr className="my-3 border-gray-200" />,
+            a: ({ children, href }) => (
+              <a href={href} className="text-blue-600 hover:text-blue-800 underline" target="_blank" rel="noopener noreferrer">
+                {children}
+              </a>
+            ),
           }}
         >
           {partialContent}
@@ -209,12 +240,43 @@ const ChatMessage: React.FC<ChatMessageProps> = ({ message, index, isLoadedProje
               remarkPlugins={[remarkGfm]}
               className="markdown-content"
               components={{
-                h3: ({ children }) => <h3 className="text-md font-semibold mt-2 mb-1">{children}</h3>,
-                ul: ({ children }) => <ul className="list-disc pl-5 mb-2">{children}</ul>,
-                ol: ({ children }) => <ol className="list-decimal pl-5 mb-2">{children}</ol>,
-                li: ({ children }) => <li className="mb-1">{children}</li>,
-                p: ({ children }) => <p className="mb-2">{children}</p>,
-                strong: ({ children }) => <strong className="font-semibold">{children}</strong>,
+                h1: ({ children }) => <h1 className="text-lg font-bold text-gray-900 mt-3 mb-2 border-b border-gray-200 pb-1">{children}</h1>,
+                h2: ({ children }) => <h2 className="text-md font-semibold text-gray-800 mt-3 mb-2">{children}</h2>,
+                h3: ({ children }) => <h3 className="text-md font-semibold text-gray-700 mt-2 mb-1">{children}</h3>,
+                h4: ({ children }) => <h4 className="text-sm font-semibold text-gray-700 mt-2 mb-1">{children}</h4>,
+                ul: ({ children }) => <ul className="list-disc pl-5 mb-3 space-y-1">{children}</ul>,
+                ol: ({ children }) => <ol className="list-decimal pl-5 mb-3 space-y-1">{children}</ol>,
+                li: ({ children }) => <li className="mb-1 leading-relaxed">{children}</li>,
+                p: ({ children }) => <p className="mb-2 leading-relaxed">{children}</p>,
+                strong: ({ children }) => <strong className="font-semibold text-gray-900 bg-yellow-50/50 px-1 rounded">{children}</strong>,
+                em: ({ children }) => <em className="italic text-gray-700">{children}</em>,
+                code: ({ children, className }) => {
+                  const isInline = !className;
+                  return isInline ? (
+                    <code className="bg-gray-100 px-1.5 py-0.5 rounded text-sm font-mono text-gray-800 border">{children}</code>
+                  ) : (
+                    <pre className="bg-gray-100 p-3 rounded-md text-sm font-mono text-gray-800 whitespace-pre-wrap overflow-x-auto border mb-2">
+                      <code>{children}</code>
+                    </pre>
+                  );
+                },
+                blockquote: ({ children }) => (
+                  <blockquote className="border-l-4 border-blue-400 pl-4 italic text-gray-700 mb-2 bg-blue-50/30 py-2 rounded-r-md">{children}</blockquote>
+                ),
+                table: ({ children }) => (
+                  <div className="overflow-x-auto mb-3">
+                    <table className="min-w-full border border-gray-200 rounded-md">{children}</table>
+                  </div>
+                ),
+                thead: ({ children }) => <thead className="bg-gray-50">{children}</thead>,
+                th: ({ children }) => <th className="px-3 py-2 text-left text-sm font-semibold text-gray-700 border-b border-gray-200">{children}</th>,
+                td: ({ children }) => <td className="px-3 py-2 text-sm text-gray-700 border-b border-gray-100">{children}</td>,
+                hr: () => <hr className="my-3 border-gray-200" />,
+                a: ({ children, href }) => (
+                  <a href={href} className="text-blue-600 hover:text-blue-800 underline" target="_blank" rel="noopener noreferrer">
+                    {children}
+                  </a>
+                ),
               }}
             >
               {formattedContent || "Loading..."}

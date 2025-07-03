@@ -121,6 +121,7 @@ class IntentClassifier:
         self.architecture_patterns = [
             r"add\s+(?:a\s+)?(\w+)",
             r"create\s+(?:a\s+)?(\w+)",
+            r"generate\s+(?:a\s+)?(\w+)",
             r"connect\s+(\w+)\s+to\s+(\w+)",
             r"remove\s+(?:the\s+)?(\w+)",
             r"change\s+(?:the\s+)?(\w+)",
