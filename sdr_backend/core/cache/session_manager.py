@@ -740,6 +740,40 @@ class SessionManager:
         
         # Return most recent entries first
         return list(reversed(feedback))
+    
+    async def get_diagram_from_session(self, session_id: str) -> dict | None:
+        """
+        Fast helper used by /report endpoint.
+
+        • Returns clean diagram_state if it exists in Redis.  
+        • If Redis record missing OR diagram_state empty, returns None.  
+        • Does **not** hit Supabase projects table – that step already
+          happens in the report endpoint (avoids a duplicate round-trip).
+        """
+        if not session_id:
+            return None
+
+        if not self.redis_pool:
+            await self.connect()
+
+        raw = await self.redis_pool.get(f"session:{session_id}")
+        if not raw:
+            log_info(f"Session {session_id} not in Redis (may have expired)")
+            return None
+
+        try:
+            data = json.loads(raw)
+        except Exception:
+            log_info(f"Corrupted JSON in session {session_id}")
+            return None
+
+        diagram_state = data.get("diagram_state") or {}
+        if not diagram_state.get("nodes"):        # empty or malformed
+            return None
+
+        # Ensure consistent hashing later
+        clean = self._sanitize_diagram_state(diagram_state)
+        return clean
 
             
     @asynccontextmanager

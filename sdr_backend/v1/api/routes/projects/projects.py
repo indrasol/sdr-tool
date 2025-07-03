@@ -428,6 +428,13 @@ async def delete_project(
         #     if not role_response.data or not role_response.data[0]["permissions"].get("edit", False):
         #         raise HTTPException(status_code=403, detail="Insufficient permissions to edit")
         
+        # Delete associated reports first to avoid foreign-key constraint errors
+        delete_related_reports = lambda: supabase.from_("reports").delete().eq("project_code", project_code).execute()
+        await safe_supabase_operation(
+            delete_related_reports,
+            f"Failed to delete reports for project {project_code}"
+        )
+
         def delete_project():
             return supabase.from_("projects").delete().eq("project_code", project_code).eq("user_id", current_user["id"]).execute()
             
@@ -623,6 +630,14 @@ async def save_project(
     user_id = current_user["id"]
     project_code = request_data.project_code
     diagram_state_request = request_data.diagram_state
+    # --- Fallback: derive project_code from session if not provided ---
+    # Some frontend calls may omit project_code. Since the session already
+    # stores the related project_id we can recover it here to avoid 500 errors.
+    if not project_code:
+        # We will attempt to fetch the project_code from Redis session after
+        # we have made sure the session exists (done just below). For the
+        # moment set it to an empty string – it will be overwritten shortly.
+        project_code = None
     # Add logging context
     log_extra = {
         "user_id": user_id,
@@ -648,7 +663,9 @@ async def save_project(
         session_data = await asyncio.wait_for(
             session_mgr.get_session(
                 session_id=session_id,
-                expected_project_id=project_code,
+                # We only pass expected_project_id if we have one. This avoids
+                # unnecessary mismatches when project_code was omitted.
+                expected_project_id=project_code if project_code else None,
                 expected_user_id=user_id
             ),
             timeout=15.0  # 5-second timeout for Redis operation
@@ -658,6 +675,15 @@ async def save_project(
             log.error("Session not found or access denied")
             raise HTTPException(status_code=404, detail=f"Session {session_id} not found or access denied")
             
+        # If project_code was missing, recover it from the session now
+        if not project_code:
+            project_code = session_data.get("project_id")
+            log.info(f"Recovered project_code from session: {project_code}")
+
+            if not project_code:
+                log.error("project_code could not be determined – aborting save_project")
+                raise HTTPException(status_code=400, detail="project_code missing from request and session")
+
         # 2. Extract data to save
         diagram_state = diagram_state_request
         if not isinstance(diagram_state, dict):

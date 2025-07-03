@@ -195,3 +195,28 @@ class Template(Base):
 
     # relationship back to Tenant
     tenant = relationship("Tenant", back_populates="templates")
+
+
+class Report(Base):
+    __tablename__ = "reports"
+
+    id            = Column(Integer, primary_key=True, index=True)
+    report_id     = Column(String(36), unique=True, nullable=False)          # UUID
+    project_code  = Column(String, ForeignKey("projects.project_code"), nullable=False)
+    generated_by  = Column(String, ForeignKey("users.id"), nullable=False)
+    # store the fully rendered JSON blob so a regenerate is fast
+    content       = Column(JSONB, nullable=False)
+    # link to PNG/JPEG for the architecture snapshot
+    diagram_url   = Column(String, nullable=True)
+    diagram_hash   = Column(String, nullable=True)
+    # shallow denormalised stats for listing
+    high_risks    = Column(Integer, default=0)
+    medium_risks  = Column(Integer, default=0)
+    low_risks     = Column(Integer, default=0)
+
+    created_at    = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at    = Column(DateTime(timezone=True), server_default=func.now(),
+                           onupdate=func.now())
+
+    project = relationship("Project")
+    user    = relationship("User")

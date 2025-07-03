@@ -77,11 +77,17 @@ const ChatInput: React.FC<ChatInputProps> = ({
   // Only show the bot icon when there are messages or messages were sent, and no text in the input
   const showBotIcon = (hasMessages || messagesSent) && !input;
   
-  // Determine if we should show the typing effect placeholder
-  const showTypingPlaceholder = !input && !isThinking && !hasInteracted && !messagesSent && !hasMessages;
+  // Show typing placeholder only in the very first empty state (no messages yet)
+  const showTypingPlaceholder = !input && !isThinking && !hasInteracted && !hasMessages;
   
   // Only set static placeholder when NOT showing the typing effect - leave completely empty when showing typing effect
-  const staticPlaceholder = showTypingPlaceholder ? "" : (isThinking ? "" : (showBotIcon ? "" : getStaticPlaceholderText(placeholderProps)));
+  const staticPlaceholder = showTypingPlaceholder
+    ? ""
+    : isThinking
+      ? ""
+      : showBotIcon
+        ? ""
+        : getStaticPlaceholderText(placeholderProps);
 
   return (
     <div className="p-3 bg-white border-t sticky bottom-0 z-10 shadow-sm" ref={chatInputRef}>
@@ -94,7 +100,7 @@ const ChatInput: React.FC<ChatInputProps> = ({
             placeholder={staticPlaceholder}
             className={`min-h-[24px] max-h-[50px] rounded-xl border-gray-200 
               focus:border-securetrack-purple focus:ring-securetrack-purple/20 
-              transition-all shadow-sm text-left ${showBotIcon ? 'pl-28 pr-24' : 'pr-24'}
+              transition-all shadow-sm text-left ${showBotIcon ? 'pl-24 pr-24' : 'pr-24'}
               ${isThinking ? 'bg-gray-50' : ''}`}
             onKeyDown={e => {
               if (e.key === 'Enter' && !e.shiftKey && !isThinking) {
@@ -104,7 +110,7 @@ const ChatInput: React.FC<ChatInputProps> = ({
             }}
             disabled={isThinking}
             style={{ 
-              paddingLeft: showBotIcon ? '7rem' : '1rem',
+              paddingLeft: showBotIcon ? '6rem' : '1rem',
               textAlign: 'left',
               caretColor: 'auto',
               direction: 'ltr',
@@ -116,7 +122,7 @@ const ChatInput: React.FC<ChatInputProps> = ({
           
           {/* Typing effect placeholder - appears as an overlay */}
           {showTypingPlaceholder && (
-            <div className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none">
+            <div className="absolute inset-0 flex items-center pl-4 pointer-events-none z-20">
               <PlaceholderText 
                 hasMessages={hasMessages} 
                 messagesSent={messagesSent} 

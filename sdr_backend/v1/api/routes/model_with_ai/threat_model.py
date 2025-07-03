@@ -285,14 +285,22 @@ async def run_threat_analysis_endpoint(
         if session_id and session_data:
             conversation_history = session_data.get("conversation_history", [])
             
-        # Generate a data flow description for the diagram
-        data_flow_description = await llm_service.analyze_diagram(
-            diagram_content=diagram_state,
-            model_provider="openai",
-            model_name="gpt-4.1-mini"
-        )
-        data_flow_content = data_flow_description.get("data_flow_description", "")
-        log_info(f"Generated data flow description with {len(data_flow_content)} characters")
+        # Generate or reuse data flow description for the diagram
+        if request.data_flow_description:
+            data_flow_content = request.data_flow_description
+            log_info(
+                f"Reusing pre-computed data flow description passed from caller ({len(data_flow_content)} chars)"
+            )
+        else:
+            data_flow_description = await llm_service.analyze_diagram(
+                diagram_content=diagram_state,
+                model_provider="openai",
+                model_name="gpt-4.1-mini"
+            )
+            data_flow_content = data_flow_description.get("data_flow_description", "")
+            log_info(
+                f"Generated data flow description via LLM ({len(data_flow_content)} chars)"
+            )
         
         # Create a prompt builder for generating the threat prompt
         prompt_builder = PromptBuilder()

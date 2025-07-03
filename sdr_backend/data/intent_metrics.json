@@ -1,6 +1,6 @@
 {
-  "classifications": 140,
-  "pattern_matches": 136,
+  "classifications": 170,
+  "pattern_matches": 166,
   "vector_matches": 4,
   "llm_fallbacks": 0,
   "confidence_distribution": {
@@ -8,15 +8,15 @@
     "0.2-0.4": 0,
     "0.4-0.6": 0,
     "0.6-0.8": 2,
-    "0.8-1.0": 138
+    "0.8-1.0": 168
   },
   "intent_distribution": {
-    "ArchitectureResponse": 138,
+    "ArchitectureResponse": 168,
     "ExpertResponse": 0,
     "ClarificationResponse": 2,
     "OutOfContextResponse": 0
   },
-  "avg_classification_time": 0.010988232067653111,
-  "total_classification_time": 1.5383524894714355,
-  "last_updated": "2025-06-11T01:08:36.599336"
+  "avg_classification_time": 0.009110439524931065,
+  "total_classification_time": 1.5487747192382812,
+  "last_updated": "2025-06-29T00:19:27.261828"
 }

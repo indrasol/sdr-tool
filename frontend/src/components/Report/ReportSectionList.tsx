@@ -1,5 +1,22 @@
 import React, { useState, useEffect } from 'react';
-import { MoveVertical, Trash2, ChevronRight, ChevronDown, FileText, Plus } from 'lucide-react';
+import { 
+  MoveVertical, 
+  Trash2, 
+  ChevronRight, 
+  ChevronDown, 
+  FileText, 
+  Plus,
+  FileTextIcon,
+  Network,
+  GitBranch,
+  LogIn,
+  ShieldAlert,
+  ShieldCheck,
+  AlertTriangle,
+  AlertCircle,
+  Info,
+  HelpCircle
+} from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Button } from '@/components/ui/button';
@@ -18,6 +35,7 @@ interface ReportSectionListProps {
   onOpenDeleteDialog: (index: number) => void;
   onAddPage: (page: ReportPage) => void;
   onAddSubsection: (parentIndex: number, subsection: ReportPage) => void;
+  onMovePage: (fromIndex: number, toIndex: number) => void;
 }
 
 type SectionMap = {
@@ -35,15 +53,19 @@ const ReportSectionList: React.FC<ReportSectionListProps> = ({
   onOpenMoveDialog,
   onOpenDeleteDialog,
   onAddPage,
-  onAddSubsection
+  onAddSubsection,
+  onMovePage
 }) => {
   const [sectionMap, setSectionMap] = useState<SectionMap>({});
   const [newSubsectionTitle, setNewSubsectionTitle] = useState('');
   const [activePopover, setActivePopover] = useState<number | null>(null);
+  const [dragIndex, setDragIndex] = useState<number | null>(null);
   
   // Determine parent-child relationships based on titles
   useEffect(() => {
     const newSectionMap: SectionMap = {};
+    
+    console.log('Processing report pages:', reportPages.map(p => p.title));
     
     // First pass: identify all sections
     reportPages.forEach((page, index) => {
@@ -55,24 +77,40 @@ const ReportSectionList: React.FC<ReportSectionListProps> = ({
     });
     
     // Identify main sections
-    const mainSections = ["Project Description", "Production(Go Live) Requirement", "System Architecture Diagram", 
-                         "Data-flow Diagram", "Entry Point", "Model Attack Possibilities", 
-                         "Key Risk Areas", "Appendix A : Q & A ?"];
+    const mainSections = ["Project Description", "System Design Architecture", 
+                         "Data Flow Diagram", "Entry Point", "Model Attack Possibilities", 
+                         "Key Risk Areas"];
     
-    // Second pass: establish parent-child relationships
+    // Second pass: establish parent-child relationships (generic)
+    let currentMainIndex: number | null = null;
+
     reportPages.forEach((page, index) => {
+      if (mainSections.includes(page.title)) {
+        // Main section encountered
+        currentMainIndex = index;
+        // Key Risk Areas can have predefined children later
+        newSectionMap[index].isParent = page.title === "Key Risk Areas";
+        return;
+      }
+
+      // Handle predefined risk subs separately
       if (page.title === "High Risks" || page.title === "Medium Risks" || page.title === "Low Risks") {
-        // These are children of "Key Risk Areas"
         const parentIndex = reportPages.findIndex(p => p.title === "Key Risk Areas");
         if (parentIndex !== -1) {
           newSectionMap[parentIndex].isParent = true;
           newSectionMap[parentIndex].children.push(index);
         }
-      } else if (mainSections.includes(page.title)) {
-        // These are main sections
-        newSectionMap[index].isParent = mainSections.includes(page.title);
+        return;
+      }
+
+      // Generic subsection: assign to last main section if exists
+      if (currentMainIndex !== null) {
+        newSectionMap[currentMainIndex].isParent = true;
+        newSectionMap[currentMainIndex].children.push(index);
       }
     });
+    
+    console.log('Section map:', newSectionMap);
     
     setSectionMap(newSectionMap);
   }, [reportPages]);
@@ -125,11 +163,112 @@ const ReportSectionList: React.FC<ReportSectionListProps> = ({
                                border-blue-200
                                text-blue-700 font-medium
                                shadow-sm`;
+
+  // Risk section specific styles
+  const getRiskSectionStyles = (title: string, isActive: boolean) => {
+    if (title === 'High Risks') {
+      return isActive 
+        ? `${baseButtonStyles} from-red-100/90 to-red-200/90 border-red-200 text-red-700 font-medium shadow-sm`
+        : `${baseButtonStyles} from-red-50/70 to-red-100/70 border-red-100 hover:border-red-200 text-red-600 hover:text-red-700 hover:from-red-100/80 hover:to-red-200/80 hover:shadow-sm`;
+    } else if (title === 'Medium Risks') {
+      return isActive
+        ? `${baseButtonStyles} from-orange-100/90 to-yellow-200/90 border-orange-200 text-orange-700 font-medium shadow-sm`
+        : `${baseButtonStyles} from-orange-50/70 to-yellow-100/70 border-orange-100 hover:border-orange-200 text-orange-600 hover:text-orange-700 hover:from-orange-100/80 hover:to-yellow-200/80 hover:shadow-sm`;
+    } else if (title === 'Low Risks') {
+      return isActive
+        ? `${baseButtonStyles} from-blue-100/90 to-blue-200/90 border-blue-200 text-blue-700 font-medium shadow-sm`
+        : `${baseButtonStyles} from-blue-50/70 to-blue-100/70 border-blue-100 hover:border-blue-200 text-blue-600 hover:text-blue-700 hover:from-blue-100/80 hover:to-blue-200/80 hover:shadow-sm`;
+    }
+    return null;
+  };
   
   // Subsection styles
   const subsectionStyle = `hover:bg-blue-50/50 text-gray-700 hover:text-blue-700`;
   const subsectionActiveStyle = `bg-blue-100/60 text-blue-700 font-medium`;
   
+  // Child risk styles
+  const getRiskChildStyles = (title: string, isActive: boolean) => {
+    if (title === 'High Risks') {
+      return isActive
+        ? 'bg-red-100/60 text-red-700 font-medium border-l-4 border-l-red-400 pl-3'
+        : 'hover:bg-red-50/60 text-gray-700 hover:text-red-700 border-l-4 border-l-red-300 pl-3';
+    } else if (title === 'Medium Risks') {
+      return isActive
+        ? 'bg-amber-100/60 text-amber-700 font-medium border-l-4 border-l-amber-400 pl-3'
+        : 'hover:bg-amber-50/60 text-gray-700 hover:text-amber-700 border-l-4 border-l-amber-300 pl-3';
+    } else if (title === 'Low Risks') {
+      return isActive
+        ? 'bg-blue-100/60 text-blue-700 font-medium border-l-4 border-l-blue-400 pl-3'
+        : 'hover:bg-blue-50/60 text-gray-700 hover:text-blue-700 border-l-4 border-l-blue-300 pl-3';
+    }
+    return null;
+  };
+  
+  // Function to get appropriate icon for each section
+  const getSectionIcon = (title: string, isChild: boolean = false) => {
+    const iconSize = "h-4 w-4";
+    const iconColor = isChild ? "text-gray-400" : "text-blue-400";
+    
+    // Risk sections with color coding (now as main sections)
+    if (title === 'High Risks') {
+      return <AlertTriangle className={`${iconSize} text-red-500`} />;
+    } else if (title === 'Medium Risks') {
+      return <AlertCircle className={`${iconSize} text-orange-500`} />;
+    } else if (title === 'Low Risks') {
+      return <Info className={`${iconSize} text-blue-500`} />;
+    }
+    // Legacy risk subsections with color coding (for backward compatibility)
+    else if (title.includes('High Risk')) {
+      return <AlertTriangle className={`${iconSize} text-red-500`} />;
+    } else if (title.includes('Medium Risk')) {
+      return <AlertCircle className={`${iconSize} text-orange-500`} />;
+    } else if (title.includes('Low Risk')) {
+      return <Info className={`${iconSize} text-blue-500`} />;
+    }
+    
+    // Main sections
+    switch (title) {
+      case 'Project Description':
+        return <FileTextIcon className={`${iconSize} ${iconColor}`} />;
+      case 'System Design Architecture':
+        return <Network className={`${iconSize} ${iconColor}`} />;
+      case 'Data Flow Diagram':
+        return <GitBranch className={`${iconSize} ${iconColor}`} />;
+      case 'Entry Point':
+        return <LogIn className={`${iconSize} ${iconColor}`} />;
+      case 'Model Attack Possibilities':
+        return <ShieldAlert className={`${iconSize} ${iconColor}`} />;
+      case 'Key Risk Areas':
+        return <ShieldCheck className={`${iconSize} ${iconColor}`} />;
+      case 'Appendix A : Q & A ?':
+        return <HelpCircle className={`${iconSize} ${iconColor}`} />;
+      default:
+        return <FileText className={`${iconSize} ${iconColor}`} />;
+    }
+  };
+  
+  // Helper to count risks in content (looks for '**Risk:' pattern)
+  const countRisks = (content: string) => {
+    if (!content) return 0;
+    const matches = content.match(/\*\*Risk:/g);
+    return matches ? matches.length : 0;
+  };
+  
+  const handleDragStart = (index: number) => {
+    setDragIndex(index);
+  };
+
+  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+  };
+
+  const handleDrop = (index: number) => {
+    if (dragIndex !== null && dragIndex !== index) {
+      onMovePage(dragIndex, index);
+    }
+    setDragIndex(null);
+  };
+
   return (
     <div className="space-y-1 max-h-[calc(100vh-400px)] overflow-y-auto pr-1">
       <TooltipProvider>
@@ -156,6 +295,10 @@ const ReportSectionList: React.FC<ReportSectionListProps> = ({
           return (
             <div
               key={index}
+              draggable
+              onDragStart={() => handleDragStart(index)}
+              onDragOver={handleDragOver}
+              onDrop={() => handleDrop(index)}
               className={`rounded-md overflow-hidden animate-fadeIn ${isChild ? 'ml-6' : ''}`}
             >
               <div
@@ -168,28 +311,43 @@ const ReportSectionList: React.FC<ReportSectionListProps> = ({
                 }}
                 className={`p-2 rounded-md cursor-pointer flex justify-between group items-center
                   ${isChild 
-                    ? (currentPage === index 
-                        ? 'bg-blue-100/60 text-blue-700 font-medium border-l-4 border-l-blue-400 pl-3' 
-                        : 'hover:bg-blue-50/50 text-gray-700 hover:text-blue-700 border-l-4 border-l-blue-200 pl-3')
-                    : (currentPage === index 
-                        ? sectionActiveGradient 
-                        : sectionGradient)
+                    ? (() => {
+                        const riskStyle = getRiskChildStyles(page.title, currentPage === index);
+                        return riskStyle || (currentPage === index 
+                          ? 'bg-blue-100/60 text-blue-700 font-medium border-l-4 border-l-blue-400 pl-3' 
+                          : 'hover:bg-blue-50/50 text-gray-700 hover:text-blue-700 border-l-4 border-l-blue-200 pl-3');
+                      })()
+                    : (() => {
+                        const riskStyles = getRiskSectionStyles(page.title, currentPage === index);
+                        return riskStyles || (currentPage === index ? sectionActiveGradient : sectionGradient);
+                      })()
                   } 
                   border ${!isChild && (currentPage === index ? 'border-blue-200' : 'border-transparent hover:border-blue-100')}`}
               >
                 <div className="flex items-center gap-2 py-1">
                   {hasChildren ? (
-                    isOpen ? (
-                      <ChevronDown className="h-4 w-4 text-blue-500" />
-                    ) : (
-                      <ChevronRight className="h-4 w-4 text-blue-500" />
-                    )
+                    <div className="flex items-center gap-1">
+                      {isOpen ? (
+                        <ChevronDown className="h-4 w-4 text-blue-500" />
+                      ) : (
+                        <ChevronRight className="h-4 w-4 text-blue-500" />
+                      )}
+                      {getSectionIcon(page.title, false)}
+                    </div>
                   ) : (
-                    <FileText className={`h-4 w-4 ${isChild ? 'text-gray-400' : 'text-blue-400'}`} />
+                    getSectionIcon(page.title, isChild)
                   )}
                   
-                  <span className={`text-sm ${!isChild ? 'font-semibold' : ''}`}>
-                    {page.title}
+                  <span
+                    className={`text-sm ${!isChild ? 'font-semibold' : ''}`}
+                  >
+                    {(() => {
+                      if (page.title === 'High Risks' || page.title === 'Medium Risks' || page.title === 'Low Risks') {
+                        const cnt = countRisks(page.content);
+                        return `${page.title} (${cnt})`;
+                      }
+                      return page.title;
+                    })()}
                   </span>
                 </div>
                 

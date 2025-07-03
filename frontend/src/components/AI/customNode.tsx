@@ -408,8 +408,13 @@ const CustomNode = ({
 
   return (
     <div
-      className={`custom-node ${selected ? 'custom-node-selected' : ''} ${isDatabase ? 'database-node-container' : ''} ${isApplication ? 'application-node-container' : ''} ${isNetwork ? 'network-node-container' : ''} ${isClient ? 'client-node-container' : ''}`}
-      style={{ position: 'relative', zIndex: 1 }}
+      className={`custom-node node-fade-in ${selected ? 'custom-node-selected' : ''} ${isDatabase ? 'database-node-container' : ''} ${isApplication ? 'application-node-container' : ''} ${isNetwork ? 'network-node-container' : ''} ${isClient ? 'client-node-container' : ''}`}
+      style={{ 
+        position: 'relative', 
+        zIndex: 1,
+        // Use animationDelay in ms if provided via node data for staggered fade-in effect
+        animationDelay: safeData.animationDelayMs !== undefined ? `${safeData.animationDelayMs}ms` : undefined,
+      }}
       data-nodetype={nodeType.toLowerCase()}
       data-has-threats={threats && threats.length > 0 ? 'true' : 'false'}
       data-is-database={isDatabase ? 'true' : 'false'}
@@ -519,7 +524,7 @@ const CustomNode = ({
               {/* Add extra vertical spacing between icon and label for clarity */}
               <div style={{ height: '0px' }} />
               {/* Label underneath */}
-              <div className="text-center mt-2 max-w-[160px]">
+              <div className="text-center mt-2 max-w-[200px]">
                 <div className="font-semibold text-sm node-label bg-transparent">
                   {label}
                 </div>
