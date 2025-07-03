@@ -27,8 +27,8 @@ export async function layoutWithELK(
       // Balanced alignment within each layer
       'elk.layered.nodePlacement.bk.fixedAlignment': 'BALANCED',
       // Spacing options – tweak for pleasant default layout
-      'elk.spacing.nodeNode': '60',
-      'elk.layered.spacing.nodeNodeBetweenLayers': '120',
+      'elk.spacing.nodeNode': '150',
+      'elk.layered.spacing.nodeNodeBetweenLayers': '150',
     },
     children: nodes.map((n) => {
       // Detect explicit pinned flag instead of x!=0 heuristic

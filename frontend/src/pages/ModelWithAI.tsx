@@ -21,7 +21,6 @@ import {
   DFDData
 } from '@/interfaces/aiassistedinterfaces';
 import { sendDesignRequest, generateThreatModel } from '@/services/designService';
-import projectService from '@/services/projectService';
 import { useDiagramNodes } from '@/components/AI/hooks/useDiagramNodes';
 import { edgeStyles, determineEdgeType } from '@/components/AI/utils/edgeStyles';
 // Import getLayoutedElements directly from AIFlowDiagram to ensure consistency
@@ -33,9 +32,11 @@ import DFDVisualization from '@/components/AI/DFDVisualization';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { getAuthHeaders, BASE_API_URL, fetchWithTimeout, DEFAULT_TIMEOUT } from '../services/apiService'
 import { debounce } from 'lodash';
-import { createLayerContainers, determineNodeLayer, getLayerStyle } from '@/components/AI/utils/layerUtils';
+import { createLayerContainers, determineNodeLayer, getLayerStyle, DEFAULT_NODE_WIDTH, DEFAULT_NODE_HEIGHT, LABEL_EXTRA_HEIGHT, LAYER_CONTAINER_PADDING, LAYER_EXTRA_BOTTOM_PADDING } from '@/components/AI/utils/layerUtils';
 import LayerGroupNode from '@/components/AI/LayerGroupNode';
 import { mapNodeTypeToIcon } from '@/components/AI/utils/mapNodeTypeToIcon'; // Add import for mapNodeTypeToIcon
+import { captureDiagramImage } from '@/utils/diagramUtils';
+import projectService from '@/services/projectService';
 
 
 // Interface for proper TypeScript support
@@ -137,7 +138,7 @@ const ModelWithAI = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
   const [thinking, setThinking] = useState(null);
-  const [projectId, setProjectId] = useState('default-project');
+  const [projectId, setProjectId] = useState(null);
   const [isProjectLoading, setIsProjectLoading] = useState(false);
   const [projectLoaded, setProjectLoaded] = useState(false);
   const [thinkingStartTime, setThinkingStartTime] = useState(null);
@@ -168,6 +169,8 @@ const ModelWithAI = () => {
 
   // Layout state
   const [isLayouting, setIsLayouting] = useState(false);
+  // flag to indicate that the diagram has finished its initial layout and can be displayed
+  const [diagramReady, setDiagramReady] = useState(false);
   const layoutTimeoutRef = useRef(null);
   // Ref to allow layout triggering from deeply nested callbacks before applyLayout is declared
   const applyLayoutRef = useRef<() => void>(() => {});
@@ -189,6 +192,8 @@ const ModelWithAI = () => {
   const dfdReactFlowInstance = useRef(null);
   // Add a reference to the main diagram's ReactFlow instance
   const mainReactFlowInstance = useRef(null);
+  // Track if we already auto-fit after the latest render
+  const hasAutoFitView = useRef(false);
 
   // Diagram state from useDiagramWithAI hook
   const {
@@ -318,8 +323,19 @@ const ModelWithAI = () => {
       return node;
     });
     
+    // Assign incremental animation delays for cinematic reveal (120ms steps)
+    const enhancedNodesWithDelay = enhancedNodes.map((node, index) => {
+      return {
+        ...node,
+        data: {
+          ...node.data,
+          animationDelayMs: index * 120,
+        },
+      };
+    });
+    
     // Combine both types of nodes 
-    return [...enhancedNodes, ...stickyNotes];
+    return [...enhancedNodesWithDelay, ...stickyNotes];
   }, [prepareNodes, handleEditNode, handleDeleteNode, isLayouting, applyLayoutRef]);
 
   // Memoize the edges to prevent unnecessary updates
@@ -433,6 +449,9 @@ const ModelWithAI = () => {
   
     console.log('[ModelWithAI] Setting isLayouting = true');
     setIsLayouting(true);
+    // Diagram is about to re-render – reset auto-fit flag
+    hasAutoFitView.current = false;
+    setDiagramReady(false);
   
     try {
       // Filter out any existing layer group nodes and save them separately
@@ -481,26 +500,54 @@ const ModelWithAI = () => {
           console.log('[ModelWithAI] setEdges called.');
         }
   
-        // Reset layouting flag slightly later using timeout
+        // Reset layouting flag slightly later using timeout, then mark diagram ready
         setTimeout(() => {
           console.log('[ModelWithAI] Resetting isLayouting = false after timeout.');
           setIsLayouting(false);
+          setDiagramReady(true);
         }, 50);
   
       } else {
         console.log('[ModelWithAI] No layouted nodes returned. Resetting layouting flag immediately.');
         setIsLayouting(false);
+        setDiagramReady(true);
       }
     } catch (error) {
       console.error('[ModelWithAI] Error applying layout:', error);
       setIsLayouting(false); // Ensure flag is reset on error
+      setDiagramReady(true);
+
+      toast({
+        title: 'Error Applying Layout',
+        description: error.message || 'Failed to apply layout',
+        variant: 'destructive',
+      });
     }
-  }, [isLayouting, prepareNodesForDiagram, processEdges, setNodes, setEdges, setIsLayouting]);
+  }, [isLayouting, prepareNodesForDiagram, processEdges, setNodes, setEdges, setIsLayouting, setDiagramReady, toast]);
 
   // Keep ref updated
   useEffect(() => {
     applyLayoutRef.current = applyLayout;
   }, [applyLayout]);
+
+  // Whenever layouting flag switches to false (and we have nodes) ensure diagramReady is true
+  useEffect(() => {
+    if (!isLayouting && nodes.length > 0) {
+      setDiagramReady(true);
+    }
+  }, [isLayouting, nodes.length]);
+
+  // Auto-fit once after diagram has rendered and is ready
+  useEffect(() => {
+    if (diagramReady && !hasAutoFitView.current && nodes.length > 0 && mainReactFlowInstance.current) {
+      try {
+        mainReactFlowInstance.current.fitView({ padding: 0.2 });
+        hasAutoFitView.current = true;
+      } catch (err) {
+        console.warn('[ModelWithAI] Auto fitView failed', err);
+      }
+    }
+  }, [diagramReady, nodes.length]);
 
   // New function to apply backend positioning rules for LEFT-TO-RIGHT flow
 const applyBackendPositioning = useCallback((nodes: Node[]): Node[] => {
@@ -536,7 +583,7 @@ const applyBackendPositioning = useCallback((nodes: Node[]): Node[] => {
     
     // Calculate Y positioning with proper spacing (vertical spread within layer)
     const baseY = 100; // Start Y position for each layer
-    const ySpacing = 140; // Vertical spacing between nodes in same layer
+    const ySpacing = 200; // Increased spacing between stacked nodes
 
     layerNodes.forEach((node, index) => {
       const positionedNode = {
@@ -618,19 +665,24 @@ const applyBackendPositioning = useCallback((nodes: Node[]): Node[] => {
       
       // Calculate new boundaries based on node positions with improved padding
       const positions = layerNodes.map(n => n.position);
-      const minX = Math.min(...positions.map(p => p.x)) - 60; // Increased left padding
-      const minY = Math.min(...positions.map(p => p.y)) - 50; // Increased top padding
+      const minX = Math.min(...positions.map(p => p.x)) - LAYER_CONTAINER_PADDING;
+      const minY = Math.min(...positions.map(p => p.y)) - LAYER_CONTAINER_PADDING;
       
       // Calculate maximum extents with more space
       const maxX = Math.max(...layerNodes.map(node => {
-        const nodeWidth = node.width || 120; // Default to larger width if not specified
+        const nodeWidth = node.width || DEFAULT_NODE_WIDTH; // Use default width if not specified
         return node.position.x + nodeWidth;
-      })) + 60; // Increased right padding
+      })) + LAYER_CONTAINER_PADDING; // Increased right padding
       
-      const maxY = Math.max(...layerNodes.map(node => {
-        const nodeHeight = node.height || 120; // Default to larger height if not specified
-        return node.position.y + nodeHeight;
-      })) + 50; // Increased bottom padding
+      // Add extra vertical padding beneath nodes so the bottom border has breathing room
+      const EXTRA_BOTTOM_PADDING = LAYER_EXTRA_BOTTOM_PADDING;
+      
+      const maxY = Math.max(
+        ...layerNodes.map(node => {
+          const nodeHeight = (node.height || DEFAULT_NODE_HEIGHT) + LABEL_EXTRA_HEIGHT; // Include label height
+          return node.position.y + nodeHeight;
+        })
+      ) + LAYER_CONTAINER_PADDING + EXTRA_BOTTOM_PADDING; // existing + extra
       
       const width = maxX - minX;
       const height = maxY - minY;
@@ -640,40 +692,31 @@ const applyBackendPositioning = useCallback((nodes: Node[]): Node[] => {
       const widthAdjustment = isDataLayer ? 40 : 0; // Extra width for data layer
       const heightAdjustment = isDataLayer ? 30 : 0; // Extra height for data layer
       
-      // If we have an existing container, update it, otherwise create a new one
-      if (existingContainer) {
-        updatedContainers.push({
-          ...existingContainer,
-          position: { x: minX, y: minY },
-          style: {
-            ...existingContainer.style,
-            width: width + widthAdjustment,
-            height: height + heightAdjustment,
-            backgroundColor: 'transparent', // Make background transparent
-            zIndex: -10, // Lower zIndex to ensure nodes appear above containers
-          },
-          data: {
-            ...existingContainer.data,
-            childNodeIds: layerNodes.map(n => n.id),
-          }
-        });
-      } else {
-        // Create a new container for this layer
+      // Round values to the nearest integer to avoid tiny float differences
+      const roundedMinX = Math.round(minX);
+      const roundedMinY = Math.round(minY);
+      const roundedWidth = Math.round(width + widthAdjustment);
+      const roundedHeight = Math.round(height + heightAdjustment);
+      
+      const TOLERANCE = 1; // pixels – ignore sub-pixel or 1-px jitter
+      
+      // If no existing container for this layer, create a brand-new one
+      if (!existingContainer) {
         updatedContainers.push({
           id: `layer-${layer}`,
           type: 'layerGroup',
-          position: { x: minX, y: minY },
+          position: { x: roundedMinX, y: roundedMinY },
           style: {
-            width: width + widthAdjustment,
-            height: height + heightAdjustment,
-            backgroundColor: 'transparent', // Make background transparent
+            width: roundedWidth,
+            height: roundedHeight,
+            backgroundColor: 'transparent',
             borderColor: layerStyle.borderColor,
             color: layerStyle.color,
             borderWidth: 2,
             borderStyle: 'dashed',
             borderRadius: 10,
-            zIndex: -10, // Lower zIndex to ensure nodes appear above containers
-            boxShadow: 'none', // Remove box shadow for cleaner look
+            zIndex: -10,
+            boxShadow: 'none',
           },
           data: {
             label: layerStyle.label,
@@ -682,6 +725,39 @@ const applyBackendPositioning = useCallback((nodes: Node[]): Node[] => {
             childNodeIds: layerNodes.map(n => n.id),
           },
         } as Node);
+        return; // proceed to next layer – nothing to update further
+      }
+      
+      const positionChanged =
+        Math.abs((existingContainer.position?.x ?? 0) - roundedMinX) > TOLERANCE ||
+        Math.abs((existingContainer.position?.y ?? 0) - roundedMinY) > TOLERANCE;
+      
+      const currentWidth = Number(existingContainer.style?.width ?? 0);
+      const currentHeight = Number(existingContainer.style?.height ?? 0);
+      
+      const sizeChanged =
+        Math.abs(currentWidth - roundedWidth) > TOLERANCE ||
+        Math.abs(currentHeight - roundedHeight) > TOLERANCE;
+      
+      // If nothing significant changed, keep the old container to avoid React re-mounts
+      if (positionChanged || sizeChanged) {
+        updatedContainers.push({
+          ...existingContainer,
+          position: { x: roundedMinX, y: roundedMinY },
+          style: {
+            ...existingContainer.style,
+            width: roundedWidth,
+            height: roundedHeight,
+            backgroundColor: 'transparent',
+            zIndex: -10,
+          },
+          data: {
+            ...existingContainer.data,
+            childNodeIds: layerNodes.map(n => n.id),
+          },
+        });
+      } else {
+        updatedContainers.push(existingContainer);
       }
     });
     
@@ -750,6 +826,36 @@ const applyBackendPositioning = useCallback((nodes: Node[]): Node[] => {
         hasIconRenderer: !!node.data?.iconRenderer
       })));
 
+      // Capture and save diagram image
+      try {
+        // Apply fit view before capturing to ensure full diagram is visible
+        if (mainReactFlowInstance.current && mainReactFlowInstance.current.fitView) {
+          console.log('Applying fit view before auto-save diagram capture');
+          mainReactFlowInstance.current.fitView({ 
+            padding: 0.2, 
+            duration: 0 // No animation for auto-save
+          });
+          
+          // Brief wait for fit view to take effect
+          await new Promise(resolve => setTimeout(resolve, 100));
+        }
+        
+        const diagramImage = await captureDiagramImage({
+          backgroundColor: '#ffffff',
+          pixelRatio: 2,
+          quality: 1.0,
+          padding: 50
+        });
+        
+        if (diagramImage) {
+          localStorage.setItem(`diagram_image_${projectId}`, diagramImage);
+          console.log('Diagram image saved to localStorage during auto-save');
+        }
+      } catch (imageError) {
+        console.warn('Could not capture diagram image during save:', imageError);
+        // Continue with project save even if image capture fails
+      }
+
       try {
         const result = await projectService.saveProject(sessionIdRef.current, currentDiagramState, projectId);
         console.log(`Project save result: ${result ? 'success' : 'failed'}`);
@@ -771,22 +877,166 @@ const applyBackendPositioning = useCallback((nodes: Node[]): Node[] => {
     });
 
     let projectIdToUse = '';
+    let diagramStateFromNav = null;
+    let sessionIdFromNav = null;
+    let fromReportPage = false;
+    
     if (params.projectId) {
       projectIdToUse = params.projectId;
       console.log('Project ID from URL params:', projectIdToUse);
     } else if (location.state && location.state.projectId) {
       projectIdToUse = location.state.projectId;
       console.log('Project ID from navigation state:', projectIdToUse);
-    } else if (projectId) {
+      
+      // Check if we have diagram state passed from navigation (e.g., from report page)
+      if (location.state.diagramState) {
+        diagramStateFromNav = location.state.diagramState;
+        console.log('Diagram state received from navigation:', diagramStateFromNav);
+      }
+      
+      // Check if we have session ID from navigation
+      if (location.state.sessionId) {
+        sessionIdFromNav = location.state.sessionId;
+        console.log('Session ID from navigation state:', sessionIdFromNav);
+      }
+      
+      // Check if this navigation came from report page
+      if (location.state.fromReport) {
+        fromReportPage = true;
+        console.log('Navigation came from report page');
+      }
+    } else if (projectId && projectId !== 'default-project') {
       projectIdToUse = projectId;
       console.log('Using existing project ID:', projectIdToUse);
     }
 
     if (projectIdToUse) {
+      console.log('Setting project ID to:', projectIdToUse);
       setProjectId(projectIdToUse);
-      if (!projectLoaded) {
+      
+      // If we have session ID from navigation, set it immediately
+      if (sessionIdFromNav) {
+        setSessionId(sessionIdFromNav);
+      }
+      
+      // If we have diagram state from navigation (from report page), restore it immediately
+      if (diagramStateFromNav && fromReportPage) {
+        console.log('Restoring diagram state from report page navigation');
+        
+        try {
+          // Prepare the nodes from the diagram state
+          const restoredNodes = (diagramStateFromNav.nodes || []).map((node) => ({
+            ...node,
+            data: {
+              ...node.data,
+              onEdit: handleEditNode,
+              onDelete: handleDeleteNode,
+            },
+          }));
+          
+          const restoredEdges = diagramStateFromNav.edges || [];
+          
+          // Prepare nodes with proper handlers
+          const preparedNodes = prepareNodesForDiagram(restoredNodes, restoredEdges);
+          const processedEdges = processEdges(restoredEdges, preparedNodes);
+          
+          // Create layer containers for the restored nodes
+          const layerContainers = createLayerContainers(preparedNodes);
+          const combinedNodes = [...layerContainers, ...preparedNodes];
+          
+          // Set nodes and edges
+          setNodes(combinedNodes);
+          setEdges(processedEdges);
+          
+          // Mark project as loaded to prevent additional loading
+          setProjectLoaded(true);
+          hasLoadedDiagramData.current = true;
+          
+          // Load conversation history from backend for the project
+          console.log('Loading conversation history for project:', projectIdToUse);
+          
+          // Load conversation history asynchronously
+          const loadConversationHistory = async () => {
+            try {
+              const projectData = await projectService.loadProject(projectIdToUse);
+              
+              // Handle conversation history same as in the load function
+              if (projectData.conversation_history && Array.isArray(projectData.conversation_history)) {
+                const formattedMessages = projectData.conversation_history
+                  .map((entry) => {
+                    // Handle new format with id, role, content fields
+                    if (entry.role && entry.content) {
+                      return {
+                        role: entry.role,
+                        content: entry.content,
+                        isPreExisting: true,
+                        timestamp: entry.timestamp || new Date().toISOString()
+                      };
+                    }
+                    // Handle old format with query and response fields
+                    else if (entry.query && entry.response) {
+                      return [
+                        { role: 'user', content: entry.query, isPreExisting: true },
+                        { role: 'assistant', content: entry.response.message || entry.response, isPreExisting: true },
+                      ];
+                    }
+                    return [];
+                  })
+                  .flat();
+                setMessages(formattedMessages);
+                console.log("Loaded conversation history from report page navigation:", formattedMessages.length, "messages");
+              }
+            } catch (historyError) {
+              console.warn('Could not load conversation history from report page restoration:', historyError);
+              // Continue with diagram restoration even if history loading fails
+            }
+          };
+          
+          // Execute the async function
+          loadConversationHistory();
+          
+          // Automatically apply layout and fit view after restoration
+          setTimeout(() => {
+            console.log('Auto-applying layout after diagram restoration from report page');
+            applyLayoutRef.current(); // Use ref to avoid dependency issues
+            
+            // Apply fit view after layout is complete
+            setTimeout(() => {
+              if (mainReactFlowInstance.current) {
+                console.log('Auto-applying fit view after layout completion');
+                mainReactFlowInstance.current.fitView({ padding: 0.2, duration: 300 });
+              }
+            }, 800); // Wait longer to ensure layout is fully applied
+          }, 500); // Wait for nodes to be rendered
+          
+          // Show success message
+          toast({
+            title: 'Project Restored',
+            description: 'Successfully restored your diagram and conversation history from the report page.',
+            duration: 3000,
+          });
+        } catch (error) {
+          console.error('Error restoring diagram state from navigation:', error);
+          
+          // Fall back to loading from backend
+          toast({
+            title: 'Diagram Restoration Failed',
+            description: 'Loading diagram from saved project data instead.',
+            variant: 'default',
+            duration: 3000,
+          });
+          
+          // Load from backend as fallback
+          if (!projectLoaded) {
+            load(projectIdToUse);
+          }
+        }
+      } else if (!projectLoaded) {
+        // Only load from backend if we don't have navigation state
         load(projectIdToUse);
       }
+    } else {
+      console.log('No valid project ID found, waiting for user to select a project');
     }
 
     return () => {
@@ -806,7 +1056,7 @@ const applyBackendPositioning = useCallback((nodes: Node[]): Node[] => {
         }
       }
     };
-  }, [toast, location.state, params, projectId, projectLoaded, saveCurrentState]);
+  }, [toast, location.state, params.projectId, projectLoaded]); // Use ref for applyLayout to avoid dependency issues
 
   // Add this function before the handleSwitchView function
   const processAndDisplayThreatModel = useCallback((threatModelResponse) => {
@@ -911,8 +1161,15 @@ const applyBackendPositioning = useCallback((nodes: Node[]): Node[] => {
 
         console.log('Sending clean diagram state for threat model generation', request);
 
+        // Get the most current project ID (it might be different from state)
+        const currentProjectId = projectId || params.projectId || location.state?.projectId;
+        
+        if (!currentProjectId) {
+          throw new Error('No project ID available for threat model generation.');
+        }
+
         // Use our service function to generate the threat model
-        const threatModelResponse = await generateThreatModel(projectId, request, toast);
+        const threatModelResponse = await generateThreatModel(currentProjectId, request, toast);
 
         console.log('Threat Model Response:', threatModelResponse);
 
@@ -995,30 +1252,46 @@ const applyBackendPositioning = useCallback((nodes: Node[]): Node[] => {
           // Process edges
           const processedEdges = processEdges(validEdges, preparedNodes);
 
-          // Always create new layer containers when loading from backend
-          // This ensures layers are properly created regardless of what comes from backend
-          const layerContainers = createLayerContainers(preparedNodes);
-          const combinedNodes = [...layerContainers, ...preparedNodes];
+          // Run ELK once, right here
+          let layoutedNodes = preparedNodes;
+          let layoutedEdges = processedEdges;
+          try {
+            const { nodes, edges } = await layoutWithELK(
+              preparedNodes,
+              processedEdges,
+              { direction: 'LR', nodeWidth: 172, nodeHeight: 36 }
+            );
+            layoutedNodes = nodes as Node[];
+            layoutedEdges = edges as any[];
+          } catch (err) {
+            console.warn('[load] ELK failed, using raw positions', err);
+          }
 
-          // Set nodes and edges
+          // Build containers AFTER nodes have final coords
+          const layerContainers = createLayerContainers(layoutedNodes);
+          const combinedNodes = [...layerContainers, ...layoutedNodes];
+
+          // Commit state atomically (avoids visible jump)
           setNodes(combinedNodes);
-          setEdges(processedEdges);
+          setEdges(layoutedEdges);
+
+          // Ensure a deterministic auto-arrange & fitView after everything mounts.
+          // We schedule a two-step timeout:
+          //   1) call applyLayout (guarantees ELK pass & layer containers sync)
+          //   2) after layout completes, fit the viewport.
+          setTimeout(() => {
+            if (applyLayoutRef.current) {
+              applyLayoutRef.current();
+            }
+
+            // Give ELK/layout a moment, then fit the view.
+            setTimeout(() => {
+              mainReactFlowInstance.current?.fitView({ padding: 0.2, duration: 300 });
+            }, 600);
+          }, 100);
 
           hasLoadedDiagramData.current = true;
           setProjectLoaded(true);
-
-          // ADDED: Automatically apply layout after project is loaded (with slight delay to ensure rendering)
-          setTimeout(() => {
-            console.log('Auto-applying layout after project load');
-            applyLayout();
-            
-            // Fit view to show all elements
-            setTimeout(() => {
-              if (mainReactFlowInstance.current) {
-                mainReactFlowInstance.current.fitView({ padding: 0.2 });
-              }
-            }, 300);
-          }, 500);
 
           // Check if project has threat model data
           if (projectData.dfd_data) {
@@ -1075,7 +1348,7 @@ const applyBackendPositioning = useCallback((nodes: Node[]): Node[] => {
         setIsProjectLoading(false);
       }
     },
-    [toast, prepareNodesForDiagram, handleEditNode, handleDeleteNode, processEdges, setNodes, setEdges, applyLayout]  // Added applyLayout to dependencies
+    [toast, prepareNodesForDiagram, handleEditNode, handleDeleteNode, processEdges, setNodes, setEdges]  // Removed applyLayout dependency to avoid loops
   );
 
   const save = async () => {
@@ -1171,8 +1444,15 @@ const applyBackendPositioning = useCallback((nodes: Node[]): Node[] => {
       // Filter out layerGroup nodes before sending to backend
       const filteredNodes = nodes.filter(node => node.type !== 'layerGroup');
 
+      // Get the most current project ID (it might be different from state)
+      const currentProjectId = projectId || params.projectId || location.state?.projectId;
+      
+      if (!currentProjectId) {
+        throw new Error('No project ID available. Please select or create a project first.');
+      }
+
       const request = {
-        project_id: projectId,
+        project_id: currentProjectId,
         query: message,
         diagram_state: { nodes: filteredNodes, edges },
         session_id: sessionId || undefined,
@@ -1222,7 +1502,7 @@ const applyBackendPositioning = useCallback((nodes: Node[]): Node[] => {
           };
 
           // Call the generate threat model API directly
-          const threatModelResponse = await generateThreatModel(projectId, request, toast);
+          const threatModelResponse = await generateThreatModel(currentProjectId, request, toast);
 
           // Use our utility function for consistency
           processAndDisplayThreatModel(threatModelResponse);
@@ -1298,6 +1578,13 @@ const applyBackendPositioning = useCallback((nodes: Node[]): Node[] => {
 
         // Try to generate the threat model immediately using direct API
         try {
+          // Get the most current project ID (it might be different from state)
+          const currentProjectId = projectId || params.projectId || location.state?.projectId;
+          
+          if (!currentProjectId) {
+            throw new Error('No project ID available for threat model generation.');
+          }
+
           // Prepare the request with current diagram state
           // Filter out layerGroup nodes before sending to backend
           const filteredNodes = nodes.filter(node => node.type !== 'layerGroup');
@@ -1311,7 +1598,7 @@ const applyBackendPositioning = useCallback((nodes: Node[]): Node[] => {
           };
 
           // Call the generate threat model API directly
-          const threatModelResponse = await generateThreatModel(projectId, request, toast);
+          const threatModelResponse = await generateThreatModel(currentProjectId, request, toast);
 
           // Use our utility function for consistency
           processAndDisplayThreatModel(threatModelResponse);
@@ -1354,11 +1641,12 @@ const applyBackendPositioning = useCallback((nodes: Node[]): Node[] => {
     setResponseMetadata, setError
   ]);
 
-  // Handle architecture response from AI
+  // Handle architecture response from AI – perform ELK layout before rendering to avoid flash
   const handleArchitectureResponse = useCallback(
-    (response) => {
+    async (response) => {
       console.log('Handling Architecture Response with backend positioning');
       setIsLayouting(true); // Indicate layout process starts
+      setDiagramReady(false);
   
       const diagramUpdates = response.diagram_updates || {};
       const nodesToAdd = response.nodes_to_add || [];
@@ -1370,6 +1658,12 @@ const applyBackendPositioning = useCallback((nodes: Node[]): Node[] => {
       const currentLayerContainers = [...nodes].filter(node => node.type === 'layerGroup');
       const currentNodes = [...nodes].filter(node => node.type !== 'layerGroup');
       const currentEdges = [...edges]; // Create a copy to prevent reference issues
+      
+      // Detect if this is an initial architecture generation (first time or nearly empty diagram)
+      const isInitialGeneration = currentNodes.length === 0 || 
+                                  (currentNodes.length <= 2 && nodesToAdd.length > 0);
+      
+      console.log('Architecture generation type:', isInitialGeneration ? 'Initial generation' : 'Modification');
   
       // --- Start Calculation Phase ---
       let nextNodes = [...currentNodes];
@@ -1473,30 +1767,73 @@ const applyBackendPositioning = useCallback((nodes: Node[]): Node[] => {
       console.log('Preparing final node list...');
       const finalNodesListPrepared = prepareNodesForDiagram(finalNodesListUnprepared, finalEdgesList);
   
-      // 7. Apply LR flow positioning
-      console.log('Applying LR flow positioning...');
-      const backendPositionedNodes = finalNodesListPrepared; // keep ELK coordinates
+      // 7. Run ELK layout BEFORE touching state to avoid initial clutter
+      console.log('Running ELK layout before rendering…');
+      let layoutedNodes: Node[] = finalNodesListPrepared;
+      let layoutedEdges: any[] = finalEdgesList;
+      try {
+        const layoutRes = await layoutWithELK(finalNodesListPrepared, finalEdgesList, {
+          direction: 'LR',
+          nodeWidth: 172,
+          nodeHeight: 36,
+        });
+        layoutedNodes = layoutRes.nodes as Node[];
+        layoutedEdges = layoutRes.edges as any[];
+      } catch (err) {
+        console.warn('ELK layout failed, falling back to un-layouted positions', err);
+      }
   
-      // 8. Generate updated layer containers
-      const updatedLayerContainers = updateExistingLayerContainers(currentLayerContainers, backendPositionedNodes);
+      // 8. Generate or update layer containers based on layouted nodes
+      const updatedLayerContainers = updateExistingLayerContainers(currentLayerContainers, layoutedNodes);
   
       // 9. Combine layer containers with regular nodes
-      const combinedNodes = [...updatedLayerContainers, ...backendPositionedNodes];
+      const combinedNodes = [...updatedLayerContainers, ...layoutedNodes];
   
-      // 10. Set state
-      console.log('Setting final state...');
-      console.log(`Final node count: ${backendPositionedNodes.length}, Final edge count: ${finalEdgesList.length}`);
-      
-      setEdges(finalEdgesList);
+      // 10. Commit to React state
       setNodes(combinedNodes);
+      setEdges(layoutedEdges);
   
       setArchitectureUpdated(true);
       setIsLayouting(false);
+      setDiagramReady(true);
+  
+      // 11. Auto-apply layout and fit view for initial architecture generation
+      if (isInitialGeneration && nodesToAdd.length > 0) {
+        console.log('Auto-applying layout and fit view for initial architecture generation');
+        
+        // Apply layout and fit view after the nodes are rendered
+        setTimeout(() => {
+          console.log('Applying auto-arrange for initial generation');
+          applyLayoutRef.current(); // Use ref to avoid dependency issues
+          
+          // Apply fit view after layout is complete
+          setTimeout(() => {
+            if (mainReactFlowInstance.current) {
+              console.log('Applying auto-fit view for initial generation');
+              mainReactFlowInstance.current.fitView({ 
+                padding: 0.2, 
+                duration: 500, // Smooth animation for better UX
+                includeHiddenNodes: false 
+              });
+            }
+          }, 1000); // Wait longer to ensure layout is fully applied
+        }, 600); // Wait for nodes to be rendered
+        
+        // Show success message for initial generation
+        setTimeout(() => {
+          toast({
+            title: 'Architecture Generated',
+            description: 'Your architecture has been generated and automatically arranged for optimal viewing.',
+            duration: 4000,
+          });
+        }, 1500); // Show after layout is complete
+      }
       
       console.log('Architecture response processed successfully with LR flow positioning');
     },
     [setNodes, setEdges, prepareNodesForDiagram, processEdges, handleEditNode, handleDeleteNode, 
-     setIsLayouting, nodes, edges, updateExistingLayerContainers, applyBackendPositioning]
+     setIsLayouting, nodes, edges, updateExistingLayerContainers, applyBackendPositioning, 
+     applyLayoutRef, mainReactFlowInstance, setDiagramReady, toast]
   );
 
   const handleExpertResponse = (fullResponse) => {
@@ -1705,9 +2042,137 @@ const applyBackendPositioning = useCallback((nodes: Node[]): Node[] => {
   };
 
   const handleGenerateReportWithNavigation = () => {
-    const reportPath = handleGenerateReport();
-    navigate(reportPath);
-    return reportPath;
+    // Start the async process but return immediately
+    (async () => {
+      // Clean diagram state by removing functions and keeping only essential data
+      const cleanNodes = nodes
+        .filter(node => node.type !== 'layerGroup') // Filter out layer containers
+        .map(node => ({
+          id: node.id,
+          type: node.type,
+          position: node.position,
+          data: {
+            label: node.data?.label,
+            description: node.data?.description,
+            nodeType: node.data?.nodeType,
+            // Exclude functions like onEdit, onDelete, etc.
+          }
+        }));
+
+      const cleanEdges = edges.map(edge => ({
+        id: edge.id,
+        source: edge.source,
+        target: edge.target,
+        type: edge.type,
+        label: edge.label
+      }));
+
+      const cleanDiagramState = {
+        nodes: cleanNodes,
+        edges: cleanEdges
+      };
+
+      // Get the most current project ID (it might be different from state)
+      const currentProjectId = projectId || params.projectId || location.state?.projectId;
+      
+      // Log for debugging
+      console.log('Generating report for project:', currentProjectId);
+      console.log('Session ID:', sessionId);
+      console.log('Diagram nodes:', cleanNodes.length);
+
+      // Capture diagram image BEFORE navigating to report page
+      // Only capture if we're in Architecture Diagram mode and have nodes
+      let diagramImageUrl = null;
+      if (viewMode === 'AD' && cleanNodes.length > 0) {
+        try {
+          toast({
+            title: "Capturing diagram...",
+            description: "Please wait while we capture your architecture diagram.",
+            duration: 2000,
+          });
+
+          // Apply fit view before capturing to ensure full diagram is visible
+          if (mainReactFlowInstance.current && mainReactFlowInstance.current.fitView) {
+            console.log('Applying fit view before diagram capture');
+            mainReactFlowInstance.current.fitView({ 
+              padding: 0.2, 
+              duration: 300 // Short animation to settle the view
+            });
+            
+            // Wait for fit view animation to complete
+            await new Promise(resolve => setTimeout(resolve, 500));
+          }
+
+          // Wait an additional moment for any ongoing animations to complete
+          await new Promise(resolve => setTimeout(resolve, 300));
+
+          diagramImageUrl = await captureDiagramImage({
+            backgroundColor: '#ffffff',
+            pixelRatio: 2,
+            quality: 1.0,
+            padding: 50
+          });
+
+          console.log('Successfully captured diagram for report');
+          
+          // Save to localStorage for the report page
+          if (diagramImageUrl) {
+            localStorage.setItem(`diagram_image_${currentProjectId}`, diagramImageUrl);
+            localStorage.setItem(`diagram_image_timestamp_${currentProjectId}`, Date.now().toString());
+            console.log('Diagram image saved to localStorage for project:', currentProjectId);
+          }
+          
+        } catch (error) {
+          console.warn('Failed to capture diagram image:', error);
+          toast({
+            title: "Note",
+            description: "Could not capture diagram image, but report will still be generated.",
+            variant: "default",
+          });
+        }
+      } else if (viewMode === 'DFD') {
+        // If we're in DFD mode, try to get the saved architecture diagram
+        const savedImage = localStorage.getItem(`diagram_image_${currentProjectId}`);
+        if (savedImage) {
+          diagramImageUrl = savedImage;
+          console.log('Using previously saved architecture diagram');
+        } else {
+          toast({
+            title: "Switch to Architecture View",
+            description: "Please switch to Architecture Diagram view to capture the current diagram.",
+            variant: "default",
+          });
+        }
+      }
+
+      // Store current diagram state in localStorage as backup
+      localStorage.setItem('diagramNodes', JSON.stringify(cleanNodes));
+      localStorage.setItem('diagramEdges', JSON.stringify(cleanEdges));
+      localStorage.setItem('projectId', currentProjectId || '');
+      localStorage.setItem('sessionId', sessionId || '');
+      
+      console.log('Navigating to report with:', { 
+        projectId, 
+        sessionId, 
+        nodesCount: cleanNodes.length, 
+        edgesCount: cleanEdges.length,
+        hasDiagramImage: !!diagramImageUrl
+      });
+      
+      console.log('Navigating with project ID:', currentProjectId);
+      
+      // Navigate with cleaned state and diagram image
+      navigate('/generate-report', { 
+        state: { 
+          projectId: currentProjectId,
+          sessionId: sessionId,
+          diagramState: cleanDiagramState,
+          diagramImage: diagramImageUrl // Pass the captured image
+        } 
+      });
+    })();
+
+    return '/generate-report'; // Return immediately for interface compatibility
   };
 
   const handleRevertToDiagramState = (messageContent, diagramState) => {
@@ -2003,28 +2468,38 @@ const applyBackendPositioning = useCallback((nodes: Node[]): Node[] => {
             {/* Layout with single level of nesting, simpler structure */}
             <div className="flex-1 relative">
               {viewMode === 'AD' ? (
-                <AIFlowDiagram
-                  nodes={nodes}
-                  edges={stableEdges}
-                  setNodes={setNodes}
-                  setEdges={setEdges}
-                  viewMode={viewMode}
-                  onSwitchView={viewModeChange}
-                  onZoomIn={handleZoomIn}
-                  onZoomOut={handleZoomOut}
-                  onFitView={handleFitView}
-                  onCopy={handleCopy}
-                  onPaste={handlePaste}
-                  onUndo={handleUndo}
-                  onRedo={handleRedo}
-                  onComment={handleComment}
-                  onGenerateReport={handleGenerateReportWithNavigation}
-                  onSave={handleActualSave}
-                  onLayout={applyLayout}
-                  isLayouting={isLayouting}
-                  reactFlowInstanceRef={mainReactFlowInstance}
-                  projectId={projectId}
-                />
+                <div className="h-full w-full relative">
+                  {/* Diagram */}
+                  <AIFlowDiagram
+                    nodes={nodes}
+                    edges={stableEdges}
+                    setNodes={setNodes}
+                    setEdges={setEdges}
+                    viewMode={viewMode}
+                    onSwitchView={viewModeChange}
+                    onZoomIn={handleZoomIn}
+                    onZoomOut={handleZoomOut}
+                    onFitView={handleFitView}
+                    onCopy={handleCopy}
+                    onPaste={handlePaste}
+                    onUndo={handleUndo}
+                    onRedo={handleRedo}
+                    onComment={handleComment}
+                    onGenerateReport={handleGenerateReportWithNavigation}
+                    onSave={handleActualSave}
+                    onLayout={applyLayout}
+                    isLayouting={isLayouting}
+                    reactFlowInstanceRef={mainReactFlowInstance}
+                    projectId={projectId}
+                  />
+
+                  {/* Overlay spinner while layout pending, only if diagram exists */}
+                  {!diagramReady && nodes.length > 0 && (
+                    <div className="absolute inset-0 flex items-center justify-center bg-white/60 z-30">
+                      <Loader2 className="h-10 w-10 animate-spin text-securetrack-purple" />
+                    </div>
+                  )}
+                </div>
               ) : (
                 <div className="h-full w-full flex flex-col">
                   <DiagramActions

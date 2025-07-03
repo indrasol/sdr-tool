@@ -411,16 +411,18 @@ export const createLayerContainers = (nodes: Node[]): Node[] => {
   // Calculate layer boundaries based on backend positioning rules
   const layerBoundaries: Record<string, { minX: number, minY: number, maxX: number, maxY: number, width: number, height: number }> = {};
   
-  // Define expected X ranges for each layer based on LEFT-TO-RIGHT flow
+  // Adjusted X-ranges with extra gap between layers (≈70-100 px) to
+  // prevent any container overlap and improve visual clarity.
   const layerXRanges: Record<string, { min: number, max: number }> = {
-    client: { min: 50, max: 350 },       // CLIENT ZONE (X: 50-350) - LEFTMOST (wider for horizontal spread)
-    network: { min: 300, max: 600 },     // DMZ LAYER (X: 300-600) - LEFT-CENTER (wider for horizontal spread)
-    application: { min: 550, max: 900 }, // APPLICATION LAYER (X: 550-900) - CENTER (wider for horizontal spread)
-    data: { min: 950, max: 1350 },       // DATA LAYER (X: 950-1350) - RIGHTMOST (wider for horizontal spread)
-    aws: { min: 550, max: 900 },         // AWS services positioned by type (wider range)
-    azure: { min: 550, max: 900 },       // Azure services positioned by type (wider range)
-    gcp: { min: 550, max: 900 },         // GCP services positioned by type (wider range)
-    default: { min: 550, max: 900 }      // Default to application layer (wider range)
+    client: { min: 50, max: 250 },          // CLIENT ZONE (50-250)
+    network: { min: 300, max: 550 },        // DMZ (300-550)
+    application: { min: 650, max: 900 },    // APPLICATION (650-900)
+    data: { min: 1000, max: 1350 },         // DATA (1000-1350)
+    // Cloud providers inherit application layer spacing
+    aws: { min: 650, max: 900 },
+    azure: { min: 650, max: 900 },
+    gcp: { min: 650, max: 900 },
+    default: { min: 650, max: 900 },
   };
   
    // Calculate boundaries for each layer (LEFT-TO-RIGHT flow)
@@ -432,47 +434,70 @@ export const createLayerContainers = (nodes: Node[]): Node[] => {
     const expectedXRange = layerXRanges[layer] || layerXRanges.default;
     
     // Calculate boundaries with proper padding for LR flow
-    const padding = 40; // Consistent padding for all layers
+    const padding = LAYER_CONTAINER_PADDING; // Use global constant for consistency
     
-    // Use expected X range to position layer container properly (horizontal)
-    const minX = Math.min(
+    // Ensure the container does not expand into the previous layer's horizontal space
+    let minX = Math.min(
       Math.min(...positions.map(p => p.x)) - padding,
       expectedXRange.min
     );
+    // Clamp to expected minimum so it never crosses previous layer
+    if (minX < expectedXRange.min) {
+      minX = expectedXRange.min;
+    }
     
     const minY = Math.min(...positions.map(p => p.y)) - padding;
 
     // Calculate maximum extents for LR flow
-    const maxX = Math.max(
+    let maxX = Math.max(
       Math.max(...layerNodes.map(node => {
-        const nodeWidth = node.width || 120;
+        const nodeWidth = node.width || DEFAULT_NODE_WIDTH;
         return node.position.x + nodeWidth;
       })) + padding,
       expectedXRange.max
     );
+    // Clamp to expected maximum so it never bleeds into next layer
+    if (maxX > expectedXRange.max) {
+      maxX = expectedXRange.max;
+    }
     
-    const maxY = Math.max(...layerNodes.map(node => {
-      const nodeHeight = node.height || 120;
-      return node.position.y + nodeHeight;
-    })) + padding;
+    // Add extra vertical space beneath the lowest node so that the layer container's
+    // bottom border is not flush with the node/label. This improves readability.
+    const EXTRA_BOTTOM_PADDING = LAYER_EXTRA_BOTTOM_PADDING; // additional space below lowest node
 
-    const width = maxX - minX;
+    const maxY = Math.max(
+      ...layerNodes.map(node => {
+        const nodeHeight = (node.height || DEFAULT_NODE_HEIGHT) + LABEL_EXTRA_HEIGHT;
+        return node.position.y + nodeHeight;
+      })
+    ) + padding + EXTRA_BOTTOM_PADDING;
+
+    const width = Math.max(50, maxX - minX); // ensure positive width
     const height = maxY - minY;
 
     layerBoundaries[layer] = { minX, minY, maxX, maxY, width, height };
   });
   
+  // Minimum horizontal space to keep between neighbouring layer containers (in px)
+  const LAYER_CONTAINER_GAP = 30;
+  
   // Ensure proper layer separation based on backend Y ranges
   Object.entries(layerBoundaries).forEach(([layer, bounds]) => {
     const expectedXRange = layerXRanges[layer] || layerXRanges.default;
     
-    // Ensure layer container encompasses the expected X range (horizontal)
-    if (bounds.minX > expectedXRange.min) {
+    // Ensure a small gap at both ends so adjacent containers don't touch
+    if (bounds.minX > expectedXRange.min + LAYER_CONTAINER_GAP) {
+      bounds.minX = expectedXRange.min + LAYER_CONTAINER_GAP;
+      bounds.width = bounds.maxX - bounds.minX;
+    } else if (bounds.minX < expectedXRange.min) {
       bounds.minX = expectedXRange.min;
       bounds.width = bounds.maxX - bounds.minX;
     }
-    
-    if (bounds.maxX < expectedXRange.max) {
+
+    if (bounds.maxX < expectedXRange.max - LAYER_CONTAINER_GAP) {
+      bounds.maxX = expectedXRange.max - LAYER_CONTAINER_GAP;
+      bounds.width = bounds.maxX - bounds.minX;
+    } else if (bounds.maxX > expectedXRange.max) {
       bounds.maxX = expectedXRange.max;
       bounds.width = bounds.maxX - bounds.minX;
     }
@@ -523,4 +548,10 @@ export const createLayerContainers = (nodes: Node[]): Node[] => {
     return levelA - levelB;
   });
 };
+
+export const DEFAULT_NODE_WIDTH = 220;
+export const DEFAULT_NODE_HEIGHT = 36;
+export const LABEL_EXTRA_HEIGHT = 60;
+export const LAYER_CONTAINER_PADDING = 80;
+export const LAYER_EXTRA_BOTTOM_PADDING = 70;
 

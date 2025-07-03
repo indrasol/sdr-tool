@@ -4608,7 +4608,7 @@ node_types = {
       },
       {
         "name": "network_cdn",
-        "description": "Ork Network Cdn Network."
+        "description": "Ork Network CDN Network."
       },
       {
         "name": "network_service_mesh",
