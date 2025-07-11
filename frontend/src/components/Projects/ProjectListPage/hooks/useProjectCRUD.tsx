@@ -1,5 +1,5 @@
 // src/hooks/useProjectCRUD.ts
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { ProjectPriority, ProjectStatus, ProjectTemplateType } from '@/types/projectTypes';
 import { Project, CreateProjectPayload, UpdateProjectPayload } from '@/interfaces/projectInterfaces';
 import { useAuth } from '@/components/Auth/AuthContext';
@@ -11,9 +11,15 @@ export const useProjectCRUD = () => {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
   
-  // Determine current user ID/name for project creation
-  const currentUserName = user?.username || user?.email || 'unknown';
-  const tenantId = user?.tenantId || 7;
+  // Determine the current user values reactively
+  const currentUserName = useMemo(() => {
+    return user?.username || user?.email || 'unknown';
+  }, [user]);
+  
+  // Helper to fetch tenant ID safely without relying on a stale constant
+  const getTenantId = () => {
+    return user?.tenantId ?? 1; // default to 1 if not yet available
+  };
   
   // Handle opening the create project dialog
   const handleCreateProject = (setCreateDialogOpen: (open: boolean) => void) => {
@@ -46,7 +52,7 @@ export const useProjectCRUD = () => {
         creator: currentUserName,
         template_type: projectData.templateType,
         imported_file: projectData.importedFile,
-        tenant_id: tenantId,
+        tenant_id: getTenantId(),
         tags: projectData.tags
       };
       
@@ -150,7 +156,7 @@ export const useProjectCRUD = () => {
   // Get a project by ID
   const getProjectById = async (projectId: string): Promise<Project | null> => {
     try {
-      return await projectService.getProjectById(projectId, tenantId);
+      return await projectService.getProjectById(projectId, getTenantId());
     } catch (error) {
       console.error("Error fetching project:", error);
       toast({
@@ -320,6 +326,6 @@ export const useProjectCRUD = () => {
     handleProjectCreation,
     isSubmitting,
     currentUserName,
-    tenantId
+    getTenantId
   };
 };

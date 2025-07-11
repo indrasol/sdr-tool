@@ -66,9 +66,25 @@ async def login(identifier: dict,current_user: dict = Depends(verify_token)):
         )
         log_info(f"User tenant response: {user_tenant_response}")
 
+        # If user not found in our "users" table yet (first login), auto-create
         if not user_response.data or len(user_response.data) == 0:
-            raise HTTPException(status_code=401, detail="User not found")
-        
+            # Fetch auth user info via Supabase admin
+            try:
+                auth_user = supabase_client.auth.admin.get_user_by_id(current_user["id"])
+                email = auth_user.user.email if hasattr(auth_user, "user") else identifier.get("identifier")
+            except Exception:
+                email = identifier.get("identifier")
+
+            new_user = {
+                "id": current_user["id"],
+                "username": identifier.get("identifier"),
+                "email": email
+            }
+            def insert_user():
+                return supabase_client.from_("users").insert(new_user).execute()
+            await safe_supabase_operation(insert_user, "Failed to auto-create user on first login")
+            user_response = {"data": [new_user]}
+
         if not user_tenant_response.data or len(user_tenant_response.data) == 0:
             raise HTTPException(status_code=401, detail="User tenant not found")
 

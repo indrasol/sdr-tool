@@ -24,6 +24,19 @@ import {
   X,
   Image,
   Download,
+  LayoutGrid,
+  Settings,
+  Activity,
+  Zap,
+  Clock,
+  Target,
+  RefreshCw,
+  Sun,
+  Moon,
+  AlertTriangle,
+  Loader2,
+  LayoutTemplate,
+  Building,
 } from 'lucide-react';
 import { Button } from '../ui/button';
 import { Separator } from '../ui/separator';
@@ -50,29 +63,16 @@ import {
   DropdownMenuCheckboxItem,
 } from "../ui/dropdown-menu";
 import { Badge } from "../ui/badge";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
 import { toPng } from 'html-to-image';
 import { useOrgTemplates } from '@/hooks/useOrgTemplates';
 import { useAuth } from '@/components/Auth/AuthContext';
 import { useProjects } from '@/hooks/useProjects';
 import templateApiService from '@/services/templateApiService';
 import { captureDiagramImage } from '@/utils/diagramUtils';
-
-// Add custom button hover styles
-const buttonHoverStyles = `
-  transition-all duration-200
-  hover:bg-gradient-to-r hover:from-blue-100/80 hover:to-purple-100/80 
-  hover:text-blue-700 hover:border-blue-200 hover:shadow-sm
-`;
-
-// Add custom CSS for filter buttons from ProjectFilters.tsx
-const filterButtonStyles = `
-  bg-gradient-to-r from-blue-50/70 to-purple-50/70
-  border-blue-100 hover:border-blue-200
-  text-blue-600 hover:text-blue-700
-  hover:from-blue-100/80 hover:to-purple-100/80
-  hover:shadow-sm
-  transition-all duration-300
-`;
+import StyleToggle from './components/StyleToggle';
+import { useTheme } from '@/contexts/ThemeContext';
+import { cn } from '@/lib/utils';
 
 type ViewMode = 'AD' | 'DFD';
 
@@ -98,6 +98,27 @@ interface DiagramActionsProps {
   edges?: any[]; // Add edges for diagram state
   isDataFlowActive?: boolean;
   isFlowchartActive?: boolean;
+  // Threat Analysis props
+  onRunThreatAnalysis?: () => void;
+  runningThreatAnalysis?: boolean;
+  // Layout controls
+  onLayout?: (options: {
+    direction: 'LR' | 'TB' | 'BT' | 'RL';
+    engine: 'auto' | 'elk' | 'dagre' | 'basic';
+    enablePerformanceMonitoring: boolean;
+  }) => void;
+  isLayouting?: boolean;
+  lastLayoutResult?: {
+    engineUsed: string;
+    executionTime: number;
+    qualityScore: number;
+    success: boolean;
+    complexityMetrics?: {
+      nodeCount: number;
+      edgeCount: number;
+      complexityScore: number;
+    };
+  };
 }
 
 const DiagramActions: React.FC<DiagramActionsProps> = ({
@@ -121,11 +142,17 @@ const DiagramActions: React.FC<DiagramActionsProps> = ({
   nodes = [],
   edges = [],
   isDataFlowActive,
-  isFlowchartActive
+  isFlowchartActive,
+  onRunThreatAnalysis,
+  runningThreatAnalysis = false,
+  onLayout,
+  isLayouting,
+  lastLayoutResult
 }) => {
   const { addOrgTemplate } = useOrgTemplates();
   const { user } = useAuth();
   const { allProjects } = useProjects();
+  const { theme, toggleTheme } = useTheme();
   const [copied, setCopied] = useState(false);
   const [isTemplateModalOpen, setIsTemplateModalOpen] = useState(false);
   const [isImageModalOpen, setIsImageModalOpen] = useState(false);
@@ -144,10 +171,25 @@ const DiagramActions: React.FC<DiagramActionsProps> = ({
     description: ''
   });
 
+  // Layout controls state
+  const [isLayoutDropdownOpen, setIsLayoutDropdownOpen] = useState(false);
+  const [layoutDirection, setLayoutDirection] = useState<'LR' | 'TB' | 'BT' | 'RL'>('LR');
+  const [layoutEngine, setLayoutEngine] = useState<'auto' | 'elk' | 'dagre' | 'basic'>('auto');
+  const [enablePerformanceMonitoring, setEnablePerformanceMonitoring] = useState(true);
+
 
 
   const handleSwitchToAD = () => {
-    if (viewMode !== 'AD' && onSwitchView) {
+    // Clear other view states first
+    if (isDataFlowActive && onToggleDataFlow) {
+      onToggleDataFlow();
+    }
+    if (isFlowchartActive && onToggleFlowchart) {
+      onToggleFlowchart();
+    }
+    
+    // Then switch to AD view
+    if (onSwitchView) {
       onSwitchView('AD');
     }
   };
@@ -353,6 +395,54 @@ const DiagramActions: React.FC<DiagramActionsProps> = ({
     }));
   };
 
+  // Layout control handlers
+  const handleApplyLayout = () => {
+    if (onLayout) {
+      onLayout({
+        direction: layoutDirection,
+        engine: layoutEngine,
+        enablePerformanceMonitoring
+      });
+    }
+    setIsLayoutDropdownOpen(false);
+  };
+
+  const getEngineDescription = (engineType: string) => {
+    const descriptions = {
+      auto: 'Automatically selects the best engine based on diagram complexity',
+      elk: 'Advanced hierarchical layout with optimal node placement',
+      dagre: 'Fast directed graph layout with good performance',
+      basic: 'Simple grid-based layout for basic diagrams'
+    };
+    return descriptions[engineType as keyof typeof descriptions] || 'Unknown engine';
+  };
+
+  const getEngineIcon = (engineType: string) => {
+    const icons = {
+      auto: Zap,
+      elk: Settings,
+      dagre: Activity,
+      basic: LayoutGrid
+    };
+    return icons[engineType as keyof typeof icons] || LayoutGrid;
+  };
+
+  const getQualityColor = (score: number) => {
+    if (score >= 0.8) return 'text-green-600';
+    if (score >= 0.6) return 'text-yellow-600';
+    return 'text-red-600';
+  };
+
+  const getEngineColor = (engineType: string) => {
+    const colors = {
+      auto: 'bg-blue-100 text-blue-800',
+      elk: 'bg-purple-100 text-purple-800',
+      dagre: 'bg-green-100 text-green-800',
+      basic: 'bg-gray-100 text-gray-800'
+    };
+    return colors[engineType as keyof typeof colors] || 'bg-gray-100 text-gray-800';
+  };
+
   const handleSaveImage = async () => {
     const reactFlowWrapper = document.querySelector('.react-flow') as HTMLElement;
     const viewport = document.querySelector('.react-flow__viewport') as HTMLElement;
@@ -542,19 +632,76 @@ const DiagramActions: React.FC<DiagramActionsProps> = ({
     }
   };
 
+// Custom Sequence Flow Icon Component
+const SequenceFlowIcon = ({ size = 16, className = "" }) => (
+  <svg
+    width={size}
+    height={size}
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    className={className}
+  >
+    {/* Top flow: Node 1 -> Node 2 */}
+    <circle cx="7" cy="4" r="2.2" />
+    <circle cx="17" cy="4" r="2.2" />
+    <path d="M9.5 4h5" />
+    <path d="M14.5 3l2.5 1-2.5 1" />
+    
+    {/* Arrow down from Node 2 */}
+    <path d="M17 6.5v4" />
+    <path d="M16 9.5l1 1 1-1" />
+    
+    {/* Middle node */}
+    <circle cx="17" cy="12" r="2.2" />
+    
+    {/* Flow back left to Node 3 */}
+    <path d="M14.5 12H9.5" />
+    <path d="M11.5 11l-2.5 1 2.5 1" />
+    <circle cx="7" cy="12" r="2.2" />
+    
+    {/* Arrow down from Node 3 with more space */}
+    <path d="M7 14.5v3.5" />
+    <path d="M6 17l1 1 1-1" />
+    
+    {/* Bottom flow: Node 4 -> Node 5 -> Node 6 with more spacing */}
+    <circle cx="7" cy="20" r="2.2" />
+    <circle cx="17" cy="20" r="2.2" />
+    <circle cx="21" cy="20" r="2.2" />
+    <path d="M9.5 20h5" />
+    <path d="M14.5 19l2.5 1-2.5 1" />
+    <path d="M19.5 20h1" />
+    <path d="M19.5 19l1.5 1-1.5 1" />
+  </svg>
+);
+
   return (
-    <div className="bg-white border-b border-gray-200 px-3 flex items-center justify-between w-full flex-shrink-0 h-12">
+    <div className={`border-b px-3 flex items-center justify-between w-full flex-shrink-0 h-12 z-10 relative ${
+      theme === 'dark' 
+        ? 'bg-gray-800 border-gray-700' 
+        : 'bg-white border-gray-200'
+    }`}>
       <TooltipProvider>
         <div className="flex items-center space-x-1">
           {projectId && projectId !== 'default-project' && (
             <Tooltip>
               <TooltipTrigger asChild>
                 <div
-                  className={`flex items-center h-8 px-3 rounded-md border text-sm font-medium cursor-pointer ${filterButtonStyles}`}
+                  className={`flex items-center h-8 px-3 rounded-md border text-sm font-medium cursor-pointer ${
+                    theme === 'dark'
+                      ? "text-gray-300 hover:text-white hover:bg-gray-700"
+                      : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
+                  }`}
                   onClick={copyProjectId}
                 >
 
-                  <span className="ml-1 text-blue-700">{projectId}</span>
+                  <span className={cn(
+                    "ml-1 font-medium",
+                    theme === 'dark' ? "text-purple-400" : "text-blue-700"
+                  )}>{projectId}</span>
                   {copied ? (
                     <Check size={14} className="ml-2 text-green-500" />
                   ) : (
@@ -601,7 +748,11 @@ const DiagramActions: React.FC<DiagramActionsProps> = ({
               <Button
                 variant="ghost"
                 size="icon"
-                className={`h-8 w-8 ${buttonHoverStyles}`}
+                className={`h-8 w-8 ${
+                  theme === 'dark'
+                    ? "text-gray-300 hover:text-white hover:bg-gray-700"
+                    : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
+                }`}
                 onClick={onGenerateReport}
               >
                 <FileText size={16} />
@@ -615,7 +766,11 @@ const DiagramActions: React.FC<DiagramActionsProps> = ({
               <Button
                 variant="ghost"
                 size="icon"
-                className={`h-8 w-8 ${buttonHoverStyles}`}
+                className={`h-8 w-8 ${
+                  theme === 'dark'
+                    ? "text-gray-300 hover:text-white hover:bg-gray-700"
+                    : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
+                }`}
                 onClick={onSave}
               >
                 <Save size={16} />
@@ -631,7 +786,11 @@ const DiagramActions: React.FC<DiagramActionsProps> = ({
               <Button
                 variant="ghost"
                 size="icon"
-                className={`h-8 w-8 ${buttonHoverStyles}`}
+                className={`h-8 w-8 ${
+                  theme === 'dark'
+                    ? "text-gray-300 hover:text-white hover:bg-gray-700"
+                    : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
+                }`}
                 onClick={onZoomIn}
               >
                 <ZoomIn size={16} />
@@ -645,7 +804,11 @@ const DiagramActions: React.FC<DiagramActionsProps> = ({
               <Button
                 variant="ghost"
                 size="icon"
-                className={`h-8 w-8 ${buttonHoverStyles}`}
+                className={`h-8 w-8 ${
+                  theme === 'dark'
+                    ? "text-gray-300 hover:text-white hover:bg-gray-700"
+                    : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
+                }`}
                 onClick={onZoomOut}
               >
                 <ZoomOut size={16} />
@@ -659,7 +822,11 @@ const DiagramActions: React.FC<DiagramActionsProps> = ({
               <Button
                 variant="ghost"
                 size="icon"
-                className={`h-8 w-8 ${buttonHoverStyles}`}
+                className={`h-8 w-8 ${
+                  theme === 'dark'
+                    ? "text-gray-300 hover:text-white hover:bg-gray-700"
+                    : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
+                }`}
                 onClick={onFitView}
               >
                 <Maximize2 size={16} />
@@ -673,7 +840,11 @@ const DiagramActions: React.FC<DiagramActionsProps> = ({
               <Button
                 variant="ghost"
                 size="icon"
-                className={`h-8 w-8 ${buttonHoverStyles}`}
+                className={`h-8 w-8 ${
+                  theme === 'dark'
+                    ? "text-gray-300 hover:text-white hover:bg-gray-700"
+                    : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
+                }`}
                 onClick={onComment}
               >
                 <MessageSquare size={16} />
@@ -684,51 +855,38 @@ const DiagramActions: React.FC<DiagramActionsProps> = ({
 
           <Separator orientation="vertical" className="h-6 mx-1" />
 
-          {/* AD Button */}
-
-          {/* <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                variant="outline"
-                size="sm"
-                className={`h-8 px-2 border-securetrack-purple/50 text-securetrack-purple ${buttonHoverStyles} ${viewMode === 'AD' ? 'bg-gradient-to-r from-blue-500 to-teal-500 text-white' : ''
-                  }`}
-                onClick={handleSwitchToAD}
-              >
-                <span className="text-xs font-medium">AD</span>
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent side="bottom">Switch to Architecture Diagram</TooltipContent>
-          </Tooltip> */}
-
-          {/* DFD Button */}
-          {/* 
+          {/* AD Icon - Active by default for interactive React Flow diagrams */}
           <Tooltip>
             <TooltipTrigger asChild>
               <Button
-                variant="outline"
-                size="sm" // Adjusted size
-                className={`h-8 px-2 border-securetrack-purple/50 text-securetrack-purple ${buttonHoverStyles} ${
-                  viewMode === 'DFD' ? 'bg-gradient-to-r from-blue-500 to-teal-500 text-white' : ''
-                }`}
-                onClick={handleSwitchToDFD}
+                variant="ghost"
+                size="icon"
+                className={`h-8 w-8 ${
+                  theme === 'dark'
+                    ? "text-gray-300 hover:text-white hover:bg-gray-700"
+                    : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
+                } ${viewMode === 'AD' && !isDataFlowActive && !isFlowchartActive ? 'bg-gradient-to-r from-blue-500 to-teal-500 text-white' : ''}`}
+                onClick={handleSwitchToAD}
               >
-                 <span className="text-xs font-medium">DFD</span>
+                <Network size={16} />
               </Button>
             </TooltipTrigger>
-            <TooltipContent side="bottom">Switch to Data Flow Diagram</TooltipContent>
+            <TooltipContent side="bottom">Interactive Diagramming View</TooltipContent>
           </Tooltip>
-          */}
 
           <Tooltip>
             <TooltipTrigger asChild>
               <Button
                 variant="ghost"
                 size="icon"
-                className={`h-8 w-8 ${buttonHoverStyles} ${isDataFlowActive ? 'bg-blue-100' : ''}`}
+                className={`h-8 w-8 ${
+                  theme === 'dark'
+                    ? "text-gray-300 hover:text-white hover:bg-gray-700"
+                    : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
+                } ${isDataFlowActive ? 'bg-gradient-to-r from-blue-500 to-teal-500 text-white' : ''}`}
                 onClick={onToggleDataFlow}
               >
-                <Network size={16} />
+                <SequenceFlowIcon size={16} />
               </Button>
             </TooltipTrigger>
             <TooltipContent side="bottom">Toggle Sequence Diagram</TooltipContent>
@@ -740,7 +898,11 @@ const DiagramActions: React.FC<DiagramActionsProps> = ({
               <Button
                 variant="ghost"
                 size="icon"
-                className={`h-8 w-8 ${buttonHoverStyles} ${isFlowchartActive ? 'bg-blue-100' : ''}`}
+                className={`h-8 w-8 ${
+                  theme === 'dark'
+                    ? "text-gray-300 hover:text-white hover:bg-gray-700"
+                    : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
+                } ${isFlowchartActive ? 'bg-gradient-to-r from-blue-500 to-teal-500 text-white' : ''}`}
                 onClick={onToggleFlowchart}
               >
                 <Workflow size={16} />
@@ -749,21 +911,222 @@ const DiagramActions: React.FC<DiagramActionsProps> = ({
             <TooltipContent side="bottom">Toggle Data Flow Graph</TooltipContent>
           </Tooltip>
 
-        </div>
+          <Separator orientation="vertical" className="h-6 mx-1" />
 
-        <div className="flex items-center space-x-1">
+          {/* Layout Controls Dropdown */}
+          {onLayout && (
+            <DropdownMenu open={isLayoutDropdownOpen} onOpenChange={setIsLayoutDropdownOpen}>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <DropdownMenuTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className={`h-8 w-8 ${
+                        theme === 'dark'
+                          ? "text-gray-300 hover:text-white hover:bg-gray-700"
+                          : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
+                      } ${isLayouting ? 'animate-pulse' : ''}`}
+                      disabled={isLayouting}
+                    >
+                      {isLayouting ? (
+                        <RefreshCw size={16} className="animate-spin" />
+                      ) : (
+                        <LayoutGrid size={16} />
+                      )}
+                    </Button>
+                  </DropdownMenuTrigger>
+                </TooltipTrigger>
+                <TooltipContent side="bottom">Layout Controls</TooltipContent>
+              </Tooltip>
+              <DropdownMenuContent className="w-80 p-6 space-y-6 bg-gradient-to-br from-white to-blue-50/30 border-blue-100/50 shadow-xl rounded-lg">
+                <div className="space-y-6">
+                  <div className="flex items-center justify-between">
+                    <h3 className="font-semibold text-blue-700 flex items-center gap-2">
+                      <div className="bg-gradient-to-r from-blue-500 to-purple-600 p-1.5 rounded-md shadow-sm">
+                        <LayoutGrid className="h-4 w-4 text-white" />
+                      </div>
+                      Layout Controls
+                    </h3>
+                    <Badge variant="outline" className="text-xs bg-blue-50/50 border-blue-200 text-blue-600">
+                      Enhanced
+                    </Badge>
+                  </div>
+                  
+                  {/* Direction Control */}
+                  <div className="space-y-3">
+                    <Label className="text-sm font-semibold text-blue-700 flex items-center gap-2">
+                      <div className="w-1.5 h-1.5 bg-blue-500 rounded-full"></div>
+                      Direction
+                    </Label>
+                    <div className="grid grid-cols-2 gap-3">
+                      {[
+                        { value: 'LR', label: 'Left → Right' },
+                        { value: 'TB', label: 'Top → Bottom' },
+                        { value: 'BT', label: 'Bottom → Top' },
+                        { value: 'RL', label: 'Right → Left' }
+                      ].map(({ value, label }) => (
+                        <Button
+                          key={value}
+                          variant={layoutDirection === value ? "default" : "outline"}
+                          size="sm"
+                          className={`text-sm py-2.5 px-4 transition-all duration-300 font-medium ${
+                            layoutDirection === value 
+                              ? 'bg-gradient-to-r from-blue-400 to-purple-500 text-white shadow-md hover:shadow-lg transform hover:-translate-y-0.5' 
+                              : `${
+                                theme === 'dark'
+                                  ? "bg-gray-700 hover:bg-gray-600 text-gray-200 border-gray-600"
+                                  : "bg-white hover:bg-gray-50 text-gray-700 border-gray-200"
+                              } hover:transform hover:-translate-y-0.5`
+                          }`}
+                          onClick={() => setLayoutDirection(value as any)}
+                        >
+                          {label}
+                        </Button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Engine Selection */}
+                  <div className="space-y-3">
+                    <Label className="text-sm font-semibold text-blue-700 flex items-center gap-2">
+                      <div className="w-1.5 h-1.5 bg-blue-500 rounded-full"></div>
+                      Layout Engine
+                    </Label>
+                    <div className="grid grid-cols-2 gap-3">
+                      {[
+                        { value: 'auto', label: 'Auto', icon: Zap },
+                        { value: 'elk', label: 'ELK', icon: Settings },
+                        { value: 'dagre', label: 'Dagre', icon: Activity },
+                        { value: 'basic', label: 'Basic', icon: LayoutGrid }
+                      ].map(({ value, label, icon: Icon }) => (
+                        <Button
+                          key={value}
+                          variant={layoutEngine === value ? "default" : "outline"}
+                          size="sm"
+                          className={`text-sm py-2.5 px-4 flex items-center gap-2 transition-all duration-300 font-medium ${
+                            layoutEngine === value 
+                              ? 'bg-gradient-to-r from-blue-400 to-purple-500 text-white shadow-md hover:shadow-lg transform hover:-translate-y-0.5' 
+                              : `${
+                                theme === 'dark'
+                                  ? "bg-gray-700 hover:bg-gray-600 text-gray-200 border-gray-600"
+                                  : "bg-white hover:bg-gray-50 text-gray-700 border-gray-200"
+                              } hover:transform hover:-translate-y-0.5`
+                          }`}
+                          onClick={() => setLayoutEngine(value as any)}
+                        >
+                          <Icon size={14} />
+                          {label}
+                        </Button>
+                      ))}
+                    </div>
+                    <p className="text-xs text-blue-600/70 bg-blue-50/50 p-3 rounded-md border border-blue-100/50">
+                      {getEngineDescription(layoutEngine)}
+                    </p>
+                  </div>
+
+                  {/* Performance Monitoring */}
+                  <div className="flex items-center justify-between p-3 bg-blue-50/50 rounded-lg border border-blue-100/50">
+                    <Label className="text-sm font-semibold text-blue-700 flex items-center gap-2">
+                      <div className="w-1.5 h-1.5 bg-blue-500 rounded-full"></div>
+                      Performance Monitoring
+                    </Label>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setEnablePerformanceMonitoring(!enablePerformanceMonitoring)}
+                      className={`text-sm py-2 px-4 font-medium transition-all duration-300 ${
+                        enablePerformanceMonitoring 
+                          ? 'bg-gradient-to-r from-green-500 to-emerald-600 text-white border-green-500 hover:shadow-lg transform hover:-translate-y-0.5' 
+                          : `${
+                            theme === 'dark'
+                              ? "bg-gray-700 hover:bg-gray-600 text-gray-200 border-gray-600"
+                              : "bg-white hover:bg-gray-50 text-gray-700 border-gray-200"
+                          } hover:transform hover:-translate-y-0.5`
+                      }`}
+                    >
+                      {enablePerformanceMonitoring ? 'ON' : 'OFF'}
+                    </Button>
+                  </div>
+
+                  {/* Last Layout Result */}
+                  {lastLayoutResult && (
+                    <div className="bg-gradient-to-r from-blue-50/70 to-purple-50/70 p-4 rounded-lg border border-blue-100/50 space-y-3">
+                      <h4 className="text-sm font-semibold text-blue-700 flex items-center gap-2">
+                        <div className="w-1.5 h-1.5 bg-blue-500 rounded-full"></div>
+                        Last Layout Result
+                      </h4>
+                      <div className="grid grid-cols-2 gap-3 text-sm">
+                        <div className="flex items-center gap-2">
+                          <span className="text-blue-600/70">Engine:</span>
+                          <Badge className={`${getEngineColor(lastLayoutResult.engineUsed)} text-xs`}>
+                            {lastLayoutResult.engineUsed}
+                          </Badge>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className="text-blue-600/70">Time:</span>
+                          <span className="text-blue-800 font-medium">{lastLayoutResult.executionTime}ms</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className="text-blue-600/70">Quality:</span>
+                          <span className={`font-medium ${getQualityColor(lastLayoutResult.qualityScore)}`}>
+                            {(lastLayoutResult.qualityScore * 100).toFixed(0)}%
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className="text-blue-600/70">Status:</span>
+                          <Badge variant={lastLayoutResult.success ? "default" : "destructive"} className="text-xs">
+                            {lastLayoutResult.success ? 'Success' : 'Failed'}
+                          </Badge>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Apply Layout Button */}
+                  <Button
+                    onClick={handleApplyLayout}
+                    disabled={isLayouting}
+                    className="w-full h-11 bg-gradient-to-r from-blue-400 to-purple-500 hover:from-blue-500 hover:to-purple-600 text-white font-medium text-sm shadow-md hover:shadow-lg transition-all duration-300 transform hover:-translate-y-0.5 disabled:transform-none disabled:hover:shadow-md"
+                  >
+                    {isLayouting ? (
+                      <>
+                        <RefreshCw size={16} className="mr-2 animate-spin" />
+                        Applying Layout...
+                      </>
+                    ) : (
+                      <>
+                        <LayoutGrid size={16} className="mr-2" />
+                        Apply Layout
+                      </>
+                    )}
+                  </Button>
+                </div>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
+
+          {/* Style Toggle */}
+          <div title="View Mode">
+            <StyleToggle variant="compact" size="sm" />
+          </div>
+
+          <Separator orientation="vertical" className="h-6 mx-1" />
 
           {/* Save as Template Button */}
           <Tooltip>
             <TooltipTrigger asChild>
               <Button
-                variant="outline"
-                size="sm"
-                className={`h-9 text-sm whitespace-nowrap px-2 sm:px-3 ${filterButtonStyles}`}
+                variant="ghost"
+                size="icon"
+                className={`h-8 w-8 ${
+                  theme === 'dark'
+                    ? "text-gray-300 hover:text-white hover:bg-gray-700"
+                    : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
+                }`}
                 onClick={handleOpenTemplateModal}
               >
-                <Save size={16} className="mr-1 sm:mr-2 h-4 w-4" />
-                <span className="font-medium">Save as Template</span>
+                <LayoutTemplate size={16} />
               </Button>
             </TooltipTrigger>
             <TooltipContent side="bottom">Save as Template</TooltipContent>
@@ -773,18 +1136,105 @@ const DiagramActions: React.FC<DiagramActionsProps> = ({
           <Tooltip>
             <TooltipTrigger asChild>
               <Button
-                variant="outline"
-                size="sm"
-                className={`h-9 text-sm whitespace-nowrap px-2 sm:px-3 ${filterButtonStyles}`}
+                variant="ghost"
+                size="icon"
+                className={`h-8 w-8 ${
+                  theme === 'dark'
+                    ? "text-gray-300 hover:text-white hover:bg-gray-700"
+                    : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
+                }`}
                 onClick={handleOpenImageModal}
               >
-                <Image size={16} className="mr-1 sm:mr-2 h-4 w-4" />
-                <span className="font-medium">Save as Image</span>
+                <Image size={16} />
               </Button>
             </TooltipTrigger>
             <TooltipContent side="bottom">Save as Image</TooltipContent>
           </Tooltip>
 
+          <Separator orientation="vertical" className="h-6 mx-1" />
+
+          {/* Run Threat Analysis Button - only show in AD mode */}
+          {viewMode === 'AD' && onRunThreatAnalysis && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={onRunThreatAnalysis}
+                  disabled={runningThreatAnalysis}
+                  className={cn(
+                    "h-8 px-3 text-xs font-medium transition-all duration-200 flex items-center gap-1.5 rounded shadow-sm hover:shadow-md",
+                    theme === 'dark'
+                      ? "bg-gradient-to-r from-red-900/80 to-red-800/80 hover:from-red-800 hover:to-red-700 text-red-300 border border-red-700/50 hover:border-red-600"
+                      : "bg-gradient-to-r from-red-100 to-red-200 hover:from-red-200 hover:to-red-300 text-red-700 border border-red-200"
+                  )}
+                >
+                  {runningThreatAnalysis ? (
+                    <>
+                      <Loader2 size={14} className="animate-spin" />
+                      Running...
+                    </>
+                  ) : (
+                    <>
+                      <AlertTriangle size={14} />
+                      Run Threat Analysis
+                    </>
+                  )}
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="bottom">Analyze architecture for security threats</TooltipContent>
+            </Tooltip>
+          )}
+
+          <Separator orientation="vertical" className="h-6 mx-1" />
+
+
+
+        </div>
+
+        <div className="flex items-center space-x-1">
+          {/* Theme Toggle Button - Beautiful modern design */}
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={toggleTheme}
+                className={`h-8 w-8 relative overflow-hidden transition-all duration-300 transform hover:scale-105 ${
+                  theme === 'dark' 
+                    ? 'hover:bg-gradient-to-r hover:from-yellow-400/20 hover:to-orange-400/20 hover:text-yellow-400' 
+                    : 'hover:bg-gradient-to-r hover:from-indigo-100/80 hover:to-purple-100/80 hover:text-indigo-700'
+                } rounded-lg border-2 ${
+                  theme === 'dark' 
+                    ? 'border-yellow-400/30 hover:border-yellow-400/50' 
+                    : 'border-indigo-200/50 hover:border-indigo-300'
+                } hover:shadow-lg`}
+              >
+                <div className="relative flex items-center justify-center">
+                  {theme === 'dark' ? (
+                    <Sun 
+                      size={16} 
+                      className="text-yellow-400 drop-shadow-sm animate-pulse" 
+                    />
+                  ) : (
+                    <Moon 
+                      size={16} 
+                      className="text-indigo-600 drop-shadow-sm" 
+                    />
+                  )}
+                  {/* Subtle glow effect */}
+                  <div className={`absolute inset-0 rounded-lg ${
+                    theme === 'dark' 
+                      ? 'bg-gradient-to-r from-yellow-400/10 to-orange-400/10' 
+                      : 'bg-gradient-to-r from-indigo-400/10 to-purple-400/10'
+                  } opacity-0 hover:opacity-100 transition-opacity duration-300`} />
+                </div>
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="bottom">
+              {theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+            </TooltipContent>
+          </Tooltip>
         </div>
       </TooltipProvider>
 

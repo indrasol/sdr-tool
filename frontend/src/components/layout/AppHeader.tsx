@@ -12,9 +12,10 @@ const AppHeader = () => {
   };
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-50 glass-card px-6 py-4">
+    <header className="fixed top-0 left-0 right-0 z-50 glass-card px-4 py-3">
       <div className="max-w-7xl mx-auto flex items-center justify-between">
-        <Link to="/" className="flex items-center space-x-2 hover:opacity-90 transition-opacity">
+        {/* Logo and Brand - Leftmost positioning */}
+        <Link to="/org" className="flex items-center space-x-2 hover:opacity-90 transition-opacity flex-shrink-0">
           <div className="relative flex items-center">
             <Route className="w-8 h-8" style={{ color: '#3ECF8E' }} />
           </div>
@@ -23,22 +24,27 @@ const AppHeader = () => {
           </span>
         </Link>
         
-        <nav className="hidden md:flex items-center space-x-6">
-          <Link to="/dashboard" className="text-sm font-medium hover:text-primary transition-colors">
-            Dashboard
-          </Link>
-          <Link to="/projects" className="text-sm font-medium hover:text-primary transition-colors">
-            Projects
-          </Link>
-          <Link to="/solutions-hub" className="text-sm font-medium hover:text-primary transition-colors">
-            Hub
-          </Link>
-          <a href="/documents" className="text-sm font-medium hover:text-primary transition-colors">
-            Documents
-          </a>
-          <a href="/soc2" className="text-sm font-medium hover:text-primary transition-colors">
-            SOC 2
-          </a>
+        {/* Navigation and Actions - Rightmost positioning */}
+        <div className="flex items-center space-x-6">
+          <nav className="hidden md:flex items-center space-x-6">
+            <Link to="/dashboard" className="text-sm font-medium hover:text-primary transition-colors">
+              Dashboard
+            </Link>
+            <Link to="/projects" className="text-sm font-medium hover:text-primary transition-colors">
+              Projects
+            </Link>
+            <Link to="/solutions-hub" className="text-sm font-medium hover:text-primary transition-colors">
+              Hub
+            </Link>
+            <a href="/documents" className="text-sm font-medium hover:text-primary transition-colors">
+              Documents
+            </a>
+            <a href="/soc2" className="text-sm font-medium hover:text-primary transition-colors">
+              SOC 2
+            </a>
+          </nav>
+          
+          {/* Logout button */}
           <Button 
             variant="outline" 
             size="sm"
@@ -48,7 +54,7 @@ const AppHeader = () => {
             <LogOut className="h-4 w-4" />
             Logout
           </Button>
-        </nav>
+        </div>
       </div>
     </header>
   );

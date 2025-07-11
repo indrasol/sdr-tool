@@ -1,18 +1,24 @@
 import React from 'react';
-import { Handle, Position, NodeResizer, NodeProps } from '@xyflow/react';
+import { Handle, Position, NodeProps } from '@xyflow/react';
 import NodeContextToolbar from './NodeContextToolbar';
 import { CustomNodeData } from './types/diagramTypes';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { getCategoryStyle } from './utils/nodeStyles';
 import ThreatBadges from './ThreatBadges';  // Import ThreatBadges component
 import { classNames } from "@/lib/utils";
-import { mapNodeTypeToIcon } from './utils/mapNodeTypeToIcon';  // Add mapNodeTypeToIcon import
+import { Icon } from '@iconify/react';
+import { NodeIcon } from './components/SmartIcon';
+import { useDiagramStyle } from './contexts/DiagramStyleContext';
+import { resolveIcon } from './utils/enhancedIconifyRegistry';
 
 const CustomNode = ({ 
   id, 
   data, 
   selected,
 }: NodeProps) => {
+  // Get current diagram style
+  const { diagramStyle, styleConfig } = useDiagramStyle();
+  
   // Ensure data is always defined with default values
   const nodeData: Partial<CustomNodeData> = data || { label: 'Node', nodeType: 'default' };
   
@@ -23,7 +29,10 @@ const CustomNode = ({
   const label = safeData.label || 'Node';
   const description = safeData.description || '';
   const nodeType = safeData.nodeType || 'default';
-  const iconRenderer = safeData.iconRenderer;
+  const iconifyId = (safeData as any).iconifyId as string | undefined;
+  
+  // Resolve icon using enhanced registry
+  const resolvedIconId = iconifyId || resolveIcon(nodeType);
   // Access connection flags safely, defaulting to false if undefined
   const hasSourceConnection = safeData.hasSourceConnection ?? false;
   const hasTargetConnection = safeData.hasTargetConnection ?? false;
@@ -470,7 +479,7 @@ const CustomNode = ({
               {isPinned && (
                 <div className="pinned-badge absolute -top-1 -left-1 text-red-500 text-sm select-none" title="Pinned">📌</div>
               )}
-              {/* Icon container with shadow for better visibility */}
+              {/* Icon container with enhanced styling */}
               <div 
                 className={classNames(
                   "flex flex-col items-center justify-center mb-1 gap-6", // Use gap-6 for wide, equal vertical spacing between icons
@@ -487,46 +496,83 @@ const CustomNode = ({
                   minWidth: isClient ? '70px' : isDatabase || isApplication || isNetwork ? '64px' : '50px', 
                   minHeight: isClient ? '70px' : isDatabase || isApplication || isNetwork ? '64px' : '50px',
                   backgroundColor: isClient || isDatabase || isApplication || isNetwork ? 'transparent' : (getCategoryStyle(nodeType)?.bgColor || 'transparent'),
-                  position: 'relative', // Ensure icon container is positioned
-                  ...(isClient || isDatabase || isApplication || isNetwork ? { filter: 'drop-shadow(0px 2px 8px rgba(0,0,0,0.2))' } : {}), // Add drop shadow
+                  position: 'relative',
+                  borderRadius: styleConfig.nodeStyle.borderRadius,
+                  transition: 'all 0.2s ease-in-out',
+                  filter: diagramStyle === 'sketch' ? 'url(#hand-shadow)' : (isClient || isDatabase || isApplication || isNetwork ? 'drop-shadow(0px 2px 8px rgba(0,0,0,0.2))' : 'none'),
+                  fontFamily: styleConfig.nodeStyle.fontFamily,
                 }}
               >
-                {iconRenderer ? (
-                  (() => {
-                    const { component: IconComponent, props } = iconRenderer();
-                    return (
-                      <IconComponent 
-                        {...props} 
-                        size={iconSize} 
-                        className={nodeStyle.iconClass || ''}
-                        color={isClient || isDatabase || isApplication || isNetwork ? props.color : iconColor}
-                      />
-                    );
-                  })()
-                ) : safeData.iconUrl ? (
-                  // Use the iconUrl if it exists
-                  <div 
-                    dangerouslySetInnerHTML={{ __html: safeData.iconUrl as string }} 
+                {resolvedIconId && (
+                  <NodeIcon
+                    nodeType={nodeType}
+                    className={nodeStyle.iconClass}
                     style={{
-                      width: `${iconSize}px`,
-                      height: `${iconSize}px`,
-                      display: 'flex',
-                      justifyContent: 'center',
-                      alignItems: 'center'
+                      width: iconSize,
+                      height: iconSize,
+                      filter: diagramStyle === 'sketch' ? 'url(#rough-paper)' : styleConfig.nodeStyle.filter,
                     }}
-                    className={nodeStyle.iconClass || ''}
                   />
-                ) : (
-                  mapNodeTypeToIcon(nodeType)
                 )}
               </div>
               
               {/* Add extra vertical spacing between icon and label for clarity */}
               <div style={{ height: '0px' }} />
               {/* Label underneath */}
-              <div className="text-center mt-2 max-w-[200px]">
-                <div className="font-semibold text-sm node-label bg-transparent">
-                  {label}
+              <div 
+                className="text-center mt-2 max-w-[200px]"
+                style={{
+                  fontFamily: styleConfig.nodeStyle.fontFamily,
+                }}
+              >
+                <div 
+                  className="font-semibold text-sm node-label bg-transparent"
+                  style={{
+                    fontSize: styleConfig.nodeStyle.fontSize,
+                    fontWeight: styleConfig.nodeStyle.fontWeight,
+                    fontFamily: styleConfig.nodeStyle.fontFamily,
+                  }}
+                >
+                  {(() => {
+                    // AGGRESSIVE CORRUPTION DETECTION AND LOGGING
+                    let displayLabel = label;
+                    
+                    if (typeof label === 'string') {
+                      // Detect multiple types of corruption
+                      const isCorrupted = (
+                        label.length > 50 || 
+                        label.includes('http') || 
+                        label.includes('data:') || 
+                        label.includes('.svg') || 
+                        label.includes('base64') ||
+                        label.includes('storage.') ||
+                        label.includes('supabase.') ||
+                        label.includes('amazonaws.') ||
+                        label.includes('blob:') ||
+                        label.split('/').length > 3 ||
+                        label.startsWith('eyJ') || // Base64 detection
+                        /^[A-Za-z0-9+/=]{20,}$/.test(label) // Base64 pattern
+                      );
+                      
+                      if (isCorrupted) {
+                        console.error(`🚨 RENDERING CORRUPTION DETECTED in node ${id}:`, {
+                          originalLabel: label.substring(0, 100) + (label.length > 100 ? '...' : ''),
+                          nodeType,
+                          data
+                        });
+                        
+                        // Generate clean fallback label
+                        const cleanLabel = (nodeType?.split('_').pop() || id || 'Node')
+                          .replace(/[-_]/g, ' ')
+                          .replace(/\b\w/g, l => l.toUpperCase());
+                        
+                        console.log(`🔧 Using clean fallback label: "${cleanLabel}"`);
+                        displayLabel = cleanLabel;
+                      }
+                    }
+                    
+                    return displayLabel;
+                  })()}
                 </div>
               </div>
               

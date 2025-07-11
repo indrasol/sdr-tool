@@ -11,12 +11,12 @@ def log_info(message):
     logger.info(f"--------------------------------")
 
 def log_error(message):
-    logger.ERROR(f"--------------------------------")
-    logger.ERROR(f"{message}")
-    logger.ERROR(f"--------------------------------")
+    logger.error(f"--------------------------------")
+    logger.error(f"{message}")
+    logger.error(f"--------------------------------")
 
 def log_debugger(message):
-    logger.DEBUG(f"--------------------------------")
-    logger.DEBUG(f"{message}")
-    logger.DEBUG(f"--------------------------------")
+    logger.debug(f"--------------------------------")
+    logger.debug(f"{message}")
+    logger.debug(f"--------------------------------")
 

@@ -132,29 +132,9 @@ export class TemplateStorageService {
    * Check if the bucket exists and create it if needed
    */
   static async ensureBucketExists(): Promise<void> {
-    try {
-      const { data: buckets, error } = await supabase.storage.listBuckets();
-      
-      if (error) {
-        throw new Error(`Failed to list buckets: ${error.message}`);
-      }
-
-      const bucketExists = buckets.some(bucket => bucket.name === BUCKET_NAME);
-      
-      if (!bucketExists) {
-        const { error: createError } = await supabase.storage.createBucket(BUCKET_NAME, {
-          public: false,
-          allowedMimeTypes: ['application/json'],
-          fileSizeLimit: 10 * 1024 * 1024 // 10MB limit
-        });
-
-        if (createError) {
-          throw new Error(`Failed to create bucket: ${createError.message}`);
-        }
-      }
-    } catch (error) {
-      console.error('Error ensuring bucket exists:', error);
-      throw error;
-    }
+    // Listing or creating buckets requires a service-role key and will fail
+    // for the browser's anon role.  We therefore assume the bucket has been
+    // provisioned during deployment and skip any run-time checks here.
+    return;
   }
 } 

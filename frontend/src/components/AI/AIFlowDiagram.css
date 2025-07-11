@@ -160,13 +160,20 @@
   pointer-events: auto;
 }
 
-/* Modern gradient background for diagram pane */
+/* Modern diagram background styling */
 .diagram-background {
   background: linear-gradient(135deg, rgba(242, 244, 248, 0.8) 0%, rgba(230, 233, 240, 0.7) 50%, rgba(223, 227, 236, 0.6) 100%);
   backdrop-filter: blur(8px);
   position: absolute;
   inset: 0;
   z-index: -1;
+}
+
+/* Dark mode diagram background */
+[data-theme="dark"] .diagram-background,
+.dark .diagram-background {
+  background: linear-gradient(135deg, rgba(17, 24, 39, 0.95) 0%, rgba(31, 41, 55, 0.9) 50%, rgba(55, 65, 81, 0.85) 100%);
+  backdrop-filter: blur(12px);
 }
 
 /* Animated gradient pattern for diagram background */
@@ -179,6 +186,16 @@
   opacity: 0.7;
   z-index: -1;
   animation: patternMove 20s ease-in-out infinite alternate;
+}
+
+/* Dark mode animated pattern */
+[data-theme="dark"] .diagram-pattern,
+.dark .diagram-pattern {
+  background-image: 
+    radial-gradient(circle at 25% 25%, rgba(124, 101, 246, 0.12) 0%, transparent 50%),
+    radial-gradient(circle at 75% 75%, rgba(139, 92, 246, 0.12) 0%, transparent 50%),
+    radial-gradient(circle at 50% 50%, rgba(99, 102, 241, 0.08) 0%, transparent 70%);
+  opacity: 0.8;
 }
 
 @keyframes patternMove {

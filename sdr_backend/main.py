@@ -38,6 +38,10 @@ from utils.prometheus_metrics import setup_custom_metrics_endpoint, APP_ACTIVE_S
 import os
 # Hugging Face Transformer Model download
 from core.intent_classification.intent_classifier_v1 import download_transformer_models
+# ------------------- V2 routers -------------------
+from v2.api.routes.model_with_ai.design_v2 import router as design_v2_router
+from v2.api.routes.notifications import router as notifications_router
+from core.dsl.env_check import ensure_d2_present
 
 session_manager = SessionManager()
 # logger = setup_logging()
@@ -69,10 +73,13 @@ async def lifespan(app: FastAPI):
         health_monitor.capture_routes_info(app)
         log_info("Health monitoring initialized.")
 
+        # Check for d2 binary
+        ensure_d2_present()
+
         # Set cache directory
-        log_info("Downloading transformer models...")
-        download_transformer_models(max_retries=5)
-        log_info("Transformer models downloaded.")
+        # log_info("Downloading transformer models...")
+        # download_transformer_models(max_retries=5)
+        # log_info("Transformer models downloaded.")
         # Initialize active sessions gauge
         APP_ACTIVE_SESSIONS.set(0)
         
@@ -149,9 +156,13 @@ async def generic_exception_handler(request: Request, exc: Exception):
         content={"detail": "Internal server error. Please try again later."},
     )
 
-# Include our API routes under the /api prefix
+# ----- Register routers -----
+# v1 grouped under /v1/routes
 app.include_router(api_router, prefix="/v1/routes")
 
+# v2 REST + WebSocket endpoints (clean versioned paths)
+app.include_router(design_v2_router, prefix="/v2/design")
+app.include_router(notifications_router, prefix="/v2")
 
 @app.get("/metrics", dependencies=[Depends(authenticate_metrics)])
 async def default_metrics():

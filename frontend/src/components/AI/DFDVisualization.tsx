@@ -2619,7 +2619,7 @@ const DFDVisualization: React.FC<DFDVisualizationProps> = ({ dfdData, reactFlowI
             style={{ overflowX: 'hidden' }} // Removed fixed marginLeft to prevent diagram being cut off
           >
             {/* Minimap toggle button - positioned near the minimap */}
-            <Panel position="bottom-right" className="mr-2 mb-2">
+            <Panel position="bottom-left" className="ml-2 mb-2">
               <button
                 onClick={toggleMinimap}
                 className="minimap-toggle-button"
@@ -2646,7 +2646,10 @@ const DFDVisualization: React.FC<DFDVisualizationProps> = ({ dfdData, reactFlowI
                   backgroundColor: '#f8f9fb',
                   border: '1px solid rgba(124, 101, 246, 0.2)',
                   borderRadius: '6px',
-                  zIndex: 5
+                  zIndex: 5,
+                  position: 'absolute',
+                  bottom: '10px',
+                  left: '10px'
                 }}
                 maskColor="rgba(124, 101, 246, 0.07)"
               />
