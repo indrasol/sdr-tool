@@ -12,7 +12,7 @@ app = FastAPI()
 router = APIRouter()
 
 @router.get("/authenticate")
-async def authenticate_user(token: str = Header(None)):
+async def authenticate_user(authorization: str = Header(None, alias="Authorization")):
     """
     Get authenticated user based on JWT token.
     
@@ -26,7 +26,7 @@ async def authenticate_user(token: str = Header(None)):
         HTTPException: If authentication fails
     """
     try:
-        return await verify_token(token)
+        return await verify_token(authorization)
     except Exception as e:
         # Catch any unexpected exceptions, log them, and return a generic error
         log_info(f"Unexpected error in authenticate_user: {str(e)}")

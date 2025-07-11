@@ -1,4 +1,25 @@
-import React, { useEffect, useState, useRef, useCallback, useMemo } from 'react';
+/**
+ * 🚨 DEPRECATED: Legacy ModelWithAI v1
+ * 
+ * This is the legacy v1 flow that has been replaced by ModelWithAI_v2.tsx
+ * The v1 flow is kept for backward compatibility only.
+ * 
+ * ✅ CURRENT: Use ModelWithAI_v2.tsx for all new development
+ * ⚠️ DEPRECATED: This file (ModelWithAI.tsx) is legacy
+ * 
+ * Key improvements in v2:
+ * - Fixed double AI bubble responses
+ * - Enhanced icon resolution with 1000+ diverse icons
+ * - Improved hierarchical layout algorithms
+ * - Better error handling and state management
+ * - Cleaner architecture and performance optimizations
+ * 
+ * Route mapping:
+ * - /model-with-ai → ModelWithAI_v2.tsx (current)
+ * - /model-with-ai-legacy → ModelWithAI.tsx (this deprecated file)
+ */
+
+import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import Layout from '@/components/layout/Layout';
 import { useToast } from '@/hooks/use-toast';
 import { useNavigate, useLocation, useParams } from 'react-router-dom';
@@ -34,9 +55,12 @@ import { getAuthHeaders, BASE_API_URL, fetchWithTimeout, DEFAULT_TIMEOUT } from 
 import { debounce } from 'lodash';
 import { createLayerContainers, determineNodeLayer, getLayerStyle, DEFAULT_NODE_WIDTH, DEFAULT_NODE_HEIGHT, LABEL_EXTRA_HEIGHT, LAYER_CONTAINER_PADDING, LAYER_EXTRA_BOTTOM_PADDING } from '@/components/AI/utils/layerUtils';
 import LayerGroupNode from '@/components/AI/LayerGroupNode';
-import { mapNodeTypeToIcon } from '@/components/AI/utils/mapNodeTypeToIcon'; // Add import for mapNodeTypeToIcon
 import { captureDiagramImage } from '@/utils/diagramUtils';
 import projectService from '@/services/projectService';
+import { DiagramStyleProvider } from '@/components/AI/contexts/DiagramStyleContext';
+import SketchFilters from '@/components/AI/styles/SketchFilters';
+import StyleToggle from '@/components/AI/components/StyleToggle';
+import { resolveIcon } from '@/components/AI/utils/enhancedIconifyRegistry';
 
 
 // Interface for proper TypeScript support
@@ -287,27 +311,31 @@ const ModelWithAI = () => {
     
     // Add additional check for missing icons/styling and fix if needed
     const enhancedNodes = processedRegularNodes.map(node => {
-      // If node doesn't have explicit icon data but has a nodeType, add the icon URL
-      if (!node.data.iconUrl && node.data.nodeType) {
-        // Check if we can get an icon URL for this node type
-        const iconUrl = mapNodeTypeToIcon(node.data.nodeType);
-        
-        if (iconUrl) {
-          // Store the icon URL directly in node data rather than creating a renderer
-          node.data.iconUrl = iconUrl;
-          console.log(`Added missing iconUrl for node ${node.id} (${node.data.nodeType})`);
-        }
-      }
+      // CRITICAL FIX: Enhanced icon resolution for diverse node icons
+      const nodeType = node.data?.nodeType || node.type || 'default';
+      
+      // Always resolve icon using enhanced registry for consistent icon assignment
+      const resolvedIconId = resolveIcon(nodeType);
+      
+      // Set both iconifyId and ensure it's available in node data
+      const enhancedData = {
+        ...node.data,
+        iconifyId: resolvedIconId,
+        nodeType: nodeType, // Ensure nodeType is always available
+      };
+      
+      // Log icon assignment for debugging
+      console.log(`Icon assignment for node ${node.id} (${nodeType}): ${resolvedIconId}`);
       
       // Ensure all nodes have the standard callbacks
-      if (!node.data.onEdit) {
-        node.data.onEdit = handleEditNode;
+      if (!enhancedData.onEdit) {
+        enhancedData.onEdit = handleEditNode;
       }
-      if (!node.data.onDelete) {
-        node.data.onDelete = handleDeleteNode;
+      if (!enhancedData.onDelete) {
+        enhancedData.onDelete = handleDeleteNode;
       }
-      if (!node.data.onLock) {
-        node.data.onLock = (id: string) => {
+      if (!enhancedData.onLock) {
+        enhancedData.onLock = (id: string) => {
           setNodes(nds => nds.map(n => n.id === id ? { ...n, data: { ...n.data, pinned: !(n.data?.pinned === true) } } : n));
           // trigger layout if node unlocked
           if (!isLayouting) {
@@ -320,7 +348,10 @@ const ModelWithAI = () => {
         };
       }
       
-      return node;
+      return {
+        ...node,
+        data: enhancedData
+      };
     });
     
     // Assign incremental animation delays for cinematic reveal (120ms steps)
@@ -1707,14 +1738,11 @@ const applyBackendPositioning = useCallback((nodes: Node[]): Node[] => {
         });
       }
   
-      // 3. Prepare nodes to add with LR flow positioning hints
-      const basicNodesToAdd = nodesToAdd.map((node, index) => ({
+      // 3. Prepare nodes to add with NO predetermined positions - let ELK handle all positioning
+      const basicNodesToAdd = nodesToAdd.map((node) => ({
         id: node.id,
         type: 'default',
-        position: node.position || { 
-          x: 400 + (index * 160), // Horizontal spacing for LR flow
-          y: 100 + (index * 140)  // Vertical spread within layer
-        }, 
+        position: { x: 0, y: 0 }, // Let ELK determine optimal positions
         data: {
           label: node.data?.label || node.id || 'Node',
           description: node.data?.description || '',
@@ -1768,7 +1796,7 @@ const applyBackendPositioning = useCallback((nodes: Node[]): Node[] => {
       const finalNodesListPrepared = prepareNodesForDiagram(finalNodesListUnprepared, finalEdgesList);
   
       // 7. Run ELK layout BEFORE touching state to avoid initial clutter
-      console.log('Running ELK layout before rendering…');
+      console.log('Running ELK layout for optimal hierarchical positioning…');
       let layoutedNodes: Node[] = finalNodesListPrepared;
       let layoutedEdges: any[] = finalEdgesList;
       try {
@@ -1779,8 +1807,9 @@ const applyBackendPositioning = useCallback((nodes: Node[]): Node[] => {
         });
         layoutedNodes = layoutRes.nodes as Node[];
         layoutedEdges = layoutRes.edges as any[];
+        console.log('ELK layout applied successfully - nodes positioned hierarchically');
       } catch (err) {
-        console.warn('ELK layout failed, falling back to un-layouted positions', err);
+        console.warn('ELK layout failed, falling back to basic positioning', err);
       }
   
       // 8. Generate or update layer containers based on layouted nodes
@@ -1797,39 +1826,10 @@ const applyBackendPositioning = useCallback((nodes: Node[]): Node[] => {
       setIsLayouting(false);
       setDiagramReady(true);
   
-      // 11. Auto-apply layout and fit view for initial architecture generation
-      if (isInitialGeneration && nodesToAdd.length > 0) {
-        console.log('Auto-applying layout and fit view for initial architecture generation');
-        
-        // Apply layout and fit view after the nodes are rendered
-        setTimeout(() => {
-          console.log('Applying auto-arrange for initial generation');
-          applyLayoutRef.current(); // Use ref to avoid dependency issues
-          
-          // Apply fit view after layout is complete
-          setTimeout(() => {
-            if (mainReactFlowInstance.current) {
-              console.log('Applying auto-fit view for initial generation');
-              mainReactFlowInstance.current.fitView({ 
-                padding: 0.2, 
-                duration: 500, // Smooth animation for better UX
-                includeHiddenNodes: false 
-              });
-            }
-          }, 1000); // Wait longer to ensure layout is fully applied
-        }, 600); // Wait for nodes to be rendered
-        
-        // Show success message for initial generation
-        setTimeout(() => {
-          toast({
-            title: 'Architecture Generated',
-            description: 'Your architecture has been generated and automatically arranged for optimal viewing.',
-            duration: 4000,
-          });
-        }, 1500); // Show after layout is complete
-      }
+      // 11. REMOVED CONFLICTING LAYOUT SCHEDULING - No additional layout calls needed
+      // The ELK layout above already provides optimal hierarchical positioning
       
-      console.log('Architecture response processed successfully with LR flow positioning');
+      console.log('Architecture response processed successfully with hierarchical ELK positioning');
     },
     [setNodes, setEdges, prepareNodesForDiagram, processEdges, handleEditNode, handleDeleteNode, 
      setIsLayouting, nodes, edges, updateExistingLayerContainers, applyBackendPositioning, 
@@ -2403,8 +2403,10 @@ const applyBackendPositioning = useCallback((nodes: Node[]): Node[] => {
   }, [isResizingChat, handleResizeChat, stopResizingChat]);
 
   return (
-    <Layout>
-      <div className="fixed top-16 left-0 right-0 bottom-0 overflow-hidden flex flex-col mt-2">
+    <DiagramStyleProvider>
+      <Layout>
+        <SketchFilters />
+        <div className="fixed top-16 left-0 right-0 bottom-0 overflow-hidden flex flex-col mt-2">
         <div className="flex h-full w-full">
           <div
             className={`${styles.resizablePanel} ${isResizingChat ? styles.resizing : ''} ${isChatCollapsed ? styles.collapsedPanel : ''}`}
@@ -2616,6 +2618,7 @@ const applyBackendPositioning = useCallback((nodes: Node[]): Node[] => {
         )}
       </div>
     </Layout>
+    </DiagramStyleProvider>
   );
 };
 

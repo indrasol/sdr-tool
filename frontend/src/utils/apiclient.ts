@@ -1,4 +1,5 @@
 import tokenService from '../services/tokenService';
+import { toast } from 'sonner';
 
 // Base API URL
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000/api';
@@ -31,9 +32,13 @@ const handleResponse = async (response: Response) => {
 
   // Handle authentication errors specifically
   if (response.status === 401) {
-    // Clear auth data and redirect to login if token expired or invalid
+    // Show friendly token expiry message then clear auth and redirect
+    toast.error('Token expired. Could you please login again and resume your work');
     tokenService.clearAuth();
-    window.location.href = '/';
+    // give slight delay to allow toast to render
+    setTimeout(() => {
+      window.location.href = '/';
+    }, 1000);
   }
 
   throw new Error(errorMessage);

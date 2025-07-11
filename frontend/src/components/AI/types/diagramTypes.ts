@@ -51,8 +51,23 @@ export interface AIFlowDiagramProps {
   onComment?: () => void;
   onGenerateReport?: () => string;
   onSave?: () => void;
-  onLayout?: () => void; // New prop for layout functionality
+  onLayout?: (options: {
+    direction: 'LR' | 'TB' | 'BT' | 'RL';
+    engine: 'auto' | 'elk' | 'dagre' | 'basic';
+    enablePerformanceMonitoring: boolean;
+  }) => void; // Enhanced layout functionality
   isLayouting?: boolean; // New prop for tracking layout state
+  lastLayoutResult?: {
+    engineUsed: string;
+    executionTime: number;
+    qualityScore: number;
+    success: boolean;
+    complexityMetrics?: {
+      nodeCount: number;
+      edgeCount: number;
+      complexityScore: number;
+    };
+  }; // Layout result for feedback
   reactFlowInstanceRef?: React.MutableRefObject<any>; // Reference to the ReactFlow instance
   projectId?: string; // Project ID to display
   diagramRef?: React.RefObject<HTMLDivElement>; // Reference to diagram container for image capture

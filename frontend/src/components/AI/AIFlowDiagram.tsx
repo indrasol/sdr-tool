@@ -27,12 +27,12 @@ import { useToast } from '@/hooks/use-toast';
 import { ThreatItem } from '@/interfaces/aiassistedinterfaces';
 import ThreatPanel from './ThreatPanel';
 import RemoteSvgIcon from './icons/RemoteSvgIcon';
-import { mapNodeTypeToIcon } from '../AI/utils/mapNodeTypeToIcon';
 import LayerGroupNode from './LayerGroupNode';
 import { createLayerContainers } from './utils/layerUtils';
-import MermaidCanvas from './MermaidCanvas';
+import MermaidCanvas, { MermaidCanvasRef } from './MermaidCanvas';
 import { fetchDataFlow, fetchFlowchart } from '@/services/dataFlowService';
 import { DataFlowRequest } from '@/types/dataFlowTypes';
+import { useTheme } from '@/contexts/ThemeContext';
 
 // Helper function to check if two arrays of nodes or edges are deeply equal by comparing their essential properties
 const areArraysEqual = (arr1: any[], arr2: any[], isNodes = true) => {
@@ -91,9 +91,13 @@ const AIFlowDiagram: React.FC<AIFlowDiagramProps> = ({
   onSave,
   onLayout,
   isLayouting: externalIsLayouting,
+  lastLayoutResult,
   reactFlowInstanceRef,
   projectId,
 }): React.ReactNode => {
+  // Add theme hook
+  const { theme } = useTheme();
+  
   // Add a ref for the diagram container to capture it as an image
   const diagramContainerRef = useRef<HTMLDivElement>(null);
   
@@ -146,27 +150,28 @@ const AIFlowDiagram: React.FC<AIFlowDiagramProps> = ({
     layerGroup: LayerGroupNode,
   }), []);
 
-  // Default edge options
+  // Default edge options with theme-aware styling
   const defaultEdgeOptions = useMemo(() => ({
     type: 'smoothstep',
     markerEnd: {
       type: MarkerType.ArrowClosed,
       width: 12, 
       height: 12,
-      color: '#333',
+      color: theme === 'dark' ? '#e5e7eb' : '#333',
     },
     style: {
       strokeWidth: 1.5,
-      stroke: '#333',
+      stroke: theme === 'dark' ? '#e5e7eb' : '#333',
     },
     animated: false,
     pathOptions: {
       curvature: 0.1, // Minimal curvature
       offset: 0
     }
-  }), []);
+  }), [theme]);
 
   const reactFlowInstance = useRef(null);
+  const mermaidCanvasRef = useRef<MermaidCanvasRef>(null);
   const [didFitView, setDidFitView] = useState(false);
 
   // Use ReactFlow hooks to manage nodes and edges with stabilized initial values
@@ -372,59 +377,46 @@ const AIFlowDiagram: React.FC<AIFlowDiagramProps> = ({
     };
   }, []);
 
-  // Improved node change handler for better dragging performance
+  // CRITICAL FIX: Simplified node change handler that prevents layout flicker
   const handleNodesChange = useCallback((changes) => {
-    // First, directly apply changes to update node positions immediately for smooth UI
+    // Apply changes immediately for smooth UI
     onNodesChange(changes);
     
-    // NOTE: We intentionally skip reacting to "dimensions" change events because they are
-    // emitted every render for many nodes (especially layer containers). Reacting to them by
-    // rebuilding layer containers creates an infinite update loop which floods the console and
-    // causes visible flicker. Refresh layer containers is now triggered only after explicit
-    // user-driven actions such as drag-end, layout, or other deliberate updates.
-    
-    // Gather IDs of nodes whose position is being changed
-    const movedNodeIds = new Set(
-      changes
-        .filter(change => change.type === 'position')
-        .map(change => change.id)
-    );
-    
-    // Find drag-related change by inspecting the changes array
+    // CRITICAL: Only handle essential position changes, ignore dimension changes to prevent flicker
     const positionChanges = changes.filter(change => change.type === 'position');
+    
+    if (positionChanges.length === 0) {
+      return; // No position changes, nothing to do
+    }
+    
+    // Track moved nodes
+    const movedNodeIds = new Set(positionChanges.map(change => change.id));
+    
+    // Detect drag state changes
     const dragStartChange = positionChanges.find(change => change.dragging === true);
     const dragEndChange = positionChanges.find(change => 
       change.dragging === false || change.dragging === undefined
     );
     
     if (dragStartChange && !isDragging.current) {
-      // Drag just started
-      // console.log('Node dragging started');
       isDragging.current = true;
     } else if (dragEndChange && isDragging.current) {
-      // Drag just ended
-      // console.log('Node dragging ended');
-      
-      // Mark affected nodes as pinned
+      // Mark moved nodes as pinned
       setNodes(prevNodes => prevNodes.map(n =>
         movedNodeIds.has(n.id) ? { ...n, data: { ...n.data, pinned: true } } : n
       ));
       
-      // Use a timeout to ensure React Flow internal state is updated first
+      // CRITICAL FIX: Simplified sync after drag ends
       setTimeout(() => {
         isDragging.current = false;
-
-        // Refresh layer containers once after dragging stops to reflect new node placement
-        scheduleContainerRefresh();
-
-        // Only sync back to parent after drag is completely done
-        if (setNodesExternal && nodes.length > 0 && !isUpdatingNodesRef.current) {
-          // console.log('Syncing node positions after drag ended');
+        
+        // Only sync to parent if not updating from parent
+        if (setNodesExternal && !isUpdatingNodesRef.current) {
           setNodesExternal(nodes);
         }
-      }, 100);
+      }, 50); // Reduced timeout for faster response
     }
-  }, [onNodesChange, nodes, setNodesExternal, setNodes, scheduleContainerRefresh]);
+  }, [onNodesChange, nodes, setNodesExternal, setNodes]);
 
   // Use custom hook to manage nodes and their interactions
   const {
@@ -482,37 +474,28 @@ const AIFlowDiagram: React.FC<AIFlowDiagramProps> = ({
     }).filter(Boolean);
   }, []);
 
-  // Handle initial sync of nodes and edges - ONCE only
+  // CRITICAL FIX: Simplified initial sync with validation
   useEffect(() => {
     if (initialRenderRef.current && initialNodes && initialNodes.length > 0) {
-      // console.log('Initial sync of nodes and edges');
-      // First process nodes, passing the initial edges
-      const preparedNodes = prepareNodes(initialNodes, initialEdges);
+      console.log('Initial sync - processing validated nodes and edges');
       
-      // Then process edges
-      const processedEdges = initialEdges && initialEdges.length > 0 
-        ? processEdges(initialEdges) 
-        : [];
+      // Process nodes and edges
+      const preparedNodes = prepareNodes(initialNodes, initialEdges || []);
+      const processedEdges = processEdges(initialEdges || []);
       
-      // Update state
+      // Update state once
       setNodes(preparedNodes);
       setEdges(processedEdges);
       
-      // Store original diagram for toggling
-      originalDiagramRef.current = {
-        nodes: preparedNodes,
-        edges: processedEdges
-      };
+      // Store references
+      originalDiagramRef.current = { nodes: preparedNodes, edges: processedEdges };
+      dataFlowDiagramRef.current = { nodes: [], edges: [] };
       
-      // Create empty data flow diagram (no nodes, no edges)
-      dataFlowDiagramRef.current = {
-        nodes: [],
-        edges: []
-      };
-      
-      // Mark initial render as complete
+      // Mark as complete
       initialRenderRef.current = false;
       hasSyncedInitialData.current = true;
+      
+      console.log(`Initial sync complete: ${preparedNodes.length} nodes, ${processedEdges.length} edges`);
     }
   }, [initialNodes, initialEdges, prepareNodes, processEdges, setNodes, setEdges]);
 
@@ -538,7 +521,11 @@ const AIFlowDiagram: React.FC<AIFlowDiagramProps> = ({
 
   // Handle layout button – delegate to parent component which owns layout
   const handleLayout = useCallback(() => {
-    onLayout?.();
+    onLayout?.({
+      direction: 'LR',
+      engine: 'auto',
+      enablePerformanceMonitoring: true
+    });
   }, [onLayout]);
 
   // Handle connect event
@@ -588,30 +575,23 @@ const AIFlowDiagram: React.FC<AIFlowDiagramProps> = ({
     return '/report';
   };
 
-  // Store the instance of ReactFlow when it's initialized
+  // CRITICAL FIX: Simplified onInit that prevents double layout
   const onInit = useCallback((instance) => {
     reactFlowInstance.current = instance;
-    // If an external ref was provided, update it too
     if (reactFlowInstanceRef) {
       reactFlowInstanceRef.current = instance;
     }
     console.log('ReactFlow instance initialized');
 
-    // Force a fit view after a short delay
+    // Simple fit view without triggering layout
     setTimeout(() => {
       if (reactFlowInstance.current && !didFitView) {
         console.log('Fitting view to diagram content');
         reactFlowInstance.current.fitView({ padding: 0.2 });
         setDidFitView(true);
-        
-        // Apply initial layout if we have multiple nodes
-        if (nodes.length > 1) {
-          console.log('Applying initial layout');
-          handleLayout();
-        }
       }
-    }, 200);
-  }, [didFitView, handleLayout, nodes.length, reactFlowInstanceRef]);
+    }, 100); // Reduced timeout
+  }, [didFitView, reactFlowInstanceRef]);
 
   // handler for toggling data flow diagram view
   const handleToggleSequence = useCallback(async () => {
@@ -963,8 +943,16 @@ const AIFlowDiagram: React.FC<AIFlowDiagramProps> = ({
 
   // Handle zoom in action
   const handleZoomIn = () => {
-    if (reactFlowInstance.current) {
-      reactFlowInstance.current.zoomIn();
+    if (isSequenceActive || isFlowchartActive) {
+      // For sequence/flowchart diagrams, use MermaidCanvas zoom
+      if (mermaidCanvasRef.current) {
+        mermaidCanvasRef.current.zoomIn();
+      }
+    } else {
+      // For ReactFlow diagrams, use ReactFlow zoom
+      if (reactFlowInstance.current) {
+        reactFlowInstance.current.zoomIn();
+      }
     }
     if (onZoomIn) {
       onZoomIn();
@@ -973,8 +961,16 @@ const AIFlowDiagram: React.FC<AIFlowDiagramProps> = ({
 
   // Handle zoom out action
   const handleZoomOut = () => {
-    if (reactFlowInstance.current) {
-      reactFlowInstance.current.zoomOut();
+    if (isSequenceActive || isFlowchartActive) {
+      // For sequence/flowchart diagrams, use MermaidCanvas zoom
+      if (mermaidCanvasRef.current) {
+        mermaidCanvasRef.current.zoomOut();
+      }
+    } else {
+      // For ReactFlow diagrams, use ReactFlow zoom
+      if (reactFlowInstance.current) {
+        reactFlowInstance.current.zoomOut();
+      }
     }
     if (onZoomOut) {
       onZoomOut();
@@ -983,8 +979,16 @@ const AIFlowDiagram: React.FC<AIFlowDiagramProps> = ({
 
   // Handle fit view action
   const handleFitView = () => {
-    if (reactFlowInstance.current) {
-      reactFlowInstance.current.fitView({ padding: 0.2 });
+    if (isSequenceActive || isFlowchartActive) {
+      // For sequence/flowchart diagrams, use MermaidCanvas fit view
+      if (mermaidCanvasRef.current) {
+        mermaidCanvasRef.current.fitView();
+      }
+    } else {
+      // For ReactFlow diagrams, use ReactFlow fit view
+      if (reactFlowInstance.current) {
+        reactFlowInstance.current.fitView({ padding: 0.2 });
+      }
     }
     if (onFitView) {
       onFitView();
@@ -1043,8 +1047,13 @@ const AIFlowDiagram: React.FC<AIFlowDiagramProps> = ({
         edges={edges}
         isDataFlowActive={isSequenceActive}
         isFlowchartActive={isFlowchartActive}
+        onRunThreatAnalysis={handleRunThreatAnalysis}
+        runningThreatAnalysis={runningThreatAnalysis}
+        onLayout={onLayout}
+        isLayouting={effectiveIsLayouting}
+        lastLayoutResult={lastLayoutResult}
       />
-      <div className="flex-1 overflow-hidden relative" ref={diagramContainerRef}>
+      <div className="flex-1 overflow-hidden relative" ref={diagramContainerRef} data-theme={theme}>
         {/* Modern gradient background */}
         <div className="diagram-background"></div>
         <div className="diagram-pattern"></div>
@@ -1079,11 +1088,17 @@ const AIFlowDiagram: React.FC<AIFlowDiagramProps> = ({
             {/* Center welcome message with animation */}
             <div className="w-full h-full flex items-center justify-center">
               <div className="welcome-message px-10 py-8 animate-float-slow" style={{
-                background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.4) 0%, rgba(230, 240, 255, 0.3) 100%)',
+                background: theme === 'dark' 
+                  ? 'linear-gradient(135deg, rgba(31, 41, 55, 0.4) 0%, rgba(55, 65, 81, 0.3) 100%)'
+                  : 'linear-gradient(135deg, rgba(255, 255, 255, 0.4) 0%, rgba(230, 240, 255, 0.3) 100%)',
                 backdropFilter: 'blur(12px)',
-                border: '1px solid rgba(255, 255, 255, 0.4)',
+                border: theme === 'dark' 
+                  ? '1px solid rgba(124, 101, 246, 0.4)'
+                  : '1px solid rgba(255, 255, 255, 0.4)',
                 borderRadius: '20px',
-                boxShadow: '0 15px 35px rgba(124, 101, 246, 0.15), 0 5px 15px rgba(124, 101, 246, 0.1), 0 0 0 1px rgba(124, 101, 246, 0.05)',
+                boxShadow: theme === 'dark'
+                  ? '0 15px 35px rgba(124, 101, 246, 0.25), 0 5px 15px rgba(124, 101, 246, 0.15), 0 0 0 1px rgba(124, 101, 246, 0.1)'
+                  : '0 15px 35px rgba(124, 101, 246, 0.15), 0 5px 15px rgba(124, 101, 246, 0.1), 0 0 0 1px rgba(124, 101, 246, 0.05)',
                 maxWidth: '650px',
                 transform: 'translateZ(0)',
                 overflow: 'hidden',
@@ -1101,19 +1116,21 @@ const AIFlowDiagram: React.FC<AIFlowDiagramProps> = ({
                 }}></div>
                 
                 <div className="welcome-text" style={{
-                  color: '#2d3748',
+                  color: theme === 'dark' ? '#e5e7eb' : '#2d3748',
                   fontSize: '24px',
                   fontWeight: '600',
                   letterSpacing: '-0.01em',
                   lineHeight: '1.4',
                   fontFamily: 'Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
-                  textShadow: '0 1px 1px rgba(255, 255, 255, 0.6)'
+                  textShadow: theme === 'dark' 
+                    ? '0 1px 1px rgba(0, 0, 0, 0.6)'
+                    : '0 1px 1px rgba(255, 255, 255, 0.6)'
                 }}>
                   Design your secure architecture with AI assistance
                 </div>
                 <div style={{
                   marginTop: '16px',
-                  color: '#4a5568',
+                  color: theme === 'dark' ? '#9ca3af' : '#4a5568',
                   fontSize: '16px',
                   lineHeight: '1.5',
                   fontFamily: 'Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
@@ -1130,7 +1147,9 @@ const AIFlowDiagram: React.FC<AIFlowDiagramProps> = ({
                   width: '100px',
                   height: '100px',
                   borderRadius: '50%',
-                  background: 'radial-gradient(circle, rgba(124, 101, 246, 0.15) 0%, rgba(124, 101, 246, 0) 70%)',
+                  background: theme === 'dark'
+                    ? 'radial-gradient(circle, rgba(124, 101, 246, 0.25) 0%, rgba(124, 101, 246, 0) 70%)'
+                    : 'radial-gradient(circle, rgba(124, 101, 246, 0.15) 0%, rgba(124, 101, 246, 0) 70%)',
                   zIndex: -1
                 }}></div>
               </div>
@@ -1145,7 +1164,10 @@ const AIFlowDiagram: React.FC<AIFlowDiagramProps> = ({
                 <Loader2 className="h-8 w-8 animate-spin text-securetrack-purple" />
               </div>
             ) : (
-              <MermaidCanvas code={isSequenceActive ? sequenceMermaid : flowchartMermaid} />
+              <MermaidCanvas 
+                ref={mermaidCanvasRef}
+                code={isSequenceActive ? sequenceMermaid : flowchartMermaid} 
+              />
             )}
           </div>
         ) : (
@@ -1158,7 +1180,13 @@ const AIFlowDiagram: React.FC<AIFlowDiagramProps> = ({
             nodeTypes={nodeTypes}
             defaultEdgeOptions={defaultEdgeOptions}
             onInit={onInit}
-            fitView
+            fitView={false}
+            fitViewOptions={{
+              padding: 0.2,
+              includeHiddenNodes: false,
+              minZoom: 0.1,
+              maxZoom: 1.5
+            }}
             attributionPosition="bottom-right"
             panOnScroll
             zoomOnScroll
@@ -1170,29 +1198,35 @@ const AIFlowDiagram: React.FC<AIFlowDiagramProps> = ({
             style={{ position: 'relative', zIndex: 20 }}
             onNodeClick={viewMode === 'AD' ? onNodeClick : undefined}
             onPaneClick={viewMode === 'AD' ? onPaneClick : undefined}
+            defaultViewport={{ x: 0, y: 0, zoom: 0.8 }}
+            minZoom={0.1}
+            maxZoom={2.0}
           >
             {showMinimap && (
               <MiniMap
                 nodeStrokeColor={(n) => (n.selected ? '#ff0072' : '#7C65F6')}
                 nodeColor={(n) => {
                   const nodeType = n.data?.nodeType;
-                  return nodeType ? '#FF9900' : '#ffffff';
+                  return nodeType ? '#FF9900' : theme === 'dark' ? '#374151' : '#ffffff';
                 }}
                 nodeBorderRadius={8}
                 style={{ 
                   width: 160, 
                   height: 100,
-                  backgroundColor: '#f8f9fb',
-                  border: '1px solid rgba(124, 101, 246, 0.2)',
+                  backgroundColor: theme === 'dark' ? '#1f2937' : '#f8f9fb',
+                  border: `1px solid ${theme === 'dark' ? 'rgba(124, 101, 246, 0.4)' : 'rgba(124, 101, 246, 0.2)'}`,
                   borderRadius: '6px',
-                  zIndex: 5
+                  zIndex: 5,
+                  position: 'absolute',
+                  bottom: '10px',
+                  left: '10px'
                 }}
-                maskColor="rgba(124, 101, 246, 0.07)"
+                maskColor={theme === 'dark' ? 'rgba(124, 101, 246, 0.15)' : 'rgba(124, 101, 246, 0.07)'}
               />
             )}
             
             {/* Minimap toggle button - positioned above the minimap */}
-            <Panel position="bottom-right" className="mr-2 mb-2">
+            <Panel position="bottom-left" className="ml-2 mb-2">
               <button
                 onClick={toggleMinimap}
                 className="minimap-toggle-button"
@@ -1206,10 +1240,14 @@ const AIFlowDiagram: React.FC<AIFlowDiagramProps> = ({
               </button>
             </Panel>
             
-            <Background gap={12} size={1} color="#f8f8f8" />
+            <Background 
+              gap={12} 
+              size={1} 
+              color={theme === 'dark' ? '#374151' : '#f8f8f8'} 
+            />
             
             {/* Add a left-side panel for the Run Threat Analysis button */}
-            {viewMode === 'AD' && (
+            {/* {viewMode === 'AD' && (
               <Panel position="top-left" className="ml-4 mt-3">
                 <button
                   onClick={handleRunThreatAnalysis}
@@ -1229,7 +1267,7 @@ const AIFlowDiagram: React.FC<AIFlowDiagramProps> = ({
                   )}
                 </button>
               </Panel>
-            )}
+            )} */}
             
             {/* Keep the original panel but remove the threat analysis button */}
             <Panel position="top-right" className="flex gap-2">
