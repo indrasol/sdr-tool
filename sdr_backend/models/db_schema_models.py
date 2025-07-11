@@ -168,8 +168,8 @@ class Template(Base):
     # internal PK
     id = Column(Integer, primary_key=True, index=True)
 
-    # user‐facing 4-char alphanumeric ID
-    template_id = Column(String(4), unique=True, nullable=False, index=True)
+    # user‐facing 5-char ID ("T" + 4 digits)
+    template_id = Column(String(5), unique=True, nullable=False, index=True)
 
     # who created it
     tenant_id   = Column(Integer, ForeignKey("tenants.id", ondelete="CASCADE"), nullable=False)

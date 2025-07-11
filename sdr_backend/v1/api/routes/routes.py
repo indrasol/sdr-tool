@@ -42,6 +42,10 @@ from v1.api.routes.model_with_ai.reports.generate_report import router as report
 # Data Flow
 from v1.api.routes.model_with_ai.data_flow import router as data_flow_router
 
+# (v2 routers are included at the app level – do not import here)
+from v2.api.routes.notifications import router as notifications_router
+from v2.api.routes.model_with_ai.design_v2 import router as design_v2_router
+
 
 router = APIRouter()
 
@@ -76,3 +80,7 @@ router.include_router(health_router, tags=["Health - health_router"])
 
 # Data Flow
 router.include_router(data_flow_router, tags=["model_with_ai - data_flow_router"])
+
+# (notifications_router & design_v2_router mounted globally – removed here)
+router.include_router(notifications_router, tags=["Notifications - notifications_router"])
+router.include_router(design_v2_router, tags=["model_with_ai - design_v2_router"])

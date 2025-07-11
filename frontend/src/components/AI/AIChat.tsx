@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import ChatTabs from './ChatTabs';
 import MessageList from './MessageList';
 import ChatInput from './ChatInput';
@@ -9,6 +9,7 @@ import { WallpaperOption } from './types/chatTypes';
 import ThinkingDisplay from './ThinkingDisplay'
 import { X } from 'lucide-react';
 import SpeechOverlay from './SpeechOverlay';
+import { useTheme } from '@/contexts/ThemeContext';
 
 export interface Message {
   role: 'user' | 'assistant';
@@ -54,6 +55,45 @@ interface ChatSession {
   messages: Message[];
 }
 
+const CHAT_KEY = 'chatHistory';
+// Roughly 4 MB – browsers usually allow a bit more, but this is safe across vendors.
+const MAX_BYTES = 4 * 1024 * 1024;
+
+const stripHeavyFields = (history: ChatSession[]): ChatSession[] => {
+  // Remove diagramState (and any other heavy fields) before persisting to LS
+  return history.map(s => ({
+    ...s,
+    messages: s.messages.map(m => {
+      const { diagramState, ...rest } = m as any;
+      return rest;
+    })
+  }));
+};
+
+const safePersistHistory = (history: ChatSession[]) => {
+  try {
+    const lightHistory = stripHeavyFields(history);
+    const json = JSON.stringify(lightHistory);
+    if (json.length > MAX_BYTES) {
+      // Retain most recent sessions until under limit
+      let trimmed = [...lightHistory];
+      while (json.length > MAX_BYTES && trimmed.length > 1) {
+        trimmed.pop();
+      }
+      localStorage.setItem(CHAT_KEY, JSON.stringify(trimmed));
+    } else {
+      localStorage.setItem(CHAT_KEY, json);
+    }
+  } catch (e: any) {
+    if (e?.name === 'QuotaExceededError') {
+      console.warn('chatHistory quota exceeded – clearing stored history');
+      try { localStorage.removeItem(CHAT_KEY); } catch (_) {}
+    } else {
+      console.error('Failed to persist chatHistory', e);
+    }
+  }
+};
+
 const AIChat: React.FC<AIChatProps> = ({ 
   messages, 
   onSendMessage, 
@@ -70,6 +110,7 @@ const AIChat: React.FC<AIChatProps> = ({
   showSuggestion = false,
   onCloseSuggestion = () => {}
 }) => {
+  const { theme } = useTheme();
   const [activeTab, setActiveTab] = useState<'guardian' | 'history'>('guardian');
   const [chatHistory, setChatHistory] = useState<ChatSession[]>([]);
   const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
@@ -271,7 +312,7 @@ const AIChat: React.FC<AIChatProps> = ({
         
         // Save updated chat history
         setChatHistory(updatedChatHistory);
-        localStorage.setItem('chatHistory', JSON.stringify(updatedChatHistory));
+        safePersistHistory(updatedChatHistory);
         
         // Update prev state for future comparisons
         setPrevDiagramState(currentDiagramState);
@@ -282,7 +323,7 @@ const AIChat: React.FC<AIChatProps> = ({
   // Load chat history from localStorage on component mount (only if not using backend history)
   useEffect(() => {
     if (!useBackendHistory) {
-      const storedHistory = localStorage.getItem('chatHistory');
+      const storedHistory = localStorage.getItem(CHAT_KEY);
       if (storedHistory) {
         try {
           const parsed = JSON.parse(storedHistory);
@@ -329,8 +370,7 @@ const AIChat: React.FC<AIChatProps> = ({
         
         setChatHistory(prev => {
           const updated = [newSession, ...prev];
-          // Save to localStorage
-          localStorage.setItem('chatHistory', JSON.stringify(updated));
+          safePersistHistory(updated);
           return updated;
         });
       } else {
@@ -349,8 +389,7 @@ const AIChat: React.FC<AIChatProps> = ({
               : session
           );
           
-          // Save to localStorage
-          localStorage.setItem('chatHistory', JSON.stringify(updatedHistory));
+          safePersistHistory(updatedHistory);
           return updatedHistory;
         });
       }
@@ -399,7 +438,7 @@ const AIChat: React.FC<AIChatProps> = ({
   const handleClearHistory = () => {
     if (!useBackendHistory) {
       setChatHistory([]);
-      localStorage.removeItem('chatHistory');
+      localStorage.removeItem(CHAT_KEY);
     }
   };
 
@@ -519,14 +558,27 @@ const AIChat: React.FC<AIChatProps> = ({
   };
 
   return (
-    <div className={cn("flex flex-col h-full relative overflow-hidden", currentWallpaper.textClass)}>
-      {/* Add the background with the selected wallpaper */}
-      <div className={cn("absolute inset-0 -z-10", currentWallpaper.bgClass)} />
+    <div className={cn(
+      "flex flex-col h-full relative overflow-hidden", 
+      currentWallpaper.textClass,
+      theme === 'dark' ? 'text-gray-100' : 'text-gray-900'
+    )}>
+      {/* Add the background with the selected wallpaper and theme-aware styling */}
+      <div className={cn(
+        "absolute inset-0 -z-10", 
+        currentWallpaper.bgClass,
+        theme === 'dark' 
+          ? 'bg-gradient-to-b from-gray-900 to-gray-800' 
+          : currentWallpaper.bgClass
+      )} />
       
-      <ChatTabs 
-        activeTab={activeTab} 
-        onTabChange={handleTabChange} 
-      />
+      {/* ChatTabs - Positioned above content with proper z-index */}
+      <div className="relative z-20 flex-shrink-0">
+        <ChatTabs 
+          activeTab={activeTab} 
+          onTabChange={handleTabChange} 
+        />
+      </div>
       
       {/* Speech Recognition Overlay - Positioned relative to this component */}
       {activeTab === 'guardian' && (
@@ -537,83 +589,102 @@ const AIChat: React.FC<AIChatProps> = ({
         />
       )}
       
-      {activeTab === 'guardian' ? (
-        <>
-          <MessageList 
-            messages={messages} 
-            isLoading={isLoading}
-            isThinking={isLoading} 
-            thinking={thinking}
-            isLoadedProject={isLoadedProject}
-          />
-          
-          {/* Show thinking UI when available */}
-          {thinking && thinking.text && (
-            <div className="px-4 pb-2">
-              <ThinkingDisplay 
-                thinking={thinking.text} 
-                hasRedactedThinking={thinking.hasRedactedContent} 
+      {/* Content Area - Below tabs with proper z-index */}
+      <div className="flex-1 min-h-0 relative z-10">
+        {activeTab === 'guardian' ? (
+          <div className="flex flex-col h-full">
+            <MessageList 
+              messages={messages}
+              thinking={thinking}
+              error={error}
+              onRevertToDiagramState={handleRevertToDiagramState}
+            />
+            
+            {/* Chat Input Area - Compact without background wrapper */}
+            <div className={cn(
+              "border-t flex-shrink-0",
+              theme === 'dark' 
+                ? "border-gray-700" 
+                : "border-gray-200"
+            )}>
+              <ChatInput 
+                onSendMessage={onSendMessage} 
+                onGenerateReport={onGenerateReport}
+                onSaveProject={onSaveProject}
+                hasMessages={messages.length > 0}
+                isThinking={Boolean(thinking?.text) || isLoading}
+                projectId={projectId}
+                isLoadedProject={isLoadedProject}
+                onMicrophoneClick={handleMicrophoneClick}
               />
             </div>
-          )}
-          
-          {/* Show error messages when available */}
-          {error && (
-            <div className="mx-4 mb-3 p-3 bg-red-100 text-red-800 rounded-md">
-              {error}
-            </div>
-          )}
-
-          {/* Display suggestion card inside chat interface */}
-          {internalShowSuggestion && internalSuggestion && (
-            <div className="mx-4 mb-3">
-              <div className="bg-gradient-to-r from-blue-50/80 via-indigo-50/80 to-purple-50/80 backdrop-blur-sm rounded-lg shadow-lg p-4 border border-indigo-100/50 relative transition-all duration-300 ease-in-out hover:shadow-indigo-100/30">
-                <button 
-                  onClick={handleCloseSuggestion}
-                  className="absolute top-3 right-3 text-indigo-400 hover:text-indigo-600 transition-colors duration-200"
-                  aria-label="Close suggestion"
-                >
-                  <X size={16} strokeWidth={2.5} />
-                </button>
-                <div className="flex items-start gap-2">
-                  <div className="w-1 h-16 bg-gradient-to-b from-indigo-400 to-purple-400 rounded-full opacity-70"></div>
-                  <div className="flex-1">
-                    <h3 className="text-sm font-semibold text-indigo-700 mb-1.5 flex items-center">
-                      <span className="inline-block w-2 h-2 bg-indigo-400 rounded-full animate-pulse mr-2"></span>
-                      Perhaps you meant:
-                    </h3>
-                    <button
-                      onClick={handleUseSuggestion}
-                      className="text-indigo-600 hover:text-indigo-800 hover:underline text-left w-full text-sm pl-1 transition-all duration-200"
-                    >
-                      {internalSuggestion}
-                    </button>
+            
+            {/* Display suggestion card inside chat interface */}
+            {internalShowSuggestion && internalSuggestion && (
+              <div className="mx-4 mb-3 relative z-30">
+                <div className={cn(
+                  "backdrop-blur-sm rounded-lg shadow-lg p-4 border relative transition-all duration-300 ease-in-out",
+                  theme === 'dark'
+                    ? "bg-gradient-to-r from-blue-900/80 via-indigo-900/80 to-purple-900/80 border-indigo-700/50 hover:shadow-indigo-900/30"
+                    : "bg-gradient-to-r from-blue-50/80 via-indigo-50/80 to-purple-50/80 border-indigo-100/50 hover:shadow-indigo-100/30"
+                )}>
+                  <button 
+                    onClick={handleCloseSuggestion}
+                    className={cn(
+                      "absolute top-3 right-3 transition-colors duration-200",
+                      theme === 'dark'
+                        ? "text-indigo-400 hover:text-indigo-300"
+                        : "text-indigo-400 hover:text-indigo-600"
+                    )}
+                    aria-label="Close suggestion"
+                  >
+                    <X size={16} strokeWidth={2.5} />
+                  </button>
+                  <div className="flex items-start gap-2">
+                    <div className={cn(
+                      "w-1 h-16 rounded-full opacity-70",
+                      theme === 'dark'
+                        ? "bg-gradient-to-b from-indigo-400 to-purple-400"
+                        : "bg-gradient-to-b from-indigo-400 to-purple-400"
+                    )}></div>
+                    <div className="flex-1">
+                      <h3 className={cn(
+                        "text-sm font-semibold mb-1.5 flex items-center",
+                        theme === 'dark' ? "text-indigo-300" : "text-indigo-700"
+                      )}>
+                        <span className={cn(
+                          "inline-block w-2 h-2 rounded-full animate-pulse mr-2",
+                          theme === 'dark' ? "bg-indigo-400" : "bg-indigo-400"
+                        )}></span>
+                        Perhaps you meant:
+                      </h3>
+                      <button
+                        onClick={handleUseSuggestion}
+                        className={cn(
+                          "hover:underline text-left w-full text-sm pl-1 transition-all duration-200",
+                          theme === 'dark'
+                            ? "text-indigo-300 hover:text-indigo-200"
+                            : "text-indigo-600 hover:text-indigo-800"
+                        )}
+                      >
+                        {internalSuggestion}
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
-          )}
-          
-          <ChatInput 
-            onSendMessage={onSendMessage} 
-            onGenerateReport={onGenerateReport}
-            onSaveProject={onSaveProject}
-            hasMessages={messages.length > 0}
-            isThinking={isLoading}
+            )}
+          </div>
+        ) : (
+          <ChatHistory 
+            chatHistory={chatHistory}
+            onSelectChat={handleSelectChat}
+            onClearHistory={handleClearHistory}
+            onRevertToDiagramState={handleRevertToDiagramState}
             projectId={projectId}
-            isLoadedProject={isLoadedProject}
-            onMicrophoneClick={handleMicrophoneClick}
           />
-        </>
-      ) : (
-        <ChatHistory 
-          chatHistory={chatHistory}
-          onSelectChat={handleSelectChat}
-          onClearHistory={handleClearHistory}
-          onRevertToDiagramState={handleRevertToDiagramState}
-          projectId={projectId}
-        />
-      )}
+        )}
+      </div>
     </div>
   );
 };

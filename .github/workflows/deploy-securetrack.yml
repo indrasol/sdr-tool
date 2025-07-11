@@ -54,20 +54,18 @@ jobs:
             --push \
             --tag $LOGIN_SERVER/${{ env.IMAGE_NAME }}:latest \
             --tag $LOGIN_SERVER/${{ env.IMAGE_NAME }}:${{ github.sha }} \
+            --file sdr_backend/Dockerfile \
             .
 
-      # 5) Build the Docker image and push to ACR
-      # - name: "Build and push Docker image to ACR"
-      #   run: |
-      #     # Tag format: <loginServer>/<imageName>:<tag>
-      #     ACR_LOGIN_SERVER=$(az acr show --name ${{ env.ACR_NAME }} --query loginServer --output tsv)
-      #     IMAGE_TAG="$ACR_LOGIN_SERVER/${{ env.IMAGE_NAME }}:latest"
+      # 6️⃣  (optional) sanity check – prove D2 is inside the image
+      - name: Smoke-test D2 in container
+        run: |
+          docker run --rm $LOGIN_SERVER/${{ env.IMAGE_NAME }}:latest d2 --version
 
-      #     # Build the image (context is repo root)
-      #     docker build -f Dockerfile -t $IMAGE_TAG .
-
-      #     # Push to ACR
-      #     docker push $IMAGE_TAG
+      # 6.5️⃣  (optional) sanity check – prove d2json tool works
+      - name: Smoke-test d2json tool in container
+        run: |
+          docker run --rm $LOGIN_SERVER/${{ env.IMAGE_NAME }}:latest sh -c "echo 'app { client -> api; api -> db }' | d2json --layout none"
 
       # 6) Deploy the new image to Azure Web App
       - name: "Deploy to Azure Web App"

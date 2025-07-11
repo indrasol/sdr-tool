@@ -164,7 +164,8 @@ def build_flowchart(nodes: List[Dict[str, Any]], edges: List[Dict[str, Any]]) ->
         return " ".join(_format_word(w) for w in parts)
 
     for group_name, group_nodes in groups.items():
-        safe_group = _safe(group_name)
+        # Add suffix to subgraph identifier to avoid conflicts with node identifiers
+        safe_group = _safe(group_name) + "_group"
         pretty_name = _prettify_group(group_name)
         # Render subgraph with a blank header to avoid duplicate labels inside the box
         lines.append(f"  subgraph {safe_group} [\" \" ]")

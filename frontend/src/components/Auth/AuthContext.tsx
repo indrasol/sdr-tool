@@ -38,6 +38,10 @@ interface AuthProviderProps {
 // const BASE_API_URL = import.meta.env.VITE_BASE_API_URL
 // const BASE_API_URL = import.meta.env.VITE_DEV_BASE_API_URL
 
+// Front-end needs the public API key to call protected back-end helper routes
+// (e.g. /get-email). It is injected at build-time via Vite.
+const supabaseApiKey = import.meta.env.VITE_SUPABASE_API_KEY;
+
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
@@ -152,17 +156,18 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       // Step 1: Determine if the identifier is an email or username
       let emailToUse = identifier;
       if (!identifier.includes('@')) {
-        const supabaseKey = import.meta.env.VITE_SUPABASE_SERVICE_KEY
-        console.log("Supabase key:", supabaseKey);
+        console.log("Supabase API key:", supabaseApiKey);
 
-        console.log(import.meta.env.VITE_BASE_API_URL)
         // If no '@' is present, assume it's a username and fetch the email from the backend
         const response = await fetch(`${BASE_API_URL}/get-email`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'X-API-Key': supabaseKey },
+          headers: { 'Content-Type': 'application/json', 'X-API-Key': supabaseApiKey },
           body: JSON.stringify({ username: identifier }),
         });
-        if (!response.ok) throw new Error('Username not found');
+        if (!response.ok) {
+          toast.error('Username not found. Try logging in with your e-mail address.');
+          throw new Error('Username not found');
+        }
         const data = await response.json();
         console.log("Data:", data);
         emailToUse = data.email;
@@ -206,8 +211,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       setIsAuthenticated(true);
       toast.success('Login successful!');
   
-      // Step 4: Navigate to dashboard
-      setTimeout(() => navigate('/dashboard'), 1000);
+      // Step 4: Navigate to organizations page
+      setTimeout(() => navigate('/org'), 1000);
 
     } catch (error: any) {
       console.error('Login error:', error);
@@ -221,33 +226,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       setIsLoading(false);
     }
   };
-
-  // Retry logic to handle transient failure in registration
-  async function retryCleanup(userId: string, retries: number = 3): Promise<void> {
-    for (let attempt = 1; attempt <= retries; attempt++) {
-      try {
-        const response = await fetch(`${BASE_API_URL}/cleanup-auth-user`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "X-API-Key": "your-secret-api-key",
-          },
-          body: JSON.stringify({ user_id: userId }),
-        });
-        if (response.ok) {
-          console.log(`Cleanup successful on attempt ${attempt}`);
-          return;
-        }
-        console.error(`Cleanup attempt ${attempt} failed: ${response.statusText}`);
-      } catch (error) {
-        console.error(`Cleanup attempt ${attempt} failed:`, error);
-      }
-      if (attempt < retries) {
-        await new Promise((resolve) => setTimeout(resolve, 1000 * attempt)); // 1s, 2s, etc.
-      }
-    }
-    throw new Error("Failed to clean up user data after multiple attempts");
-  }
 
   // Register function using Supabase
   const register = async (data: RegisterData): Promise<boolean> => {
@@ -279,6 +257,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         options: {
           data: {
             username: data.name,
+            full_name: data.name,
             tenant_name: data.organizationName,
           }
         }
@@ -289,18 +268,45 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       if (!supabaseUser) throw new Error("User registration failed");
       user_id = supabaseUser.id;  // Store user ID for cleanup if needed
       
-      // Step 3: Get a valid token for API calls
-      let token = authData.session?.access_token;;
-      if (!token) {
-        const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
-          email: data.email,
-          password: data.password,
-        });
-        if (signInError) throw new Error("Registration succeeded but token retrieval failed: " + signInError.message);
-        token = signInData.session?.access_token;
-        if (!token) throw new Error('Unable to retrieve token after registration');
+      // If email confirmation is enabled, Supabase will *not* return a session.
+      // In that case we simply ask the user to verify their e-mail and end here.
+      const supabaseSession = authData.session;
+      if (!supabaseSession) {
+        // Create a pending registration record in our database so the user can log in after e-mail confirmation.
+        try {
+          const pendingResponse = await fetch(`${BASE_API_URL}/register/pending`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'X-API-Key': supabaseApiKey,
+            },
+            body: JSON.stringify({
+              user_id: supabaseUser.id,
+              tenant_name: data.organizationName,
+              email: data.email,
+              username: data.name,
+            }),
+          });
+
+          if (!pendingResponse.ok) {
+            const errorData = await pendingResponse.json();
+            throw new Error(errorData.detail || 'Pending registration failed');
+          }
+        } catch (error: any) {
+          console.error('Pending registration error:', error);
+          toast.error(error.message || 'Registration failed');
+          await supabase.auth.signOut();
+          tokenService.clearAuth();
+          setUser(null);
+          setIsAuthenticated(false);
+          throw error;
+        }
+
+        toast.success('Registration successful! Please confirm your e-mail before logging in.');
+        return true; // Allow navigation to /login
       }
-      console.log("Token:", token);
+
+      const token = supabaseSession.access_token;
       
       // Step 4: Register with backend
       const response = await fetch(`${BASE_API_URL}/register`, {
@@ -339,21 +345,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       console.error('Registration error:', error);
       toast.error(error.message || 'Registration failed');
 
-      // If Supabase auth succeeded but backend failed, trigger cleanup
-      if (user_id) {
-        try {
-          await retryCleanup(user_id);
-          const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY
-          await fetch(`${BASE_API_URL}/cleanup-auth-user`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json", "X-API-Key": supabaseKey },
-            body: JSON.stringify({ user_id: user_id }),
-          });
-        } catch (cleanupError) {
-          console.error("Cleanup failed:", cleanupError);
-          toast.error("Failed to clean up user data. Please contact support.");
-        }
-      }
+      // No additional cleanup required – the user was never inserted into our
+      // application database without first owning a valid JWT.
+
       await supabase.auth.signOut();
       tokenService.clearAuth();
       setUser(null);

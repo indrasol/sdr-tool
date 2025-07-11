@@ -3,8 +3,7 @@ import { useToast } from '@/hooks/use-toast';
 import { addEdge, MarkerType, Node, Edge, XYPosition } from '@xyflow/react';
 import { getNodeShapeStyle, nodeDefaults } from '../utils/nodeStyles';
 import { edgeStyles } from '../utils/edgeStyles';
-import { mapNodeTypeToIcon } from '../utils/mapNodeTypeToIcon';
-import RemoteSvgIcon from '../icons/RemoteSvgIcon';
+import { iconifyRegistry } from '../utils/iconifyRegistry';
 import { CustomNodeData } from '../types/diagramTypes';
 import { DEFAULT_NODE_WIDTH, DEFAULT_NODE_HEIGHT } from '../utils/layerUtils';
 
@@ -82,7 +81,11 @@ export function useDiagramNodes(
   initialEdges: Edge[] = [],
   externalSetNodes = null,
   externalSetEdges = null,
-  externalOnLayout: (() => void) | null = null
+  externalOnLayout: ((options?: {
+    direction: 'LR' | 'TB' | 'BT' | 'RL';
+    engine: 'auto' | 'elk' | 'dagre' | 'basic';
+    enablePerformanceMonitoring: boolean;
+  }) => void) | null = null
 ) {
   const { toast } = useToast();
   const [editNodeDialogOpen, setEditNodeDialogOpen] = useState(false);
@@ -147,179 +150,136 @@ export function useDiagramNodes(
         return null;
       }
       
-      // Special case: Preserve sticky notes and comment nodes
-      if (
-        node.type === 'comment' || 
-        node.data?.nodeType === 'stickyNote' || 
-        node.data?.isComment === true ||
-        node.data?.preserveType === 'comment'
-      ) {
-        // Return sticky notes as-is with minimal modifications to preserve their nature
-        const stickyNoteNode = {
+      // CRITICAL FIX: Preserve backend data if it's already validated
+      if (node.data?.validated && node.data?.source === 'backend') {
+        // Use backend-provided iconifyId with enhanced fallback
+        const backendIconifyId = (node.data as any).iconifyId;
+        const nodeType = node.data?.nodeType || node.type || 'application';
+        const fallbackIconifyId = iconifyRegistry[nodeType] || 'mdi:application';
+        const finalIconifyId = backendIconifyId || fallbackIconifyId;
+        
+        // Enhanced logging for debugging
+        console.log(`V2: Enhanced icon processing for ${node.id}:`, {
+          nodeType,
+          backendIconifyId,
+          fallbackIconifyId,
+          finalIconifyId
+        });
+        
+        // Enhanced position logging for debugging layout issues
+        const position = node.position || { x: 0, y: 0 };
+        console.log(`V2: Position for ${node.id}: (${position.x}, ${position.y})`);
+        
+        return {
           ...node,
-          // Ensure type is kept as 'comment'
+          type: 'default',
+          draggable: true,
+          position: position, // Ensure position is properly set
+          data: {
+            ...node.data,
+            iconifyId: finalIconifyId,
+            onEdit: node.data.onEdit || handleEditNode,
+            onDelete: node.data.onDelete || handleDeleteNode,
+            onLock: node.data.onLock || ((id: string) => {
+              if (!externalSetNodes) return;
+              externalSetNodes((nds: Node[]) => nds.map(n => n.id === id ? { ...n, data: { ...n.data, pinned: !(n.data?.pinned === true) } } : n));
+              if (externalOnLayout) externalOnLayout({
+                direction: 'LR',
+                engine: 'auto',
+                enablePerformanceMonitoring: true
+              });
+            }),
+            hasSourceConnection: sourceIds.has(node.id),
+            hasTargetConnection: targetIds.has(node.id),
+          }
+        } as Node<CustomNodeData>;
+      }
+      
+      // Handle comment nodes
+      if (node.type === 'comment' || node.data?.nodeType === 'stickyNote') {
+        return {
+          ...node,
           type: 'comment',
-          // Ensure these properties are preserved
           connectable: false,
           data: {
             ...node.data,
-            // Ensure these critical properties are always present
             nodeType: node.data?.nodeType || 'stickyNote',
             isComment: true,
             excludeFromLayers: true,
-            // Add handlers only if they don't exist
             onEdit: node.data?.onEdit || handleEditNode,
             onDelete: node.data?.onDelete || handleDeleteNode,
           }
-        };
-        return stickyNoteNode as Node<CustomNodeData>;
+        } as Node<CustomNodeData>;
       }
       
-      // Regular node processing
-      // Extract node type and ensure it exists
+      // Regular node processing - simplified
       const nodeType = (node.data?.nodeType || node.type || 'default') as string;
+      const label = node.data?.label || node.id || 'Node';
+      
+      // CRITICAL FIX: Comprehensive label cleaning to prevent URL/base64 corruption
+      let cleanLabel = label;
+      if (typeof label === 'string' && (
+        label.length > 50 || 
+        label.includes('http') || 
+        label.includes('data:') || 
+        label.includes('.svg') || 
+        label.includes('base64') ||
+        label.includes('storage.') ||
+        label.includes('supabase.') ||
+        (label.split('/').length - 1) > 2
+      )) {
+        // Generate clean label from node ID or type
+        const cleanId = (node.id || nodeType || 'Node')
+          .replace(/[-_]/g, ' ')
+          .split(' ')
+          .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+          .join(' ');
+        cleanLabel = cleanId;
+        console.warn(`Fixed corrupted label for node ${node.id}:`, {
+          original: label.substring(0, 100) + '...',
+          cleaned: cleanLabel
+        });
+      }
       
       // Check if this is a client node 
       const isClientNode = () => {
         const nodeTypeStr = nodeType.toLowerCase();
-        const section = nodeTypeStr.split('_')[0];
-        
-        return section === 'client' || 
-              nodeTypeStr.startsWith('client_') ||
-              nodeTypeStr.includes('client') || 
-              nodeTypeStr.includes('mobile_app') ||
-              nodeTypeStr.includes('browser') ||
-              nodeTypeStr.includes('desktop_app') ||
-              nodeTypeStr.includes('iot_device') ||
-              nodeTypeStr.includes('kiosk') ||
-              nodeTypeStr.includes('user_');
+        return nodeTypeStr.includes('client') || nodeTypeStr.includes('user') || 
+               nodeTypeStr.includes('mobile') || nodeTypeStr.includes('browser');
       };
       
-      // Check if the node already has an iconRenderer from toolbar
-      const existingIconRenderer = node.data?.iconRenderer;
+      const iconifyId = (node.data as any).iconifyId || iconifyRegistry[nodeType] || 'mdi:application';
       
-      let iconRenderer = existingIconRenderer;
-      
-      // If no existing iconRenderer, try to create one from the nodeType
-      if (!existingIconRenderer) {
-        // Get icon URL based on node type
-        const iconUrl = mapNodeTypeToIcon(nodeType);
-        
-        // Extract section from node type (e.g., 'network' from 'network_internet')
-        const [section = '', component = ''] = nodeType.split('_');
-        
-        // Check if this is a microservice or application type node
-        const isMicroserviceNode = nodeType.includes('microservice') || component === 'microservice';
-        
-        // Create iconRenderer if we have an icon URL
-        if (iconUrl) {
-          iconRenderer = () => ({
-            component: RemoteSvgIcon,
-            props: { 
-              url: iconUrl, 
-              size: 48,
-              className: `${section}-icon${isMicroserviceNode ? ' microservice-icon' : ''} node-icon-container`
-            },
-            bgColor: 'transparent'
-          });
-        }
-      }
-      
-      // Ensure position is not undefined – use deterministic origin to avoid scattered flash before layout
-      const position = node.position || { x: 0, y: 0 };
-      
-      // Assign safe width/height defaults until React Flow measures the real values
-      const safeWidth = (node.width ?? DEFAULT_NODE_WIDTH);
-      const safeHeight = (node.height ?? DEFAULT_NODE_HEIGHT);
-      
-      // Ensure data object exists and type it
-      const data: Partial<CustomNodeData> = node.data || {};
-      
-      // Extract label from node data or generate from component part of nodeType, ensure it's a string
-      const [section = '', component = ''] = nodeType.split('_');
-      const originalLabel: string = (data.label || 
-                   (component ? component.charAt(0).toUpperCase() + component.slice(1) : 'Node')) as string;
-      
-      // NEW LOGIC: Format the label based on nodeType and originalLabel
-      let formattedLabel = originalLabel;
-      
-      // Only apply the special formatting if both nodeType and originalLabel exist
-      if (nodeType && originalLabel) {
-        // Extract the component name without the category prefix
-        if (component) {
-          // Format the component name to be user-friendly
-          // e.g., "redis_cache" becomes "Redis Cache"
-          const formattedComponent = component
-            .split('_')
-            .map(part => part.charAt(0).toUpperCase() + part.slice(1))
-            .join(' ');
-          
-          // Check if the original label already contains the component name at the start
-          // to avoid duplication like "Redis - Redis - Session Cache"
-          const startsWithComponent = originalLabel.toLowerCase().startsWith(formattedComponent.toLowerCase());
-          
-          // Only apply the formatting if the label doesn't already start with the component name
-          if (!startsWithComponent && formattedComponent.toLowerCase() !== originalLabel.toLowerCase()) {
-            formattedLabel = `${formattedComponent} - ${originalLabel}`;
-          }
-        }
-      }
-      
-      // Check if this is an application or microservice node
-      const isApplicationNode = section === 'application';
-      const isMicroserviceNode = nodeType.includes('microservice') || component === 'microservice';
-      
-      // Check if this node has connections
-      const hasSourceConnection = sourceIds.has(node.id);
-      const hasTargetConnection = targetIds.has(node.id);
-      
-      // Determine if this node should be excluded from layers (client nodes)
-      const shouldExcludeFromLayers = isClientNode();
-      
-      // === NEW: attach onLock toggle callback & keep pinned flag ===
-      const togglePin = (id: string) => {
-        if (!externalSetNodes) return;
-        externalSetNodes((nds: Node[]) => nds.map(n => n.id === id ? { ...n, data: { ...n.data, pinned: !(n.data?.pinned === true) } } : n));
-        // Trigger layout if provided
-        if (externalOnLayout) {
-          externalOnLayout();
-        }
-      };
-
-      // Preserve existing pinned flag (default false)
-      const isPinnedFlag = data.pinned === true;
-      
-      // Always force draggable to be true, never override with false
       return {
         ...node,
-        type: 'default', // Always use our custom node
-        position: position as XYPosition, // Assert position type
-        width: safeWidth,
-        height: safeHeight,
-        dragging: node.dragging || false, // Preserve dragging state if it exists
-        draggable: true, // Always draggable
+        type: 'default',
+        draggable: true,
+        position: node.position || { x: 0, y: 0 },
+        width: node.width ?? DEFAULT_NODE_WIDTH,
+        height: node.height ?? DEFAULT_NODE_HEIGHT,
         data: {
-          ...data,
-          // Preserve existing pinned flag or default
-          pinned: isPinnedFlag,
-          // Add callbacks for edit/delete
-          onEdit: data.onEdit || handleEditNode,
-          onDelete: data.onDelete || handleDeleteNode,
-          // NEW: onLock callback to toggle pinned
-          onLock: data.onLock || togglePin,
-          label: formattedLabel, // Use the newly formatted label
+          ...node.data,
+          label: cleanLabel,
           nodeType: nodeType,
-          section: section,
-          isMicroservice: isMicroserviceNode,
-          iconRenderer: iconRenderer,
-          hasSourceConnection: hasSourceConnection, 
-          hasTargetConnection: hasTargetConnection,
-          excludeFromLayers: shouldExcludeFromLayers || data.excludeFromLayers, // Mark client nodes to exclude from layers
-        } as CustomNodeData, // Assert the final data structure
-        className: node.dragging ? 'dragging' : '',
-      } as Node<CustomNodeData>; // Assert the final node structure
-    }).filter((node): node is Node<CustomNodeData> => node !== null); // Type guard for filter
-  }, [handleEditNode, handleDeleteNode]);
+          onEdit: node.data?.onEdit || handleEditNode,
+          onDelete: node.data?.onDelete || handleDeleteNode,
+          onLock: node.data?.onLock || ((id: string) => {
+            if (!externalSetNodes) return;
+            externalSetNodes((nds: Node[]) => nds.map(n => n.id === id ? { ...n, data: { ...n.data, pinned: !(n.data?.pinned === true) } } : n));
+            if (externalOnLayout) externalOnLayout({
+              direction: 'LR',
+              engine: 'auto',
+              enablePerformanceMonitoring: true
+            });
+          }),
+          iconifyId,
+          hasSourceConnection: sourceIds.has(node.id),
+          hasTargetConnection: targetIds.has(node.id),
+          excludeFromLayers: isClientNode(),
+        }
+      } as Node<CustomNodeData>;
+    }).filter((node): node is Node<CustomNodeData> => node !== null);
+  }, [handleEditNode, handleDeleteNode, externalSetNodes, externalOnLayout]);
 
   // Memoize the results of prepareNodes to prevent recreating nodes on every render
   const preparedNodes = useMemo(() => {
@@ -431,6 +391,7 @@ export function useDiagramNodes(
     
     // Get appropriate styling for this node type
     const nodeTypeStyle = getNodeShapeStyle(nodeType);
+    const iconifyId = iconifyRegistry[normalizedNodeType] || 'mdi:application';
     
     // Define the new node
     const newNode = {
@@ -443,7 +404,7 @@ export function useDiagramNodes(
         onDelete: handleDeleteNode,
         nodeType: normalizedNodeType, // Use normalized type in data as well
         description: `A ${nodeType.toLowerCase()} component`,
-        iconRenderer: iconRenderer, // Include the iconRenderer in node data
+        iconifyId,
         category: nodeCategory,
       },
       style: {

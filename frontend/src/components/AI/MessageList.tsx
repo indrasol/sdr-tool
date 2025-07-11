@@ -1,260 +1,136 @@
-import React, { useRef, useEffect, useState } from 'react';
-import ChatMessage, { Message } from './ChatMessage';
-import EmptyChatState from './EmptyChatState';
-import { motion } from 'framer-motion'
-import { Bot } from 'lucide-react';
-import './MessageList.css'
+import React, { useState, useEffect, useRef } from 'react';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { useTheme } from '@/contexts/ThemeContext';
+import { cn } from '@/lib/utils';
+import MessageBubble from './MessageBubble';
+
+export interface Message {
+  role: 'user' | 'assistant';
+  content: string;
+  isPreExisting?: boolean;
+  timestamp?: string;
+  id?: number;
+  changed?: boolean;
+  diagramState?: {
+    nodes: any[];
+    edges: any[];
+  };
+}
 
 interface MessageListProps {
   messages: Message[];
-  isThinking: boolean;
-  thinking?: { text: string; hasRedactedContent: boolean } | null;
+  thinking?: {
+    text: string;
+    hasRedactedContent: boolean;
+  } | null;
   error?: string | null;
-  isLoading?: boolean;
-  isLoadedProject?: boolean;
+  onRevertToDiagramState?: (messageContent: string, diagramState: any) => void;
 }
 
-const MessageList: React.FC<MessageListProps> = ({ messages, isThinking = false, thinking = null, error = null, isLoading = false, isLoadedProject = false  }) => {
+const MessageList: React.FC<MessageListProps> = ({
+  messages,
+  thinking,
+  error,
+  onRevertToDiagramState
+}) => {
+  const { theme } = useTheme();
+  const [copiedMessageId, setCopiedMessageId] = useState<number | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const processedMessageIds = useRef<Set<number>>(new Set());
-  const containerRef = useRef<HTMLDivElement>(null);
-  const isScrolledToBottom = useRef<boolean>(true);
-  
-  // Track which messages we've already rendered to prevent re-typing
-  const [processedMessages, setProcessedMessages] = useState<Message[]>([]);
 
-  // Scroll to bottom of messages when new messages are added
+  // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
-    if (isScrolledToBottom.current) {
-      setTimeout(() => {
-        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-      }, 100);
-    }
-  }, [messages, processedMessages]);
-  
-  // Track scroll position to determine if we should auto-scroll
-  useEffect(() => {
-    const handleScroll = () => {
-      if (containerRef.current) {
-        const { scrollTop, scrollHeight, clientHeight } = containerRef.current;
-        // Consider "scrolled to bottom" if within 100px of the bottom
-        isScrolledToBottom.current = scrollHeight - scrollTop - clientHeight < 100;
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages, thinking]);
+
+  const handleCopyMessage = async (content: string, messageId?: number) => {
+    try {
+      await navigator.clipboard.writeText(content);
+      if (messageId) {
+        setCopiedMessageId(messageId);
+        setTimeout(() => setCopiedMessageId(null), 2000);
       }
-    };
-    
-    const container = containerRef.current;
-    if (container) {
-      container.addEventListener('scroll', handleScroll);
-      // Check initial scroll position
-      handleScroll();
-      
-      return () => {
-        container.removeEventListener('scroll', handleScroll);
-      };
+    } catch (err) {
+      console.error('Failed to copy message:', err);
     }
-  }, []);
-  
-  // Force scroll to bottom when component mounts
-  useEffect(() => {
-    setTimeout(() => {
-      messagesEndRef.current?.scrollIntoView({ behavior: 'auto' });
-      isScrolledToBottom.current = true;
-    }, 200);
-  }, []);
-
-  // Process new messages to prevent re-typing after revert
-  useEffect(() => {
-    // Process new messages to ensure only unprocessed ones get the typing animation
-    const newProcessedMessages = messages.map(msg => {
-      // Consider a message processed if:
-      // 1. It has preExisting flag
-      // 2. We've seen its ID before
-      // 3. It has isAlreadyTyped flag
-      // 4. It's from a loaded project and is not the most recent message (optimization)
-      const isProcessed = 
-        msg.isPreExisting || 
-        (msg.id !== undefined && processedMessageIds.current.has(msg.id)) ||
-        msg.isAlreadyTyped ||
-        (isLoadedProject && msg.role === 'assistant'); // Make all assistant messages in loaded projects skip typing
-      
-      // Add IDs of processed messages to our tracking set
-      if (msg.id !== undefined) {
-        processedMessageIds.current.add(msg.id);
-      }
-      
-      // Return the message with isAlreadyTyped flag set if it's been processed
-      return {
-        ...msg,
-        isAlreadyTyped: isProcessed
-      };
-    });
-    
-    setProcessedMessages(newProcessedMessages);
-    
-    // Log the processed messages for debugging
-    console.log(`Processed ${newProcessedMessages.length} messages, ${newProcessedMessages.filter(m => m.isAlreadyTyped).length} already typed`);
-  }, [messages, isLoadedProject]);
-
-  // Loading indicator animation variants
-  const loadingVariants = {
-    initial: { opacity: 0, y: 10 },
-    animate: { opacity: 1, y: 0, transition: { duration: 0.3 } },
   };
 
   return (
-    <div ref={containerRef} className="flex-grow overflow-y-auto p-4 space-y-4 messages-container">
-      {messages.length === 0 ? (
-        <EmptyChatState />
-      ) : (
-        processedMessages.map((message, index) => (
-          <ChatMessage 
-            key={`msg-${message.id || index}-${message.role}`} 
-            message={message} 
-            index={index} 
-            isLoadedProject={isLoadedProject} 
-          />
-        ))
-      )}
-      {/* Loading indicator */}
-      {isLoading && (
-        <motion.div 
-          initial="initial"
-          animate="animate"
-          variants={loadingVariants}
-          className="max-w-[65%] mr-auto"
-        >
-          <div className="p-2.5 rounded-xl shadow-sm backdrop-blur-sm text-sm bg-gradient-to-r from-[#f3f3f3] to-[#ffffff] border border-gray-100">
-            <div className="typing-indicator">
-              <span></span>
-              <span></span>
-              <span></span>
+    <div className={cn(
+      "flex-1 overflow-hidden",
+      theme === 'dark' 
+        ? "bg-gradient-to-b from-gray-900/50 to-gray-800/50" 
+        : "bg-gradient-to-b from-gray-50/50 to-white/50"
+    )}>
+      <ScrollArea className="h-full px-4 py-6">
+        <div className="flex flex-col gap-6 max-w-4xl mx-auto">
+          {messages.length === 0 ? (
+            <div className={cn(
+              "flex flex-col items-center justify-center h-64 text-center",
+              theme === 'dark' ? "text-gray-400" : "text-gray-500"
+            )}>
+              <div className={cn(
+                "text-6xl mb-4",
+                theme === 'dark' ? "text-gray-600" : "text-gray-300"
+              )}>
+                💬
+              </div>
+              <h3 className={cn(
+                "text-xl font-semibold mb-2",
+                theme === 'dark' ? "text-gray-300" : "text-gray-600"
+              )}>
+                Start a conversation
+              </h3>
+              <p className={cn(
+                "text-sm max-w-md",
+                theme === 'dark' ? "text-gray-500" : "text-gray-400"
+              )}>
+                Ask questions about your architecture diagram or request modifications. 
+                The AI will help you design secure and robust systems.
+              </p>
             </div>
-          </div>
-          <div className="text-xs mt-1 px-2 text-gray-500 flex items-center gap-1 justify-start">
-            <span className="flex items-center gap-1">
-              <Bot size={14} className="text-securetrack-purple" /> 
-            </span>
-            • {new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
-          </div>
-        </motion.div>
-      )}
-      <div ref={messagesEndRef} />
+          ) : (
+            <>
+              {messages.map((message, index) => (
+                <MessageBubble
+                  key={message.id || index}
+                  role={message.role}
+                  content={message.content}
+                  timestamp={message.timestamp}
+                  onCopy={message.role === 'assistant' ? () => handleCopyMessage(message.content, message.id) : undefined}
+                  copied={copiedMessageId === message.id}
+                />
+              ))}
+              
+              {/* Thinking indicator */}
+              {thinking && (
+                <MessageBubble
+                  role="assistant"
+                  content={thinking.text}
+                  isTyping={true}
+                />
+              )}
+              
+              {/* Error message */}
+              {error && (
+                <div className={cn(
+                  "p-4 rounded-lg border-l-4 border-red-500 mx-4",
+                  theme === 'dark'
+                    ? "bg-red-900/20 text-red-300 border-red-400"
+                    : "bg-red-50 text-red-700 border-red-400"
+                )}>
+                  <div className="font-medium text-sm">Error</div>
+                  <div className="text-sm mt-1 opacity-90">{error}</div>
+                </div>
+              )}
+            </>
+          )}
+          
+          {/* Auto-scroll target */}
+          <div ref={messagesEndRef} />
+        </div>
+      </ScrollArea>
     </div>
   );
 };
 
 export default MessageList;
-// import React, { useRef, useEffect } from 'react';
-// import ChatMessage, { Message } from './ChatMessage';
-// import EmptyChatState from './EmptyChatState';
-// import ThinkingIndicator from './Thinkingindicator';
-// import { ScrollArea } from '@/components/ui/scroll-area';
-// import { Alert, AlertDescription } from '@/components/ui/alert';
-// import ThinkingDisplay from './ThinkingDisplay';
-
-// interface MessageListProps {
-//   messages: Message[];
-//   isThinking?: boolean;
-//   thinking?: { text: string; hasRedactedContent: boolean } | null;
-//   error?: string | null;
-//   isLoadedProject?: boolean; // Add this prop to track if project was loaded
-// }
-
-// const MessageList: React.FC<MessageListProps> = ({ 
-//   messages, 
-//   isThinking = false, 
-//   thinking = null,
-//   error = null,
-//   isLoadedProject = false // Default to false if not provided
-// }) => {
-//   const messagesEndRef = useRef<HTMLDivElement>(null);
-//   const scrollAreaRef = useRef<HTMLDivElement>(null);
-
-//   // Fixed scroll to bottom implementation
-//   useEffect(() => {
-//     if (messagesEndRef.current) {
-//       setTimeout(() => {
-//         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-//       }, 50);
-//     }
-//   }, [messages, isThinking, error, thinking]);
-
-//   // useEffect(() => {
-//   //   console.log("Messages state updated:", messages);
-//   // }, [messages]);
-  
-
-
-//   return (
-//     <div className="flex-grow overflow-hidden relative" style={{ height: 'calc(100vh - 180px)' }}>
-//       <ScrollArea className="h-full pr-1 absolute inset-0" scrollHideDelay={300}>
-//         <div className="p-4 pb-20" ref={scrollAreaRef}>
-//           <div className="flex flex-col space-y-3">
-//             {messages.length === 0 && !isThinking && !error ? (
-//               <EmptyChatState />
-//             ) : (
-//               <>
-//                 {messages.map((message, index) => {
-//                   // Determine if this message should skip the typing animation:
-//                   // 1. If it's explicitly marked as already typed
-//                   // 2. If it's marked as pre-existing
-//                   // 3. If we're loading a project and this isn't the most recent message
-//                   const shouldSkipTyping = 
-//                   message.isAlreadyTyped === true || 
-//                   message.isPreExisting === true || 
-//                   (isLoadedProject && index < messages.length - 1);
-
-//                   // console.log(`Messages inside render : ${message}`)
-//                   // console.log(`Messages already typed : ${message.isAlreadyTyped}`)
-//                   // console.log(`shouldSkipTyping  : ${shouldSkipTyping}`)
-                  
-//                   return (
-//                     <ChatMessage 
-//                       key={index} 
-//                       message={message}
-//                       isLoadedProject={isLoadedProject}
-//                       // message={{
-//                       //   ...message,
-//                       //   isAlreadyTyped: shouldSkipTyping
-//                       // }} 
-//                       index={index} 
-//                     />
-//                   );
-//                 })}
-//               </>
-//             )}
-            
-//             {/* Error message */}
-//             {error && (
-//               <Alert variant="destructive" className="my-2">
-//                 <AlertDescription>{error}</AlertDescription>
-//               </Alert>
-//             )}
-            
-//             {/* Position the thinking indicator within the message flow */}
-//             {isThinking && (
-//               <div className="py-2 mb-4">
-//                 <ThinkingIndicator />
-//               </div>
-//             )}
-            
-//             {/* Thinking content display */}
-//             {thinking && thinking.text && (
-//               <div className="my-2">
-//                 <ThinkingDisplay
-//                   thinking={thinking.text}
-//                   hasRedactedThinking={thinking.hasRedactedContent}
-//                 />
-//               </div>
-//             )}
-            
-//             {/* This invisible element helps with scrolling to the bottom */}
-//             <div ref={messagesEndRef} className="h-4" />
-//           </div>
-//         </div>
-//       </ScrollArea>
-//     </div>
-//   );
-// };
-
-// export default MessageList;

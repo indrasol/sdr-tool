@@ -55,9 +55,15 @@ async def create_project(
     # Check Tenant user access
     check_tenant_access = lambda: supabase.from_("user_tenant_association").select("tenant_id").eq("user_id", current_user["id"]).execute()
     tenant_response = await safe_supabase_operation(check_tenant_access, "Failed to verify tenant access")
-    user_tenant_ids = [item["tenant_id"] for item in tenant_response.data]
 
-    if project.tenant_id not in user_tenant_ids:
+    # Normalise tenant IDs to strings for reliable comparison (Supabase may return ints or strings)
+    user_tenant_ids = {str(item.get("tenant_id")) for item in tenant_response.data}
+    project_tenant_id = str(project.tenant_id)
+
+    if project_tenant_id not in user_tenant_ids:
+        log_info(
+            f"Tenant authorisation failed – project_tenant_id={project_tenant_id}, user_tenant_ids={user_tenant_ids}"
+        )
         raise HTTPException(status_code=403, detail="Not authorized for this tenant")
     
     # Get user info
@@ -67,13 +73,12 @@ async def create_project(
     log_info(f"user : {user_name}")
     log_info(f"tenant_id : {project.tenant_id}")
 
-
-
-    # Optional: Ensure creator matches authenticated user
+    # Ensure the creator matches the authenticated user. If the payload contains a different value,
+    # override it instead of rejecting the request. This prevents false-negative 403 errors caused
+    # by stale or incorrect client-side data while still guaranteeing integrity on the back-end.
     if project.creator != user_name:
-        log_info(f"Creator mismatch: {project.creator} vs {user_name}")
-        
-        raise HTTPException(status_code=403, detail="Creator must match authenticated user")
+        log_info(f"Creator mismatch: payload '{project.creator}' vs authenticated '{user_name}'. Overriding.")
+        project.creator = user_name
 
     try:
         log_info(f"Creating project for user: {current_user}, tenant: {project.tenant_id}")
@@ -86,7 +91,7 @@ async def create_project(
             priority=project.priority,  # Enum object
             created_date=project.created_date,
             due_date=project.due_date,
-            creator=project.creator,
+            creator=user_name,  # Use authenticated username to guarantee consistency
             domain=project.domain,
             template_type=project.template_type,
             imported_file=project.imported_file,
@@ -101,7 +106,7 @@ async def create_project(
             "priority": project.priority,
             "createdDate": project.created_date,
             "dueDate": project.due_date,
-            "creator": project.creator,
+            "creator": user_name,
             "domain": project.domain,
             "templateType": project.template_type,
             "importedFile": project.imported_file,
@@ -532,19 +537,33 @@ async def load_project(
                 user_messages.sort(key=lambda msg: msg.get("id", 0))
             
             # Process each user message and its corresponding assistant response
-            for user_msg in user_messages:
+            for idx, user_msg in enumerate(user_messages):
                 user_content = user_msg.get("content", "")
-                user_id = user_msg.get("id")
-                
-                # Find corresponding assistant message (should be the next message with id = user_id + 1)
-                ai_response = next(
-                    (msg for msg in conversation_history 
-                     if isinstance(msg, dict) and msg.get("role") == "assistant" and msg.get("id") == user_id + 1), 
-                    None
-                )
+                uid = user_msg.get("id")
+
+                # Some older entries may miss id or be non-int; fall back to list order
+                ai_response: dict | None = None
+
+                if isinstance(uid, int):
+                    ai_response = next(
+                        (m for m in conversation_history
+                         if isinstance(m, dict) and m.get("role") == "assistant" and m.get("id") == uid + 1),
+                        None
+                    )
+
+                # Fallback: first assistant message that comes after this user message in list order
+                if ai_response is None:
+                    try:
+                        user_idx = conversation_history.index(user_msg)
+                        for m in conversation_history[user_idx + 1:]:
+                            if isinstance(m, dict) and m.get("role") == "assistant":
+                                ai_response = m
+                                break
+                    except ValueError:
+                        pass
                 
                 if ai_response:
-                    log_info(f"Adding conversation pair: User message {user_id} with AI response {ai_response.get('id')}")
+                    log_info(f"Adding conversation pair: User message {uid} with AI response {ai_response.get('id')}")
                     
                     await session_manager.add_to_conversation(
                         session_id=session_id,
@@ -557,7 +576,7 @@ async def load_project(
                         changed=ai_response.get("changed", False)
                     )
                 else:
-                    log_info(f"No matching assistant response found for user message {user_id}")
+                    log_info(f"No matching assistant response found for user message {uid}")
         
         # Process query-based format (old format)
         elif uses_query_format:

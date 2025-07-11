@@ -1,5 +1,5 @@
 # routers/router.py
-from fastapi import APIRouter, Depends, HTTPException, Body
+from fastapi import APIRouter, Depends, HTTPException, Body, BackgroundTasks
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from models.db_schema_models import User, Tenant, UserTenantAssociation
@@ -12,6 +12,7 @@ from services.auth_handler import verify_token, verify_api_key
 from config.settings import SUPABASE_SECRET_KEY
 from fastapi.security import APIKeyHeader
 from functools import partial
+import asyncio
 
 router = APIRouter()
 
@@ -180,3 +181,102 @@ async def cleanup_auth_user(request_data: dict, api_key: str = Depends(verify_ap
         return {"message": "Auth user deleted successfully"}
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to delete auth user: {str(e)}")
+
+# -----------------------------
+# Helper: cleanup unconfirmed users after 1 h
+# -----------------------------
+
+
+async def _cleanup_unconfirmed_user(user_id: str):
+    """Remove auth and DB records for users who never confirmed e-mail."""
+    # Wait 1 hour (3600 s)
+    await asyncio.sleep(3600)
+
+    supabase_client = get_supabase_client()
+
+    try:
+        # Check if the auth user has confirmed their e-mail yet
+        auth_user_resp = supabase_client.auth.admin.get_user_by_id(user_id)
+        # Different SDK versions expose the field differently; try both.
+        confirmed_at = getattr(auth_user_resp.user, "email_confirmed_at", None)
+        if confirmed_at is None and isinstance(auth_user_resp.user, dict):
+            confirmed_at = auth_user_resp.user.get("email_confirmed_at")
+
+        if confirmed_at:
+            # User confirmed – nothing to do
+            log_info(f"User {user_id} confirmed email. Cleanup not required.")
+            return
+
+        log_info(f"User {user_id} did NOT confirm email within 1 h – cleaning up.")
+
+        # Delete from user_tenant_association first (FK constraint)
+        try:
+            supabase_client.from_("user_tenant_association").delete().eq("user_id", user_id).execute()
+        except Exception:
+            pass
+
+        # Delete from users table
+        try:
+            supabase_client.from_("users").delete().eq("id", user_id).execute()
+        except Exception:
+            pass
+
+        # Delete from auth.users
+        try:
+            supabase_client.auth.admin.delete_user(user_id)
+        except Exception:
+            pass
+    except Exception as e:
+        # Log but do not raise, since this is a background task
+        log_info(f"Cleanup task error for user {user_id}: {str(e)}")
+
+# -----------------------------
+# Pending-registration endpoint
+# -----------------------------
+
+
+@router.post("/register/pending")
+async def register_pending(
+    request_data: RegisterRequest,
+    api_key: str = Depends(verify_api_key),
+):
+    """Create DB records for a user whose e-mail is still unconfirmed.
+
+    Called right after `supabase.auth.signUp()` when no JWT session exists.
+    Protected via the X-API-Key header so only our front-end can call it.
+    """
+    try:
+        log_info("Entered register_pending endpoint")
+
+        # 1) Ensure tenant exists
+        tenant_id = await get_or_create_tenant(request_data.tenant_name)
+
+        # 2) Insert the user row if it doesn't exist yet
+        new_user_data = {
+            "id": request_data.user_id,
+            "username": request_data.username,
+            "email": request_data.email,
+        }
+
+        def insert_user():
+            return supabase.from_("users").upsert(new_user_data).execute()
+
+        await safe_supabase_operation(insert_user, "Failed to insert pending user")
+
+        # 3) Upsert association row
+        def upsert_assoc():
+            return (
+                supabase.from_("user_tenant_association")
+                .upsert({"user_id": request_data.user_id, "tenant_id": tenant_id})
+                .execute()
+            )
+
+        await safe_supabase_operation(upsert_assoc, "Failed to upsert user-tenant association")
+
+        # 4) Schedule cleanup task (detached, won't block server shutdown)
+        asyncio.create_task(_cleanup_unconfirmed_user(request_data.user_id))
+
+        return {"message": "Pending registration stored. Please confirm e-mail within 1 hour."}
+    except Exception as e:
+        log_info(f"Error in register_pending: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Pending registration failed: {str(e)}")
