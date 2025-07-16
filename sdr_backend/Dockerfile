@@ -19,7 +19,7 @@ RUN --mount=type=cache,target=/go-build-cache \
 FROM golang:1.24.4-bookworm AS d2-builder
 ENV CGO_ENABLED=0
 RUN --mount=type=cache,target=/go-build-cache \
-    go install github.com/terrastruct/d2@v0.7.0
+    go install oss.terrastruct.com/d2@v0.7.0
 RUN install -Dm755 /go/bin/d2 /out/d2 
 
 ###############################################################################
