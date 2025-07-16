@@ -41,7 +41,7 @@ WORKDIR /app
 # ---------------------------------------------------------------------------
 RUN apt-get update \
  && apt-get install -y --no-install-recommends \
-      curl tesseract-ocr poppler-utils git ca-certificates \
+      curl tesseract-ocr poppler-utils git ca-certificates make \
  && rm -rf /var/lib/apt/lists/*
 
 
