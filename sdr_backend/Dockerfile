@@ -62,14 +62,14 @@ RUN chmod +x /usr/local/bin/d2json && d2json --help >/dev/null
 # ---------------------------------------------------------------------------
 # Python dependencies
 # ---------------------------------------------------------------------------
-COPY requirements.txt .
+COPY sdr_backend/requirements.txt .
 RUN pip install --upgrade pip \
- && pip install --no-cache-dir -r requirements.txt
+ && pip install --no-cache-dir -r sdr_backend/requirements.txt
 
 # ---------------------------------------------------------------------------
 # Application code
 # ---------------------------------------------------------------------------
-COPY . .
+COPY sdr_backend/ .
 
 # ---------------------------------------------------------------------------
 # Non-root user (optional but recommended)
