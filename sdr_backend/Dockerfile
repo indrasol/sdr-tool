@@ -49,8 +49,6 @@ RUN apt-get update \
 # D2 CLI
 # ---------------------------------------------------------------------------
 RUN curl -fsSL https://d2lang.com/install.sh | sh -s -- \
- && mv "${HOME}/.d2/bin/d2" /usr/local/bin/ \
- && chmod +x /usr/local/bin/d2 \
  && d2 --version     # sanity check during build
 
 
