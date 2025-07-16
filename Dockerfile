@@ -12,9 +12,13 @@ RUN go mod download
 COPY sdr_backend/tools/cmd/d2json/*.go ./
 RUN go build -o /d2json main.go  # Adjust if your entrypoint file is different, e.g., d2json.go
 
+# Copy the rest of the source and build the binary
+COPY sdr_backend/tools/cmd/d2json/*.go ./
+RUN GOOS=linux GOARCH=amd64 go build -ldflags="-s -w" -o /d2json main.go
+
 # ────────── build image ──────────
 # 1) Force amd64 so Azure Web App (x86_64) can run it
-FROM python:3.11-slim AS base
+FROM python:3.11-slim-bookworm AS base
 WORKDIR /app
 
 # Install system deps (including tesseract for OCR, poppler for PDFs, git for potential runtime use)
