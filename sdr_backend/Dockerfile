@@ -1,31 +1,29 @@
 ###############################################################################
-# 1️  Builder stage – compile the d2json helper with Go 1.24
+# 1️⃣  Builder stage – compile d2json helper (unchanged)
 ###############################################################################
 FROM golang:1.24.4-bookworm AS d2json-builder
-
-# Allow the stub compiler to auto-download the real 1.24 toolchain if needed
 ENV GOTOOLCHAIN=auto
-
-# Enable Go’s build cache across layers (faster CI builds)
 RUN mkdir -p /go-build-cache
 ENV GOMODCACHE=/go-build-cache
-
 WORKDIR /src/d2json
-
-# Copy go.mod/go.sum first for better cache hits
 COPY sdr_backend/tools/cmd/d2json/go.* ./
-RUN --mount=type=cache,target=/go-build-cache \
-    go mod download
-
-# Copy the remaining source files and build a static Linux binary
+RUN --mount=type=cache,target=/go-build-cache go mod download
 COPY sdr_backend/tools/cmd/d2json/*.go ./
 RUN --mount=type=cache,target=/go-build-cache \
     CGO_ENABLED=0 GOOS=linux GOARCH=amd64 \
     go build -ldflags="-s -w" -o /out/d2json .
 
+###############################################################################
+# 2️  NEW builder stage – compile the D2 CLI
+###############################################################################
+FROM golang:1.24.4-bookworm AS d2-builder
+ENV CGO_ENABLED=0
+RUN --mount=type=cache,target=/go-build-cache \
+    go install github.com/terrastruct/d2@v0.7.0
+RUN install -Dm755 /go/bin/d2 /out/d2 
 
 ###############################################################################
-# 2️  Runtime stage – slim Python image with D2 + d2json
+# 3  Runtime stage – slim Python image with D2 + d2json
 ###############################################################################
 FROM python:3.11-slim-bookworm
 
@@ -39,32 +37,31 @@ WORKDIR /app
 # ---------------------------------------------------------------------------
 # OS dependencies (OCR, PDF, etc.)
 # ---------------------------------------------------------------------------
-RUN apt-get update \
- && apt-get install -y --no-install-recommends \
-      curl tesseract-ocr poppler-utils git ca-certificates make \
- && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        curl tesseract-ocr poppler-utils git ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
 
 
-# ---------------------------------------------------------------------------
-# D2 CLI
-# ---------------------------------------------------------------------------
-RUN curl -fsSL https://d2lang.com/install.sh | sh -s -- \
- && d2 --version     # sanity check during build
+# ---- Copy pre-built CLIs ----------------------------------------------------
+COPY --from=d2-builder     /out/d2      /usr/local/bin/d2
+COPY --from=d2json-builder /out/d2json  /usr/local/bin/d2json
+RUN  chmod +x /usr/local/bin/d2 /usr/local/bin/d2json \
+ &&  d2 --version && d2json --help >/dev/null
 
 
 # ---------------------------------------------------------------------------
 # d2json helper from builder
 # ---------------------------------------------------------------------------
-COPY --from=d2json-builder /out/d2json /usr/local/bin/d2json
-RUN chmod +x /usr/local/bin/d2json && d2json --help >/dev/null
+# COPY --from=d2json-builder /out/d2json /usr/local/bin/d2json
+# RUN chmod +x /usr/local/bin/d2json && d2json --help >/dev/null
 
 
 # ---------------------------------------------------------------------------
 # Python dependencies
 # ---------------------------------------------------------------------------
-COPY sdr_backend/requirements.txt .
+COPY sdr_backend/requirements.txt ./requirements.txt
 RUN pip install --upgrade pip \
- && pip install --no-cache-dir -r sdr_backend/requirements.txt
+ && pip install --no-cache-dir -r requirements.txt
 
 # ---------------------------------------------------------------------------
 # Application code
@@ -74,8 +71,7 @@ COPY sdr_backend/ .
 # ---------------------------------------------------------------------------
 # Non-root user (optional but recommended)
 # ---------------------------------------------------------------------------
-RUN useradd --create-home --shell /bin/bash app \
- && chown -R app:app /app
+RUN useradd --create-home --shell /bin/bash app && chown -R app:app /app
 USER app
 
 # Add /src to PYTHONPATH so 'from app.config' works
@@ -86,7 +82,7 @@ HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 \
     CMD curl -f http://localhost:8000/docs || exit 1
     
 # FastAPI listens on 8080 inside the container (change if you want)
-EXPOSE 8080
+EXPOSE 8000
 
 # ---------------------------------------------------------------------------
 # Start the API
