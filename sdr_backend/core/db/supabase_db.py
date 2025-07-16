@@ -15,6 +15,8 @@ thread_pool = ThreadPoolExecutor()
 @lru_cache
 def get_supabase_client():
     # http_client = httpx.Client()
+    log_info(f"SUPABASE_PROJECT_URL: {SUPABASE_PROJECT_URL}")
+    log_info(f"SUPABASE_API_KEY: {SUPABASE_API_KEY}")
     supbase: Client = create_client(SUPABASE_PROJECT_URL, SUPABASE_API_KEY)
     return supbase
 
