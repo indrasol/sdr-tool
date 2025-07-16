@@ -71,6 +71,15 @@ export interface AIFlowDiagramProps {
   reactFlowInstanceRef?: React.MutableRefObject<any>; // Reference to the ReactFlow instance
   projectId?: string; // Project ID to display
   diagramRef?: React.RefObject<HTMLDivElement>; // Reference to diagram container for image capture
+  // Toggle functions for diagram views
+  onToggleDataFlow?: () => void;
+  onToggleFlowchart?: () => void;
+  // State for active views
+  isDataFlowActive?: boolean;
+  isFlowchartActive?: boolean;
+  // Threat analysis functionality
+  onRunThreatAnalysis?: () => void;
+  runningThreatAnalysis?: boolean;
 }
 
 // Additional types that might be useful

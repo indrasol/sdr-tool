@@ -1,12 +1,16 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Sparkles, Bell, Calendar } from "lucide-react";
+import { Sparkles, Calendar, RefreshCw } from "lucide-react";
 import { useEffect, useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 
 interface WelcomeCardProps {
   username: string;
+  refreshMetrics?: () => Promise<void>;
+  isLoading?: boolean;
 }
 
-const WelcomeCard = ({ username }: WelcomeCardProps) => {
+const WelcomeCard = ({ username, refreshMetrics, isLoading = false }: WelcomeCardProps) => {
   const [currentTime, setCurrentTime] = useState(new Date());
   
   useEffect(() => {
@@ -49,29 +53,28 @@ const WelcomeCard = ({ username }: WelcomeCardProps) => {
           </div>
         </CardTitle>
         <div className="flex items-center gap-4">
-          <div className="flex items-center text-sm text-muted-foreground">
-            <Calendar className="h-4 w-4 mr-1" />
-            {formattedDate}
-          </div>
-          <div className="relative">
-            <Bell className="h-5 w-5 text-gray-600 hover:text-blue-500 cursor-pointer transition-colors" />
-            <span className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full border-2 border-white"></span>
+          <div className="flex items-center gap-2">
+            <Badge variant="secondary" className="bg-gradient-to-r from-blue-500/20 to-teal-500/20 hover:from-blue-500/30 hover:to-teal-500/30 text-blue-600 border-none px-3 py-1 flex items-center gap-2 shadow-sm">
+              <Calendar className="h-3.5 w-3.5" />
+              <span>{formattedDate}</span>
+            </Badge>
+            {refreshMetrics && (
+              <Badge
+                onClick={refreshMetrics}
+                className={`bg-gradient-to-r from-yellow-400 to-orange-500 hover:from-yellow-500 hover:to-orange-600 text-white border-none px-3 py-1 flex items-center gap-2 shadow-sm cursor-pointer ${isLoading ? 'opacity-70' : ''}`}
+              >
+                <RefreshCw className={`h-3.5 w-3.5 ${isLoading ? 'animate-spin' : ''}`} />
+                <span>Refresh</span>
+              </Badge>
+            )}
           </div>
         </div>
       </CardHeader>
       <CardContent className="relative z-10">
         <div className="flex flex-col md:flex-row md:items-center justify-between">
-          <p className="text-sm text-gray-600 font-medium mb-3 md:mb-0 md:mr-4 max-w-3xl">
-            Welcome to your security dashboard. Your analytics show steady progress in strengthening your security posture.
-            Review your high-priority projects to maintain compliance standards.
-          </p>
-          <div className="flex flex-wrap gap-2 md:flex-shrink-0">
-            <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
-              5 tasks completed
-            </span>
-            <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-amber-100 text-amber-800">
-              3 pending reviews
-            </span>
+          <div className="text-sm text-gray-600 font-medium mb-3 md:mb-0 md:mr-4 max-w-3xl">
+            <p className="mb-1">Welcome to your command center — a bird's eye view of your overall landscape.</p>
+            <p>Your dashboard auto-refreshes every minute, ensuring you always have the latest intelligence at your fingertips.</p>
           </div>
         </div>
       </CardContent>

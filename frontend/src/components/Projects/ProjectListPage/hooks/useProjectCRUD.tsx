@@ -41,6 +41,9 @@ export const useProjectCRUD = () => {
     setIsSubmitting(true);
     
     try {
+      // Get team ID from user context if available
+      const teamId = user?.teamId || undefined;
+      
       // Create project payload
       const createPayload: CreateProjectPayload = {
         name: projectData.name,
@@ -53,6 +56,7 @@ export const useProjectCRUD = () => {
         template_type: projectData.templateType,
         imported_file: projectData.importedFile,
         tenant_id: getTenantId(),
+        team_id: teamId,
         tags: projectData.tags
       };
       

@@ -633,7 +633,7 @@ const SolutionsHub = () => {
 
   return (
     <Layout>
-      <div className="space-y-6 mt-16 font-['Geneva','Segoe UI',sans-serif]">
+      <div className="space-y-6 mt-0 font-['Geneva','Segoe UI',sans-serif]">
         {/* Header Card similar to WelcomeCard */}
         <Card className="col-span-full bg-gradient-to-r from-blue-500/20 via-teal-500/20 to-emerald-500/20 border-none overflow-hidden animate-fade-in shadow-sm hover:shadow-md transition-all duration-300 relative">
           <div className="absolute inset-0 overflow-hidden pointer-events-none">

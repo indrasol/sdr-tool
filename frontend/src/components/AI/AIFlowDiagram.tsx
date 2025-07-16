@@ -1,8 +1,9 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState, forwardRef, useImperativeHandle } from 'react';
 import {
   ReactFlow,
   MiniMap,
   Background,
+  BackgroundVariant,
   useNodesState,
   useEdgesState,
   ReactFlowInstance,
@@ -19,7 +20,6 @@ import EditNodeDialog from './EditNodeDialog';
 import { AIFlowDiagramProps } from './types/diagramTypes';
 import { useDiagramNodes } from './hooks/useDiagramNodes';
 import { edgeStyles } from './utils/edgeStyles';
-import DiagramActions from './DiagramActions';
 import './AIFlowDiagram.css';
 import { AlertTriangle, Loader2, EyeOff, Eye } from 'lucide-react';
 import { runThreatAnalysis } from '@/services/designService';
@@ -72,7 +72,17 @@ const areArraysEqual = (arr1: any[], arr2: any[], isNodes = true) => {
 
 // getLayoutedElements removed – layout is now owned by the parent component
 
-const AIFlowDiagram: React.FC<AIFlowDiagramProps> = ({
+export interface AIFlowDiagramHandle {
+  toggleSequence: () => void;
+  toggleFlowchart: () => void;
+  isSequenceActive: () => boolean;
+  isFlowchartActive: () => boolean;
+  zoomIn: () => void;
+  zoomOut: () => void;
+  fitView: () => void;
+}
+
+const AIFlowDiagram = forwardRef<AIFlowDiagramHandle, AIFlowDiagramProps>(({
   nodes: initialNodes,
   edges: initialEdges,
   setNodes: setNodesExternal,
@@ -94,7 +104,16 @@ const AIFlowDiagram: React.FC<AIFlowDiagramProps> = ({
   lastLayoutResult,
   reactFlowInstanceRef,
   projectId,
-}): React.ReactNode => {
+  // Toggle functions for diagram views
+  onToggleDataFlow,
+  onToggleFlowchart,
+  // State for active views
+  isDataFlowActive,
+  isFlowchartActive,
+  // Threat analysis functionality
+  onRunThreatAnalysis,
+  runningThreatAnalysis: externalRunningThreatAnalysis,
+}, ref): React.ReactNode => {
   // Add theme hook
   const { theme } = useTheme();
   
@@ -106,14 +125,18 @@ const AIFlowDiagram: React.FC<AIFlowDiagramProps> = ({
   const effectiveIsLayouting = externalIsLayouting !== undefined ? externalIsLayouting : internalIsLayouting;
   
   // Add state for data flow diagram toggle
-  const [isSequenceActive, setIsSequenceActive] = useState(false);
+  const [internalIsSequenceActive, setInternalIsSequenceActive] = useState(false);
   const [sequenceMermaid, setSequenceMermaid] = useState<string>('');
   const [isGeneratingSequence, setIsGeneratingSequence] = useState(false);
 
   // State for Mermaid flowchart diagram toggle
-  const [isFlowchartActive, setIsFlowchartActive] = useState(false);
+  const [internalIsFlowchartActive, setInternalIsFlowchartActive] = useState(false);
   const [flowchartMermaid, setFlowchartMermaid] = useState<string>('');
   const [isGeneratingFlowchart, setIsGeneratingFlowchart] = useState(false);
+
+  // Use external state if provided, otherwise use internal state
+  const effectiveIsSequenceActive = isDataFlowActive !== undefined ? isDataFlowActive : internalIsSequenceActive;
+  const effectiveIsFlowchartActive = isFlowchartActive !== undefined ? isFlowchartActive : internalIsFlowchartActive;
 
   const [diagramDirty, setDiagramDirty] = useState(false);
   // Add state to control empty canvas view visibility
@@ -238,7 +261,8 @@ const AIFlowDiagram: React.FC<AIFlowDiagramProps> = ({
 
   // Threat analysis state
   const { toast } = useToast();
-  const [runningThreatAnalysis, setRunningThreatAnalysis] = useState(false);
+  const [internalRunningThreatAnalysis, setInternalRunningThreatAnalysis] = useState(false);
+  const effectiveRunningThreatAnalysis = externalRunningThreatAnalysis !== undefined ? externalRunningThreatAnalysis : internalRunningThreatAnalysis;
   const [threatAnalysisResults, setThreatAnalysisResults] = useState(null);
   const [threats, setThreats] = useState<ThreatItem[]>([]);
   const [selectedThreat, setSelectedThreat] = useState<ThreatItem | null>(null);
@@ -595,7 +619,13 @@ const AIFlowDiagram: React.FC<AIFlowDiagramProps> = ({
 
   // handler for toggling data flow diagram view
   const handleToggleSequence = useCallback(async () => {
-    if (!isSequenceActive) {
+    // Use external toggle function if provided, otherwise use internal logic
+    if (onToggleDataFlow) {
+      onToggleDataFlow();
+      return;
+    }
+
+    if (!effectiveIsSequenceActive) {
       deactivateOtherViews('sequence');
       // about to enable data flow view
       if (diagramDirty || !sequenceMermaid) {
@@ -623,12 +653,19 @@ const AIFlowDiagram: React.FC<AIFlowDiagramProps> = ({
       }
     }
 
-    setIsSequenceActive((prev) => !prev);
-  }, [isSequenceActive, diagramDirty, sequenceMermaid, nodes, edges, projectId, toast]);
+    setInternalIsSequenceActive((prev) => !prev);
+
+  }, [onToggleDataFlow, effectiveIsSequenceActive, diagramDirty, sequenceMermaid, nodes, edges, projectId, toast]);
 
   // NEW: handler for flowchart generation toggle
   const handleToggleFlowchart = useCallback(async () => {
-    if (!isFlowchartActive) {
+    // Use external toggle function if provided, otherwise use internal logic
+    if (onToggleFlowchart) {
+      onToggleFlowchart();
+      return;
+    }
+
+    if (!effectiveIsFlowchartActive) {
       deactivateOtherViews('flowchart');
       if (diagramDirty || !flowchartMermaid) {
         try {
@@ -654,13 +691,14 @@ const AIFlowDiagram: React.FC<AIFlowDiagramProps> = ({
       }
     }
 
-    setIsFlowchartActive((prev) => !prev);
-  }, [isFlowchartActive, diagramDirty, flowchartMermaid, nodes, edges, projectId, toast]);
+    setInternalIsFlowchartActive((prev) => !prev);
+
+  }, [onToggleFlowchart, effectiveIsFlowchartActive, diagramDirty, flowchartMermaid, nodes, edges, projectId, toast]);
 
   // Run threat analysis function
   const handleRunThreatAnalysis = useCallback(async () => {
     try {
-      setRunningThreatAnalysis(true);
+      setInternalRunningThreatAnalysis(true);
       
       // Filter out layerGroup nodes first
       const filteredNodes = nodes.filter(node => node.type !== 'layerGroup');
@@ -719,7 +757,7 @@ const AIFlowDiagram: React.FC<AIFlowDiagramProps> = ({
       console.error('Error running threat analysis:', error);
       // Toast is already handled in the service function
     } finally {
-      setRunningThreatAnalysis(false);
+      setInternalRunningThreatAnalysis(false);
     }
   }, [nodes, edges, toast]);
 
@@ -943,7 +981,7 @@ const AIFlowDiagram: React.FC<AIFlowDiagramProps> = ({
 
   // Handle zoom in action
   const handleZoomIn = () => {
-    if (isSequenceActive || isFlowchartActive) {
+    if (effectiveIsSequenceActive || effectiveIsFlowchartActive) {
       // For sequence/flowchart diagrams, use MermaidCanvas zoom
       if (mermaidCanvasRef.current) {
         mermaidCanvasRef.current.zoomIn();
@@ -961,7 +999,7 @@ const AIFlowDiagram: React.FC<AIFlowDiagramProps> = ({
 
   // Handle zoom out action
   const handleZoomOut = () => {
-    if (isSequenceActive || isFlowchartActive) {
+    if (effectiveIsSequenceActive || effectiveIsFlowchartActive) {
       // For sequence/flowchart diagrams, use MermaidCanvas zoom
       if (mermaidCanvasRef.current) {
         mermaidCanvasRef.current.zoomOut();
@@ -979,7 +1017,7 @@ const AIFlowDiagram: React.FC<AIFlowDiagramProps> = ({
 
   // Handle fit view action
   const handleFitView = () => {
-    if (isSequenceActive || isFlowchartActive) {
+    if (effectiveIsSequenceActive || effectiveIsFlowchartActive) {
       // For sequence/flowchart diagrams, use MermaidCanvas fit view
       if (mermaidCanvasRef.current) {
         mermaidCanvasRef.current.fitView();
@@ -1006,53 +1044,37 @@ const AIFlowDiagram: React.FC<AIFlowDiagramProps> = ({
     }, 3000); // 3 seconds timeout - should be longer than any reasonable drag operation
     
     return () => clearTimeout(safetyTimeout);
-  }, [nodes]); // Run this check whenever nodes change
+  }, [nodes]);   // Run this check whenever nodes change
 
   useEffect(() => {
-    if (!isSequenceActive) {
+    if (!effectiveIsSequenceActive) {
       setDiagramDirty(true);
     }
-  }, [nodes, edges]);
+  }, [nodes, edges, effectiveIsSequenceActive]);
 
   // Helper to reset other diagram views when one is activated
   const deactivateOtherViews = (view: 'sequence' | 'flowchart') => {
     if (view === 'sequence') {
-      setIsFlowchartActive(false);
+      setInternalIsFlowchartActive(false);
     } else if (view === 'flowchart') {
-      setIsSequenceActive(false);
+      setInternalIsSequenceActive(false);
     }
   };
+
+  // Expose imperative handle
+  useImperativeHandle(ref, () => ({
+    toggleSequence: handleToggleSequence,
+    toggleFlowchart: handleToggleFlowchart,
+    isSequenceActive: () => effectiveIsSequenceActive,
+    isFlowchartActive: () => effectiveIsFlowchartActive,
+    zoomIn: handleZoomIn,
+    zoomOut: handleZoomOut,
+    fitView: handleFitView,
+  }), [handleToggleSequence, handleToggleFlowchart, effectiveIsSequenceActive, effectiveIsFlowchartActive, handleZoomIn, handleZoomOut, handleFitView]);
 
   // AIFlowDiagram.tsx
   return (
     <div className="h-full w-full flex flex-col">
-      <DiagramActions
-        viewMode={viewMode}
-        onSwitchView={onSwitchView}
-        onZoomIn={handleZoomIn}
-        onZoomOut={handleZoomOut}
-        onFitView={handleFitView}
-        onCopy={onCopy}
-        onPaste={onPaste}
-        onUndo={onUndo}
-        onRedo={onRedo}
-        onComment={onComment}
-        onToggleDataFlow={handleToggleSequence}
-        onToggleFlowchart={handleToggleFlowchart}
-        onGenerateReport={handleGenerateReport}
-        onSave={handleSave}
-        projectId={projectId || ''}
-        diagramRef={diagramContainerRef}
-        nodes={nodes}
-        edges={edges}
-        isDataFlowActive={isSequenceActive}
-        isFlowchartActive={isFlowchartActive}
-        onRunThreatAnalysis={handleRunThreatAnalysis}
-        runningThreatAnalysis={runningThreatAnalysis}
-        onLayout={onLayout}
-        isLayouting={effectiveIsLayouting}
-        lastLayoutResult={lastLayoutResult}
-      />
       <div className="flex-1 overflow-hidden relative" ref={diagramContainerRef} data-theme={theme}>
         {/* Modern gradient background */}
         <div className="diagram-background"></div>
@@ -1157,7 +1179,7 @@ const AIFlowDiagram: React.FC<AIFlowDiagramProps> = ({
           </div>
         )}
         
-        {isSequenceActive || isFlowchartActive ? (
+        {effectiveIsSequenceActive || effectiveIsFlowchartActive ? (
           <div className="w-full h-full" style={{ position: 'relative', zIndex: 20 }}>
             {isGeneratingSequence || isGeneratingFlowchart ? (
               <div className="w-full h-full flex items-center justify-center">
@@ -1166,7 +1188,7 @@ const AIFlowDiagram: React.FC<AIFlowDiagramProps> = ({
             ) : (
               <MermaidCanvas 
                 ref={mermaidCanvasRef}
-                code={isSequenceActive ? sequenceMermaid : flowchartMermaid} 
+                code={effectiveIsSequenceActive ? sequenceMermaid : flowchartMermaid} 
               />
             )}
           </div>
@@ -1240,10 +1262,12 @@ const AIFlowDiagram: React.FC<AIFlowDiagramProps> = ({
               </button>
             </Panel>
             
-            <Background 
-              gap={12} 
-              size={1} 
-              color={theme === 'dark' ? '#374151' : '#f8f8f8'} 
+            {/* Dotted background – slightly larger dots & theme-aware color for better visibility */}
+            <Background
+              variant={BackgroundVariant.Dots}
+              gap={24}
+              size={2}
+              color={theme === 'dark' ? '#4b5563' : '#c8c8c8'}
             />
             
             {/* Add a left-side panel for the Run Threat Analysis button */}
@@ -1321,7 +1345,7 @@ const AIFlowDiagram: React.FC<AIFlowDiagramProps> = ({
       )}
     </div>
   );
-};
+});
 
 export default AIFlowDiagram;
 

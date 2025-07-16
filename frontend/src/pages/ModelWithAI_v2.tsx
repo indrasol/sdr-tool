@@ -1,13 +1,22 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { useLocation, useParams } from 'react-router-dom';
+
+// TypeScript declarations for Speech Recognition API
+declare global {
+  interface Window {
+    SpeechRecognition: typeof SpeechRecognition;
+    webkitSpeechRecognition: typeof SpeechRecognition;
+  }
+}
 import Layout from '@/components/layout/Layout';
 import { useToast } from '@/hooks/use-toast';
 import { sendDesignGenerateRequest } from '@/services/designService_v2';
 import { DesignGenerateRequestV2, DesignServiceResponseV2, IntentV2, DSLResponse } from '@/interfaces/aiassistedinterfaces_v2';
-import AIFlowDiagram from '@/components/AI/AIFlowDiagram';
+import AIFlowDiagram, { AIFlowDiagramHandle } from '@/components/AI/AIFlowDiagram';
 import { Node, Edge, ReactFlowInstance } from '@xyflow/react';
 import AIChat, { Message } from '@/components/AI/AIChat';
-import FloatingChatInterface from '@/components/AI/FloatingChatInterface';
+import SpeechOverlay from '@/components/AI/SpeechOverlay';
+import { AnimatePresence } from 'framer-motion';
 import { useAuth } from '@/components/Auth/AuthContext';
 import tokenService from '@/services/tokenService';
 import projectService from '@/services/projectService';
@@ -25,6 +34,26 @@ import {
 import { layoutWithEnhancedEngine, LayoutResult } from '@/components/AI/utils/enhancedLayoutEngine';
 import { useTheme } from '@/contexts/ThemeContext';
 import { cn } from '@/lib/utils';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { motion } from 'framer-motion';
+import { 
+  Send, 
+  Mic, 
+  MicOff, 
+  MessageSquare,
+  Save, 
+  Layout as LayoutIcon, 
+  Download, 
+  Maximize, 
+  RefreshCw,
+  Layers,
+  Grid,
+  Zap,
+  ChevronUp,
+  Move
+} from 'lucide-react';
+import DiagramActions from '@/components/AI/DiagramActions';
 
 // CRITICAL FIX: Enhanced edge processing function for proper edge loading and styling
 const processEdges = (edges: Edge[] = [], nodes: Node[] = []): Edge[] => {
@@ -173,6 +202,21 @@ const prepareNodesForDiagram = (inputNodes: Node[], inputEdges: Edge[] = []): No
   return transformedNodes;
 };
 
+// Utility: ensure each node has hasSourceConnection/hasTargetConnection flags based on edges
+const addConnectionFlags = (nodes: Node[], edges: Edge[]): Node[] => {
+  if (!nodes || nodes.length === 0) return nodes;
+  const sourceIds = new Set(edges.map(e => e.source));
+  const targetIds = new Set(edges.map(e => e.target));
+  return nodes.map(n => ({
+    ...n,
+    data: {
+      ...n.data,
+      hasSourceConnection: sourceIds.has(n.id),
+      hasTargetConnection: targetIds.has(n.id),
+    },
+  }));
+};
+
 const ModelWithAI_V2: React.FC = () => {
   const { toast } = useToast();
   const { user } = useAuth();
@@ -187,6 +231,13 @@ const ModelWithAI_V2: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [projectId, setProjectId] = useState<string | undefined>();
+  const [inputValue, setInputValue] = useState('');
+  
+  // Voice mode state
+  const [isVoiceMode, setIsVoiceMode] = useState(false); // retained for compatibility
+  const [isSpeechOverlayOpen, setIsSpeechOverlayOpen] = useState(false);
+  const [isChatVisible, setIsChatVisible] = useState(false);
+  const [isListening, setIsListening] = useState(false); // maintains compatibility with legacy speech logic
   
   // Enhanced layout state management
   const [isLayouting, setIsLayouting] = useState(false);
@@ -195,14 +246,87 @@ const ModelWithAI_V2: React.FC = () => {
   // Track in-flight request so we can cancel it when component unmounts
   const requestCtrlRef = useRef<AbortController | null>(null);
   
+  // Voice recognition refs
+  const recognitionRef = useRef<SpeechRecognition | null>(null);
+  
   // Debounce mechanism to prevent rapid fire messages
   const lastMessageTimeRef = useRef<number>(0);
 
   // Keep a ref to the underlying React Flow instance so we can trigger actions like fitView
   const reactFlowInstanceRef = useRef<ReactFlowInstance | null>(null);
 
-  // REMOVED: Automatic fitView that overrides backend positions
-  // Only trigger fitView when explicitly requested by user, not on every node change
+  // Diagram ref for DiagramActions
+  const diagramRef = useRef<HTMLDivElement>(null);
+
+  // Ref to access AIFlowDiagram imperative API
+  const aiDiagramRef = useRef<AIFlowDiagramHandle | null>(null);
+
+  // Active state for bottom bar buttons
+  const [isDataFlowActive, setIsDataFlowActive] = useState(false);
+  const [isFlowchartActive, setIsFlowchartActive] = useState(false);
+
+  // Collapse state for bottom toolbar
+  const [isToolbarCollapsed, setIsToolbarCollapsed] = useState(false);
+
+  // Persisted chat position (in pixels)
+  const [chatPos, setChatPos] = useState({ x: 0, y: 0 });
+  const chatInputRef = useRef<HTMLDivElement>(null);
+  const [chatRect, setChatRect] = useState<DOMRect | null>(null);
+
+  // Track position of the expanded chat panel so we can also "fit" it back
+  const [chatPanelPos, setChatPanelPos] = useState({ x: 0, y: 0 });
+
+  const resetChatPosition = () => {
+    setChatPos({ x: 0, y: 0 });
+    setChatRect(null);
+    // Also reset the expanded chat panel position
+    setChatPanelPos({ x: 0, y: 0 });
+  };
+
+  // Initialize speech recognition
+  useEffect(() => {
+    if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      recognitionRef.current = new SpeechRecognition();
+      recognitionRef.current.continuous = true;
+      recognitionRef.current.interimResults = true;
+      recognitionRef.current.lang = 'en-US';
+
+      recognitionRef.current.onresult = (event) => {
+        const transcript = Array.from(event.results)
+          .map(result => result[0])
+          .map(result => result.transcript)
+          .join('');
+
+        setInputValue(transcript);
+      };
+
+      recognitionRef.current.onend = () => {
+        setIsListening(false);
+      };
+
+      recognitionRef.current.onerror = (event) => {
+        console.error('Speech recognition error:', event.error);
+        setIsListening(false);
+        toast({
+          title: 'Voice Error',
+          description: 'Failed to recognize speech. Please try again.',
+          variant: 'destructive'
+        });
+      };
+    }
+  }, [toast]);
+
+  // Toggle voice mode
+  const toggleVoiceMode = () => {
+    setIsVoiceMode(!isVoiceMode);
+  };
+
+  // Start/stop voice recognition
+  const toggleListening = () => {
+    // Open the enhanced speech overlay for voice input
+    setIsSpeechOverlayOpen(true);
+  };
 
   // ----------------------------
   //  LOAD PROJECT ON MOUNT
@@ -235,13 +359,12 @@ const ModelWithAI_V2: React.FC = () => {
           
           // CRITICAL FIX: Apply enhanced node preparation with FORCED left-to-right layout
           const enhancedNodes = prepareNodesForDiagram(validatedState.nodes, validatedState.edges);
-          console.log(`✅ V2: Enhanced ${enhancedNodes.length} loaded nodes with left-to-right architecture layout`);
-          
-          // CRITICAL FIX: Process edges for proper loading and styling
           const processedEdges = processEdges(validatedState.edges, enhancedNodes);
+          const nodesWithFlags = addConnectionFlags(enhancedNodes, processedEdges);
+          console.log(`✅ V2: Enhanced ${enhancedNodes.length} loaded nodes with left-to-right architecture layout`);
           console.log(`✅ V2: Processed ${processedEdges.length} edges for proper data flow visualization`);
-          
-          setNodes(enhancedNodes);
+
+          setNodes(nodesWithFlags);
           setEdges(processedEdges);
         }
 
@@ -336,21 +459,31 @@ const ModelWithAI_V2: React.FC = () => {
   };
 
   const setDiagramState = (state: { nodes: Node<any>[]; edges: Edge[] }) => {
-    // CRITICAL FIX: Validate and clean diagram state before setting
-    console.log('🔄 V2: Setting diagram state with FORCED left-to-right layout - raw:', state);
-    const validatedState = validateDiagramState(state);
-    console.log('V2: Setting diagram state - validated:', validatedState);
-    
-    // CRITICAL FIX: Apply enhanced node preparation with FORCED left-to-right layout
-    const enhancedNodes = prepareNodesForDiagram(validatedState.nodes, validatedState.edges);
-    console.log(`✅ V2: Enhanced ${enhancedNodes.length} nodes with left-to-right layout in setDiagramState`);
-    
-    // CRITICAL FIX: Process edges for proper loading and styling
-    const processedEdges = processEdges(validatedState.edges, enhancedNodes);
-    console.log(`✅ V2: Processed ${processedEdges.length} edges for data flow visualization`);
-    
-    setNodes(enhancedNodes);
-    setEdges(processedEdges);
+    try {
+      // CRITICAL FIX: Validate and clean diagram state before setting
+      console.log('🔄 V2: Setting diagram state with FORCED left-to-right layout - raw:', state);
+      const validatedState = validateDiagramState(state);
+      console.log('V2: Setting diagram state - validated:', validatedState);
+
+      // Apply enhanced node preparation with FORCED left-to-right layout
+      const enhancedNodes = prepareNodesForDiagram(validatedState.nodes, validatedState.edges);
+      const processedEdges = processEdges(validatedState.edges, enhancedNodes);
+      const nodesWithFlags = addConnectionFlags(enhancedNodes, processedEdges);
+
+      console.log(`✅ V2: Enhanced ${enhancedNodes.length} nodes with left-to-right layout in setDiagramState`);
+      console.log(`✅ V2: Processed ${processedEdges.length} edges for data flow visualization`);
+
+      setNodes(nodesWithFlags);
+      setEdges(processedEdges);
+    } catch (err) {
+      console.error('Diagram state processing failed', err);
+      toast({
+        title: 'Diagram Error',
+        description: 'Failed to load—reverting to last valid state.',
+        variant: 'destructive',
+      });
+      // On failure we keep previous nodes/edges untouched to avoid blank canvas
+    }
 
     // REMOVED: Automatic fitView - left-to-right layout is already optimally positioned
   };
@@ -374,8 +507,11 @@ const ModelWithAI_V2: React.FC = () => {
       });
 
       if (result.success) {
-        setNodes(result.nodes);
-        setEdges(result.edges);
+        const enhancedNodes = prepareNodesForDiagram(result.nodes, result.edges);
+        const processedEdges = processEdges(result.edges, enhancedNodes);
+        const nodesWithFlags = addConnectionFlags(enhancedNodes, processedEdges);
+        setNodes(nodesWithFlags);
+        setEdges(processedEdges);
         setLastLayoutResult(result);
         
         toast({
@@ -399,9 +535,19 @@ const ModelWithAI_V2: React.FC = () => {
     }
   };
 
+  // Send message (adapted for bottom input)
+  const handleSendMessage = async () => {
+    if (!inputValue.trim()) return;
+    setIsChatVisible(true); // auto-open chat window on send
+    await handleSendMessageInternal(inputValue);
+    setInputValue('');
+  };
 
 
-  const handleSendMessage = async (userText: string) => {
+
+
+
+  const handleSendMessageInternal = async (userText: string) => {
     if (!userText.trim()) return;
 
     // Prevent multiple simultaneous requests
@@ -513,15 +659,14 @@ const ModelWithAI_V2: React.FC = () => {
 
               // CRITICAL FIX: Apply enhanced node preparation with FORCED left-to-right layout
               const enhancedNodes = prepareNodesForDiagram(state.nodes, state.edges);
+              const processedEdges = processEdges(state.edges, enhancedNodes);
+              const nodesWithFlags = addConnectionFlags(enhancedNodes, processedEdges);
               
               console.log(`✅ V2: Enhanced ${enhancedNodes.length} nodes with beautiful left-to-right architecture layout`);
-
-              // CRITICAL FIX: Process edges for proper loading and styling  
-              const processedEdges = processEdges(state.edges, enhancedNodes);
               console.log(`✅ V2: Processed ${processedEdges.length} edges for clear data flow`);
 
               // Set enhanced nodes and processed edges
-              setNodes(enhancedNodes);
+              setNodes(nodesWithFlags);
               setEdges(processedEdges);
               
               // REMOVED: Automatic fitView - left-to-right layout is already optimally positioned
@@ -584,7 +729,7 @@ const ModelWithAI_V2: React.FC = () => {
             console.log('🔄 Auto-retrying with refined prompt...');
             setTimeout(() => {
               const refinedPrompt = `[RETRY] Create a ${userText.toLowerCase()} with simpler, cleaner component names (avoid special characters)`;
-              handleSendMessage(refinedPrompt);
+              handleSendMessage();
             }, 1000);
             
             // Update placeholder message directly
@@ -727,69 +872,369 @@ const ModelWithAI_V2: React.FC = () => {
     };
   }, [user?.id]);
 
+  // Modern action handlers
+  const handleZoomIn = () => {
+    aiDiagramRef.current?.zoomIn();
+  };
+
+  const handleZoomOut = () => {
+    aiDiagramRef.current?.zoomOut();
+  };
+
+  const handleFitView = () => {
+    aiDiagramRef.current?.fitView();
+  };
+
+  const handleExport = () => {
+    // TODO: Implement export functionality
+    toast({
+      title: 'Export',
+      description: 'Export functionality coming soon!',
+    });
+  };
+
+  const handleRefresh = () => {
+    // Refresh the diagram layout
+    handleEnhancedLayout({ 
+      direction: 'LR', 
+      engine: 'auto', 
+      enablePerformanceMonitoring: true 
+    });
+  };
+
+  // DiagramActions handlers
+  const handleGenerateReport = () => {
+    // TODO: Implement report generation
+    toast({
+      title: 'Report Generation',
+      description: 'Report generation functionality coming soon!',
+    });
+  };
+
+  const handleComment = () => {
+    // TODO: Implement comment functionality
+    toast({
+      title: 'Comments',
+      description: 'Comment functionality coming soon!',
+    });
+  };
+
+  const handleSwitchView = (mode: 'AD' | 'DFD') => {
+    if (mode === 'AD') {
+      // DiagramActions already triggered the necessary toggles; just clear local flags
+      setIsDataFlowActive(false);
+      setIsFlowchartActive(false);
+    }
+    // (future) handle DFD switch if needed
+  };
+
+  // Toggle handlers that delegate to AIFlowDiagram via ref
+  const handleToggleDataFlow = () => {
+    if (aiDiagramRef.current) {
+      aiDiagramRef.current.toggleSequence();
+      setIsDataFlowActive(prev => {
+        const next = !prev;
+        if (next) setIsFlowchartActive(false);
+        return next;
+      });
+    }
+  };
+
+  const handleToggleFlowchart = () => {
+    if (aiDiagramRef.current) {
+      aiDiagramRef.current.toggleFlowchart();
+      setIsFlowchartActive(prev => {
+        const next = !prev;
+        if (next) setIsDataFlowActive(false);
+        return next;
+      });
+    }
+  };
+
+  const handleRunThreatAnalysis = () => {
+    // TODO: Implement threat analysis
+    toast({
+      title: 'Threat Analysis',
+      description: 'Threat analysis functionality coming soon!',
+    });
+  };
+
   return (
-    <Layout>
+    <Layout noMargins>
       <DiagramStyleProvider>
         <SketchFilters />
-        {/* Full-viewport workspace (below the fixed header) */}
-        <div className="fixed top-16 left-0 right-0 bottom-0 overflow-hidden flex flex-col mt-2">
-          {/* Full-width Diagram */}
-          <div className={cn(
-            "flex-1 relative",
-            theme === 'dark' 
-              ? "bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900" 
-              : "bg-gray-50"
-          )}>
-            {/* Add dark mode pattern overlay */}
-            {theme === 'dark' && (
-              <div className="absolute inset-0 opacity-30">
-                <div className="absolute inset-0 bg-gradient-to-r from-purple-900/20 via-transparent to-blue-900/20"></div>
-                <div 
-                  className="absolute inset-0" 
-                  style={{
-                    backgroundImage: `radial-gradient(circle at 25% 25%, rgba(124, 101, 246, 0.08) 0%, transparent 50%), 
-                                     radial-gradient(circle at 75% 75%, rgba(124, 101, 246, 0.08) 0%, transparent 50%)`,
-                    backgroundSize: '400px 400px',
-                    animation: 'patternMove 20s ease-in-out infinite alternate'
-                  }}
-                ></div>
-              </div>
-            )}
+        
+        {/* Full-screen diagram pane with extreme zoomed out dotted background like Flowstep */}
+        <div 
+          id="diagram-container"
+          className={cn(
+          "h-full min-h-[calc(100vh-64px)] w-full overflow-hidden relative",
+          // Use dotted background pattern with CSS
+          theme === 'dark'
+            ? "bg-gray-900 bg-[radial-gradient(circle,#374151_1px,transparent_1px)] [background-size:32px_32px]"
+            : "bg-white bg-[radial-gradient(circle,#e5e7eb_1px,transparent_1px)] [background-size:32px_32px]"
+        )}>
+          {/* Add subtle gradient overlay */}
+          <motion.div 
+            className="absolute inset-0 z-0 pointer-events-none"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 1.2 }}
+          >
+            <div className="absolute inset-0 bg-gradient-to-br from-transparent via-purple-50/5 to-blue-50/10 dark:from-transparent dark:via-purple-900/5 dark:to-blue-900/10"></div>
+          </motion.div>
+          
+          <motion.div 
+            className="w-full h-full" 
+            initial={{ opacity: 0 }} 
+            animate={{ opacity: 1 }} 
+            transition={{ duration: 0.6, ease: 'easeOut' }}
+            ref={diagramRef}
+          >
             <AIFlowDiagram
-              nodes={nodes}
-              edges={edges}
-              setNodes={setNodes}
-              setEdges={setEdges}
-              viewMode="AD"
-              onSwitchView={(_mode) => { /* view switch handler TBD */ }}
-              reactFlowInstanceRef={reactFlowInstanceRef}
-              onSave={handleSave}
-              onLayout={handleEnhancedLayout}
-              isLayouting={isLayouting}
-              lastLayoutResult={lastLayoutResult}
-              projectId={projectId}
-            />
-          </div>
+                ref={aiDiagramRef}
+                nodes={nodes}
+                edges={edges}
+                setNodes={setNodes}
+                setEdges={setEdges}
+                viewMode="AD"
+                onSwitchView={handleSwitchView}
+                reactFlowInstanceRef={reactFlowInstanceRef}
+                onSave={handleSave}
+                onLayout={handleEnhancedLayout}
+                isLayouting={isLayouting}
+                lastLayoutResult={lastLayoutResult}
+                projectId={projectId}
+              />
+          </motion.div>
         </div>
 
-        {/* Modern Floating Chat Interface */}
-        <FloatingChatInterface
-          messages={messages}
-          onSendMessage={handleSendMessage}
-          onSaveProject={handleSave}
-          onGenerateReport={() => {}}
-          isLoading={false}
-          thinking={isLoading ? { text: 'Processing your request...', hasRedactedContent: false } : null}
-          error={error}
-          projectId={projectId}
-          isLoadedProject={false}
-          diagramState={{ nodes, edges }}
-          onRevertToDiagramState={(_msg, state) => {
-            if (state?.nodes && state?.edges) {
-              setDiagramState({ nodes: state.nodes, edges: state.edges });
+        {/* Draggable floating chat input */}
+        <motion.div 
+          ref={chatInputRef}
+          className="absolute bottom-20 left-4 right-4 z-50 max-w-4xl mx-auto px-4 cursor-move"
+          initial={{ y: 100, opacity: 0 }} 
+          animate={{ y: 0, opacity: 1 }} 
+          transition={{ duration: 0.4, ease: 'easeOut' }}
+          drag
+          dragMomentum={false}
+          style={{ x: chatPos.x, y: chatPos.y }}
+          onDragEnd={(e, dragInfo) => {
+            setChatPos(prev => ({ x: prev.x + dragInfo.offset.x, y: prev.y + dragInfo.offset.y }));
+            if (chatInputRef.current) {
+              setChatRect(chatInputRef.current.getBoundingClientRect());
             }
           }}
+        >
+          {/* Chat input with glass morphism */}
+          <div className={cn(
+            "backdrop-blur-xl bg-white/10 dark:bg-gray-900/10 rounded-2xl",
+            "border border-white/20 dark:border-gray-700/20",
+            "shadow-2xl shadow-black/10 dark:shadow-black/30"
+          )}>
+            <div className="px-6 py-4">
+              <div className="flex items-center space-x-3">
+                {/* Drag handle */}
+                <div
+                  className="cursor-move rounded-lg p-2 backdrop-blur-sm text-gray-400 hover:text-gray-600 hover:bg-white/20"
+                  title="Drag chat bar"
+                >
+                  <Move size={16} />
+                </div>
+                  <div className="flex-1 relative">
+                  <Input 
+                    placeholder="Describe your architecture or ask about your system..." 
+                    value={inputValue} 
+                    onChange={(e) => setInputValue(e.target.value)} 
+                    onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && handleSendMessage()}
+                    className={cn(
+                      "pr-16 pl-4 py-3 rounded-xl border-2 transition-all duration-200",
+                      "bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm",
+                      "border-white/30 dark:border-gray-600/30",
+                      "focus:border-purple-500/50 focus:ring-2 focus:ring-purple-500/20",
+                      "text-gray-900 dark:text-gray-100",
+                      "placeholder-gray-500 dark:placeholder-gray-400"
+                    )}
+                    disabled={isLoading}
+                  />
+                  
+                  {/* Voice capture button */}
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={toggleListening}
+                    className={cn(
+                      "absolute right-2 top-1/2 transform -translate-y-1/2 rounded-lg p-2",
+                      "backdrop-blur-sm",
+                      isSpeechOverlayOpen 
+                        ? "text-red-500 bg-red-500/20" 
+                        : "text-gray-400 hover:text-gray-600 hover:bg-white/20"
+                    )}
+                  >
+                    {isSpeechOverlayOpen ? <MicOff size={16} /> : <Mic size={16} />}
+                  </Button>
+                </div>
+
+                {/* Toggle Chat Window */}
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setIsChatVisible(prev => !prev)}
+                  className={cn(
+                    "rounded-lg p-2 backdrop-blur-sm transition-all duration-200",
+                    isChatVisible
+                      ? "text-purple-600 bg-purple-600/20"
+                      : "text-gray-400 hover:text-gray-600 hover:bg-white/20"
+                  )}
+                >
+                  <MessageSquare size={16} />
+                </Button>
+
+                {/* Send button */}
+                <Button 
+                  onClick={handleSendMessage} 
+                  disabled={isLoading || !inputValue.trim()}
+                  className={cn(
+                    "rounded-xl px-6 py-3 transition-all duration-200",
+                    "bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800",
+                    "shadow-lg shadow-purple-500/25 hover:shadow-purple-500/40 hover:scale-105",
+                    "backdrop-blur-sm",
+                    "disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+                  )}
+                >
+                  {isLoading ? (
+                    <RefreshCw className="animate-spin" size={16} />
+                  ) : (
+                    <Send size={16} />
+                  )}
+                </Button>
+                {/* Fit back button */}
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={resetChatPosition}
+                  disabled={chatPos.x === 0 && chatPos.y === 0 && chatPanelPos.x === 0 && chatPanelPos.y === 0}
+                  className={cn(
+                    "rounded-lg p-2 backdrop-blur-sm transition-all duration-200",
+                    chatPos.x === 0 && chatPos.y === 0
+                      ? "opacity-40 cursor-not-allowed"
+                      : "text-gray-400 hover:text-gray-600 hover:bg-white/20"
+                  )}
+                >
+                  <Maximize size={16} />
+                </Button>
+              </div>
+            </div>
+          </div>
+        </motion.div>
+
+        {/* Draggable sliding chat panel */}
+        <AnimatePresence>
+          {isChatVisible && (
+            <motion.div
+              key="chat-panel"
+              initial={{ opacity: 0, y: 50, height: 0 }}
+              animate={{ opacity: 1, y: 0, height: '60vh' }}
+              exit={{ opacity: 0, y: 50, height: 0 }}
+              transition={{ type: 'spring', stiffness: 260, damping: 30 }}
+              className={cn(
+                'absolute z-50 w-[90vw] max-w-4xl cursor-move',
+                'bg-white/90 dark:bg-gray-900/90 backdrop-blur-xl rounded-2xl',
+                'border border-white/20 dark:border-gray-700/20 shadow-2xl flex flex-col overflow-hidden'
+              )}
+              style={(() => {
+                if (!chatRect) return { bottom: 'calc(5rem + 4.5rem)', left: '50%', transform: 'translateX(-50%)', x: chatPanelPos.x, y: chatPanelPos.y };
+                const openUpwards = chatRect.top > window.innerHeight / 2;
+                const panelX = chatRect.left + chatRect.width / 2;
+                const base = { left: panelX, transform: 'translateX(-50%)', x: chatPanelPos.x, y: chatPanelPos.y } as any;
+                return openUpwards
+                  ? { ...base, bottom: window.innerHeight - chatRect.top + 16 }
+                  : { ...base, top: chatRect.bottom + 16 };
+              })()}
+              drag
+              dragMomentum={false}
+              onDragEnd={(e, dragInfo) => {
+                // Update the panel position relative to its current offset
+                setChatPanelPos(prev => ({ x: prev.x + dragInfo.offset.x, y: prev.y + dragInfo.offset.y }));
+              }}
+            >
+              <AIChat
+                messages={messages}
+                onSendMessage={(msg) => handleSendMessageInternal(msg)}
+                onGenerateReport={handleGenerateReport}
+                onSaveProject={handleSave}
+                isLoading={isLoading}
+                thinking={null}
+                error={error}
+                projectId={projectId}
+                isLoadedProject={true}
+                showInput={false}
+              />
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        <SpeechOverlay
+          isOpen={isSpeechOverlayOpen}
+          onClose={() => setIsSpeechOverlayOpen(false)}
+          onTranscriptComplete={(transcript) => {
+            setIsSpeechOverlayOpen(false);
+            setIsChatVisible(true);
+            handleSendMessageInternal(transcript);
+          }}
         />
+
+        {/* Floating DiagramActions bar with collapse capability */}
+        {isToolbarCollapsed ? (
+          <motion.button
+            className="absolute bottom-4 left-1/2 -translate-x-1/2 z-50 p-2 rounded-full backdrop-blur-lg bg-white/20 dark:bg-gray-800/20 border border-white/20 dark:border-gray-700/20 shadow-lg hover:shadow-xl transition-all"
+            initial={{ y: 100, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ duration: 0.4, ease: 'easeOut' }}
+            onClick={() => setIsToolbarCollapsed(false)}
+          >
+            <ChevronUp size={18} className="text-gray-700 dark:text-gray-200" />
+          </motion.button>
+        ) : (
+          <motion.div
+            className="absolute bottom-4 left-4 right-4 z-50 max-w-4xl mx-auto px-4"
+            initial={{ y: 100, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ duration: 0.5, ease: 'easeOut', delay: 0.1 }}
+          >
+            <div
+              className={cn(
+                'inline-flex items-center bg-transparent backdrop-blur-none',
+                'rounded-2xl px-2 gap-1'
+              )}
+            >
+              <DiagramActions
+                viewMode="AD"
+                onSwitchView={handleSwitchView}
+                onZoomIn={handleZoomIn}
+                onZoomOut={handleZoomOut}
+                onFitView={handleFitView}
+                onGenerateReport={handleGenerateReport}
+                onComment={handleComment}
+                onToggleDataFlow={handleToggleDataFlow}
+                onToggleFlowchart={handleToggleFlowchart}
+                onSave={handleSave}
+                projectId={projectId}
+                diagramRef={diagramRef}
+                nodes={nodes}
+                edges={edges}
+                isDataFlowActive={isDataFlowActive}
+                isFlowchartActive={isFlowchartActive}
+                onRunThreatAnalysis={handleRunThreatAnalysis}
+                runningThreatAnalysis={false}
+                onLayout={handleEnhancedLayout}
+                isLayouting={isLayouting}
+                lastLayoutResult={lastLayoutResult}
+                onCollapse={() => setIsToolbarCollapsed(true)}
+              />
+            </div>
+          </motion.div>
+        )}
       </DiagramStyleProvider>
     </Layout>
   );

@@ -12,7 +12,12 @@ export function Sidebar({ className }: SidebarProps) {
 
   return (
     <>
-      <div className={cn("w-16 border-r bg-white flex flex-col items-center py-4", className)}>
+      <div
+        className={cn(
+          "w-16 border-r bg-gradient-to-b from-securetrack-lightpurple/10 via-white to-securetrack-lightgray/40 flex flex-col items-center py-4",
+          className
+        )}
+      >
         <div className="mb-8">
           <Menu className="w-6 h-6 text-gray-600" />
         </div>

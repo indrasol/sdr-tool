@@ -24,6 +24,7 @@ import Projects from '@/pages/Projects';
 import SecurityAnalysis from '@/pages/SecurityAnalysis';
 import SolutionsHub from '@/pages/SolutionsHub';
 import GenerateReport from '@/pages/GenerateReport';
+import ReportsPage from '@/pages/Reports';
 import NotFound from '@/pages/NotFound';
 import Login from '@/pages/Login';
 import Register from '@/pages/Register';
@@ -31,7 +32,8 @@ import LoginPage from '@/pages/LoginPage';
 import RegisterPage from '@/pages/RegisterPage';
 import DeveloperLogin from '@/pages/DeveloperLogin';
 import DeveloperDashboard from '@/pages/DeveloperDashboard';
-import Organizations from '@/pages/Organizations';
+import Teams from '@/pages/Teams';
+import Settings from '@/pages/Settings';
 import ProtectedRoute from '@/components/Auth/ProtectedRoute';
 
 const queryClient = new QueryClient();
@@ -59,9 +61,9 @@ const App = () => (
                 
                 {/* Protected Routes */}
                 <Route element={<ProtectedRoute />}>
-                  <Route path="/org" element={<Organizations />} />
+                  <Route path="/teams" element={<Teams />} />
                   <Route path="/dashboard" element={<Dashboard />} />
-                  <Route path="/dashboard/:orgId" element={<Dashboard />} />
+                  <Route path="/dashboard/:teamId" element={<Dashboard />} />
                   <Route path="/documents" element={<Documents />} />
                   <Route path="/soc2" element={<SOC2 />} />
                   <Route path="/create-project" element={<CreateProject />} />
@@ -73,7 +75,9 @@ const App = () => (
                   <Route path="/projects" element={<Projects />} />
                   <Route path="/security-analysis" element={<SecurityAnalysis />} />
                   <Route path="/solutions-hub" element={<SolutionsHub />} />
+                  <Route path="/settings" element={<Settings />} />
                   <Route path="/generate-report" element={<GenerateReport />} />
+                  <Route path="/reports" element={<ReportsPage />} />
                   <Route path="*" element={<NotFound />} />
                 </Route>
               </Routes>

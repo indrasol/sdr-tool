@@ -1,6 +1,6 @@
 from datetime import datetime
 from uuid import uuid4
-from fastapi import APIRouter, HTTPException, Depends
+from fastapi import APIRouter, HTTPException, Depends, Query
 from core.db.supabase_db import get_supabase_client, safe_supabase_operation
 from models.report_models import GenerateReportRequest, GenerateReportResponse
 from models.dfd_models import DFDSwitchRequest
@@ -13,6 +13,14 @@ from utils.logger import log_info
 import asyncio  # Needed for async sleep while waiting on Redis lock
 from core.prompt_engineering.prompt_builder import PromptBuilder
 from models.threat_models import ThreatsResponse
+import logging
+
+# Set up structured logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
+logger = logging.getLogger(__name__)
 
 router = APIRouter()
 

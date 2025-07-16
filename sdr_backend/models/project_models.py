@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-from typing import Optional
+from typing import Optional, List
 from datetime import date
 from constants import ProjectPriority, ProjectStatus
 
@@ -15,6 +15,7 @@ class ProjectData(BaseModel):
     domain: Optional[str] = None
     template_type: Optional[str] = None
     imported_file: Optional[str] = None
+    team_id: Optional[int] = None
 
 
 class UpdateProjectData(BaseModel):
@@ -28,6 +29,7 @@ class UpdateProjectData(BaseModel):
     due_date: Optional[date] = None
     creator: Optional[str] = None
     domain: Optional[str] = None
+    team_id: Optional[int] = None
 
 class FetchProjectsRequest(BaseModel):
     tenant_id: int

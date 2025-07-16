@@ -50,6 +50,7 @@ async def create_project(
     log_info(f"Current user: {current_user}")
     log_info(f"Tenant ID: {project.tenant_id}")
     log_info(f"Creator : {project.creator}")
+    log_info(f"Team ID: {project.team_id}")
 
     supabase = get_supabase_client()
     # Check Tenant user access
@@ -81,7 +82,7 @@ async def create_project(
         project.creator = user_name
 
     try:
-        log_info(f"Creating project for user: {current_user}, tenant: {project.tenant_id}")
+        log_info(f"Creating project for user: {current_user}, tenant: {project.tenant_id}, team: {project.team_id}")
         project_id = await supabase_manager.create_project(
             user_id=current_user["id"], 
             name=project.name,
@@ -95,7 +96,8 @@ async def create_project(
             domain=project.domain,
             template_type=project.template_type,
             imported_file=project.imported_file,
-            version=0
+            version=0,
+            team_id=project.team_id
         )
         log_info("project id : {project_id}")
         return {
@@ -110,7 +112,8 @@ async def create_project(
             "domain": project.domain,
             "templateType": project.template_type,
             "importedFile": project.imported_file,
-            "tenantId": project.tenant_id
+            "tenantId": project.tenant_id,
+            "teamId": project.team_id
         }
         # return {"project_id": project_id}
     except HTTPException as he:

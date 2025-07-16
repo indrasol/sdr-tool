@@ -117,6 +117,37 @@ class SessionManagerV2:
         await self._update(session_id, mut)
 
     # ------------------------------------------------------------------
+    #  DSL Cache helpers (per-project, keyed by SHA1 of query)
+    # ------------------------------------------------------------------
+
+    _DSL_CACHE_TTL = 1800  # 30 minutes
+
+    async def _dsl_cache_key(self, project_id: str, query_hash: str) -> str:
+        return f"dsl_cache:{project_id}:{query_hash}"
+
+    async def cache_dsl(self, project_id: str, query: str, data: Dict[str, Any]):
+        """Cache rendered diagram (DSL + JSON) for the given query."""
+        import hashlib, json as _json
+        await self._ensure()
+        h = hashlib.sha1(query.strip().lower().encode()).hexdigest()
+        key = await self._dsl_cache_key(project_id, h)
+        await self._pool.setex(key, self._DSL_CACHE_TTL, _json.dumps(data))
+
+    async def get_cached_dsl(self, project_id: str, query: str) -> Optional[Dict[str, Any]]:
+        """Retrieve cached diagram for query if exists and not expired."""
+        import hashlib, json as _json
+        await self._ensure()
+        h = hashlib.sha1(query.strip().lower().encode()).hexdigest()
+        key = await self._dsl_cache_key(project_id, h)
+        raw = await self._pool.get(key)
+        if raw:
+            try:
+                return _json.loads(raw)
+            except Exception:
+                return None
+        return None
+
+    # ------------------------------------------------------------------
     #  TTL helper
     # ------------------------------------------------------------------
 

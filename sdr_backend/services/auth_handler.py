@@ -113,11 +113,49 @@ async def verify_token(authorization: str = Header(None), is_registration: bool 
             log_info(f"User not found in database for Supabase ID: {user_id}")
             raise HTTPException(status_code=404, detail="User not found in database")
 
-        # Return a dictionary with both user_id and username
+        # Get user data
         user_data = user_response.data[0]
+        
+        # Fetch tenant ID from user_tenant_association table
+        def user_tenant_operation():
+            return supabase.from_("user_tenant_association").select("tenant_id").eq("user_id", user_id).execute()
+
+        user_tenant_response = await safe_supabase_operation(
+            user_tenant_operation,
+            "Failed to fetch user tenant data"
+        )
+        
+        # Extract tenant ID if available
+        tenant_id = None
+        if user_tenant_response.data and len(user_tenant_response.data) > 0:
+            tenant_id = user_tenant_response.data[0].get("tenant_id")
+            log_info(f"Found tenant ID for user {user_id}: {tenant_id}")
+        else:
+            log_info(f"No tenant ID found for user {user_id}")
+            
+        # Fetch team ID from team_members table (default to the first one found)
+        def user_team_operation():
+            return supabase.from_("team_members").select("team_id").eq("user_id", user_id).execute()
+            
+        user_team_response = await safe_supabase_operation(
+            user_team_operation,
+            "Failed to fetch user team data"
+        )
+        
+        # Extract team ID if available (use the first one as default)
+        team_id = None
+        if user_team_response.data and len(user_team_response.data) > 0:
+            team_id = user_team_response.data[0].get("team_id")
+            log_info(f"Found team ID for user {user_id}: {team_id}")
+        else:
+            log_info(f"No team ID found for user {user_id}")
+
+        # Return a dictionary with user_id, username, tenant_id and team_id
         return {
             "id": user_id,
-            "username": user_data["username"]
+            "username": user_data["username"],
+            "tenantId": tenant_id,  # Match the camelCase used in frontend
+            "teamId": team_id       # Match the camelCase used in frontend
         }
 
     except HTTPException as http_exc:

@@ -47,6 +47,8 @@ interface AIChatProps {
   suggestion?: string;
   showSuggestion?: boolean;
   onCloseSuggestion?: () => void;
+  /** Hide input area when shown in embedded read-only panel */
+  showInput?: boolean;
 }
 
 interface ChatSession {
@@ -108,7 +110,8 @@ const AIChat: React.FC<AIChatProps> = ({
   onRevertToDiagramState,
   suggestion = '',
   showSuggestion = false,
-  onCloseSuggestion = () => {}
+  onCloseSuggestion = () => {},
+  showInput = true,
 }) => {
   const { theme } = useTheme();
   const [activeTab, setActiveTab] = useState<'guardian' | 'history'>('guardian');
@@ -600,24 +603,25 @@ const AIChat: React.FC<AIChatProps> = ({
               onRevertToDiagramState={handleRevertToDiagramState}
             />
             
-            {/* Chat Input Area - Compact without background wrapper */}
-            <div className={cn(
-              "border-t flex-shrink-0",
-              theme === 'dark' 
-                ? "border-gray-700" 
-                : "border-gray-200"
-            )}>
-              <ChatInput 
-                onSendMessage={onSendMessage} 
-                onGenerateReport={onGenerateReport}
-                onSaveProject={onSaveProject}
-                hasMessages={messages.length > 0}
-                isThinking={Boolean(thinking?.text) || isLoading}
-                projectId={projectId}
-                isLoadedProject={isLoadedProject}
-                onMicrophoneClick={handleMicrophoneClick}
-              />
-            </div>
+            {showInput && (
+              <div className={cn(
+                "border-t flex-shrink-0",
+                theme === 'dark' 
+                  ? "border-gray-700" 
+                  : "border-gray-200"
+              )}>
+                <ChatInput 
+                  onSendMessage={onSendMessage} 
+                  onGenerateReport={onGenerateReport}
+                  onSaveProject={onSaveProject}
+                  hasMessages={messages.length > 0}
+                  isThinking={Boolean(thinking?.text) || isLoading}
+                  projectId={projectId}
+                  isLoadedProject={isLoadedProject}
+                  onMicrophoneClick={handleMicrophoneClick}
+                />
+              </div>
+            )}
             
             {/* Display suggestion card inside chat interface */}
             {internalShowSuggestion && internalSuggestion && (

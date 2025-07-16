@@ -81,7 +81,7 @@ const SecurityAnalysis = () => {
     <Layout>
       <div className="absolute inset-0 bg-gradient-to-br from-blue-50/80 via-white to-purple-50/60 pointer-events-none -z-10" />
       <motion.div 
-        className="space-y-6 pb-8 mt-16"
+        className="space-y-6 pb-8 mt-0"
         variants={containerVariants}
         initial="hidden"
         animate="visible"

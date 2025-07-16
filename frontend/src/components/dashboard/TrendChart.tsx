@@ -24,21 +24,21 @@ const TrendChart = () => {
   return (
     <Card className="animate-fade-up" style={{ animationDelay: "0.4s" }}>
       <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between space-y-2 sm:space-y-0 pb-4">
-        <CardTitle>Security Analysis Trends</CardTitle>
+        <CardTitle>Reports Trends</CardTitle>
         <div className="flex space-x-2">
           <Button 
             size="sm"
-            variant={chartType === 'line' ? 'default' : 'outline'}
+            variant="outline"
             onClick={() => setChartType('line')}
-            className="h-8"
+            className={`h-8 ${chartType === 'line' ? 'bg-gradient-to-r from-blue-500 to-teal-500 text-white hover:from-blue-600 hover:to-teal-600' : 'bg-gradient-to-r from-blue-50/70 to-purple-50/70 border border-blue-100 text-blue-600 hover:border-blue-200 hover:text-blue-700 hover:from-blue-100/80 hover:to-purple-100/80'}`}
           >
             Line
           </Button>
           <Button 
             size="sm"
-            variant={chartType === 'area' ? 'default' : 'outline'}
+            variant="outline"
             onClick={() => setChartType('area')}
-            className="h-8"
+            className={`h-8 ${chartType === 'area' ? 'bg-gradient-to-r from-blue-500 to-teal-500 text-white hover:from-blue-600 hover:to-teal-600' : 'bg-gradient-to-r from-blue-50/70 to-purple-50/70 border border-blue-100 text-blue-600 hover:border-blue-200 hover:text-blue-700 hover:from-blue-100/80 hover:to-purple-100/80'}`}
           >
             Area
           </Button>
@@ -69,14 +69,6 @@ const TrendChart = () => {
                   }}
                 />
                 <Legend />
-                <Line 
-                  type="monotone" 
-                  dataKey="analyses" 
-                  name="Security Analyses"
-                  stroke="#7C65F6" 
-                  strokeWidth={2}
-                  activeDot={{ r: 8 }} 
-                />
                 <Line 
                   type="monotone" 
                   dataKey="reports" 
@@ -115,14 +107,6 @@ const TrendChart = () => {
                   }}
                 />
                 <Legend />
-                <Area 
-                  type="monotone" 
-                  dataKey="analyses" 
-                  name="Security Analyses"
-                  stroke="#7C65F6" 
-                  fill="#7C65F6" 
-                  fillOpacity={0.2}
-                />
                 <Area 
                   type="monotone" 
                   dataKey="reports" 

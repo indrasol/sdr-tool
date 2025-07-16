@@ -1,29 +1,31 @@
 import React from "react";
-import AppHeader from "./AppHeader";
+import { useLocation } from "react-router-dom";
+import SidebarNav from "./SidebarNav";
+import { cn } from "@/lib/utils";
 
 interface LayoutProps {
   children: React.ReactNode;
+  noMargins?: boolean;
 }
 
-const Layout = ({ children }: LayoutProps) => {
+const Layout = ({ children, noMargins }: LayoutProps) => {
+  const location = useLocation();
+  
+  // Check if current path contains "model-with-ai" or the component passed noMargins prop
+  const isModelWithAI = location.pathname.includes("model-with-ai") || noMargins;
+  
   return (
-    <div className="min-h-screen flex flex-col bg-background">
-      <AppHeader />
-      <main className="flex-1 container py-8 animate-fade-in">
+    <div className="min-h-screen flex bg-background">
+      <SidebarNav />
+      <main 
+        className={cn(
+          "flex-1 w-full animate-fade-in",
+          // Apply padding and overflow conditionally - no padding and different overflow for ModelWithAI pages
+          isModelWithAI ? "overflow-hidden p-0" : "overflow-y-auto px-6 md:px-8 lg:px-10 py-4"
+        )}
+      >
         {children}
       </main>
-      {/* <footer className="py-4 border-t border-gray-100 bg-white/80 backdrop-blur-sm">
-        <div className="container">
-          <div className="flex flex-col md:flex-row justify-between items-center text-xs text-gray-500">
-            <p>© 2025 SecureTrack. All rights reserved.</p>
-            <div className="flex space-x-4 mt-2 md:mt-0">
-              <a href="#" className="hover:text-securetrack-purple transition-colors">Terms</a>
-              <a href="#" className="hover:text-securetrack-purple transition-colors">Privacy</a>
-              <a href="#" className="hover:text-securetrack-purple transition-colors">Help</a>
-            </div>
-          </div>
-        </div>
-      </footer> */}
     </div>
   );
 };

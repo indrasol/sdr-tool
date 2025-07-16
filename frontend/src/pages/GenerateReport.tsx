@@ -534,7 +534,7 @@ const GenerateReport = () => {
   return (
     <Layout>
       {/* Enhanced responsive container with better spacing */}
-      <div className="mt-16 space-y-6 bg-gradient-to-br from-blue-50/80 via-white to-green-50/60 min-h-screen rounded-lg p-3 sm:p-6">
+      <div className="mt-0 space-y-6 bg-gradient-to-br from-blue-50/80 via-white to-green-50/60 min-h-screen rounded-lg p-3 sm:p-6">
         
         <TitleCard 
           isEditing={isEditing} 

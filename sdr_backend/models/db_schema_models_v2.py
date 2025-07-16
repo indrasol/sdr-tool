@@ -138,6 +138,8 @@ class User(Base):
     tenants = relationship("Tenant", secondary="user_tenant_association", back_populates="users")
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+    # Add relationship to teams
+    teams = relationship("TeamMember", back_populates="user")
 
 class Project(Base):
     __tablename__ = "projects"
@@ -167,6 +169,9 @@ class Project(Base):
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
     diagram_updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+    # Add relationship to teams
+    team_id = Column(Integer, ForeignKey("teams.id"), nullable=True)
+    team = relationship("Team", back_populates="projects")
 
     def to_dict(self):
         """Convert project to a dictionary for JSON response."""
@@ -202,6 +207,8 @@ class Tenant(Base):
     templates = relationship("Template", back_populates="tenant")
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     roles = relationship("Role", back_populates="tenant")
+    # Add relationship to teams
+    teams = relationship("Team", back_populates="tenant")
 
 class Role(Base):
     __tablename__ = "roles"
@@ -300,6 +307,9 @@ class Template(Base):
 
     # relationship back to Tenant
     tenant = relationship("Tenant", back_populates="templates")
+    # Add relationship to teams
+    team_id = Column(Integer, ForeignKey("teams.id"), nullable=True)
+    team = relationship("Team", back_populates="templates")
 
 
 class Report(Base):
@@ -325,6 +335,9 @@ class Report(Base):
 
     project = relationship("Project")
     user    = relationship("User")
+    # Add relationship to teams
+    team_id = Column(Integer, ForeignKey("teams.id"), nullable=True)
+    team = relationship("Team", back_populates="reports")
 
 
 # ---------------------------------------------------------------------------
@@ -393,27 +406,52 @@ class DiagramEdge(Base):
     target_uid = Column(String, nullable=False)
 
 
-# 4. Organisation & membership ----------------------------------------------
+# 4. Teams & membership (replacing Organizations) ----------------------------------------------
 
-
-class Organization(Base):
-    __tablename__ = "organizations"
+class Team(Base):
+    """Represents a team within a tenant organization."""
+    __tablename__ = "teams"
 
     id = Column(Integer, primary_key=True, index=True)
-    name = Column(String, unique=True, nullable=False)
-    owner_user_id = Column(String, nullable=False)
+    name = Column(String, nullable=False)
+    description = Column(Text, nullable=True)
+    tenant_id = Column(Integer, ForeignKey("tenants.id", ondelete="CASCADE"), nullable=False)
+    created_by = Column(String, ForeignKey("users.id"), nullable=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+    
+    # Team icon/avatar storage
+    avatar_url = Column(String, nullable=True)
+    
+    # Team visibility settings
+    is_private = Column(Boolean, default=False)
+    
+    # Relationships
+    tenant = relationship("Tenant", back_populates="teams")
+    members = relationship("TeamMember", back_populates="team", cascade="all, delete-orphan")
+    projects = relationship("Project", back_populates="team")
+    templates = relationship("Template", back_populates="team")
+    reports = relationship("Report", back_populates="team")
 
-    members = relationship("OrganizationMember", back_populates="organization", cascade="all, delete-orphan")
 
-
-class OrganizationMember(Base):
-    __tablename__ = "organization_members"
+class TeamMember(Base):
+    """Represents team membership with role-based permissions."""
+    __tablename__ = "team_members"
 
     id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(String, nullable=False, index=True)
-    organization_id = Column(Integer, ForeignKey("organizations.id", ondelete="CASCADE"), nullable=False)
-    role = Column(String, nullable=False, default="member")  # e.g. owner, admin, viewer
+    team_id = Column(Integer, ForeignKey("teams.id", ondelete="CASCADE"), nullable=False)
+    user_id = Column(String, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    role = Column(String, nullable=False, default="member")  # owner, admin, member, guest
+    permissions = Column(JSONB, default={"view": True, "edit": False, "admin": False})
     joined_at = Column(DateTime(timezone=True), server_default=func.now())
-
-    organization = relationship("Organization", back_populates="members") 
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+    
+    # Relationships
+    team = relationship("Team", back_populates="members")
+    user = relationship("User", back_populates="teams")
+    
+    # Constraints
+    __table_args__ = (
+        # Ensure user can only have one membership per team
+        {"sqlite_autoincrement": True},
+    ) 

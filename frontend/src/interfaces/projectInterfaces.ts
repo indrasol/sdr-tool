@@ -33,6 +33,7 @@ export interface ProjectCardProps {
     templateType?: ProjectTemplateType;
     importedFile?: string;
     tenantId: number;
+    teamId?: number;
     tags?: string[];
     diagramState?: {
       nodes: any[];
@@ -53,6 +54,7 @@ export interface ProjectCardProps {
     template_type: ProjectTemplateType;
     imported_file?: string;
     tenant_id: number;
+    team_id?: number;
     tags?: string[];
   }
   
@@ -66,6 +68,7 @@ export interface ProjectCardProps {
     due_date?: string;
     assigned_to?: string;
     imported_file?: string;
+    team_id?: number;
   }
   
   // Interface for GET projects query parameters

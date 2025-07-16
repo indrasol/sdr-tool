@@ -10,7 +10,7 @@ const SOC2 = () => {
     <Layout>
       <div className="space-y-6 animate-fade-in font-sans">
         <div>
-          <h1 className="mt-16 text-3xl font-bold tracking-tight bg-gradient-to-r from-securetrack-purple to-securetrack-green bg-clip-text text-transparent animate-fade-in">
+          <h1 className="mt-0 text-3xl font-bold tracking-tight bg-gradient-to-r from-securetrack-purple to-securetrack-green bg-clip-text text-transparent animate-fade-in">
             SOC 2 Compliance
           </h1>
           <p className="text-muted-foreground mt-2 animate-fade-up" style={{animationDelay: '0.1s'}}>

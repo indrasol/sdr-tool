@@ -4,6 +4,7 @@ export interface User {
     email: string;
     username?: string;
     tenantId?: number;
+    teamId?: number; // Add teamId property to fix linter errors
     role?: string;
     // Add other user properties as needed
   }

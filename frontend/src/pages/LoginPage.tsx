@@ -52,9 +52,9 @@ const LoginPage = () => {
 
       await Promise.race([loginPromise, timeoutPromise]);
 
-      console.log("Login successful, navigating to dashboard...");
+      console.log("Login successful, navigating to teams page...");
       loginForm.reset();
-      navigate("/dashboard");
+      navigate("/teams");
     } catch (error: any) {
       console.error("Login error in component:", error);
 

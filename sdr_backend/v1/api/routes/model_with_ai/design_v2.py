@@ -2,7 +2,7 @@ from __future__ import annotations
 
 """FastAPI route for Design-Service v2 (Phase-5).
 
-POST /v2/design/generate
+POST /v1/design_v2/generate
 ------------------------
 Takes NL query + projectId, classifies intent via IntentClassifierV2 and
 routes accordingly.

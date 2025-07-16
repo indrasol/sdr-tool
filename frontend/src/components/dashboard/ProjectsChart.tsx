@@ -48,17 +48,17 @@ const ProjectsChart = () => {
         <div className="flex space-x-2">
           <Button 
             size="sm"
-            variant={timeRange === 'quarterly' ? 'default' : 'outline'}
+            variant="outline"
             onClick={() => setTimeRange('quarterly')}
-            className="h-8"
+            className={`h-8 ${timeRange === 'quarterly' ? 'bg-gradient-to-r from-blue-500 to-teal-500 text-white hover:from-blue-600 hover:to-teal-600' : 'bg-gradient-to-r from-blue-50/70 to-purple-50/70 border border-blue-100 text-blue-600 hover:border-blue-200 hover:text-blue-700 hover:from-blue-100/80 hover:to-purple-100/80'}`}
           >
             Quarterly
           </Button>
           <Button 
             size="sm"
-            variant={timeRange === 'yearly' ? 'default' : 'outline'}
+            variant="outline"
             onClick={() => setTimeRange('yearly')}
-            className="h-8"
+            className={`h-8 ${timeRange === 'yearly' ? 'bg-gradient-to-r from-blue-500 to-teal-500 text-white hover:from-blue-600 hover:to-teal-600' : 'bg-gradient-to-r from-blue-50/70 to-purple-50/70 border border-blue-100 text-blue-600 hover:border-blue-200 hover:text-blue-700 hover:from-blue-100/80 hover:to-purple-100/80'}`}
           >
             Yearly
           </Button>

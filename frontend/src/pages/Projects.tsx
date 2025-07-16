@@ -89,7 +89,7 @@ const Projects = () => {
   return (
     <Layout>
       <motion.div 
-        className="space-y-6 mt-16"
+        className="space-y-6 mt-0"
         initial="hidden"
         animate="visible"
         variants={fadeIn}
