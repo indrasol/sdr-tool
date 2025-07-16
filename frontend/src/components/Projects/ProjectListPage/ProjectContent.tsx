@@ -291,7 +291,7 @@ const ProjectContent = ({
                       variant={viewType === 'grid' ? "default" : "ghost"}
                       size="sm"
                       onClick={() => onViewTypeChange('grid')}
-                      className={`rounded-none px-1 ${viewType === 'grid' ? 'bg-gradient-to-r from-blue-500 to-teal-500 text-white' : 'text-muted-foreground'}`}
+                      className={`rounded-none px-1 ${viewType === 'grid' ? 'bg-gradient-to-r from-blue-500 to-teal-500 text-white' : 'text-blue-600 hover:bg-gradient-to-r from-blue-50/70 to-purple-50/70 hover:text-blue-700 transition-colors duration-300'}`}
                     >
                       <Grid className="h-4 w-4" />
                     </Button>
@@ -307,7 +307,7 @@ const ProjectContent = ({
                       variant={viewType === 'list' ? "default" : "ghost"}
                       size="sm"
                       onClick={() => onViewTypeChange('list')}
-                      className={`rounded-none px-1 ${viewType === 'list' ? 'bg-gradient-to-r from-blue-500 to-teal-500 text-white' : 'text-muted-foreground'}`}
+                      className={`rounded-none px-1 ${viewType === 'list' ? 'bg-gradient-to-r from-blue-500 to-teal-500 text-white' : 'text-blue-600 hover:bg-gradient-to-r from-blue-50/70 to-purple-50/70 hover:text-blue-700 transition-colors duration-300'}`}
                     >
                       <List className="h-4 w-4" />
                     </Button>

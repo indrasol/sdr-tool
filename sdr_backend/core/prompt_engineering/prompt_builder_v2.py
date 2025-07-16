@@ -177,6 +177,24 @@ ARCHITECTURE PRINCIPLES:
   • Consider SCALE: Add load balancers, CDNs, caching layers
   • Think SECURITY: Include firewalls, auth services, encryption points
   • Plan DATA: Include appropriate database types, caching, message queues
+  
+  # ==== Advanced AI & Cloud Patterns ====
+  ADVANCED AI/CLOUD PATTERNS:
+  • AI Workflow: rag_ingest: "RAG Ingest" { style.fill: "#8B5CF6" } -> vector_db: "Vector DB" { shape: cylinder; style.fill: "#F97316" } -> retriever: "Retriever" -> llm_chain: "LLM Chain" { style.fill: "#8B5CF6" }
+  • AI Agents: agent_orchestrator: "Agent Orchestrator" -> tool_registry: "Tool Registry" -> memory_store: "Memory Store" { shape: cylinder }
+    agent_orchestrator -> external_api: "External Tools" { style.dashed: true }
+  • MCP (Model Context Protocol): context_manager: "Context Manager" { style.fill: "#10B981" } -> llm_endpoint: "LLM Endpoint"
+  • A2A Collaboration: agent1: "Agent 1" <-> agent2: "Agent 2": "Bidirectional Comm" { style.animated: true }
+  • Hybrid Cloud: multi_cloud_gateway: "Multi-Cloud Gateway" -> aws_cluster: "AWS Cluster" { style.fill: "#F97316" } -> gcp_cluster: "GCP Cluster" { style.fill: "#3B82F6" }
+    service_mesh: "Istio Mesh" {
+      aws_cluster
+      gcp_cluster
+    }
+  • Serverless: api_gateway -> lambda_function: "Lambda" { style.fill: "#F43F5E" } -> event_bridge: "Event Bridge" -> dynamodb: "DynamoDB"
+  • Edge AI: cdn_edge: "CDN Edge" { style.fill: "#64748B" } -> ml_inference: "ML Inference at Edge" { style.fill: "#8B5CF6" }
+
+  # Enforce consistency for advanced patterns
+  ENFORCE CONSISTENCY: Always "direction: right"; cluster related nodes (e.g., {{ security_zone: {{ firewall -> auth_service }} }}); use dashed for optional edges.
 
 ### END STYLE PACK ###
 """

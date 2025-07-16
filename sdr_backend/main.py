@@ -2,6 +2,9 @@
 import time
 import uvicorn
 from prometheus_client import generate_latest, CONTENT_TYPE_LATEST
+from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi.util import get_remote_address
+from slowapi.errors import RateLimitExceeded
 from fastapi import FastAPI, Request, Response, Depends
 from v1.api.routes.routes import router as api_router
 from fastapi.middleware.cors import CORSMiddleware
@@ -39,8 +42,7 @@ import os
 # Hugging Face Transformer Model download
 from core.intent_classification.intent_classifier_v1 import download_transformer_models
 # ------------------- V2 routers -------------------
-from v2.api.routes.model_with_ai.design_v2 import router as design_v2_router
-from v2.api.routes.notifications import router as notifications_router
+from v2.api.routes.model_with_ai.svg_export import router as svg_export_router
 from core.dsl.env_check import ensure_d2_present
 
 session_manager = SessionManager()
@@ -97,6 +99,11 @@ app = FastAPI(
     version="1.0.0",
     lifespan=lifespan
 )
+
+# ---------------- Rate Limiting ----------------
+limiter = Limiter(key_func=get_remote_address)
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 # Allow frontend origins
 origins = [
@@ -160,9 +167,12 @@ async def generic_exception_handler(request: Request, exc: Exception):
 # v1 grouped under /v1/routes
 app.include_router(api_router, prefix="/v1/routes")
 
-# v2 REST + WebSocket endpoints (clean versioned paths)
-app.include_router(design_v2_router, prefix="/v2/design")
-app.include_router(notifications_router, prefix="/v2")
+# Mount v1 router
+# from v1.api.routes.routes import router as v1_router
+# app.include_router(v1_router, prefix="/v1")
+
+# # Mount v2 routes
+# app.include_router(svg_export_router, prefix="/v2")
 
 @app.get("/metrics", dependencies=[Depends(authenticate_metrics)])
 async def default_metrics():

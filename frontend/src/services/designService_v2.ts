@@ -22,11 +22,18 @@ export const sendDesignGenerateRequest = async (
     }
 
     try {
+      // Debug logs – capture endpoint and request details
+      console.log('[DesignServiceV2] Endpoint:', endpoint);
+      console.log('[DesignServiceV2] Request payload:', request);
+
       const res = await fetchWithTimeout(
         endpoint,
         {
           method: 'POST',
-          headers: getAuthHeaders(),
+          headers: {
+            ...getAuthHeaders(),
+            'Content-Type': 'application/json',
+          },
           body: JSON.stringify(request),
           signal,
         },

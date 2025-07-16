@@ -2,7 +2,6 @@
 import { ProjectPriority, ProjectStatus, ProjectTemplateType } from '../types/projectTypes';
 import { Project,CreateProjectPayload,UpdateProjectPayload, GetProjectsParams } from '../interfaces/projectInterfaces';
 import tokenService from './tokenService';
-import { useAuth } from '@/components/Auth/AuthContext'
 import { BASE_API_URL, getAuthHeaders } from './apiService'
 import { toast, useToast } from '@/hooks/use-toast'
 
@@ -32,7 +31,8 @@ const mapBackendToFrontend = (backendProject: any): Project => {
     domain: backendProject.domain,
     templateType: backendProject.template_type,
     importedFile: backendProject.imported_file,
-    tenantId: backendProject.tenant_id
+    tenantId: backendProject.tenant_id,
+    teamId: backendProject.team_id
   };
 };
 

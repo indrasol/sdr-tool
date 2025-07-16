@@ -22,6 +22,8 @@ from v1.api.routes.model_with_ai.design import router as design_router
 # Projects
 from v1.api.routes.projects.projects import router as project_router
 
+# Teams
+from v1.api.routes.teams.teams import router as teams_router
 
 # Redis Cache
 from v1.api.routes.redis_cache_route import router as redis_cache_router
@@ -42,9 +44,15 @@ from v1.api.routes.model_with_ai.reports.generate_report import router as report
 # Data Flow
 from v1.api.routes.model_with_ai.data_flow import router as data_flow_router
 
-# (v2 routers are included at the app level – do not import here)
-from v2.api.routes.notifications import router as notifications_router
-from v2.api.routes.model_with_ai.design_v2 import router as design_v2_router
+# Notifications
+from v1.api.routes.notifications import router as notifications_router
+
+# Design V2
+from v1.api.routes.model_with_ai.design_v2 import router as design_v2_router
+
+# Dashboard
+from v1.api.routes.dashboard.metrics import router as dashboard_metrics_router
+from v1.api.routes.dashboard.reports import router as dashboard_reports_router
 
 
 router = APIRouter()
@@ -69,6 +77,10 @@ router.include_router(report_router, tags=["Reports - generate report"])
 
 # Projects
 router.include_router(project_router, tags=["Projects - project_router"])
+
+# Teams
+router.include_router(teams_router, tags=["Teams - teams_router"])
+
 # Templates
 router.include_router(templates_router, tags=["Templates - templates_router"])
 
@@ -81,6 +93,12 @@ router.include_router(health_router, tags=["Health - health_router"])
 # Data Flow
 router.include_router(data_flow_router, tags=["model_with_ai - data_flow_router"])
 
-# (notifications_router & design_v2_router mounted globally – removed here)
+# Notifications
 router.include_router(notifications_router, tags=["Notifications - notifications_router"])
+
+# Design V2
 router.include_router(design_v2_router, tags=["model_with_ai - design_v2_router"])
+
+# Dashboard
+router.include_router(dashboard_metrics_router, tags=["Dashboard - metrics"])
+router.include_router(dashboard_reports_router, tags=["Dashboard - recent reports"])

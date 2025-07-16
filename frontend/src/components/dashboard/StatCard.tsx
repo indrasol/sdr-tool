@@ -2,6 +2,7 @@ import { cn } from "@/lib/utils";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ReactNode } from "react";
 import { Link } from "react-router-dom";
+import { Loader2 } from "lucide-react";
 
 interface StatCardProps {
   title: string;
@@ -15,6 +16,7 @@ interface StatCardProps {
     isPositive: boolean;
   };
   linkTo?: string;
+  isLoading?: boolean;
 }
 
 const StatCard = ({
@@ -26,6 +28,7 @@ const StatCard = ({
   style,
   trend,
   linkTo,
+  isLoading = false,
 }: StatCardProps) => {
   const CardWrapper = linkTo ? Link : 'div';
   
@@ -51,11 +54,18 @@ const StatCard = ({
           </div>
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold text-gray-800">{value}</div>
+          {isLoading ? (
+            <div className="flex items-center h-9 mb-1">
+              <Loader2 className="h-5 w-5 text-blue-500 animate-spin mr-2" />
+              <span className="text-sm text-gray-500">Loading...</span>
+            </div>
+          ) : (
+            <div className="text-2xl font-bold text-gray-800">{value}</div>
+          )}
           {description && (
             <p className="text-xs text-gray-600 mt-1">{description}</p>
           )}
-          {trend && (
+          {trend && !isLoading && (
             <div className="mt-2">
               <span 
                 className={cn(

@@ -11,7 +11,7 @@ const Documents = () => {
 
   return (
     <Layout>
-      <div className="space-y-6 animate-fade-in font-sans mt-16">
+      <div className="space-y-6 animate-fade-in font-sans mt-0">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <div>
             <h1 className="text-3xl font-bold tracking-tight bg-gradient-to-r from-securetrack-purple to-securetrack-green bg-clip-text text-transparent animate-fade-in">

@@ -119,6 +119,8 @@ interface DiagramActionsProps {
       complexityScore: number;
     };
   };
+  // Collapse handler
+  onCollapse?: () => void;
 }
 
 const DiagramActions: React.FC<DiagramActionsProps> = ({
@@ -147,12 +149,13 @@ const DiagramActions: React.FC<DiagramActionsProps> = ({
   runningThreatAnalysis = false,
   onLayout,
   isLayouting,
-  lastLayoutResult
+  lastLayoutResult,
+  onCollapse
 }) => {
   const { addOrgTemplate } = useOrgTemplates();
   const { user } = useAuth();
   const { allProjects } = useProjects();
-  const { theme, toggleTheme } = useTheme();
+  const { theme } = useTheme();
   const [copied, setCopied] = useState(false);
   const [isTemplateModalOpen, setIsTemplateModalOpen] = useState(false);
   const [isImageModalOpen, setIsImageModalOpen] = useState(false);
@@ -1188,54 +1191,20 @@ const SequenceFlowIcon = ({ size = 16, className = "" }) => (
 
           <Separator orientation="vertical" className="h-6 mx-1" />
 
-
+          {/* Collapse Button */}
+          {onCollapse && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={onCollapse}
+              className="h-8 px-3 text-xs font-semibold hover:bg-white/20 dark:hover:bg-gray-700/20"
+            >
+              Collapse
+            </Button>
+          )}
 
         </div>
 
-        <div className="flex items-center space-x-1">
-          {/* Theme Toggle Button - Beautiful modern design */}
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={toggleTheme}
-                className={`h-8 w-8 relative overflow-hidden transition-all duration-300 transform hover:scale-105 ${
-                  theme === 'dark' 
-                    ? 'hover:bg-gradient-to-r hover:from-yellow-400/20 hover:to-orange-400/20 hover:text-yellow-400' 
-                    : 'hover:bg-gradient-to-r hover:from-indigo-100/80 hover:to-purple-100/80 hover:text-indigo-700'
-                } rounded-lg border-2 ${
-                  theme === 'dark' 
-                    ? 'border-yellow-400/30 hover:border-yellow-400/50' 
-                    : 'border-indigo-200/50 hover:border-indigo-300'
-                } hover:shadow-lg`}
-              >
-                <div className="relative flex items-center justify-center">
-                  {theme === 'dark' ? (
-                    <Sun 
-                      size={16} 
-                      className="text-yellow-400 drop-shadow-sm animate-pulse" 
-                    />
-                  ) : (
-                    <Moon 
-                      size={16} 
-                      className="text-indigo-600 drop-shadow-sm" 
-                    />
-                  )}
-                  {/* Subtle glow effect */}
-                  <div className={`absolute inset-0 rounded-lg ${
-                    theme === 'dark' 
-                      ? 'bg-gradient-to-r from-yellow-400/10 to-orange-400/10' 
-                      : 'bg-gradient-to-r from-indigo-400/10 to-purple-400/10'
-                  } opacity-0 hover:opacity-100 transition-opacity duration-300`} />
-                </div>
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent side="bottom">
-              {theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
-            </TooltipContent>
-          </Tooltip>
-        </div>
       </TooltipProvider>
 
       <Dialog open={isTemplateModalOpen} onOpenChange={setIsTemplateModalOpen}>

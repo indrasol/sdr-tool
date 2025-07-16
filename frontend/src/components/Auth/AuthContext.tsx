@@ -21,16 +21,15 @@ interface AuthContextType {
   user: User | null;
   isAuthenticated: boolean;
   isLoading: boolean;
-  login: (email: string, password: string) => Promise<void>;
+  login: (identifier: string, password: string) => Promise<void>;
   register: (data: RegisterData) => Promise<boolean>;
-  logout: () => void;
+  logout: () => Promise<void>;
 }
 
-// Create the context with default values
+// Create context
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-
-// Provider component
+// Auth provider props
 interface AuthProviderProps {
   children: ReactNode;
 }
@@ -48,53 +47,131 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
   const navigate = useNavigate();
 
-  // Check for existing Supabase session on component mount
+  // Enhanced auth initialization with better error handling
   useEffect(() => {
     const initAuth = async () => {
       setIsLoading(true);
       try {
+        // First check if we have saved credentials
         const savedToken = tokenService.getToken();
         const savedUser = tokenService.getUser();
 
         if (savedToken && savedUser) {
-          setUser(savedUser);
-          setIsAuthenticated(true);
-          setIsLoading(false);
-          return;
+          console.log('Found saved auth credentials, verifying...');
+          
+          // Verify the saved token is still valid
+          try {
+            const response = await fetch(`${BASE_API_URL}/authenticate`, {
+              headers: { "Authorization": `Bearer ${savedToken}` },
+              signal: AbortSignal.timeout(5000) // 5 second timeout
+            });
+
+            if (response.ok) {
+              console.log('Saved token is valid, restoring session');
+              setUser(savedUser);
+              setIsAuthenticated(true);
+              setIsLoading(false);
+              return;
+            } else {
+              console.log('Saved token is invalid, checking Supabase session...');
+              // Don't immediately clear - check Supabase session first
+            }
+          } catch (error) {
+            console.warn('Backend verification failed, checking Supabase session...', error);
+            // Don't immediately clear - check Supabase session first
+          }
         }
 
-        const { data: { session } } = await supabase.auth.getSession();
+        // Check Supabase session
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+        
+        if (sessionError) {
+          console.error('Supabase session error:', sessionError);
+          throw sessionError;
+        }
+
         if (session) {
+          console.log('Found Supabase session, attempting to restore or create user session');
           const token = session.access_token;
-          tokenService.setToken(token);
+          
+          // Try to verify with backend with retries
+          let backendVerified = false;
+          let userData: User | null = null;
+          
+          for (let attempt = 1; attempt <= 3; attempt++) {
+            try {
+              console.log(`Backend verification attempt ${attempt}/3`);
+              const response = await fetch(`${BASE_API_URL}/authenticate`, {
+                headers: { "Authorization": `Bearer ${token}` },
+                signal: AbortSignal.timeout(10000) // 10 second timeout
+              });
 
-          // Verify with backend
-          const response = await fetch(`${BASE_API_URL}/authenticate`, {
-            headers: { "Authorization": `Bearer ${token}` },
-          });
+              if (response.ok) {
+                userData = await response.json();
+                backendVerified = true;
+                break;
+              } else if (response.status === 401) {
+                console.log('Token expired, attempting to refresh...');
+                // Try to refresh the session
+                const { data: refreshData, error: refreshError } = await supabase.auth.refreshSession();
+                if (refreshData.session) {
+                  const newToken = refreshData.session.access_token;
+                  tokenService.setToken(newToken);
+                  console.log('Token refreshed successfully');
+                  continue; // Retry with new token
+                }
+              }
+            } catch (error) {
+              console.warn(`Backend verification attempt ${attempt} failed:`, error);
+              if (attempt === 3) {
+                console.error('All backend verification attempts failed');
+              }
+            }
+          }
 
-          if (response.ok) {
-            const userData: User = await response.json();
+          if (backendVerified && userData) {
+            console.log('Backend verification successful, restoring session');
+            tokenService.setToken(token);
             tokenService.setUser(userData);
             setUser(userData);
             setIsAuthenticated(true);
           } else {
-            console.log("Session exists but authentication endpoint failed - clearing session");
-            await supabase.auth.signOut();
-            tokenService.clearAuth();
-            setUser(null);
-            setIsAuthenticated(false);
+            console.warn('Backend verification failed, but keeping Supabase session active');
+            // Don't sign out immediately - let user try to use the app
+            // The individual API calls will handle token refresh if needed
+            
+            // If we have saved user data, try to use it
+            if (savedUser) {
+              console.log('Using saved user data as fallback');
+              setUser(savedUser);
+              setIsAuthenticated(true);
+            } else {
+              console.log('No saved user data, clearing session');
+              await supabase.auth.signOut();
+              tokenService.clearAuth();
+              setUser(null);
+              setIsAuthenticated(false);
+            }
           }
         } else {
+          console.log('No Supabase session found, clearing local storage');
           tokenService.clearAuth();
           setUser(null);
           setIsAuthenticated(false);
         }
       } catch (error) {
         console.error("Auth initialization error:", error);
-        tokenService.clearAuth();
-        setUser(null);
-        setIsAuthenticated(false);
+        // Don't clear everything on initialization error - might be temporary network issue
+        const savedUser = tokenService.getUser();
+        if (savedUser) {
+          console.log('Using saved user data due to initialization error');
+          setUser(savedUser);
+          setIsAuthenticated(true);
+        } else {
+          tokenService.clearAuth();
+          setUser(null);
+          setIsAuthenticated(false);
+        }
       } finally {
         setIsLoading(false);
       }
@@ -102,39 +179,51 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
     initAuth();
 
+    // Enhanced auth state change handler
     const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
-      console.log(`Auth event: ${event}`);
+      console.log(`Auth event: ${event}`, { hasSession: !!session });
+      
       if (event === "SIGNED_IN" && session) {
         const token = session.access_token;
         tokenService.setToken(token);
+        
         try {
           const response = await fetch(`${BASE_API_URL}/authenticate`, {
             headers: { "Authorization": `Bearer ${token}` },
+            signal: AbortSignal.timeout(10000)
           });
+          
           if (response.ok) {
             const userData: User = await response.json();
             tokenService.setUser(userData);
             setUser(userData);
             setIsAuthenticated(true);
+            console.log('User authenticated successfully on sign-in');
           } else {
-            throw new Error("Backend authentication failed");
+            console.warn('Backend authentication failed on sign-in, but keeping session');
+            // Don't immediately sign out - let the user try to use the app
           }
         } catch (error) {
           console.error("Error verifying user on sign-in:", error);
-          await supabase.auth.signOut();
-          tokenService.clearAuth();
-          setUser(null);
-          setIsAuthenticated(false);
+          // Don't immediately sign out - might be temporary network issue
         }
       } else if (event === "SIGNED_OUT") {
+        console.log('User signed out, clearing local state');
         tokenService.clearAuth();
         setUser(null);
         setIsAuthenticated(false);
+      } else if (event === "TOKEN_REFRESHED" && session) {
+        console.log('Token refreshed, updating stored token');
+        const token = session.access_token;
+        tokenService.setToken(token);
+        // Keep existing user data - no need to re-verify for refresh
       }
     });
 
     return () => authListener.subscription.unsubscribe();
-  }, [navigate]);
+  }, []);
+
+  // ... existing isValidJWT function ...
 
   async function isValidJWT(token: string): Promise<boolean> {
   // async function isValidJWT(token : any) {
@@ -151,13 +240,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     setIsLoading(true);
     try {
 
-      console.log("All Vite env variables:", Object.keys(import.meta.env).filter(key => key.startsWith('VITE_')));
-
       // Step 1: Determine if the identifier is an email or username
       let emailToUse = identifier;
       if (!identifier.includes('@')) {
-        console.log("Supabase API key:", supabaseApiKey);
-
         // If no '@' is present, assume it's a username and fetch the email from the backend
         const response = await fetch(`${BASE_API_URL}/get-email`, {
           method: 'POST',
@@ -169,10 +254,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           throw new Error('Username not found');
         }
         const data = await response.json();
-        console.log("Data:", data);
         emailToUse = data.email;
       }
-      console.log("Email to use:", emailToUse);
       // Step 1: Authenticate with Supabase
       const { data, error } = await supabase.auth.signInWithPassword({ email: emailToUse, password });
       if (error) throw new Error(error.message);
@@ -181,27 +264,44 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       const token = data.session.access_token;
       // console.log(`Token : ${token}`)
   
-      // Step 2: Call backend /login endpoint
-      const response = await fetch(`${BASE_API_URL}/login`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
-        },
-        body: JSON.stringify({ "identifier": identifier }),
-      });
-  
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.detail || 'Backend login failed');
+      // Step 2: Call backend /login endpoint with retries
+      let response;
+      let loginData;
+      
+      for (let attempt = 1; attempt <= 3; attempt++) {
+        try {
+          console.log(`Backend login attempt ${attempt}/3`);
+          response = await fetch(`${BASE_API_URL}/login`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${token}`,
+            },
+            body: JSON.stringify({ "identifier": identifier }),
+            signal: AbortSignal.timeout(15000) // 15 second timeout
+          });
+          
+          if (response.ok) {
+            loginData = await response.json();
+            break;
+          } else if (attempt === 3) {
+            const errorData = await response.json();
+            throw new Error(errorData.detail || 'Backend login failed');
+          }
+        } catch (error) {
+          console.warn(`Backend login attempt ${attempt} failed:`, error);
+          if (attempt === 3) {
+            throw error;
+          }
+        }
       }
   
-      const loginData = await response.json();
       const user =  {
         "username": loginData.username,
         "email": loginData.email,
         "id": loginData.user_id,
         "tenantId": loginData.tenant_id,
+        "teamId": loginData.team_id
       }
   
       // Step 3: Save auth state
@@ -211,8 +311,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       setIsAuthenticated(true);
       toast.success('Login successful!');
   
-      // Step 4: Navigate to organizations page
-      setTimeout(() => navigate('/org'), 1000);
+      // Step 4: Navigate to teams page
+      setTimeout(() => navigate('/teams'), 1000);
 
     } catch (error: any) {
       console.error('Login error:', error);
@@ -272,43 +372,14 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       // In that case we simply ask the user to verify their e-mail and end here.
       const supabaseSession = authData.session;
       if (!supabaseSession) {
-        // Create a pending registration record in our database so the user can log in after e-mail confirmation.
-        try {
-          const pendingResponse = await fetch(`${BASE_API_URL}/register/pending`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'X-API-Key': supabaseApiKey,
-            },
-            body: JSON.stringify({
-              user_id: supabaseUser.id,
-              tenant_name: data.organizationName,
-              email: data.email,
-              username: data.name,
-            }),
-          });
-
-          if (!pendingResponse.ok) {
-            const errorData = await pendingResponse.json();
-            throw new Error(errorData.detail || 'Pending registration failed');
-          }
-        } catch (error: any) {
-          console.error('Pending registration error:', error);
-          toast.error(error.message || 'Registration failed');
-          await supabase.auth.signOut();
-          tokenService.clearAuth();
-          setUser(null);
-          setIsAuthenticated(false);
-          throw error;
-        }
-
-        toast.success('Registration successful! Please confirm your e-mail before logging in.');
-        return true; // Allow navigation to /login
+        toast.info('Please check your email to verify your account.');
+        return true; // Return true to navigate to login
       }
-
+      
+      // Step 3: If we got a session, use it to register with the backend
       const token = supabaseSession.access_token;
       
-      // Step 4: Register with backend
+      // Step 4: Call backend /register endpoint
       const response = await fetch(`${BASE_API_URL}/register`, {
         method: 'POST',
         headers: {
@@ -316,13 +387,15 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           'Authorization': `Bearer ${token}`,
         },
         body: JSON.stringify({
-          user_id: supabaseUser.id,
-          tenant_name: data.organizationName,
-          email: data.email,
-          username: data.name,
+          "organization_name": data.organizationName,
+          "name": data.name,
+          "email": data.email,
+          "password": data.password,
+          "confirm_password": data.confirmPassword,
+          "user_id": supabaseUser.id,
         }),
       });
-        
+      
       if (!response.ok) {
         const errorData = await response.json();
         if (errorData.detail === 'User already exists') {
@@ -390,15 +463,26 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   );
 };
 
-// Custom hook to use the auth context
-export const useAuth = (): AuthContextType => {
+// Custom hook to use auth context
+export const useAuth = () => {
   const context = useContext(AuthContext);
-  
   if (context === undefined) {
     throw new Error('useAuth must be used within an AuthProvider');
   }
-  
   return context;
 };
 
-export default AuthContext;
+// Protected route component
+export const ProtectedRoute: React.FC<{ children: ReactNode }> = ({ children }) => {
+  const { isAuthenticated, isLoading } = useAuth();
+
+  if (isLoading) {
+    return <div>Loading...</div>;
+  }
+
+  return isAuthenticated ? <>{children}</> : <Navigate to="/" replace />;
+};
+
+// Default export
+export default AuthProvider;
+

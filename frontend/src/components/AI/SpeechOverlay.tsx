@@ -9,12 +9,15 @@ interface SpeechOverlayProps {
   isOpen: boolean;
   onClose: () => void;
   onTranscriptComplete: (transcript: string) => void;
+  /** If true, overlay covers entire viewport instead of leaving header/footer gaps */
+  fullScreen?: boolean;
 }
 
 const SpeechOverlay: React.FC<SpeechOverlayProps> = ({ 
   isOpen, 
   onClose, 
-  onTranscriptComplete 
+  onTranscriptComplete,
+  fullScreen = false
 }) => {
   const [transcript, setTranscript] = useState<string>('');
   const [isListening, setIsListening] = useState<boolean>(false);
@@ -175,15 +178,11 @@ const SpeechOverlay: React.FC<SpeechOverlayProps> = ({
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.3 }}
-          className="absolute inset-0 z-[1000] flex items-center justify-center"
+          className="fixed inset-0 z-[1000] flex items-center justify-center"
           style={{ 
             backgroundColor: 'rgba(0, 0, 0, 0.5)', 
             backdropFilter: 'blur(8px)',
-            position: 'absolute',
-            top: '48px',
-            left: '0',
-            right: '0',
-            bottom: '70px'
+            ...(fullScreen ? {} : { top: '48px', bottom: '70px', position: 'absolute' })
           }}
           onClick={handleOverlayClick}
         >

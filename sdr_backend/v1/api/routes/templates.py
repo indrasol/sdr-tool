@@ -2,6 +2,7 @@
 
 import random
 import string
+import logging
 from datetime import datetime
 from typing import Dict, List
 from services.auth_handler import verify_token
@@ -15,6 +16,13 @@ from core.db.supabase_db import get_supabase_client, safe_supabase_operation
 from services.supabase_manager import SupabaseManager
 
 router = APIRouter()
+
+# Set up structured logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
+logger = logging.getLogger(__name__)
 
 supabase_manager = SupabaseManager()
 
@@ -45,6 +53,7 @@ async def save_template(
         raise HTTPException(status_code=403, detail="Not authorized for this tenant")
 
     try:
+        logger.info(f"Saving template: {req}")
         tpl_id = await supabase_manager.create_template(
             tenant_id=req.tenant_id,
             tenant_name=req.tenant_name,
@@ -91,7 +100,7 @@ async def get_template(
 
     tpl = await supabase_manager.get_template(template_id=template_id, tenant_id=tenant_id)
 
-    # Map the DB’s `diagram_info` field to `diagram_state`
+    # Map the DB's `diagram_info` field to `diagram_state`
     return GetTemplateResponse(
         success=True,
         template_id=tpl["template_id"],

@@ -15,7 +15,7 @@ const AppHeader = () => {
     <header className="fixed top-0 left-0 right-0 z-50 glass-card px-4 py-3">
       <div className="max-w-7xl mx-auto flex items-center justify-between">
         {/* Logo and Brand - Leftmost positioning */}
-        <Link to="/org" className="flex items-center space-x-2 hover:opacity-90 transition-opacity flex-shrink-0">
+        <Link to="/teams" className="flex items-center space-x-2 hover:opacity-90 transition-opacity flex-shrink-0">
           <div className="relative flex items-center">
             <Route className="w-8 h-8" style={{ color: '#3ECF8E' }} />
           </div>

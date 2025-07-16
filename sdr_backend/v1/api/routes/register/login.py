@@ -66,6 +66,23 @@ async def login(identifier: dict,current_user: dict = Depends(verify_token)):
         )
         log_info(f"User tenant response: {user_tenant_response}")
 
+        # Fetch team ID from team_members table
+        def user_team_operation():
+            return supabase_client.from_("team_members").select("team_id").eq("user_id", user_response.data[0].get("id")).execute()
+            
+        user_team_response = await safe_supabase_operation(
+            user_team_operation,
+            "Failed to fetch user team data"
+        )
+        
+        # Extract team ID if available
+        team_id = None
+        if user_team_response.data and len(user_team_response.data) > 0:
+            team_id = user_team_response.data[0].get("team_id")
+            log_info(f"Found team ID for user {user_response.data[0].get('id')}: {team_id}")
+        else:
+            log_info(f"No team ID found for user {user_response.data[0].get('id')}")
+
         # If user not found in our "users" table yet (first login), auto-create
         if not user_response.data or len(user_response.data) == 0:
             # Fetch auth user info via Supabase admin
@@ -104,7 +121,8 @@ async def login(identifier: dict,current_user: dict = Depends(verify_token)):
             "email": email,
             "tenant_id": tenant_id,
             "user_id": user_id,
-            "user": user_data
+            "user": user_data,
+            "team_id": team_id
         }
 
     except HTTPException as he:

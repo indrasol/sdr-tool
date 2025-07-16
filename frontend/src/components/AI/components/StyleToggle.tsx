@@ -8,6 +8,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Check, ChevronDown, Eye } from 'lucide-react';
+import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 import { useDiagramStyle, DiagramStyle } from '../contexts/DiagramStyleContext';
 import { useTheme } from '@/contexts/ThemeContext';
 
@@ -68,20 +69,24 @@ const StyleToggle: React.FC<StyleToggleProps> = ({
   if (variant === 'icon-only') {
     return (
       <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
-        <DropdownMenuTrigger asChild>
-          <Button 
-            variant="ghost" 
-            size="icon"
-            className={`h-8 w-8 ${
-              theme === 'dark'
-                ? "text-gray-300 hover:text-white hover:bg-gray-700"
-                : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
-            } transition-all duration-200 ${className}`}
-            title="View mode"
-          >
-            <Eye size={16} />
-          </Button>
-        </DropdownMenuTrigger>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <DropdownMenuTrigger asChild>
+              <Button 
+                variant="ghost" 
+                size="icon"
+                className={`h-8 w-8 ${
+                  theme === 'dark'
+                    ? "text-gray-300 hover:text-white hover:bg-gray-700"
+                    : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
+                } transition-all duration-200 ${className}`}
+              >
+                <Eye size={16} />
+              </Button>
+            </DropdownMenuTrigger>
+          </TooltipTrigger>
+          <TooltipContent side="bottom">View Mode</TooltipContent>
+        </Tooltip>
         <DropdownMenuContent className={`w-64 p-4 shadow-xl rounded-lg ${
           theme === 'dark' 
             ? 'bg-gradient-to-br from-gray-800 to-gray-900 border-gray-700' 
@@ -142,20 +147,24 @@ const StyleToggle: React.FC<StyleToggleProps> = ({
   if (variant === 'compact') {
     return (
       <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
-        <DropdownMenuTrigger asChild>
-          <Button 
-            variant="ghost" 
-            size="icon"
-            className={`h-8 w-8 ${
-              theme === 'dark'
-                ? "text-gray-300 hover:text-white hover:bg-gray-700"
-                : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
-            } transition-all duration-200 ${className}`}
-            title="View mode"
-          >
-            <Eye size={16} />
-          </Button>
-        </DropdownMenuTrigger>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <DropdownMenuTrigger asChild>
+              <Button 
+                variant="ghost" 
+                size="icon"
+                className={`h-8 w-8 ${
+                  theme === 'dark'
+                    ? "text-gray-300 hover:text-white hover:bg-gray-700"
+                    : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
+                } transition-all duration-200 ${className}`}
+              >
+                <Eye size={16} />
+              </Button>
+            </DropdownMenuTrigger>
+          </TooltipTrigger>
+          <TooltipContent side="bottom">View Mode</TooltipContent>
+        </Tooltip>
         <DropdownMenuContent className={`w-64 p-4 shadow-xl rounded-lg ${
           theme === 'dark' 
             ? 'bg-gradient-to-br from-gray-800 to-gray-900 border-gray-700' 
@@ -215,20 +224,24 @@ const StyleToggle: React.FC<StyleToggleProps> = ({
   // Default variant
   return (
     <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
-      <DropdownMenuTrigger asChild>
-        <Button 
-          variant="ghost" 
-          size="icon"
-          className={`h-8 w-8 ${
-            theme === 'dark'
-              ? "text-gray-300 hover:text-white hover:bg-gray-700"
-              : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
-          } transition-all duration-200 ${className}`}
-          title="View mode"
-        >
-          <Eye size={16} />
-        </Button>
-      </DropdownMenuTrigger>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <DropdownMenuTrigger asChild>
+            <Button 
+              variant="ghost" 
+              size="icon"
+              className={`h-8 w-8 ${
+                theme === 'dark'
+                  ? "text-gray-300 hover:text-white hover:bg-gray-700"
+                  : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
+              } transition-all duration-200 ${className}`}
+            >
+              <Eye size={16} />
+            </Button>
+          </DropdownMenuTrigger>
+        </TooltipTrigger>
+        <TooltipContent side="bottom">View Mode</TooltipContent>
+      </Tooltip>
       <DropdownMenuContent className={`w-64 p-4 shadow-xl rounded-lg ${
         theme === 'dark' 
           ? 'bg-gradient-to-br from-gray-800 to-gray-900 border-gray-700' 

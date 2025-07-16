@@ -61,3 +61,6 @@ d2py==0.7.0
 
 # Testing
 pytest>=8.0.0
+
+# Rate limiting
+slowapi==0.1.9
