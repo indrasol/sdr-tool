@@ -8,7 +8,7 @@ import { createClient } from '@supabase/supabase-js';
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 // The browser must only use the public (anon) key. Service keys have admin
 // privileges and should never be exposed client-side.
-const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+const supabaseKey = import.meta.env.VITE_SUPABASE_API_KEY;
 
 // Configure Supabase client with better session management to prevent automatic logout
 export const supabase = createClient(supabaseUrl, supabaseKey, {
