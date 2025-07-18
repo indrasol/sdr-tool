@@ -130,20 +130,19 @@ async def get_dashboard_metrics(
         
         # 5. Get vulnerabilities count
         try:
+            # Skip vulnerability count until table exists
+            metrics_data["vulnerabilities_count"] = 0
+            logger.info("Skipping vulnerabilities count as table doesn't exist yet", extra=log_extra)
+            
+            # Commented out original code that tries to query the non-existent table
             # First try with team_id filter
-            get_vulns_count = lambda: supabase.from_("vulnerabilities").select("id", count="exact").eq("tenant_id", tenant_id).eq("team_id", team_id).execute()
-            vulns_response = await safe_supabase_operation(get_vulns_count, "Failed to fetch vulnerabilities count")
-            metrics_data["vulnerabilities_count"] = vulns_response.count
+            # get_vulns_count = lambda: supabase.from_("vulnerabilities").select("id", count="exact").eq("tenant_id", tenant_id).eq("team_id", team_id).execute()
+            # vulns_response = await safe_supabase_operation(get_vulns_count, "Failed to fetch vulnerabilities count")
+            # metrics_data["vulnerabilities_count"] = vulns_response.count
         except Exception as e:
-            logger.warning(f"Error getting vulnerabilities with team filter: {str(e)}", extra=log_extra)
-            # Try again without team filter (legacy data might not have team_id)
-            try:
-                get_vulns_count = lambda: supabase.from_("vulnerabilities").select("id", count="exact").eq("tenant_id", tenant_id).execute()
-                vulns_response = await safe_supabase_operation(get_vulns_count, "Failed to fetch vulnerabilities count")
-                metrics_data["vulnerabilities_count"] = vulns_response.count
-            except Exception as e2:
-                logger.warning(f"Could not fetch vulnerabilities count: {str(e2)}", extra=log_extra)
-                metrics_data["vulnerabilities_count"] = 0
+            logger.info("Setting vulnerabilities count to 0", extra=log_extra)
+            # No need to log as warning since we know the table doesn't exist yet
+            metrics_data["vulnerabilities_count"] = 0
         
         # 6. Calculate other useful metrics (trend data, priority breakdown, etc.)
         metrics_data["success"] = True

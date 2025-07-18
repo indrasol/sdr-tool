@@ -54,8 +54,8 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
         "flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center shadow-md ring-2",
         isUser
           ? theme === 'dark'
-            ? "bg-gradient-to-r from-purple-600 to-purple-700 ring-purple-400/30"
-            : "bg-gradient-to-r from-purple-500 to-purple-600 ring-purple-200"
+            ? "bg-gradient-to-r from-blue-600 to-blue-700 ring-blue-400/30"
+            : "bg-gradient-to-r from-blue-600 to-blue-700 ring-blue-200"
           : theme === 'dark'
             ? "bg-gradient-to-r from-indigo-600 to-indigo-700 ring-indigo-400/30"
             : "bg-gradient-to-r from-indigo-500 to-indigo-600 ring-indigo-200"
@@ -78,8 +78,8 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
           "hover:shadow-xl hover:scale-[1.02] transform",
           isUser
             ? theme === 'dark'
-              ? "bg-gradient-to-r from-purple-700/90 to-purple-600/90 text-white border-purple-500/30 shadow-purple-900/20"
-              : "bg-gradient-to-r from-purple-500 to-purple-600 text-white border-purple-300/50 shadow-purple-500/20"
+              ? "bg-gradient-to-r from-blue-700/90 to-blue-600/90 text-white border-blue-500/30 shadow-blue-900/20"
+              : "bg-gradient-to-r from-blue-600 to-blue-700 text-white border-blue-300/50 shadow-blue-500/20"
             : theme === 'dark'
               ? "bg-gradient-to-r from-gray-800/95 to-gray-700/95 text-gray-100 border-gray-600/30 shadow-gray-900/40"
               : "bg-gradient-to-r from-white to-gray-50 text-gray-800 border-gray-200/50 shadow-gray-300/20",
@@ -143,8 +143,8 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
               : "-right-1 top-4",
             isUser
               ? theme === 'dark'
-                ? "bg-purple-700 border-l border-b border-purple-500/30"
-                : "bg-purple-500 border-l border-b border-purple-300/50"
+                ? "bg-blue-700 border-l border-b border-blue-500/30"
+                : "bg-blue-600 border-l border-b border-blue-300/50"
               : theme === 'dark'
                 ? "bg-gray-800 border-r border-t border-gray-600/30"
                 : "bg-white border-r border-t border-gray-200/50"

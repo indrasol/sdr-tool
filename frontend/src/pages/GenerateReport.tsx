@@ -558,25 +558,28 @@ const GenerateReport = () => {
           </Alert>
         )}
 
-        {/* Enhanced navigation section */}
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-          <Button 
-            variant="outline" 
-            onClick={handleBackClick}
-            className="transition-all bg-gradient-to-r from-blue-50/70 to-purple-50/70 border-blue-100 hover:border-blue-200 text-blue-600 hover:text-blue-700 hover:from-blue-100/80 hover:to-purple-100/80 hover:shadow-sm"
-          >
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            <Cpu className="mr-2 h-4 w-4" />
-            Back to AI Design
-          </Button>
+        {/* Enhanced header with consistent styling */}
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-4 bg-white/80 backdrop-blur-sm rounded-xl border border-blue-100/70 shadow-sm">
+          <div className="flex items-center gap-2">
+            <Button 
+              variant="outline" 
+              onClick={handleBackClick}
+              className="transition-all bg-gradient-to-r from-blue-50/70 to-purple-50/70 border-blue-100 hover:border-blue-200 text-blue-600 hover:text-blue-700 hover:from-blue-100/80 hover:to-purple-100/80 hover:shadow-sm"
+            >
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              <Cpu className="mr-2 h-4 w-4" />
+              Back to AI Design
+            </Button>
+            
+            {projectCode && (
+              <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-100 truncate max-w-[140px]">
+                Project: {projectCode}
+              </Badge>
+            )}
+          </div>
           
           {/* Report stats as colorful tags */}
           <div className="flex flex-wrap items-center gap-2 text-xs sm:text-sm">
-            {projectCode && (
-              <Badge variant="outline" className="bg-green-50 text-green-700 border-green-100 truncate max-w-[140px]">
-                {projectCode}
-              </Badge>
-            )}
             <Badge variant="outline" className="bg-blue-50 text-blue-600 border-blue-100">
               {reportPages.length} sections
             </Badge>

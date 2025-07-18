@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { useLocation, useParams } from 'react-router-dom';
+import { useLocation, useParams, useNavigate } from 'react-router-dom';
 
 // TypeScript declarations for Speech Recognition API
 declare global {
@@ -8,7 +8,7 @@ declare global {
     webkitSpeechRecognition: typeof SpeechRecognition;
   }
 }
-import Layout from '@/components/layout/Layout';
+import ModelWithAILayout from '@/components/layout/ModelWithAILayout';
 import { useToast } from '@/hooks/use-toast';
 import { sendDesignGenerateRequest } from '@/services/designService_v2';
 import { DesignGenerateRequestV2, DesignServiceResponseV2, IntentV2, DSLResponse } from '@/interfaces/aiassistedinterfaces_v2';
@@ -32,11 +32,11 @@ import {
   needsLayoutTransformation 
 } from '@/utils/layoutTransformer';
 import { layoutWithEnhancedEngine, LayoutResult } from '@/components/AI/utils/enhancedLayoutEngine';
-import { useTheme } from '@/contexts/ThemeContext';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { motion } from 'framer-motion';
+import { captureDiagramImage } from '@/utils/diagramUtils';
 import { 
   Send, 
   Mic, 
@@ -51,7 +51,11 @@ import {
   Grid,
   Zap,
   ChevronUp,
-  Move
+  ChevronDown,
+  Move,
+  Pencil,
+  Check,
+  X
 } from 'lucide-react';
 import DiagramActions from '@/components/AI/DiagramActions';
 
@@ -222,7 +226,7 @@ const ModelWithAI_V2: React.FC = () => {
   const { user } = useAuth();
   const location = useLocation();
   const params = useParams<{ projectId: string }>();
-  const { theme } = useTheme();
+  const navigate = useNavigate();
 
   const [sessionId, setSessionId] = useState<string | undefined>();
   const [nodes, setNodes] = useState<Node<any>[]>([]);
@@ -232,6 +236,12 @@ const ModelWithAI_V2: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [projectId, setProjectId] = useState<string | undefined>();
   const [inputValue, setInputValue] = useState('');
+  
+  // Project name state
+  const [projectName, setProjectName] = useState<string>('Untitled Project');
+  const [isEditingName, setIsEditingName] = useState(false);
+  const [editedName, setEditedName] = useState<string>('');
+  const [isProjectNameVisible, setIsProjectNameVisible] = useState(true);
   
   // Voice mode state
   const [isVoiceMode, setIsVoiceMode] = useState(false); // retained for compatibility
@@ -349,6 +359,17 @@ const ModelWithAI_V2: React.FC = () => {
         // Always set session ID first
         if (data.session_id) {
           setSessionId(data.session_id);
+        }
+
+        // Fetch project details to get the name
+        try {
+          const projectDetails = await projectService.getProjectById(pid);
+          if (projectDetails && projectDetails.name) {
+            setProjectName(projectDetails.name);
+            setEditedName(projectDetails.name);
+          }
+        } catch (error) {
+          console.error('Failed to fetch project details', error);
         }
 
         // Load diagram state with FORCED left-to-right layout
@@ -904,18 +925,147 @@ const ModelWithAI_V2: React.FC = () => {
 
   // DiagramActions handlers
   const handleGenerateReport = () => {
-    // TODO: Implement report generation
-    toast({
-      title: 'Report Generation',
-      description: 'Report generation functionality coming soon!',
-    });
+    // Clean diagram state by removing functions and keeping only essential data
+    const cleanNodes = nodes
+      .filter(node => node.type !== 'layerGroup') // Filter out layer containers
+      .map(node => ({
+        id: node.id,
+        type: node.type,
+        position: node.position,
+        data: {
+          label: node.data?.label,
+          description: node.data?.description,
+          nodeType: node.data?.nodeType,
+          // Exclude functions like onEdit, onDelete, etc.
+        }
+      }));
+
+    const cleanEdges = edges.map(edge => ({
+      id: edge.id,
+      source: edge.source,
+      target: edge.target,
+      type: edge.type,
+      label: edge.label
+    }));
+
+    const cleanDiagramState = {
+      nodes: cleanNodes,
+      edges: cleanEdges
+    };
+
+    // Capture diagram image
+    let diagramImageUrl = null;
+    (async () => {
+      try {
+        // Use captureDiagramImage without params as it finds the diagram elements directly
+        diagramImageUrl = await captureDiagramImage({
+          backgroundColor: '#ffffff',
+          pixelRatio: 2,
+          quality: 1.0,
+          padding: 50
+        });
+        
+        // Store current diagram state in localStorage as backup
+        localStorage.setItem('diagramNodes', JSON.stringify(cleanNodes));
+        localStorage.setItem('diagramEdges', JSON.stringify(cleanEdges));
+        localStorage.setItem('projectId', projectId || '');
+        localStorage.setItem('sessionId', sessionId || '');
+        
+        console.log('Navigating to report with:', { 
+          projectId, 
+          sessionId, 
+          nodesCount: cleanNodes.length, 
+          edgesCount: cleanEdges.length,
+          hasDiagramImage: !!diagramImageUrl
+        });
+        
+        // Navigate with cleaned state and diagram image
+        navigate('/generate-report', { 
+          state: { 
+            projectId: projectId,
+            sessionId: sessionId,
+            diagramState: cleanDiagramState,
+            diagramImage: diagramImageUrl // Pass the captured image
+          } 
+        });
+      } catch (err) {
+        console.error('Error preparing report:', err);
+        toast({
+          title: 'Error',
+          description: 'Failed to prepare report. Please try again.',
+          variant: 'destructive'
+        });
+      }
+    })();
   };
 
   const handleComment = () => {
-    // TODO: Implement comment functionality
+    console.log('Creating sticky note');
+    
+    // Create a comment node at a position more likely to be visible
+    // and away from other diagram elements
+    const centerPosition = {
+      x: Math.random() * 200 + 300, // Random position between 300-500 px
+      y: Math.random() * 200 + 100, // Random position between 100-300 px
+    };
+    
+    const newId = `sticky-note-${Date.now()}`;
+    console.log(`Creating new sticky note with ID: ${newId}`);
+    
+    // Create sticky note with stronger type identity
+    const stickyNote = {
+      id: newId,
+      type: 'comment',
+      position: centerPosition,
+      // Explicitly set properties to prevent transformation
+      draggable: true,
+      selectable: true,
+      // Add connector properties to prevent edge connections
+      sourcePosition: null,
+      targetPosition: null,
+      connectable: false,
+      // Use data properties to identify as a sticky note
+      data: { 
+        label: "Click to add note...",
+        nodeType: 'stickyNote',
+        isComment: true,
+        excludeFromLayers: true,
+        // Flag to prevent transformation
+        isSticky: true,
+        preserveType: 'comment',
+        // Add delete handler
+        onDelete: (id: string) => {
+          // Use functional update to guarantee we're working with the latest state
+          setNodes(prevNodes => {
+            console.log(`Deleting sticky note with ID: ${id}`);
+            return prevNodes.filter(node => node.id !== id);
+          });
+          
+          toast({
+            description: "Sticky note removed."
+          });
+        }
+      },
+      // Add style directly to node to reinforce its appearance
+      style: {
+        zIndex: 1000, // Ensure sticky notes are always on top
+        background: 'linear-gradient(135deg, #fff9c4 0%, #fff59d 100%)',
+        border: '1px solid rgba(226, 205, 109, 0.5)',
+        borderRadius: '2px',
+        boxShadow: '2px 4px 7px rgba(0,0,0,0.15)',
+      }
+    };
+    
+    // Use functional update to guarantee we're working with the latest state
+    setNodes(prevNodes => {
+      console.log('Adding sticky note to diagram');
+      // Add sticky note to nodes
+      const newNodes = [...prevNodes, stickyNote];
+      return newNodes;
+    });
+    
     toast({
-      title: 'Comments',
-      description: 'Comment functionality coming soon!',
+      description: "Sticky note added. Click to edit."
     });
   };
 
@@ -959,20 +1109,136 @@ const ModelWithAI_V2: React.FC = () => {
     });
   };
 
+  // Save project name
+  const saveProjectName = async () => {
+    if (!projectId || editedName.trim() === '') return;
+    
+    try {
+      await projectService.updateProject(projectId, {
+        name: editedName.trim()
+      });
+      
+      setProjectName(editedName.trim());
+      setIsEditingName(false);
+      
+      toast({
+        title: 'Project name updated',
+        description: 'Project name saved successfully'
+      });
+    } catch (error) {
+      console.error('Failed to update project name', error);
+      toast({
+        title: 'Update failed',
+        description: 'Could not update project name',
+        variant: 'destructive'
+      });
+    }
+  };
+
+  // Toggle project name visibility
+  const toggleProjectNameVisibility = () => {
+    setIsProjectNameVisible(prev => !prev);
+  };
+
   return (
-    <Layout noMargins>
+    <ModelWithAILayout projectId={projectId}>
       <DiagramStyleProvider>
         <SketchFilters />
+        
+        {/* Project Name Display with Toggle Button */}
+        <AnimatePresence mode="wait">
+          {isProjectNameVisible ? (
+            <motion.div
+              key="project-name-card"
+              className="absolute top-1 left-1/2 transform -translate-x-1/2 z-50"
+              initial={{ opacity: 0, y: -20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+              drag
+              dragConstraints={{ top: 0, left: -100, right: 100, bottom: 0 }}
+              dragElastic={0.2}
+            >
+              <div className="flex items-center space-x-2 py-2 px-4 bg-white/80 backdrop-blur-md rounded-full shadow-md border border-gray-100">
+                {isEditingName ? (
+                  <div className="flex items-center space-x-2">
+                    <Input
+                      value={editedName}
+                      onChange={(e) => setEditedName(e.target.value)}
+                      className="h-8 w-48 rounded-full text-sm font-medium text-gray-800"
+                      autoFocus
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') saveProjectName();
+                        if (e.key === 'Escape') setIsEditingName(false);
+                      }}
+                    />
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-6 w-6 p-0 rounded-full text-green-600"
+                      onClick={saveProjectName}
+                    >
+                      <Check size={14} />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-6 w-6 p-0 rounded-full text-gray-500"
+                      onClick={() => setIsEditingName(false)}
+                    >
+                      <X size={14} />
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="flex items-center space-x-2">
+                    <h3 className="text-sm font-medium text-gray-800">
+                      {projectName}
+                    </h3>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-6 w-6 p-0 rounded-full text-gray-500 hover:text-blue-600 hover:bg-blue-50/50"
+                      onClick={() => {
+                        setIsEditingName(true);
+                        setEditedName(projectName);
+                      }}
+                    >
+                      <Pencil size={12} />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-6 w-6 p-0 rounded-full text-gray-500 hover:text-blue-600 hover:bg-blue-50/50"
+                      onClick={toggleProjectNameVisibility}
+                    >
+                      <ChevronUp size={12} />
+                    </Button>
+                  </div>
+                )}
+              </div>
+            </motion.div>
+          ) : (
+            <motion.button
+              key="project-name-toggle"
+              className="absolute top-1 left-1/2 transform -translate-x-1/2 z-50 p-2 rounded-full backdrop-blur-lg bg-white/70 border border-gray-100 shadow-md hover:shadow-lg transition-all"
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+              onClick={toggleProjectNameVisibility}
+            >
+              <ChevronDown size={14} className="text-gray-700" />
+            </motion.button>
+          )}
+        </AnimatePresence>
         
         {/* Full-screen diagram pane with extreme zoomed out dotted background like Flowstep */}
         <div 
           id="diagram-container"
           className={cn(
-          "h-full min-h-[calc(100vh-64px)] w-full overflow-hidden relative",
-          // Use dotted background pattern with CSS
-          theme === 'dark'
-            ? "bg-gray-900 bg-[radial-gradient(circle,#374151_1px,transparent_1px)] [background-size:32px_32px]"
-            : "bg-white bg-[radial-gradient(circle,#e5e7eb_1px,transparent_1px)] [background-size:32px_32px]"
+          "h-full min-h-[calc(100vh-64px)] w-full overflow-hidden relative pt-16",
+          // Transparent background - dots are now applied at the layout level
+          "bg-transparent"
         )}>
           {/* Add subtle gradient overlay */}
           <motion.div 
@@ -981,15 +1247,16 @@ const ModelWithAI_V2: React.FC = () => {
             animate={{ opacity: 1 }}
             transition={{ duration: 1.2 }}
           >
-            <div className="absolute inset-0 bg-gradient-to-br from-transparent via-purple-50/5 to-blue-50/10 dark:from-transparent dark:via-purple-900/5 dark:to-blue-900/10"></div>
+            <div className="absolute inset-0 bg-gradient-to-br from-transparent via-purple-50/5 to-blue-50/10"></div>
           </motion.div>
           
           <motion.div 
-            className="w-full h-full" 
+            className="w-full h-[calc(100vh-80px)]" 
             initial={{ opacity: 0 }} 
             animate={{ opacity: 1 }} 
             transition={{ duration: 0.6, ease: 'easeOut' }}
             ref={diagramRef}
+            style={{ display: "flex", minHeight: "80vh" }}
           >
             <AIFlowDiagram
                 ref={aiDiagramRef}
@@ -1005,6 +1272,7 @@ const ModelWithAI_V2: React.FC = () => {
                 isLayouting={isLayouting}
                 lastLayoutResult={lastLayoutResult}
                 projectId={projectId}
+
               />
           </motion.div>
         </div>
@@ -1028,9 +1296,9 @@ const ModelWithAI_V2: React.FC = () => {
         >
           {/* Chat input with glass morphism */}
           <div className={cn(
-            "backdrop-blur-xl bg-white/10 dark:bg-gray-900/10 rounded-2xl",
-            "border border-white/20 dark:border-gray-700/20",
-            "shadow-2xl shadow-black/10 dark:shadow-black/30"
+            "backdrop-blur-xl bg-white/10 rounded-2xl",
+            "border border-white/20",
+            "shadow-2xl shadow-black/10"
           )}>
             <div className="px-6 py-4">
               <div className="flex items-center space-x-3">
@@ -1049,11 +1317,11 @@ const ModelWithAI_V2: React.FC = () => {
                     onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && handleSendMessage()}
                     className={cn(
                       "pr-16 pl-4 py-3 rounded-xl border-2 transition-all duration-200",
-                      "bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm",
-                      "border-white/30 dark:border-gray-600/30",
+                      "bg-white/90 backdrop-blur-sm",
+                      "border-white/30",
                       "focus:border-purple-500/50 focus:ring-2 focus:ring-purple-500/20",
-                      "text-gray-900 dark:text-gray-100",
-                      "placeholder-gray-500 dark:placeholder-gray-400"
+                      "text-gray-900",
+                      "placeholder-gray-500"
                     )}
                     disabled={isLoading}
                   />
@@ -1067,7 +1335,7 @@ const ModelWithAI_V2: React.FC = () => {
                       "absolute right-2 top-1/2 transform -translate-y-1/2 rounded-lg p-2",
                       "backdrop-blur-sm",
                       isSpeechOverlayOpen 
-                        ? "text-red-500 bg-red-500/20" 
+                        ? "text-blue-700 bg-blue-100/30" 
                         : "text-gray-400 hover:text-gray-600 hover:bg-white/20"
                     )}
                   >
@@ -1075,7 +1343,26 @@ const ModelWithAI_V2: React.FC = () => {
                   </Button>
                 </div>
 
-                {/* Toggle Chat Window */}
+                {/* Send button */}
+                <Button 
+                  onClick={handleSendMessage} 
+                  disabled={isLoading || !inputValue.trim()}
+                  className={cn(
+                    "rounded-xl px-6 py-3 transition-all duration-200",
+                    "bg-blue-50/70 hover:bg-blue-100/80 border border-blue-200 hover:border-blue-300",
+                    "shadow-sm hover:shadow-md",
+                    "backdrop-blur-sm",
+                    "disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:shadow-sm"
+                  )}
+                >
+                  {isLoading ? (
+                    <RefreshCw className="animate-spin text-blue-700" size={16} />
+                  ) : (
+                    <Send size={16} className="text-blue-700" />
+                  )}
+                </Button>
+                
+                {/* Chat Toggle Button (replacing Fit back button) */}
                 <Button
                   variant="ghost"
                   size="sm"
@@ -1083,45 +1370,11 @@ const ModelWithAI_V2: React.FC = () => {
                   className={cn(
                     "rounded-lg p-2 backdrop-blur-sm transition-all duration-200",
                     isChatVisible
-                      ? "text-purple-600 bg-purple-600/20"
-                      : "text-gray-400 hover:text-gray-600 hover:bg-white/20"
+                      ? "text-blue-700 bg-blue-100/30"
+                      : "text-gray-400 hover:text-blue-700 hover:bg-blue-100/30"
                   )}
                 >
                   <MessageSquare size={16} />
-                </Button>
-
-                {/* Send button */}
-                <Button 
-                  onClick={handleSendMessage} 
-                  disabled={isLoading || !inputValue.trim()}
-                  className={cn(
-                    "rounded-xl px-6 py-3 transition-all duration-200",
-                    "bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800",
-                    "shadow-lg shadow-purple-500/25 hover:shadow-purple-500/40 hover:scale-105",
-                    "backdrop-blur-sm",
-                    "disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
-                  )}
-                >
-                  {isLoading ? (
-                    <RefreshCw className="animate-spin" size={16} />
-                  ) : (
-                    <Send size={16} />
-                  )}
-                </Button>
-                {/* Fit back button */}
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={resetChatPosition}
-                  disabled={chatPos.x === 0 && chatPos.y === 0 && chatPanelPos.x === 0 && chatPanelPos.y === 0}
-                  className={cn(
-                    "rounded-lg p-2 backdrop-blur-sm transition-all duration-200",
-                    chatPos.x === 0 && chatPos.y === 0
-                      ? "opacity-40 cursor-not-allowed"
-                      : "text-gray-400 hover:text-gray-600 hover:bg-white/20"
-                  )}
-                >
-                  <Maximize size={16} />
                 </Button>
               </div>
             </div>
@@ -1133,30 +1386,60 @@ const ModelWithAI_V2: React.FC = () => {
           {isChatVisible && (
             <motion.div
               key="chat-panel"
-              initial={{ opacity: 0, y: 50, height: 0 }}
-              animate={{ opacity: 1, y: 0, height: '60vh' }}
-              exit={{ opacity: 0, y: 50, height: 0 }}
-              transition={{ type: 'spring', stiffness: 260, damping: 30 }}
+              initial={{ 
+                opacity: 0, 
+                y: 20, 
+                scaleY: 0.1, 
+                transformOrigin: 'bottom center',
+                filter: 'blur(10px)'
+              }}
+              animate={{ 
+                opacity: 1, 
+                y: 0, 
+                scaleY: 1, 
+                transformOrigin: 'bottom center',
+                filter: 'blur(0px)'
+              }}
+              exit={{ 
+                opacity: 0, 
+                y: 10, 
+                scaleY: 0.2,
+                transformOrigin: 'bottom center',
+                filter: 'blur(5px)'
+              }}
+              transition={{ 
+                type: 'spring', 
+                stiffness: 500, 
+                damping: 25,
+                mass: 0.5
+              }}
               className={cn(
-                'absolute z-50 w-[90vw] max-w-4xl cursor-move',
-                'bg-white/90 dark:bg-gray-900/90 backdrop-blur-xl rounded-2xl',
-                'border border-white/20 dark:border-gray-700/20 shadow-2xl flex flex-col overflow-hidden'
+                'absolute z-50 cursor-default',
+                'bg-white/90 backdrop-blur-xl rounded-2xl',
+                'border border-white/20 shadow-2xl flex flex-col overflow-hidden'
               )}
               style={(() => {
-                if (!chatRect) return { bottom: 'calc(5rem + 4.5rem)', left: '50%', transform: 'translateX(-50%)', x: chatPanelPos.x, y: chatPanelPos.y };
-                const openUpwards = chatRect.top > window.innerHeight / 2;
-                const panelX = chatRect.left + chatRect.width / 2;
-                const base = { left: panelX, transform: 'translateX(-50%)', x: chatPanelPos.x, y: chatPanelPos.y } as any;
-                return openUpwards
-                  ? { ...base, bottom: window.innerHeight - chatRect.top + 16 }
-                  : { ...base, top: chatRect.bottom + 16 };
+                // Get dimensions from chat input for perfect alignment
+                if (!chatInputRef.current) {
+                  return { 
+                    bottom: 'calc(5rem + 4.5rem)', 
+                    left: '50%', 
+                    transform: 'translateX(-50%)',
+                    width: 'calc(min(90vw, 48rem))',  // Match max-w-4xl (48rem)
+                    height: '70vh'
+                  };
+                }
+                
+                const inputRect = chatInputRef.current.getBoundingClientRect();
+                
+                return {
+                  bottom: window.innerHeight - inputRect.top + 8,
+                  left: inputRect.left,
+                  width: inputRect.width,
+                  height: '70vh',
+                  maxHeight: 'calc(100vh - 180px)'
+                };
               })()}
-              drag
-              dragMomentum={false}
-              onDragEnd={(e, dragInfo) => {
-                // Update the panel position relative to its current offset
-                setChatPanelPos(prev => ({ x: prev.x + dragInfo.offset.x, y: prev.y + dragInfo.offset.y }));
-              }}
             >
               <AIChat
                 messages={messages}
@@ -1187,13 +1470,15 @@ const ModelWithAI_V2: React.FC = () => {
         {/* Floating DiagramActions bar with collapse capability */}
         {isToolbarCollapsed ? (
           <motion.button
-            className="absolute bottom-4 left-1/2 -translate-x-1/2 z-50 p-2 rounded-full backdrop-blur-lg bg-white/20 dark:bg-gray-800/20 border border-white/20 dark:border-gray-700/20 shadow-lg hover:shadow-xl transition-all"
+            className="absolute bottom-4 left-1/2 -translate-x-1/2 z-50 p-2 rounded-full backdrop-blur-lg bg-white/20 border border-white/20 shadow-lg hover:shadow-xl transition-all"
             initial={{ y: 100, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             transition={{ duration: 0.4, ease: 'easeOut' }}
-            onClick={() => setIsToolbarCollapsed(false)}
+            onClick={() => {
+              setIsToolbarCollapsed(false);
+            }}
           >
-            <ChevronUp size={18} className="text-gray-700 dark:text-gray-200" />
+            <ChevronUp size={18} className="text-gray-700" />
           </motion.button>
         ) : (
           <motion.div
@@ -1204,8 +1489,7 @@ const ModelWithAI_V2: React.FC = () => {
           >
             <div
               className={cn(
-                'inline-flex items-center bg-transparent backdrop-blur-none',
-                'rounded-2xl px-2 gap-1'
+                'flex justify-center items-center rounded-2xl'
               )}
             >
               <DiagramActions
@@ -1219,7 +1503,7 @@ const ModelWithAI_V2: React.FC = () => {
                 onToggleDataFlow={handleToggleDataFlow}
                 onToggleFlowchart={handleToggleFlowchart}
                 onSave={handleSave}
-                projectId={projectId}
+                projectId={null} // Hide project ID in action bar
                 diagramRef={diagramRef}
                 nodes={nodes}
                 edges={edges}
@@ -1236,7 +1520,7 @@ const ModelWithAI_V2: React.FC = () => {
           </motion.div>
         )}
       </DiagramStyleProvider>
-    </Layout>
+    </ModelWithAILayout>
   );
 };
 

@@ -155,8 +155,8 @@ const StyleToggle: React.FC<StyleToggleProps> = ({
                 size="icon"
                 className={`h-8 w-8 ${
                   theme === 'dark'
-                    ? "text-gray-300 hover:text-white hover:bg-gray-700"
-                    : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
+                    ? "text-blue-600 hover:text-blue-500 hover:bg-blue-100/30"
+                    : "text-blue-700 hover:text-blue-800 hover:bg-blue-100/50"
                 } transition-all duration-200 ${className}`}
               >
                 <Eye size={16} />

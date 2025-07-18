@@ -682,29 +682,19 @@ const SequenceFlowIcon = ({ size = 16, className = "" }) => (
 );
 
   return (
-    <div className={`border-b px-3 flex items-center justify-between w-full flex-shrink-0 h-12 z-10 relative ${
-      theme === 'dark' 
-        ? 'bg-gray-800 border-gray-700' 
-        : 'bg-white border-gray-200'
-    }`}>
+    <div className="px-3 py-1.5 flex items-center justify-between w-full flex-shrink-0 h-12 z-10 relative
+      bg-blue-50/70 backdrop-blur-xl shadow-md rounded-xl border border-blue-200/70">
       <TooltipProvider>
-        <div className="flex items-center space-x-1">
+        <div className="flex items-center gap-1.5 w-full justify-center">
+          {/* Project ID display */}
           {projectId && projectId !== 'default-project' && (
             <Tooltip>
               <TooltipTrigger asChild>
                 <div
-                  className={`flex items-center h-8 px-3 rounded-md border text-sm font-medium cursor-pointer ${
-                    theme === 'dark'
-                      ? "text-gray-300 hover:text-white hover:bg-gray-700"
-                      : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
-                  }`}
+                  className="flex items-center h-7 px-2 rounded-lg border border-blue-200/70 text-sm font-medium cursor-pointer bg-white/30 hover:bg-white/50"
                   onClick={copyProjectId}
                 >
-
-                  <span className={cn(
-                    "ml-1 font-medium",
-                    theme === 'dark' ? "text-purple-400" : "text-blue-700"
-                  )}>{projectId}</span>
+                  <span className="font-medium text-blue-700">{projectId}</span>
                   {copied ? (
                     <Check size={14} className="ml-2 text-green-500" />
                   ) : (
@@ -715,418 +705,207 @@ const SequenceFlowIcon = ({ size = 16, className = "" }) => (
               <TooltipContent side="bottom">Click to copy project ID</TooltipContent>
             </Tooltip>
           )}
-
-          <Separator orientation="vertical" className="h-6 mx-1" />
-
-          {/* <Tooltip>
-            <TooltipTrigger asChild>
-              <Button 
-                variant="ghost" 
-                size="icon" 
-                className={`h-8 w-8 ${buttonHoverStyles}`}
-                onClick={onUndo}
-              >
-                <Undo size={16} />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent side="bottom">Undo</TooltipContent>
-          </Tooltip>
           
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button 
-                variant="ghost" 
-                size="icon" 
-                className={`h-8 w-8 ${buttonHoverStyles}`} 
-                onClick={onRedo}
-              >
-                <Redo size={16} />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent side="bottom">Redo</TooltipContent>
-          </Tooltip> */}
+          <div className="mx-1 h-5 w-px bg-blue-200/50"></div>
+          
+          {/* Generate Report */}
+          {onGenerateReport && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-7 w-7 rounded-lg bg-transparent hover:bg-blue-200/60 text-blue-700 hover:text-blue-700"
+                  onClick={onGenerateReport}
+                >
+                  <FileText size={16} />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="bottom">Generate Report</TooltipContent>
+            </Tooltip>
+          )}
+          
+          {/* Save Diagram */}
+          {onSave && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-7 w-7 rounded-lg bg-transparent hover:bg-blue-200/60 text-blue-700 hover:text-blue-700"
+                  onClick={onSave}
+                >
+                  <Save size={16} />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="bottom">Save Diagram</TooltipContent>
+            </Tooltip>
+          )}
+          
+          <div className="mx-1 h-5 w-px bg-blue-200/50"></div>
+          
+          {/* View controls */}
+          <div className="flex items-center">
+            {onZoomIn && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-7 w-7 rounded-lg bg-transparent hover:bg-blue-200/60 text-blue-700 hover:text-blue-700"
+                    onClick={onZoomIn}
+                  >
+                    <ZoomIn size={16} />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent side="bottom">Zoom In</TooltipContent>
+              </Tooltip>
+            )}
 
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                variant="ghost"
-                size="icon"
-                className={`h-8 w-8 ${
-                  theme === 'dark'
-                    ? "text-gray-300 hover:text-white hover:bg-gray-700"
-                    : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
-                }`}
-                onClick={onGenerateReport}
-              >
-                <FileText size={16} />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent side="bottom">Generate Report</TooltipContent>
-          </Tooltip>
+            {onZoomOut && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-7 w-7 rounded-lg bg-transparent hover:bg-blue-200/60 text-blue-700 hover:text-blue-700"
+                    onClick={onZoomOut}
+                  >
+                    <ZoomOut size={16} />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent side="bottom">Zoom Out</TooltipContent>
+              </Tooltip>
+            )}
 
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                variant="ghost"
-                size="icon"
-                className={`h-8 w-8 ${
-                  theme === 'dark'
-                    ? "text-gray-300 hover:text-white hover:bg-gray-700"
-                    : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
-                }`}
-                onClick={onSave}
-              >
-                <Save size={16} />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent side="bottom">Save Diagram</TooltipContent>
-          </Tooltip>
+            {onFitView && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-7 w-7 rounded-lg bg-transparent hover:bg-blue-200/60 text-blue-700 hover:text-blue-700"
+                    onClick={onFitView}
+                  >
+                    <Maximize2 size={16} />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent side="bottom">Fit View</TooltipContent>
+              </Tooltip>
+            )}
+          </div>
+          
+          {/* Comment */}
+          {onComment && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-7 w-7 rounded-lg bg-transparent hover:bg-blue-200/60 text-blue-700 hover:text-blue-700"
+                  onClick={onComment}
+                >
+                  <MessageSquare size={16} />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="bottom">Add Sticky Notes</TooltipContent>
+            </Tooltip>
+          )}
 
-          <Separator orientation="vertical" className="h-6 mx-1" />
-
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                variant="ghost"
-                size="icon"
-                className={`h-8 w-8 ${
-                  theme === 'dark'
-                    ? "text-gray-300 hover:text-white hover:bg-gray-700"
-                    : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
-                }`}
-                onClick={onZoomIn}
-              >
-                <ZoomIn size={16} />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent side="bottom">Zoom In</TooltipContent>
-          </Tooltip>
-
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                variant="ghost"
-                size="icon"
-                className={`h-8 w-8 ${
-                  theme === 'dark'
-                    ? "text-gray-300 hover:text-white hover:bg-gray-700"
-                    : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
-                }`}
-                onClick={onZoomOut}
-              >
-                <ZoomOut size={16} />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent side="bottom">Zoom Out</TooltipContent>
-          </Tooltip>
-
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                variant="ghost"
-                size="icon"
-                className={`h-8 w-8 ${
-                  theme === 'dark'
-                    ? "text-gray-300 hover:text-white hover:bg-gray-700"
-                    : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
-                }`}
-                onClick={onFitView}
-              >
-                <Maximize2 size={16} />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent side="bottom">Fit View</TooltipContent>
-          </Tooltip>
-
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                variant="ghost"
-                size="icon"
-                className={`h-8 w-8 ${
-                  theme === 'dark'
-                    ? "text-gray-300 hover:text-white hover:bg-gray-700"
-                    : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
-                }`}
-                onClick={onComment}
-              >
-                <MessageSquare size={16} />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent side="bottom">Add Sticky Note</TooltipContent>
-          </Tooltip>
-
-          <Separator orientation="vertical" className="h-6 mx-1" />
-
-          {/* AD Icon - Active by default for interactive React Flow diagrams */}
+          <div className="mx-1 h-5 w-px bg-blue-200/50"></div>
+          
+          {/* View toggles - AD view */}
           <Tooltip>
             <TooltipTrigger asChild>
               <Button
                 variant="ghost"
-                size="icon"
-                className={`h-8 w-8 ${
-                  theme === 'dark'
-                    ? "text-gray-300 hover:text-white hover:bg-gray-700"
-                    : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
-                } ${viewMode === 'AD' && !isDataFlowActive && !isFlowchartActive ? 'bg-gradient-to-r from-blue-500 to-teal-500 text-white' : ''}`}
+                size="sm"
+                className={cn(
+                  "h-7 w-7 rounded-lg bg-transparent hover:bg-blue-200/60 text-blue-700 hover:text-blue-700",
+                  viewMode === 'AD' && !isDataFlowActive && !isFlowchartActive && "bg-blue-200/50"
+                )}
                 onClick={handleSwitchToAD}
               >
                 <Network size={16} />
               </Button>
             </TooltipTrigger>
-            <TooltipContent side="bottom">Interactive Diagramming View</TooltipContent>
+            <TooltipContent side="bottom">Architecture Diagram View</TooltipContent>
           </Tooltip>
-
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                variant="ghost"
-                size="icon"
-                className={`h-8 w-8 ${
-                  theme === 'dark'
-                    ? "text-gray-300 hover:text-white hover:bg-gray-700"
-                    : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
-                } ${isDataFlowActive ? 'bg-gradient-to-r from-blue-500 to-teal-500 text-white' : ''}`}
-                onClick={onToggleDataFlow}
-              >
-                <SequenceFlowIcon size={16} />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent side="bottom">Toggle Sequence Diagram</TooltipContent>
-          </Tooltip>
-
-          {/* NEW: Toggle Flowchart button */}
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                variant="ghost"
-                size="icon"
-                className={`h-8 w-8 ${
-                  theme === 'dark'
-                    ? "text-gray-300 hover:text-white hover:bg-gray-700"
-                    : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
-                } ${isFlowchartActive ? 'bg-gradient-to-r from-blue-500 to-teal-500 text-white' : ''}`}
-                onClick={onToggleFlowchart}
-              >
-                <Workflow size={16} />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent side="bottom">Toggle Data Flow Graph</TooltipContent>
-          </Tooltip>
-
-          <Separator orientation="vertical" className="h-6 mx-1" />
-
-          {/* Layout Controls Dropdown */}
-          {onLayout && (
-            <DropdownMenu open={isLayoutDropdownOpen} onOpenChange={setIsLayoutDropdownOpen}>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <DropdownMenuTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className={`h-8 w-8 ${
-                        theme === 'dark'
-                          ? "text-gray-300 hover:text-white hover:bg-gray-700"
-                          : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
-                      } ${isLayouting ? 'animate-pulse' : ''}`}
-                      disabled={isLayouting}
-                    >
-                      {isLayouting ? (
-                        <RefreshCw size={16} className="animate-spin" />
-                      ) : (
-                        <LayoutGrid size={16} />
-                      )}
-                    </Button>
-                  </DropdownMenuTrigger>
-                </TooltipTrigger>
-                <TooltipContent side="bottom">Layout Controls</TooltipContent>
-              </Tooltip>
-              <DropdownMenuContent className="w-80 p-6 space-y-6 bg-gradient-to-br from-white to-blue-50/30 border-blue-100/50 shadow-xl rounded-lg">
-                <div className="space-y-6">
-                  <div className="flex items-center justify-between">
-                    <h3 className="font-semibold text-blue-700 flex items-center gap-2">
-                      <div className="bg-gradient-to-r from-blue-500 to-purple-600 p-1.5 rounded-md shadow-sm">
-                        <LayoutGrid className="h-4 w-4 text-white" />
-                      </div>
-                      Layout Controls
-                    </h3>
-                    <Badge variant="outline" className="text-xs bg-blue-50/50 border-blue-200 text-blue-600">
-                      Enhanced
-                    </Badge>
-                  </div>
-                  
-                  {/* Direction Control */}
-                  <div className="space-y-3">
-                    <Label className="text-sm font-semibold text-blue-700 flex items-center gap-2">
-                      <div className="w-1.5 h-1.5 bg-blue-500 rounded-full"></div>
-                      Direction
-                    </Label>
-                    <div className="grid grid-cols-2 gap-3">
-                      {[
-                        { value: 'LR', label: 'Left → Right' },
-                        { value: 'TB', label: 'Top → Bottom' },
-                        { value: 'BT', label: 'Bottom → Top' },
-                        { value: 'RL', label: 'Right → Left' }
-                      ].map(({ value, label }) => (
-                        <Button
-                          key={value}
-                          variant={layoutDirection === value ? "default" : "outline"}
-                          size="sm"
-                          className={`text-sm py-2.5 px-4 transition-all duration-300 font-medium ${
-                            layoutDirection === value 
-                              ? 'bg-gradient-to-r from-blue-400 to-purple-500 text-white shadow-md hover:shadow-lg transform hover:-translate-y-0.5' 
-                              : `${
-                                theme === 'dark'
-                                  ? "bg-gray-700 hover:bg-gray-600 text-gray-200 border-gray-600"
-                                  : "bg-white hover:bg-gray-50 text-gray-700 border-gray-200"
-                              } hover:transform hover:-translate-y-0.5`
-                          }`}
-                          onClick={() => setLayoutDirection(value as any)}
-                        >
-                          {label}
-                        </Button>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Engine Selection */}
-                  <div className="space-y-3">
-                    <Label className="text-sm font-semibold text-blue-700 flex items-center gap-2">
-                      <div className="w-1.5 h-1.5 bg-blue-500 rounded-full"></div>
-                      Layout Engine
-                    </Label>
-                    <div className="grid grid-cols-2 gap-3">
-                      {[
-                        { value: 'auto', label: 'Auto', icon: Zap },
-                        { value: 'elk', label: 'ELK', icon: Settings },
-                        { value: 'dagre', label: 'Dagre', icon: Activity },
-                        { value: 'basic', label: 'Basic', icon: LayoutGrid }
-                      ].map(({ value, label, icon: Icon }) => (
-                        <Button
-                          key={value}
-                          variant={layoutEngine === value ? "default" : "outline"}
-                          size="sm"
-                          className={`text-sm py-2.5 px-4 flex items-center gap-2 transition-all duration-300 font-medium ${
-                            layoutEngine === value 
-                              ? 'bg-gradient-to-r from-blue-400 to-purple-500 text-white shadow-md hover:shadow-lg transform hover:-translate-y-0.5' 
-                              : `${
-                                theme === 'dark'
-                                  ? "bg-gray-700 hover:bg-gray-600 text-gray-200 border-gray-600"
-                                  : "bg-white hover:bg-gray-50 text-gray-700 border-gray-200"
-                              } hover:transform hover:-translate-y-0.5`
-                          }`}
-                          onClick={() => setLayoutEngine(value as any)}
-                        >
-                          <Icon size={14} />
-                          {label}
-                        </Button>
-                      ))}
-                    </div>
-                    <p className="text-xs text-blue-600/70 bg-blue-50/50 p-3 rounded-md border border-blue-100/50">
-                      {getEngineDescription(layoutEngine)}
-                    </p>
-                  </div>
-
-                  {/* Performance Monitoring */}
-                  <div className="flex items-center justify-between p-3 bg-blue-50/50 rounded-lg border border-blue-100/50">
-                    <Label className="text-sm font-semibold text-blue-700 flex items-center gap-2">
-                      <div className="w-1.5 h-1.5 bg-blue-500 rounded-full"></div>
-                      Performance Monitoring
-                    </Label>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setEnablePerformanceMonitoring(!enablePerformanceMonitoring)}
-                      className={`text-sm py-2 px-4 font-medium transition-all duration-300 ${
-                        enablePerformanceMonitoring 
-                          ? 'bg-gradient-to-r from-green-500 to-emerald-600 text-white border-green-500 hover:shadow-lg transform hover:-translate-y-0.5' 
-                          : `${
-                            theme === 'dark'
-                              ? "bg-gray-700 hover:bg-gray-600 text-gray-200 border-gray-600"
-                              : "bg-white hover:bg-gray-50 text-gray-700 border-gray-200"
-                          } hover:transform hover:-translate-y-0.5`
-                      }`}
-                    >
-                      {enablePerformanceMonitoring ? 'ON' : 'OFF'}
-                    </Button>
-                  </div>
-
-                  {/* Last Layout Result */}
-                  {lastLayoutResult && (
-                    <div className="bg-gradient-to-r from-blue-50/70 to-purple-50/70 p-4 rounded-lg border border-blue-100/50 space-y-3">
-                      <h4 className="text-sm font-semibold text-blue-700 flex items-center gap-2">
-                        <div className="w-1.5 h-1.5 bg-blue-500 rounded-full"></div>
-                        Last Layout Result
-                      </h4>
-                      <div className="grid grid-cols-2 gap-3 text-sm">
-                        <div className="flex items-center gap-2">
-                          <span className="text-blue-600/70">Engine:</span>
-                          <Badge className={`${getEngineColor(lastLayoutResult.engineUsed)} text-xs`}>
-                            {lastLayoutResult.engineUsed}
-                          </Badge>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <span className="text-blue-600/70">Time:</span>
-                          <span className="text-blue-800 font-medium">{lastLayoutResult.executionTime}ms</span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <span className="text-blue-600/70">Quality:</span>
-                          <span className={`font-medium ${getQualityColor(lastLayoutResult.qualityScore)}`}>
-                            {(lastLayoutResult.qualityScore * 100).toFixed(0)}%
-                          </span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <span className="text-blue-600/70">Status:</span>
-                          <Badge variant={lastLayoutResult.success ? "default" : "destructive"} className="text-xs">
-                            {lastLayoutResult.success ? 'Success' : 'Failed'}
-                          </Badge>
-                        </div>
-                      </div>
-                    </div>
+          
+          {/* Sequence Flow Toggle */}
+          {onToggleDataFlow && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className={cn(
+                    "h-7 w-7 rounded-lg bg-transparent hover:bg-blue-200/60 text-blue-700 hover:text-blue-700",
+                    isDataFlowActive && "bg-blue-200/50"
                   )}
-
-                  {/* Apply Layout Button */}
-                  <Button
-                    onClick={handleApplyLayout}
-                    disabled={isLayouting}
-                    className="w-full h-11 bg-gradient-to-r from-blue-400 to-purple-500 hover:from-blue-500 hover:to-purple-600 text-white font-medium text-sm shadow-md hover:shadow-lg transition-all duration-300 transform hover:-translate-y-0.5 disabled:transform-none disabled:hover:shadow-md"
-                  >
-                    {isLayouting ? (
-                      <>
-                        <RefreshCw size={16} className="mr-2 animate-spin" />
-                        Applying Layout...
-                      </>
-                    ) : (
-                      <>
-                        <LayoutGrid size={16} className="mr-2" />
-                        Apply Layout
-                      </>
-                    )}
-                  </Button>
-                </div>
-              </DropdownMenuContent>
-            </DropdownMenu>
+                  onClick={onToggleDataFlow}
+                >
+                  <SequenceFlowIcon size={16} />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="bottom">Toggle Sequence Diagram</TooltipContent>
+            </Tooltip>
           )}
 
-          {/* Style Toggle */}
-          <div title="View Mode">
+          {/* Flowchart Toggle */}
+          {onToggleFlowchart && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className={cn(
+                    "h-7 w-7 rounded-lg bg-transparent hover:bg-blue-200/60 text-blue-700 hover:text-blue-700",
+                    isFlowchartActive && "bg-blue-200/50"
+                  )}
+                  onClick={onToggleFlowchart}
+                >
+                  <Workflow size={16} />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="bottom">Toggle Flowchart</TooltipContent>
+            </Tooltip>
+          )}
+
+          <div className="mx-1 h-5 w-px bg-blue-200/50"></div>
+          
+          {/* Layout controls */}
+          {onLayout && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-7 w-7 rounded-lg bg-transparent hover:bg-blue-200/60 text-blue-700 hover:text-blue-700"
+                  onClick={handleApplyLayout}
+                  disabled={isLayouting}
+                >
+                  <LayoutGrid size={16} />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="bottom">Apply Layout</TooltipContent>
+            </Tooltip>
+          )}
+
+          {/* Style Toggle with blue styling */}
+          <div title="View Mode" className="text-blue-700 flex items-center justify-center">
             <StyleToggle variant="compact" size="sm" />
           </div>
 
-          <Separator orientation="vertical" className="h-6 mx-1" />
-
-          {/* Save as Template Button */}
+          <div className="mx-1 h-5 w-px bg-blue-200/50"></div>
+          
+          {/* Templates and Image Export */}
           <Tooltip>
             <TooltipTrigger asChild>
               <Button
                 variant="ghost"
-                size="icon"
-                className={`h-8 w-8 ${
-                  theme === 'dark'
-                    ? "text-gray-300 hover:text-white hover:bg-gray-700"
-                    : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
-                }`}
+                size="sm"
+                className="h-7 w-7 rounded-lg bg-transparent hover:bg-blue-200/60 text-blue-700 hover:text-blue-700"
                 onClick={handleOpenTemplateModal}
               >
                 <LayoutTemplate size={16} />
@@ -1134,18 +913,13 @@ const SequenceFlowIcon = ({ size = 16, className = "" }) => (
             </TooltipTrigger>
             <TooltipContent side="bottom">Save as Template</TooltipContent>
           </Tooltip>
-
-          {/* Save as Image Button */}
+          
           <Tooltip>
             <TooltipTrigger asChild>
               <Button
                 variant="ghost"
-                size="icon"
-                className={`h-8 w-8 ${
-                  theme === 'dark'
-                    ? "text-gray-300 hover:text-white hover:bg-gray-700"
-                    : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
-                }`}
+                size="sm"
+                className="h-7 w-7 rounded-lg bg-transparent hover:bg-blue-200/60 text-blue-700 hover:text-blue-700"
                 onClick={handleOpenImageModal}
               >
                 <Image size={16} />
@@ -1154,57 +928,47 @@ const SequenceFlowIcon = ({ size = 16, className = "" }) => (
             <TooltipContent side="bottom">Save as Image</TooltipContent>
           </Tooltip>
 
-          <Separator orientation="vertical" className="h-6 mx-1" />
+          <div className="mx-1 h-5 w-px bg-blue-200/50"></div>
 
-          {/* Run Threat Analysis Button - only show in AD mode */}
-          {viewMode === 'AD' && onRunThreatAnalysis && (
+          {/* Run Threat Analysis */}
+          {onRunThreatAnalysis && (
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button
                   variant="ghost"
                   size="sm"
+                  className="h-7 rounded-lg bg-transparent hover:bg-red-100/70 text-red-600 hover:text-red-600 px-2 flex items-center gap-1"
                   onClick={onRunThreatAnalysis}
                   disabled={runningThreatAnalysis}
-                  className={cn(
-                    "h-8 px-3 text-xs font-medium transition-all duration-200 flex items-center gap-1.5 rounded shadow-sm hover:shadow-md",
-                    theme === 'dark'
-                      ? "bg-gradient-to-r from-red-900/80 to-red-800/80 hover:from-red-800 hover:to-red-700 text-red-300 border border-red-700/50 hover:border-red-600"
-                      : "bg-gradient-to-r from-red-100 to-red-200 hover:from-red-200 hover:to-red-300 text-red-700 border border-red-200"
-                  )}
                 >
-                  {runningThreatAnalysis ? (
-                    <>
-                      <Loader2 size={14} className="animate-spin" />
-                      Running...
-                    </>
-                  ) : (
-                    <>
-                      <AlertTriangle size={14} />
-                      Run Threat Analysis
-                    </>
-                  )}
+                  <AlertTriangle size={14} />
+                  <span className="text-xs font-medium">Run Threat Analysis</span>
+                  {runningThreatAnalysis && <Loader2 className="ml-1 h-3 w-3 animate-spin" />}
                 </Button>
               </TooltipTrigger>
-              <TooltipContent side="bottom">Analyze architecture for security threats</TooltipContent>
+              <TooltipContent side="bottom">Security Analysis</TooltipContent>
             </Tooltip>
           )}
-
-          <Separator orientation="vertical" className="h-6 mx-1" />
-
-          {/* Collapse Button */}
+          
+          <div className="mx-1 h-5 w-px bg-blue-200/50"></div>
+          
+          {/* Collapse - X icon instead of text */}
           {onCollapse && (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={onCollapse}
-              className="h-8 px-3 text-xs font-semibold hover:bg-white/20 dark:hover:bg-gray-700/20"
-            >
-              Collapse
-            </Button>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-7 w-7 rounded-lg bg-transparent hover:bg-blue-200/60 text-blue-700 hover:text-blue-700"
+                  onClick={onCollapse}
+                >
+                  <X size={16} />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="bottom">Collapse</TooltipContent>
+            </Tooltip>
           )}
-
         </div>
-
       </TooltipProvider>
 
       <Dialog open={isTemplateModalOpen} onOpenChange={setIsTemplateModalOpen}>
@@ -1352,13 +1116,13 @@ const SequenceFlowIcon = ({ size = 16, className = "" }) => (
             <Button 
               variant="outline" 
               onClick={() => setIsTemplateModalOpen(false)}
-              className="border-gray-200 text-gray-600 hover:text-gray-800"
+              className="border-gray-200 text-gray-600 hover:text-gray-600"
             >
               Cancel
             </Button>
             <Button 
               onClick={handleSaveTemplate}
-              className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white transition-all duration-200"
+              className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-500 hover:to-purple-600 text-white hover:text-white transition-all duration-200"
             >
               Save Template
             </Button>
@@ -1409,13 +1173,13 @@ const SequenceFlowIcon = ({ size = 16, className = "" }) => (
             <Button 
               variant="outline" 
               onClick={() => setIsImageModalOpen(false)}
-              className="border-gray-200 text-gray-600 hover:text-gray-800"
+              className="border-gray-200 text-gray-600 hover:text-gray-600"
             >
               Cancel
             </Button>
             <Button 
               onClick={handleSaveImage}
-              className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white transition-all duration-200 flex items-center gap-2"
+              className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-500 hover:to-purple-600 text-white hover:text-white transition-all duration-200 flex items-center gap-2"
             >
               <Download size={16} />
               Download Image
