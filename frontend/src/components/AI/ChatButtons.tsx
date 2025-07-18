@@ -30,7 +30,7 @@ const ChatButtons: React.FC<ChatButtonsProps> = ({ onMicrophoneClick }) => {
               type="button" 
               size="icon" 
               variant="ghost" 
-              className="h-6 w-6 text-gray-500 hover:text-securetrack-purple hover:bg-securetrack-purple/10 rounded-lg"
+              className="h-6 w-6 text-gray-500 hover:text-blue-700 hover:bg-blue-100/30 rounded-lg"
               onClick={onMicrophoneClick}
             >
               <Mic className="h-3 w-3" />
@@ -49,7 +49,7 @@ const ChatButtons: React.FC<ChatButtonsProps> = ({ onMicrophoneClick }) => {
               type="button" 
               size="icon" 
               variant="ghost" 
-              className="h-6 w-6 text-gray-500 hover:text-securetrack-purple hover:bg-securetrack-purple/10 rounded-lg"
+              className="h-6 w-6 text-gray-500 hover:text-blue-700 hover:bg-blue-100/30 rounded-lg"
             >
               <Image className="h-3 w-3" />
             </Button>
@@ -67,7 +67,7 @@ const ChatButtons: React.FC<ChatButtonsProps> = ({ onMicrophoneClick }) => {
               type="button" 
               size="icon" 
               variant="ghost" 
-              className="h-6 w-6 text-gray-500 hover:text-securetrack-purple hover:bg-securetrack-purple/10 rounded-lg"
+              className="h-6 w-6 text-gray-500 hover:text-blue-700 hover:bg-blue-100/30 rounded-lg"
             >
               <PaperclipIcon className="h-3 w-3" />
             </Button>

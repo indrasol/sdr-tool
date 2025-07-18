@@ -333,7 +333,7 @@ const FloatingChatInterface: React.FC<FloatingChatInterfaceProps> = ({
                   <Bot className="h-4 w-4 text-white" />
                 </div>
                 <div className="flex flex-col">
-                  <h3 className="text-sm font-semibold text-gray-800">AI Assistant</h3>
+                  <h3 className="text-sm font-semibold text-gray-800">Guardian AI</h3>
                   <span className="text-xs text-gray-500">
                     {thinking ? 'Thinking...' : isLoading ? 'Processing...' : 'Ready to help'}
                   </span>

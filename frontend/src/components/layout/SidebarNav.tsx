@@ -1,5 +1,5 @@
 import React from "react";
-import { NavLink, Link, useNavigate } from "react-router-dom";
+import { NavLink, Link, useNavigate, useParams, useLocation } from "react-router-dom";
 import {
   LayoutDashboard,
   Folder,
@@ -11,6 +11,7 @@ import {
   ChevronsUpDown,
   Menu,
   PanelLeft,
+  ArrowLeft,
 } from "lucide-react";
 import { useAuth } from "@/components/Auth/AuthContext";
 import { cn } from "@/lib/utils";
@@ -24,60 +25,145 @@ import {
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandList, CommandItem } from "@/components/ui/command";
 import { Button } from "@/components/ui/button";
+import { Team } from "@/interfaces/teamInterfaces";
+import tokenService from '@/services/tokenService';
+import { BASE_API_URL, getAuthHeaders } from '@/services/apiService';
 
-interface Org {
-  id: number;
-  name: string;
+interface SidebarNavProps {
+  onCollapseChange?: (collapsed: boolean) => void;
 }
 
-const SidebarNav: React.FC = () => {
+const SidebarNav: React.FC<SidebarNavProps> = ({ onCollapseChange }) => {
   const navigate = useNavigate();
+  const location = useLocation();
+  const params = useParams<{ teamId?: string }>();
   const { user, logout } = useAuth();
   const fileInputRef = React.useRef<HTMLInputElement>(null);
   const [avatarUrl, setAvatarUrl] = React.useState<string | null>(
     localStorage.getItem("avatarUrl") || null
   );
+  const [teams, setTeams] = React.useState<Team[]>([]);
+  const [isLoading, setIsLoading] = React.useState<boolean>(true);
 
   const handleLogout = async () => {
     await logout();
     navigate("/login");
   };
 
-  // TEMP: mock organizations list – replace with real data when available
-  const orgs: Org[] = [
-    { id: 1, name: "Acme Corp" },
-    { id: 2, name: "TechStart Inc." },
-  ];
-  const [selectedOrg, setSelectedOrg] = React.useState<number>(() => {
-    const stored = localStorage.getItem('selectedOrg');
-    return stored ? parseInt(stored, 10) : orgs[0].id;
+  // Extract teamId from URL params
+  const urlTeamId = params.teamId ? parseInt(params.teamId, 10) : undefined;
+
+  // State for selected team
+  const [selectedTeam, setSelectedTeam] = React.useState<number>(() => {
+    // If we have a team ID in URL params, use that first
+    if (urlTeamId) {
+      return urlTeamId;
+    }
+    // Otherwise check localStorage
+    const stored = localStorage.getItem('selectedTeam');
+    return stored ? parseInt(stored, 10) : 0;
   });
-  const [orgOpen, setOrgOpen] = React.useState(false);
+  const [teamDropdownOpen, setTeamDropdownOpen] = React.useState(false);
   const [collapsed, setCollapsed] = React.useState(false);
 
+  // Effect to update selected team when URL changes
+  React.useEffect(() => {
+    if (urlTeamId && urlTeamId !== selectedTeam) {
+      setSelectedTeam(urlTeamId);
+    }
+  }, [urlTeamId]);
+  
+  // Effect to notify parent component when collapsed state changes
+  React.useEffect(() => {
+    if (onCollapseChange) {
+      onCollapseChange(collapsed);
+    }
+  }, [collapsed, onCollapseChange]);
+
+  // Fetch teams data
+  React.useEffect(() => {
+    const fetchTeams = async () => {
+      setIsLoading(true);
+      try {
+        // Try getting tenant ID from multiple sources
+        let tenantId: number | undefined;
+        
+        if (user?.tenantId) {
+          tenantId = user.tenantId;
+        } else {
+          const userData = tokenService.getUser();
+          if (userData?.tenantId) {
+            tenantId = userData.tenantId;
+          }
+        }
+        
+        if (!tenantId) {
+          console.warn("No tenant ID found, using default value");
+          tenantId = 1; // Default tenant ID
+        }
+
+        const response = await fetch(`${BASE_API_URL}/teams?tenant_id=${tenantId}&include_private=true`, {
+          method: 'GET',
+          headers: getAuthHeaders(),
+        });
+        
+        if (!response.ok) {
+          throw new Error(`Failed to fetch teams: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        setTeams(data.teams);
+        
+        // Only set a default team if no team is selected yet and we don't have a URL parameter
+        if ((!selectedTeam || selectedTeam === 0) && !urlTeamId && data.teams.length > 0) {
+          setSelectedTeam(data.teams[0].id);
+        }
+      } catch (error) {
+        console.error('Error fetching teams:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchTeams();
+  }, [user, urlTeamId, selectedTeam]);
+
   const navItems = React.useMemo(() => [
-    { label: "Dashboard", to: `/dashboard/${selectedOrg}`, icon: LayoutDashboard },
+    { label: "Dashboard", to: `/dashboard/${selectedTeam}`, icon: LayoutDashboard },
     { label: "Projects", to: "/projects", icon: Folder },
     { label: "Hub", to: "/solutions-hub", icon: Layers },
     { label: "Reports", to: "/reports", icon: FileText },
     { label: "Settings", to: "/settings", icon: SettingsIcon },
-  ], [selectedOrg]);
+  ], [selectedTeam]);
 
-  // Persist org selection
+  // Persist team selection
   React.useEffect(() => {
-    localStorage.setItem('selectedOrg', String(selectedOrg));
-    const name = orgs.find((o) => o.id === selectedOrg)?.name ?? '';
-    localStorage.setItem('selectedOrgName', name);
-  }, [selectedOrg, orgs]);
+    if (selectedTeam) {
+      localStorage.setItem('selectedTeam', String(selectedTeam));
+      const name = teams.find((t) => t.id === selectedTeam)?.name ?? '';
+      localStorage.setItem('selectedTeamName', name);
+    }
+  }, [selectedTeam, teams]);
+
+  // Handle team selection in the dropdown
+  const handleTeamChange = (teamId: number) => {
+    setSelectedTeam(teamId);
+    setTeamDropdownOpen(false);
+    
+    // Navigate to the dashboard with the new team ID
+    if (location.pathname.includes('/dashboard')) {
+      navigate(`/dashboard/${teamId}`);
+    }
+  };
 
   return (
     <aside
       className={cn(
-        "min-h-screen bg-gradient-to-b from-securetrack-lightpurple/10 via-white to-securetrack-lightgray/40 border-r flex flex-col transition-all duration-300",
+        "fixed top-0 left-0 h-screen bg-gradient-to-b from-securetrack-lightpurple/10 via-white to-securetrack-lightgray/40 border-r flex flex-col transition-all duration-300 overflow-y-auto",
         collapsed ? "w-20" : "w-64"
       )}
     >
-      {/* Brand & Org selector */}
+      {/* Brand & Team selector */}
       <div className="px-6 py-4 border-b">
         <div className="flex items-start gap-2">
           {/* SecureTrack logo icon */}
@@ -114,11 +200,28 @@ const SidebarNav: React.FC = () => {
           </button>
         </div>
 
-        {/* Organizations dropdown */}
-        {/* Replace with shadcn-ui Select for consistent theming */}
-        <div className="mt-4">
-          {/* Removed label as requested */}
-          <Popover open={orgOpen} onOpenChange={setOrgOpen}>
+        {/* Back to Teams Button */}
+        {!collapsed && (
+          <Link
+            to="/teams"
+            className="mt-4 mb-2 w-full flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-blue-600 bg-gradient-to-r from-blue-50/70 to-purple-50/70 hover:from-blue-100/80 hover:to-purple-100/80 rounded-md border border-blue-100 hover:border-blue-200 transition-all duration-200 hover:shadow-sm"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Back to Teams
+          </Link>
+        )}
+        {collapsed && (
+          <Link
+            to="/teams"
+            className="mt-4 mb-2 w-full flex justify-center items-center py-1.5 text-blue-600 bg-gradient-to-r from-blue-50/70 to-purple-50/70 hover:from-blue-100/80 hover:to-purple-100/80 rounded-md border border-blue-100 hover:border-blue-200 transition-all duration-200 hover:shadow-sm"
+          >
+            <ArrowLeft className="h-4 w-4" />
+          </Link>
+        )}
+
+        {/* Teams dropdown */}
+        <div className="mt-3">
+          <Popover open={teamDropdownOpen} onOpenChange={setTeamDropdownOpen}>
             <PopoverTrigger asChild>
               <Button
                 variant="outline"
@@ -129,10 +232,15 @@ const SidebarNav: React.FC = () => {
                     ? "w-9 p-0 justify-center"
                     : "w-full px-2 sm:px-3 justify-between"
                 )}
+                disabled={isLoading || teams.length === 0}
               >
                 {!collapsed && (
                   <span className="truncate">
-                    {orgs.find((o) => o.id === selectedOrg)?.name}
+                    {isLoading 
+                      ? "Loading..." 
+                      : teams.length === 0 
+                        ? "No teams" 
+                        : teams.find((t) => t.id === selectedTeam)?.name || "Select team"}
                   </span>
                 )}
                 <ChevronsUpDown
@@ -145,18 +253,18 @@ const SidebarNav: React.FC = () => {
             </PopoverTrigger>
             <PopoverContent className="p-0 bg-white shadow-lg border border-blue-100 rounded-lg" align="start">
               <Command className="rounded-lg">
-                <CommandInput placeholder="Filter orgs..." className="font-inter text-sm border-b border-blue-50 focus:ring-0 focus:border-blue-100" />
+                <CommandInput placeholder="Filter teams..." className="font-inter text-sm border-b border-blue-50 focus:ring-0 focus:border-blue-100" />
                 <CommandList>
-                  <CommandEmpty>No results</CommandEmpty>
+                  <CommandEmpty>No teams found</CommandEmpty>
                   <CommandGroup className="overflow-hidden">
-                    {orgs.map((org)=> (
+                    {teams.map((team)=> (
                       <CommandItem
-                        key={org.id}
-                        value={String(org.id)}
-                        onSelect={() => { setSelectedOrg(org.id); setOrgOpen(false);} }
+                        key={team.id}
+                        value={String(team.id)}
+                        onSelect={() => handleTeamChange(team.id)}
                         className="font-inter text-blue-600 dropdown-item cursor-pointer"
                         style={
-                          selectedOrg === org.id
+                          selectedTeam === team.id
                             ? {
                                 background:
                                   "linear-gradient(to right, rgba(219, 234, 254, 0.9), rgba(233, 213, 255, 0.9))",
@@ -165,7 +273,7 @@ const SidebarNav: React.FC = () => {
                             : undefined
                         }
                       >
-                        {org.name}
+                        {team.name}
                       </CommandItem>
                     ))}
                   </CommandGroup>
@@ -198,7 +306,7 @@ const SidebarNav: React.FC = () => {
       </nav>
 
       {/* Profile & Logout */}
-      <div className="px-6 py-4 border-t flex items-center justify-between gap-3 sticky bottom-0 bg-transparent">
+      <div className="px-6 py-4 border-t flex items-center justify-between gap-3 bg-transparent">
         {user && (
           <div className="flex items-center gap-2 overflow-hidden cursor-pointer" onClick={() => fileInputRef.current?.click()}>
             {avatarUrl ? (

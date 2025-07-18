@@ -172,6 +172,18 @@ export const captureDiagramImage = async (
   await new Promise(requestAnimationFrame);
   await new Promise(resolve => setTimeout(resolve, 300)); // additional buffer
   
+  // Fix edge label backgrounds before capturing
+  const edgeLabels = document.querySelectorAll('.react-flow__edge-text-bg');
+  const edgeLabelStyles: { element: HTMLElement, originalFill: string }[] = [];
+  
+  // Make edge label backgrounds transparent for capture
+  edgeLabels.forEach(labelBg => {
+    const element = labelBg as HTMLElement;
+    const originalFill = element.getAttribute('fill') || '#000';
+    edgeLabelStyles.push({ element, originalFill });
+    element.setAttribute('fill', 'transparent');
+  });
+  
   try {
     // Capture the image with exact dimensions and enhanced options
     const dataUrl = await toPng(reactFlowWrapper, {
@@ -213,6 +225,11 @@ export const captureDiagramImage = async (
       element.style.display = originalDisplay;
     });
     
+    // Restore edge label backgrounds
+    edgeLabelStyles.forEach(({ element, originalFill }) => {
+      element.setAttribute('fill', originalFill);
+    });
+    
     return dataUrl;
   } catch (error) {
     console.error('Error during diagram capture:', error);
@@ -226,6 +243,11 @@ export const captureDiagramImage = async (
     // Restore hidden elements
     hiddenElements.forEach(({ element, originalDisplay }) => {
       element.style.display = originalDisplay;
+    });
+    
+    // Restore edge label backgrounds
+    edgeLabelStyles.forEach(({ element, originalFill }) => {
+      element.setAttribute('fill', originalFill);
     });
     
     throw error;

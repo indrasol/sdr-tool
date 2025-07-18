@@ -133,5 +133,21 @@ export default {
       },
     },
   },
-  plugins: [tailwindAnimate],
+  plugins: [
+    tailwindAnimate,
+    function({ addUtilities }) {
+      const newUtilities = {
+        '.text-shadow-sm': {
+          textShadow: '0 1px 2px rgba(0, 0, 0, 0.1)',
+        },
+        '.text-shadow-xs': {
+          textShadow: '0 1px 1px rgba(0, 0, 0, 0.05)',
+        },
+        '.text-shadow-none': {
+          textShadow: 'none',
+        },
+      };
+      addUtilities(newUtilities);
+    },
+  ],
 } satisfies Config;

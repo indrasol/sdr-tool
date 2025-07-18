@@ -11,8 +11,8 @@ interface ChatTabsProps {
 
 const tabVariants = {
   active: {
-    backgroundColor: 'rgba(124, 101, 246, 0.1)',
-    borderColor: 'rgba(124, 101, 246, 0.3)',
+    backgroundColor: 'rgba(29, 78, 216, 0.1)',
+    borderColor: 'rgba(29, 78, 216, 0.3)',
     transition: { duration: 0.3 }
   },
   inactive: {
@@ -42,8 +42,8 @@ const ChatTabs: React.FC<ChatTabsProps> = ({ activeTab, onTabChange }) => {
           className={cn(
             "flex-1 flex items-center justify-center gap-2 py-2 px-4 text-sm font-medium transition-all duration-200 relative rounded-lg border min-w-0",
             activeTab === 'guardian' 
-              ? "text-securetrack-purple border-securetrack-purple/30 bg-securetrack-purple/10" 
-              : "text-gray-600 border-transparent hover:bg-gray-50 hover:text-gray-800"
+              ? "text-blue-700 border-blue-700/30 bg-blue-100/30" 
+              : "text-gray-600 border-transparent hover:bg-blue-50 hover:text-blue-700"
           )}
           onClick={() => onTabChange('guardian')}
           animate={activeTab === 'guardian' ? 'active' : 'inactive'}
@@ -59,11 +59,11 @@ const ChatTabs: React.FC<ChatTabsProps> = ({ activeTab, onTabChange }) => {
           >
             <Bot size={16} className="shrink-0" />
           </motion.div>
-          <span className="font-medium tracking-wide select-none">AI Assistant</span>
+          <span className="font-medium tracking-wide select-none">Guardian AI</span>
           
           {activeTab === 'guardian' && (
             <motion.div 
-              className="absolute bottom-0 left-2 right-2 h-0.5 bg-securetrack-purple rounded-full"
+              className="absolute bottom-0 left-2 right-2 h-0.5 bg-blue-700 rounded-full"
               initial={{ scaleX: 0 }}
               animate={{ scaleX: 1 }}
               exit={{ scaleX: 0 }}
@@ -77,8 +77,8 @@ const ChatTabs: React.FC<ChatTabsProps> = ({ activeTab, onTabChange }) => {
           className={cn(
             "flex-1 flex items-center justify-center gap-2 py-2 px-4 text-sm font-medium transition-all duration-200 relative rounded-lg border min-w-0",
             activeTab === 'history' 
-              ? "text-securetrack-purple border-securetrack-purple/30 bg-securetrack-purple/10" 
-              : "text-gray-600 border-transparent hover:bg-gray-50 hover:text-gray-800"
+              ? "text-blue-700 border-blue-700/30 bg-blue-100/30" 
+              : "text-gray-600 border-transparent hover:bg-blue-50 hover:text-blue-700"
           )}
           onClick={() => onTabChange('history')}
           animate={activeTab === 'history' ? 'active' : 'inactive'}
@@ -98,7 +98,7 @@ const ChatTabs: React.FC<ChatTabsProps> = ({ activeTab, onTabChange }) => {
           
           {activeTab === 'history' && (
             <motion.div 
-              className="absolute bottom-0 left-2 right-2 h-0.5 bg-securetrack-purple rounded-full"
+              className="absolute bottom-0 left-2 right-2 h-0.5 bg-blue-700 rounded-full"
               initial={{ scaleX: 0 }}
               animate={{ scaleX: 1 }}
               exit={{ scaleX: 0 }}

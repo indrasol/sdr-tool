@@ -9,7 +9,6 @@ import { WallpaperOption } from './types/chatTypes';
 import ThinkingDisplay from './ThinkingDisplay'
 import { X } from 'lucide-react';
 import SpeechOverlay from './SpeechOverlay';
-import { useTheme } from '@/contexts/ThemeContext';
 
 export interface Message {
   role: 'user' | 'assistant';
@@ -113,7 +112,6 @@ const AIChat: React.FC<AIChatProps> = ({
   onCloseSuggestion = () => {},
   showInput = true,
 }) => {
-  const { theme } = useTheme();
   const [activeTab, setActiveTab] = useState<'guardian' | 'history'>('guardian');
   const [chatHistory, setChatHistory] = useState<ChatSession[]>([]);
   const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
@@ -561,18 +559,11 @@ const AIChat: React.FC<AIChatProps> = ({
   };
 
   return (
-    <div className={cn(
-      "flex flex-col h-full relative overflow-hidden", 
-      currentWallpaper.textClass,
-      theme === 'dark' ? 'text-gray-100' : 'text-gray-900'
-    )}>
+    <div className="flex flex-col h-full relative overflow-hidden text-gray-900">
       {/* Add the background with the selected wallpaper and theme-aware styling */}
       <div className={cn(
         "absolute inset-0 -z-10", 
-        currentWallpaper.bgClass,
-        theme === 'dark' 
-          ? 'bg-gradient-to-b from-gray-900 to-gray-800' 
-          : currentWallpaper.bgClass
+        currentWallpaper.bgClass
       )} />
       
       {/* ChatTabs - Positioned above content with proper z-index */}
@@ -604,12 +595,7 @@ const AIChat: React.FC<AIChatProps> = ({
             />
             
             {showInput && (
-              <div className={cn(
-                "border-t flex-shrink-0",
-                theme === 'dark' 
-                  ? "border-gray-700" 
-                  : "border-gray-200"
-              )}>
+              <div className="border-t border-gray-200 flex-shrink-0">
                 <ChatInput 
                   onSendMessage={onSendMessage} 
                   onGenerateReport={onGenerateReport}
@@ -628,48 +614,25 @@ const AIChat: React.FC<AIChatProps> = ({
               <div className="mx-4 mb-3 relative z-30">
                 <div className={cn(
                   "backdrop-blur-sm rounded-lg shadow-lg p-4 border relative transition-all duration-300 ease-in-out",
-                  theme === 'dark'
-                    ? "bg-gradient-to-r from-blue-900/80 via-indigo-900/80 to-purple-900/80 border-indigo-700/50 hover:shadow-indigo-900/30"
-                    : "bg-gradient-to-r from-blue-50/80 via-indigo-50/80 to-purple-50/80 border-indigo-100/50 hover:shadow-indigo-100/30"
+                  "bg-gradient-to-r from-blue-50/80 via-blue-50/80 to-blue-50/80 border-blue-100/50 hover:shadow-blue-100/30"
                 )}>
                   <button 
                     onClick={handleCloseSuggestion}
-                    className={cn(
-                      "absolute top-3 right-3 transition-colors duration-200",
-                      theme === 'dark'
-                        ? "text-indigo-400 hover:text-indigo-300"
-                        : "text-indigo-400 hover:text-indigo-600"
-                    )}
+                    className="absolute top-3 right-3 transition-colors duration-200 text-blue-400 hover:text-blue-700"
                     aria-label="Close suggestion"
                   >
                     <X size={16} strokeWidth={2.5} />
                   </button>
                   <div className="flex items-start gap-2">
-                    <div className={cn(
-                      "w-1 h-16 rounded-full opacity-70",
-                      theme === 'dark'
-                        ? "bg-gradient-to-b from-indigo-400 to-purple-400"
-                        : "bg-gradient-to-b from-indigo-400 to-purple-400"
-                    )}></div>
+                    <div className="w-1 h-16 rounded-full opacity-70 bg-gradient-to-b from-blue-400 to-blue-700"></div>
                     <div className="flex-1">
-                      <h3 className={cn(
-                        "text-sm font-semibold mb-1.5 flex items-center",
-                        theme === 'dark' ? "text-indigo-300" : "text-indigo-700"
-                      )}>
-                        <span className={cn(
-                          "inline-block w-2 h-2 rounded-full animate-pulse mr-2",
-                          theme === 'dark' ? "bg-indigo-400" : "bg-indigo-400"
-                        )}></span>
+                      <h3 className="text-sm font-semibold mb-1.5 flex items-center text-blue-700">
+                        <span className="inline-block w-2 h-2 rounded-full animate-pulse mr-2 bg-blue-400"></span>
                         Perhaps you meant:
                       </h3>
                       <button
                         onClick={handleUseSuggestion}
-                        className={cn(
-                          "hover:underline text-left w-full text-sm pl-1 transition-all duration-200",
-                          theme === 'dark'
-                            ? "text-indigo-300 hover:text-indigo-200"
-                            : "text-indigo-600 hover:text-indigo-800"
-                        )}
+                        className="hover:underline text-left w-full text-sm pl-1 transition-all duration-200 text-blue-700 hover:text-blue-800"
                       >
                         {internalSuggestion}
                       </button>
