@@ -17,13 +17,67 @@ import asyncio
 router = APIRouter()
 
 # Create a custom verify function specifically for registration
-registration_verify_token = partial(verify_token, is_registration=True)
+import jwt
+from fastapi import Header, HTTPException
+from config.settings import SUPABASE_SECRET_KEY
+from utils.logger import log_info
+
+async def registration_verify_token(authorization: str = Header(None)):
+    """
+    Verify JWT token for registration endpoint only.
+    
+    Args:
+        authorization: Authorization header with token
+        
+    Returns:
+        Dict with user ID
+        
+    Raises:
+        HTTPException: If authentication fails
+    """
+    try:
+        if not authorization:
+            raise HTTPException(status_code=401, detail="Missing token")
+    
+        # Extract token from header
+        token = authorization.split(" ")[1]
+        
+        # Verify the JWT token
+        try:
+            payload = jwt.decode(
+                token, 
+                SUPABASE_SECRET_KEY, 
+                algorithms=["HS256"], 
+                audience="authenticated", 
+                options={"leeway": 10, "verify_iat": False}
+            )
+        except jwt.ExpiredSignatureError:
+            raise HTTPException(status_code=401, detail="Token expired")
+        except jwt.InvalidTokenError as e:
+            raise HTTPException(status_code=401, detail=f"Invalid token: {str(e)}")
+            
+        # Extract user ID
+        user_id = payload.get("sub")
+        if not user_id:
+            raise HTTPException(status_code=401, detail="Invalid token payload: Missing user ID")
+            
+        log_info(f"Registration token valid for user ID: {user_id}")
+        
+        # Return minimal user data needed for registration
+        return {"id": user_id}
+        
+    except HTTPException as http_exc:
+        raise http_exc
+    except Exception as e:
+        log_info(f"Registration token verification error: {str(e)}")
+        raise HTTPException(status_code=500, detail="Authentication system error")
 
 
-supabase = get_supabase_client()
+
 
 # Helper function to get or create tenant
 async def get_or_create_tenant(tenant_name):
+    supabase = get_supabase_client()
     def check_tenant():
         return supabase.from_("tenants") \
             .select("id") \
@@ -73,6 +127,7 @@ async def register(
         
         log_info(f"Entered register try block")
         log_info(f"request_data : {request_data}")
+        supabase = get_supabase_client()
        # Check if user already exists - checking both user and email in one query
         def check_user_exists():
             return supabase.from_("users") \
@@ -117,6 +172,8 @@ async def register(
             create_user,
             "Failed to create user"
         )
+
+        log_info(f"new_user_response : {new_user_response}")
         
         user_id = new_user_response.data[0]["id"]
         log_info(f"Created new user with ID: {user_id}")

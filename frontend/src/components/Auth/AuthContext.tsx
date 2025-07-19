@@ -41,6 +41,22 @@ interface AuthProviderProps {
 // (e.g. /get-email). It is injected at build-time via Vite.
 const supabaseApiKey = import.meta.env.VITE_SUPABASE_API_KEY;
 
+// Helper to check if we're in registration process
+// This helps us avoid unnecessary authentication calls during registration
+const isRegistrationInProgress = (): boolean => {
+  return sessionStorage.getItem('registration_in_progress') === 'true';
+};
+
+// Helper to set registration in progress
+// We use sessionStorage to maintain this state through page refreshes but clear on browser close
+const setRegistrationInProgress = (inProgress: boolean): void => {
+  if (inProgress) {
+    sessionStorage.setItem('registration_in_progress', 'true');
+  } else {
+    sessionStorage.removeItem('registration_in_progress');
+  }
+};
+
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
@@ -52,6 +68,14 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     const initAuth = async () => {
       setIsLoading(true);
       try {
+        // Check if registration is in progress - skip authentication if so
+        // This prevents unnecessary API calls to /authenticate during registration
+        if (isRegistrationInProgress()) {
+          console.log('Registration in progress, skipping authentication check');
+          setIsLoading(false);
+          return;
+        }
+
         // First check if we have saved credentials
         const savedToken = tokenService.getToken();
         const savedUser = tokenService.getUser();
@@ -182,6 +206,12 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     // Enhanced auth state change handler
     const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
       console.log(`Auth event: ${event}`, { hasSession: !!session });
+      
+      // Skip authentication check during registration
+      if (isRegistrationInProgress()) {
+        console.log('Registration in progress, skipping auth state change handling for event:', event);
+        return;
+      }
       
       if (event === "SIGNED_IN" && session) {
         const token = session.access_token;
@@ -331,6 +361,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const register = async (data: RegisterData): Promise<boolean> => {
     setIsLoading(true);
     let user_id: string | null = null;
+    
+    // Set registration in progress flag at the beginning of the registration process
+    setRegistrationInProgress(true);
+    
     try {
       // Step 1: First check if user already exists in Supabase Auth
       const { data: checkUserData } = await supabase.auth.signInWithPassword({
@@ -347,6 +381,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         toast.info('Account already exists. Please log in.');
         await supabase.auth.signOut();
         tokenService.clearAuth();
+        // Clear registration flag since we're redirecting to login
+        setRegistrationInProgress(false);
         return true; // Return true to navigate to login
       }
       
@@ -371,10 +407,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       // If email confirmation is enabled, Supabase will *not* return a session.
       // In that case we simply ask the user to verify their e-mail and end here.
       const supabaseSession = authData.session;
-      if (!supabaseSession) {
-        toast.info('Please check your email to verify your account.');
-        return true; // Return true to navigate to login
-      }
+      // if (!supabaseSession) {
+      //   toast.info('Please check your email to verify your account.');
+      //   return true; // Return true to navigate to login
+      // }
       
       // Step 3: If we got a session, use it to register with the backend
       const token = supabaseSession.access_token;
@@ -387,12 +423,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           'Authorization': `Bearer ${token}`,
         },
         body: JSON.stringify({
-          "organization_name": data.organizationName,
-          "name": data.name,
+          "tenant_name": data.organizationName,
+          "username": data.name,
           "email": data.email,
-          "password": data.password,
-          "confirm_password": data.confirmPassword,
-          "user_id": supabaseUser.id,
+          "user_id": user_id,
         }),
       });
       
@@ -428,6 +462,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       throw error;
     } finally {
       setIsLoading(false);
+      // Always clear registration in progress flag when we're done
+      setRegistrationInProgress(false);
     }
   };
 
