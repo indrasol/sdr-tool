@@ -12,6 +12,7 @@ import {
   Menu,
   PanelLeft,
   ArrowLeft,
+  Check,
 } from "lucide-react";
 import { useAuth } from "@/components/Auth/AuthContext";
 import { cn } from "@/lib/utils";
@@ -262,17 +263,24 @@ const SidebarNav: React.FC<SidebarNavProps> = ({ onCollapseChange }) => {
                         key={team.id}
                         value={String(team.id)}
                         onSelect={() => handleTeamChange(team.id)}
-                        className="font-inter text-blue-600 dropdown-item cursor-pointer"
-                        style={
-                          selectedTeam === team.id
-                            ? {
-                                background:
-                                  "linear-gradient(to right, rgba(219, 234, 254, 0.9), rgba(233, 213, 255, 0.9))",
-                                color: "#2563eb",
-                              }
-                            : undefined
-                        }
+                        style={{
+                          background: selectedTeam === team.id 
+                            ? 'linear-gradient(to right, rgba(219, 234, 254, 0.9), rgba(233, 213, 255, 0.9))' 
+                            : 'transparent',
+                          color: '#2563eb',
+                          border: '1px solid transparent',
+                          margin: '2px 4px',
+                          borderRadius: '0.375rem',
+                          cursor: 'pointer'
+                        }}
+                        className="font-inter text-blue-600 dropdown-item"
                       >
+                        <Check
+                          className={cn(
+                            "mr-2 h-4 w-4 text-blue-600",
+                            selectedTeam === team.id ? "opacity-100" : "opacity-0"
+                          )}
+                        />
                         {team.name}
                       </CommandItem>
                     ))}
