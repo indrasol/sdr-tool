@@ -77,31 +77,7 @@ const LoginPage = () => {
 
   return (
     <div className="min-h-screen flex">
-      {/* Left Side - Secure Bot Track Image */}
-      <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden bg-gradient-to-br from-indigo-50 via-blue-50 to-cyan-50">
-        {/* High-Resolution Secure Bot Track Background */}
-        <div 
-          className="absolute inset-0 bg-contain bg-center bg-no-repeat transform scale-80 transition-transform duration-700 hover:scale-85"
-          style={{
-            backgroundImage: "url('/secure_bot_track.png')",
-            filter: 'brightness(1.0) contrast(1.05) saturate(1.1)'
-          }}
-        >
-          {/* Professional gradient overlay for enhanced visual appeal */}
-          <div className="absolute inset-0 bg-gradient-to-br from-indigo-600/8 via-transparent to-cyan-600/8"></div>
-          <div className="absolute inset-0 bg-gradient-to-t from-blue-600/10 via-transparent to-transparent"></div>
-          {/* Subtle radial gradient to blend edges with background */}
-          <div className="absolute inset-0 bg-gradient-to-br from-transparent via-transparent to-indigo-50/30"></div>
-          <div className="absolute inset-0 bg-gradient-to-tl from-transparent via-transparent to-blue-50/30"></div>
-        </div>
-        
-        {/* Subtle bot/security-themed decorative elements */}
-        <div className="absolute top-8 left-8 w-20 h-20 bg-gradient-to-br from-indigo-400/15 to-blue-400/15 rounded-full blur-xl"></div>
-        <div className="absolute bottom-8 right-8 w-16 h-16 bg-gradient-to-br from-cyan-400/15 to-blue-400/15 rounded-full blur-xl"></div>
-        <div className="absolute top-1/2 left-6 w-12 h-12 bg-gradient-to-br from-blue-400/10 to-indigo-400/10 rounded-full blur-lg"></div>
-      </div>
-
-      {/* Right Side - Login Form */}
+      {/* Left Side - Login Form */}
       <div className="w-full lg:w-1/2 flex flex-col">
         {/* Header */}
         <div className="p-8 flex items-center justify-between">
@@ -267,6 +243,30 @@ const LoginPage = () => {
             </motion.div>
           </div>
         </div>
+      </div>
+
+      {/* Right Side - Secure Bot Track Image */}
+      <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden bg-gradient-to-br from-indigo-50 via-blue-50 to-cyan-50">
+        {/* High-Resolution Secure Bot Track Background */}
+        <div 
+          className="absolute inset-0 bg-contain bg-center bg-no-repeat transform scale-80 transition-transform duration-700 hover:scale-85"
+          style={{
+            backgroundImage: "url('/secure_bot_track.png')",
+            filter: 'brightness(1.0) contrast(1.05) saturate(1.1)'
+          }}
+        >
+          {/* Professional gradient overlay for enhanced visual appeal */}
+          <div className="absolute inset-0 bg-gradient-to-br from-indigo-600/8 via-transparent to-cyan-600/8"></div>
+          <div className="absolute inset-0 bg-gradient-to-t from-blue-600/10 via-transparent to-transparent"></div>
+          {/* Subtle radial gradient to blend edges with background */}
+          <div className="absolute inset-0 bg-gradient-to-br from-transparent via-transparent to-indigo-50/30"></div>
+          <div className="absolute inset-0 bg-gradient-to-tl from-transparent via-transparent to-blue-50/30"></div>
+        </div>
+        
+        {/* Subtle bot/security-themed decorative elements */}
+        <div className="absolute top-8 left-8 w-20 h-20 bg-gradient-to-br from-indigo-400/15 to-blue-400/15 rounded-full blur-xl"></div>
+        <div className="absolute bottom-8 right-8 w-16 h-16 bg-gradient-to-br from-cyan-400/15 to-blue-400/15 rounded-full blur-xl"></div>
+        <div className="absolute top-1/2 left-6 w-12 h-12 bg-gradient-to-br from-blue-400/10 to-indigo-400/10 rounded-full blur-lg"></div>
       </div>
     </div>
   );
