@@ -9,6 +9,7 @@ import (
 	"io"
 	"os"
 	"strings"
+	"time" // Add time package for timeout support
 
 	"oss.terrastruct.com/d2/d2compiler"
 	"oss.terrastruct.com/d2/d2graph"
@@ -17,10 +18,27 @@ import (
 
 func main() {
 	layout := flag.String("layout", "elk", "elk|none")
+	timeoutSec := flag.Int("timeout", 10, "timeout in seconds")
 	flag.Parse()
 
-	src, err := io.ReadAll(os.Stdin)
-	check(err)
+	// Create a context with timeout
+	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(*timeoutSec)*time.Second)
+	defer cancel()
+
+	var src []byte
+	var err error
+
+	// Read from stdin or file based on arguments
+	if flag.NArg() > 0 {
+		// Read from file if provided as argument
+		filename := flag.Arg(0)
+		src, err = os.ReadFile(filename)
+		check(err)
+	} else {
+		// Read from stdin if no file specified
+		src, err = io.ReadAll(os.Stdin)
+		check(err)
+	}
 
 	// 1️⃣ compile D2 → graph
 	g, _, err := d2compiler.Compile("stdin", bytesReader(src), &d2compiler.CompileOptions{})
@@ -28,7 +46,7 @@ func main() {
 
 	// 2️⃣ layout - try ELK first if requested
 	if *layout == "elk" {
-		tryELKLayout(g) // Try ELK but don't fail if it doesn't work
+		tryELKLayout(ctx, g) // Pass context with timeout
 	}
 
 	// 3️⃣ flatten → JSON (this now includes our fallback layout)
@@ -127,23 +145,37 @@ func calculateNodeOrder(g *d2graph.Graph) []*d2graph.Object {
 }
 
 // tryELKLayout attempts to apply ELK layout but doesn't fail the program if it doesn't work
-func tryELKLayout(g *d2graph.Graph) error {
+func tryELKLayout(ctx context.Context, g *d2graph.Graph) error {
 	// Basic validation
 	if g == nil || len(g.Objects) == 0 {
 		return fmt.Errorf("graph is empty or nil")
 	}
 
-	// Try ELK layout with full error recovery
-	defer func() {
-		recover() // Silently recover from any panics
+	// Create a done channel to handle timeouts
+	done := make(chan error, 1)
+
+	// Run ELK layout in a goroutine
+	go func() {
+		defer func() {
+			if r := recover(); r != nil {
+				done <- fmt.Errorf("panic in ELK layout: %v", r)
+			}
+		}()
+		
+		err := d2elklayout.Layout(ctx, g, nil)
+		done <- err
 	}()
 
-	err := d2elklayout.Layout(context.Background(), g, nil)
-	if err != nil {
-		return fmt.Errorf("ELK layout error: %v", err)
+	// Wait for either completion or timeout
+	select {
+	case <-ctx.Done():
+		return fmt.Errorf("ELK layout timed out after %v", ctx.Err())
+	case err := <-done:
+		if err != nil {
+			return fmt.Errorf("ELK layout error: %v", err)
+		}
+		return nil
 	}
-
-	return nil
 }
 
 /* ---------- helpers ---------- */
@@ -200,7 +232,7 @@ func flatten(g *d2graph.Graph) jDiag {
 				label = n.Label.Value
 			}
 			
-			// Try to get position from D2 first
+			// Try to get position from ELK-enhanced D2 first (TopLeft populated by layout)
 			if n.TopLeft != nil {
 				x = float64(n.TopLeft.X)
 				y = float64(n.TopLeft.Y)
@@ -212,16 +244,16 @@ func flatten(g *d2graph.Graph) jDiag {
 		}()
 		
 		// Use our calculated layout if D2 didn't provide coordinates
-		if layout, exists := nodeLayout[id]; exists {
-			if x == 0 && y == 0 {
+		if x == 0 && y == 0 {
+			if layout, exists := nodeLayout[id]; exists {
 				x = layout.X
 				y = layout.Y
-			}
-			if w == 0 {
-				w = layout.Width
-			}
-			if h == 0 {
-				h = layout.Height
+				if w == 0 {
+					w = layout.Width
+				}
+				if h == 0 {
+					h = layout.Height
+				}
 			}
 		}
 		

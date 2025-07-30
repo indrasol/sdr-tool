@@ -1,0 +1,12 @@
+{
+  "BlobStore:generic": { "icon": "logos:amazon-s3", "color": "#ff9900" },
+  "Database:generic": { "icon": "logos:amazon-dynamodb", "color": "#4053d6" },
+  "Queue:generic": { "icon": "logos:amazon-sqs", "color": "#8c4fff" },
+  "Function:generic": { "icon": "logos:aws-lambda", "color": "#ff9900" },
+  "Monitoring:generic": { "icon": "logos:amazon-cloudwatch", "color": "#d45b07" },
+  "Gateway:generic": { "icon": "logos:amazon-api-gateway", "color": "#cd2264" },
+  "VectorStore:generic": { "icon": "logos:amazon-kendra", "color": "#4053d6" },
+  "Search:generic": { "icon": "logos:amazon-opensearch-service", "color": "#4053d6" },
+  "SecretStore:generic": { "icon": "logos:aws-secrets-manager", "color": "#8b0000" },
+  "ContainerPlatform:generic": { "icon": "logos:amazon-ecs", "color": "#ff6a00" }
+} 

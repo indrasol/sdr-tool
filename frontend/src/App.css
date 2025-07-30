@@ -40,3 +40,11 @@
 .read-the-docs {
   color: #888;
 }
+
+.react-flow__node-clusterGroup {
+  background: rgba(148, 163, 184, 0.08); /* subtle slate tint */
+  border: 1px dashed #94a3b8;
+  border-radius: 8px;
+  pointer-events: none;
+  z-index: 0;
+}

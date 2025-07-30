@@ -16,7 +16,8 @@ Schema (JSON per key ``session:{session_id}``)
   "pinned_nodes"    : list[str],       # array of node IDs client pinned
   "last_intent"     : str | null,      # last IntentV2 string
   "created_at"      : iso str,
-  "last_updated"    : iso str
+  "last_updated"    : iso str,
+  "conversation_history" : list        # array of conversation entries
 }
 
 TTL is managed via ``SESSION_EXPIRY`` env (24h default).
@@ -72,6 +73,7 @@ class SessionManagerV2:
             "last_intent": None,
             "created_at": now,
             "last_updated": now,
+            "conversation_history": []
         }
         await self._pool.setex(f"session:{session_id}", SESSION_EXPIRY, json.dumps(payload))
         return session_id
@@ -115,6 +117,47 @@ class SessionManagerV2:
         def mut(d):  # Regular function, not async
             d["last_intent"] = intent
         await self._update(session_id, mut)
+
+    # ------------------------------------------------------------------
+    #  Conversation History Helpers - NEW
+    # ------------------------------------------------------------------
+
+    async def append_conversation_entry(self, session_id: str, role: str, content: str):
+        """Append a new conversation entry to the session history."""
+        now_iso = datetime.now(timezone.utc).isoformat()
+        entry = {
+            "role": role,
+            "content": content,
+            "timestamp": now_iso
+        }
+        
+        def mut(d):
+            if "conversation_history" not in d:
+                d["conversation_history"] = []
+            d["conversation_history"].append(entry)
+        
+        await self._update(session_id, mut)
+    
+    async def get_conversation_history(self, session_id: str, limit: int = 10) -> List[Dict[str, Any]]:
+        """Get the last N conversation entries."""
+        session_data = await self.get_session(session_id)
+        if not session_data or "conversation_history" not in session_data:
+            return []
+        
+        history = session_data.get("conversation_history", [])
+        return history[-limit:] if limit > 0 else history
+
+    async def ensure_session(self, session_id: str = None, project_id: str = None) -> str:
+        """Ensure a session exists, creating one if needed."""
+        if session_id:
+            session = await self.get_session(session_id)
+            if session:
+                return session_id
+        
+        if not project_id:
+            raise ValueError("project_id required when creating a new session")
+        
+        return await self.create_session(project_id)
 
     # ------------------------------------------------------------------
     #  DSL Cache helpers (per-project, keyed by SHA1 of query)

@@ -74,6 +74,6 @@ class LLMGatewayV2:
         tokens = len(prompt.split())
         if tokens < self._SHORT_PROMPT_TOKENS:
             return "openai", "gpt-4.1-mini"
-        if tokens < self._LONG_PROMPT_TOKENS:
-            return "openai", "gpt-4.1"
-        return "anthropic", "claude-4-sonnet" 
+        # if tokens < self._LONG_PROMPT_TOKENS:
+        #     return "openai", "gpt-4.1"
+        return "openai", "gpt-4.1" 

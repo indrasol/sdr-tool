@@ -2,78 +2,30 @@ import { useState, useCallback, useMemo } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { addEdge, MarkerType, Node, Edge, XYPosition } from '@xyflow/react';
 import { getNodeShapeStyle, nodeDefaults } from '../utils/nodeStyles';
-import { edgeStyles } from '../utils/edgeStyles';
+import { getEdgeStyle, getEdgeType, edgeStyles } from '../utils/edgeStyles';
 import { iconifyRegistry } from '../utils/iconifyRegistry';
 import { CustomNodeData } from '../types/diagramTypes';
 import { DEFAULT_NODE_WIDTH, DEFAULT_NODE_HEIGHT } from '../utils/layerUtils';
 
 
-const determineEdgeType = (sourceId, targetId, nodes: Node[] = []) => {
+// Legacy edge type determination function for backward compatibility
+// Can be used as fallback if needed
+const determineEdgeType = (sourceId: string, targetId: string, nodes: Node[] = []): string => {
   // Find the source and target nodes
   const sourceNode = nodes.find(n => n.id === sourceId);
   const targetNode = nodes.find(n => n.id === targetId);
   
-  // If either node is missing, default to 'dataFlow'
+  // If either node is missing, default to 'default'
   if (!sourceNode || !targetNode) {
-    return 'dataFlow';
+    return 'default';
   }
   
   // Extract node types, defaulting to empty string if not present
   const sourceType = ((sourceNode.data?.nodeType || sourceNode.type || '') as string).toLowerCase();
   const targetType = ((targetNode.data?.nodeType || targetNode.type || '') as string).toLowerCase();
   
-  // Create arrays of type keywords for easier checking
-  const sourceTypeKeywords = sourceType.split(/[-_\s]+/);
-  const targetTypeKeywords = targetType.split(/[-_\s]+/);
-  
-  // Helper function to check if any keyword is present in a node type
-  const hasKeyword = (keywords, typeStr) => {
-    return keywords.some(keyword => 
-      typeStr.includes(keyword) || 
-      sourceTypeKeywords.includes(keyword) || 
-      targetTypeKeywords.includes(keyword)
-    );
-  };
-  
-  // Security-related connections
-  if (hasKeyword(['security', 'iam', 'auth', 'firewall', 'waf', 'shield'], sourceType + targetType)) {
-    return 'security';
-  }
-  
-  // Database connections
-  if (hasKeyword(['database', 'db', 'rds', 'sql', 'nosql', 'dynamo', 'mongo'], sourceType + targetType)) {
-    return 'database';
-  }
-  
-  // API and data flow connections
-  if (hasKeyword(['api', 'gateway', 'lambda', 'function', 'serverless'], sourceType + targetType) ||
-      sourceType.includes('api') || targetType.includes('api') ||
-      sourceType === 'api gateway' || targetType === 'api gateway') {
-    return 'dataFlow';
-  }
-  
-  // Network connections
-  if (hasKeyword(['network', 'cdn', 'cloudfront', 'route53', 'dns', 'vpc', 'subnet'], sourceType + targetType)) {
-    return 'network';
-  }
-  
-  // Log and monitoring connections
-  if (hasKeyword(['log', 'monitor', 'cloudwatch', 'trace', 'metric'], sourceType + targetType)) {
-    return 'log';
-  }
-  
-  // Secure connections (SSL/TLS)
-  if (hasKeyword(['ssl', 'tls', 'https', 'secure', 'encryption'], sourceType + targetType)) {
-    return 'secure-connection';
-  }
-  
-  // Vulnerable or insecure connections
-  if (hasKeyword(['vulnerable', 'insecure', 'exploit', 'risk'], sourceType + targetType)) {
-    return 'vulnerable';
-  }
-  
-  // Default case - when no specific type is determined
-  return 'dataFlow';
+  // Use the new getEdgeType function from edgeStyles.tsx
+  return getEdgeType(sourceType, targetType);
 };
 
 export function useDiagramNodes(
@@ -99,199 +51,51 @@ export function useDiagramNodes(
     if (targetNode) {
       setCurrentEditNode({
         id,
-        label: targetNode.data?.label || '',
-        description: targetNode.data?.description || ''
+        label: targetNode.data?.label || label,
+        description: targetNode.data?.description || '',
+        nodeType: targetNode.data?.nodeType || '',
       });
       setEditNodeDialogOpen(true);
-    } else {
-      console.warn(`Node with id ${id} not found for editing`);
     }
   }, [initialNodes]);
 
-  // Handle deleting a node
-  const handleDeleteNode = useCallback((id) => {
-    if (!externalSetNodes || !externalSetEdges) {
-      console.warn("External setters not available for handleDeleteNode");
+  // Handle saving node edit
+  const handleSaveNodeEdit = useCallback((editData) => {
+    if (!externalSetNodes) {
+      console.warn("externalSetNodes is not available for handleSaveNodeEdit");
       return;
     }
     
-    // Find the node to be deleted to show its name in the toast
-    const nodeToDelete = initialNodes.find(node => node.id === id);
-    
-    // Remove the node
-    externalSetNodes(nds => nds.filter(node => node.id !== id));
-    
-    // Remove any edges connected to this node
-    externalSetEdges(eds => eds.filter(edge => edge.source !== id && edge.target !== id));
-    
-    // Show a toast notification
-    if (nodeToDelete) {
-      const nodeLabel = nodeToDelete.data?.label || 'Unnamed node';
-        
-      toast({
-        title: "Node Deleted",
-        description: `Node "${nodeLabel}" has been removed`
-      });
-    }
-  }, [initialNodes, externalSetNodes, externalSetEdges, toast]);
-
-  // Apply style defaults to all nodes and add callbacks
-  const prepareNodes = useCallback((nodes: Node<CustomNodeData>[], edges: Edge[] = []): Node<CustomNodeData>[] => {
-    if (!nodes || !Array.isArray(nodes) || nodes.length === 0) {
-      return [];
-    }
-    
-    // Create sets for quick lookup of connected node IDs
-    const sourceIds = new Set(edges.map(edge => edge.source));
-    const targetIds = new Set(edges.map(edge => edge.target));
-    
-    return nodes.map(node => {
-      if (!node) {
-        return null;
-      }
-      
-      // CRITICAL FIX: Preserve backend data if it's already validated
-      if (node.data?.validated && node.data?.source === 'backend') {
-        // Use backend-provided iconifyId with enhanced fallback
-        const backendIconifyId = (node.data as any).iconifyId;
-        const nodeType = node.data?.nodeType || node.type || 'application';
-        const fallbackIconifyId = iconifyRegistry[nodeType] || 'mdi:application';
-        const finalIconifyId = backendIconifyId || fallbackIconifyId;
-        
-        // Enhanced logging for debugging
-        console.log(`V2: Enhanced icon processing for ${node.id}:`, {
-          nodeType,
-          backendIconifyId,
-          fallbackIconifyId,
-          finalIconifyId
-        });
-        
-        // Enhanced position logging for debugging layout issues
-        const position = node.position || { x: 0, y: 0 };
-        console.log(`V2: Position for ${node.id}: (${position.x}, ${position.y})`);
-        
-        return {
-          ...node,
-          type: 'default',
-          draggable: true,
-          position: position, // Ensure position is properly set
-          data: {
-            ...node.data,
-            iconifyId: finalIconifyId,
-            onEdit: node.data.onEdit || handleEditNode,
-            onDelete: node.data.onDelete || handleDeleteNode,
-            onLock: node.data.onLock || ((id: string) => {
-              if (!externalSetNodes) return;
-              externalSetNodes((nds: Node[]) => nds.map(n => n.id === id ? { ...n, data: { ...n.data, pinned: !(n.data?.pinned === true) } } : n));
-              if (externalOnLayout) externalOnLayout({
-                direction: 'LR',
-                engine: 'auto',
-                enablePerformanceMonitoring: true
-              });
-            }),
-            hasSourceConnection: sourceIds.has(node.id),
-            hasTargetConnection: targetIds.has(node.id),
-          }
-        } as Node<CustomNodeData>;
-      }
-      
-      // Handle comment nodes
-      if (node.type === 'comment' || node.data?.nodeType === 'stickyNote') {
-        return {
-          ...node,
-          type: 'comment',
-          connectable: false,
-          data: {
-            ...node.data,
-            nodeType: node.data?.nodeType || 'stickyNote',
-            isComment: true,
-            excludeFromLayers: true,
-            onEdit: node.data?.onEdit || handleEditNode,
-            onDelete: node.data?.onDelete || handleDeleteNode,
-          }
-        } as Node<CustomNodeData>;
-      }
-      
-      // Regular node processing - simplified
-      const nodeType = (node.data?.nodeType || node.type || 'default') as string;
-      const label = node.data?.label || node.id || 'Node';
-      
-      // CRITICAL FIX: Comprehensive label cleaning to prevent URL/base64 corruption
-      let cleanLabel = label;
-      if (typeof label === 'string' && (
-        label.length > 50 || 
-        label.includes('http') || 
-        label.includes('data:') || 
-        label.includes('.svg') || 
-        label.includes('base64') ||
-        label.includes('storage.') ||
-        label.includes('supabase.') ||
-        (label.split('/').length - 1) > 2
-      )) {
-        // Generate clean label from node ID or type
-        const cleanId = (node.id || nodeType || 'Node')
-          .replace(/[-_]/g, ' ')
-          .split(' ')
-          .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
-          .join(' ');
-        cleanLabel = cleanId;
-        console.warn(`Fixed corrupted label for node ${node.id}:`, {
-          original: label.substring(0, 100) + '...',
-          cleaned: cleanLabel
-        });
-      }
-      
-      // Check if this is a client node 
-      const isClientNode = () => {
-        const nodeTypeStr = nodeType.toLowerCase();
-        return nodeTypeStr.includes('client') || nodeTypeStr.includes('user') || 
-               nodeTypeStr.includes('mobile') || nodeTypeStr.includes('browser');
-      };
-      
-      const iconifyId = (node.data as any).iconifyId || iconifyRegistry[nodeType] || 'mdi:application';
-      
-      return {
-        ...node,
-        type: 'default',
-        draggable: true,
-        position: node.position || { x: 0, y: 0 },
-        width: node.width ?? DEFAULT_NODE_WIDTH,
-        height: node.height ?? DEFAULT_NODE_HEIGHT,
-        data: {
-          ...node.data,
-          label: cleanLabel,
-          nodeType: nodeType,
-          onEdit: node.data?.onEdit || handleEditNode,
-          onDelete: node.data?.onDelete || handleDeleteNode,
-          onLock: node.data?.onLock || ((id: string) => {
-            if (!externalSetNodes) return;
-            externalSetNodes((nds: Node[]) => nds.map(n => n.id === id ? { ...n, data: { ...n.data, pinned: !(n.data?.pinned === true) } } : n));
-            if (externalOnLayout) externalOnLayout({
-              direction: 'LR',
-              engine: 'auto',
-              enablePerformanceMonitoring: true
-            });
-          }),
-          iconifyId,
-          hasSourceConnection: sourceIds.has(node.id),
-          hasTargetConnection: targetIds.has(node.id),
-          excludeFromLayers: isClientNode(),
+    externalSetNodes((nds) =>
+      nds.map((node) => {
+        if (node.id === editData.id) {
+          // Update node data
+          return {
+            ...node,
+            data: {
+              ...node.data,
+              label: editData.label,
+              description: editData.description,
+              nodeType: editData.nodeType,
+              // Preserve other data fields
+            },
+          };
         }
-      } as Node<CustomNodeData>;
-    }).filter((node): node is Node<CustomNodeData> => node !== null);
-  }, [handleEditNode, handleDeleteNode, externalSetNodes, externalOnLayout]);
+        return node;
+      })
+    );
+    
+    // Close the dialog
+    setEditNodeDialogOpen(false);
+    setCurrentEditNode(null);
+    
+    // Show success toast
+    toast({
+      description: "Node updated successfully!"
+    });
+  }, [externalSetNodes, toast]);
 
-  // Memoize the results of prepareNodes to prevent recreating nodes on every render
-  const preparedNodes = useMemo(() => {
-    return prepareNodes(initialNodes, initialEdges);
-  }, [initialNodes, initialEdges, prepareNodes]);
-
-  // Memoized function for determining edge type
-  const getEdgeType = useCallback((sourceId, targetId) => {
-    return determineEdgeType(sourceId, targetId, initialNodes);
-  }, [initialNodes]);
-
-  // Enhanced handle connect with improved arrowhead handling
+  // Handle connect
   const handleConnect = useCallback((params) => {
     if (!externalSetEdges) {
       console.warn("externalSetEdges is not available for handleConnect");
@@ -306,41 +110,37 @@ export function useDiagramNodes(
     // Create a unique ID for the new edge
     const edgeId = `edge-${params.source}-${params.target}-${Date.now()}`;
     
-    // Determine edge type based on connected nodes
-    const edgeType = getEdgeType(params.source, params.target);
+    // Determine the source and target node types
+    const sourceNode = initialNodes.find(n => n.id === params.source);
+    const targetNode = initialNodes.find(n => n.id === params.target);
+    const sourceType = sourceNode?.data?.nodeType || '';
+    const targetType = targetNode?.data?.nodeType || '';
     
-    // Get stroke color based on edge type
-    let strokeColor = '#555'; // Default color
-    if (edgeStyles[edgeType] && typeof edgeStyles[edgeType].stroke === 'string') {
-      strokeColor = edgeStyles[edgeType].stroke;
-    } else if (edgeStyles.default && typeof edgeStyles.default.stroke === 'string') {
-      strokeColor = edgeStyles.default.stroke;
-    }
+    // Get edge type based on connected nodes
+    const edgeType = getEdgeType(sourceType, targetType);
+    
+    // Get edge style configuration
+    const edgeStyleConfig = getEdgeStyle(sourceType, targetType);
+    
+    // Get stroke color from edge style config
+    const strokeColor = edgeStyleConfig.style.stroke || '#555'; // Default color if not found
     
     // Create the new edge with consistent arrowhead
     const newEdge = {
       ...params,
       id: edgeId,
-      type: edgeType,
-      animated: edgeType === 'dataFlow' || edgeType === 'database',
-      // Always include markerEnd for arrowhead display
-      markerEnd: {
-        type: MarkerType.ArrowClosed,
-        width: 15,
-        height: 15,
-        color: strokeColor,
-        markerEndOffset: -70
+      type: 'default', // Use our custom default edge type
+      // Add data with edgeType for styling
+      data: {
+        ...(params.data || {}),
+        edgeType: edgeType,
+        sourceType: sourceType,
+        targetType: targetType,
+        label: params.label || '' // Default empty label
       },
       // Include styling based on edge type
       style: {
-        strokeWidth: 2,
-        stroke: strokeColor,
-        ...(params.style || {}),
-      },
-      data: {
-        // You can add additional edge data here if needed
-        edgeType: edgeType,
-        label: '' // Default empty label
+        ...(params.style || {})
       }
     };
     
@@ -363,7 +163,7 @@ export function useDiagramNodes(
     });
     
     return newEdge; // Return the newly created edge
-  }, [externalSetEdges, toast, getEdgeType]);
+  }, [externalSetEdges, toast, initialNodes]);
 
   // Handle adding new nodes
   const handleAddNode = useCallback((nodeType, position, iconRenderer) => {
@@ -401,7 +201,7 @@ export function useDiagramNodes(
       data: { 
         label: nodeType, // Keep original label for display
         onEdit: handleEditNode,
-        onDelete: handleDeleteNode,
+        onDelete: () => {}, // This will be handled separately
         nodeType: normalizedNodeType, // Use normalized type in data as well
         description: `A ${nodeType.toLowerCase()} component`,
         iconifyId,
@@ -422,63 +222,120 @@ export function useDiagramNodes(
     });
     
     return newId; // Return the ID of the newly created node
-  }, [externalSetNodes, handleEditNode, handleDeleteNode, toast]);
+  }, [externalSetNodes, handleEditNode]);
 
-  // Handle saving edited node data
-  const handleSaveNodeEdit = useCallback((id, updatedData) => {
-    if (!externalSetNodes) {
-      console.warn("externalSetNodes is not available for handleSaveNodeEdit");
+  // Handle deleting a node
+  const handleDeleteNode = useCallback((id) => {
+    if (!externalSetNodes || !externalSetEdges) {
+      console.warn("External setters not available for handleDeleteNode");
       return;
     }
     
-    externalSetNodes(nds => 
-      nds.map(node => {
-        if (node.id === id) {
-          return {
-            ...node,
-            data: {
-              ...node.data,
-              label: updatedData.label,
-              description: updatedData.description
-            }
-          };
+    // Find the node to be deleted to show its name in the toast
+    const nodeToDelete = initialNodes.find(node => node.id === id);
+    
+    // Remove the node
+    externalSetNodes(nds => nds.filter(node => node.id !== id));
+    
+    // Remove any edges connected to this node
+    externalSetEdges(eds => eds.filter(edge => edge.source !== id && edge.target !== id));
+    
+    // Show a toast notification
+    if (nodeToDelete) {
+      const nodeLabel = nodeToDelete.data?.label || 'Unnamed node';
+        
+      toast({
+        title: "Node Deleted",
+        description: `Node "${nodeLabel}" has been removed`
+      });
+    }
+  }, [initialNodes, externalSetNodes, externalSetEdges, toast]);
+
+  // Apply style defaults to all nodes and add callbacks
+  const prepareNodes = useCallback((nodes, edges) => {
+    if (!Array.isArray(nodes)) {
+      console.warn("prepareNodes received invalid nodes:", nodes);
+      return [];
+    }
+    
+    return nodes.map((node) => {
+      if (!node) {
+        console.warn("Encountered null or undefined node in prepareNodes");
+        return null;
+      }
+
+      const nodeId = node.id;
+      const hasSourceConnection = edges.some(e => e.source === nodeId);
+      const hasTargetConnection = edges.some(e => e.target === nodeId);
+      
+      // Safety check for node.data
+      if (!node.data) {
+        node.data = {};
+      }
+      
+      return {
+        ...node,
+        // Ensure node has a type (default to 'default')
+        type: node.type || 'default',
+        data: {
+          ...node.data,
+          label: node.data.label || 'Node',
+          // Add connection flags for handle visibility
+          hasSourceConnection,
+          hasTargetConnection,
+          // Add event handlers
+          onEdit: handleEditNode,
+          onDelete: handleDeleteNode,
+          onLock: () => {}, // Placeholder for future locking functionality
+          // Preserve other data fields
         }
-        return node;
-      })
-    );
+      };
+    }).filter(Boolean); // Remove nulls
+  }, [handleEditNode, handleDeleteNode]);
 
-    toast({
-      title: "Node Updated",
-      description: `Node "${updatedData.label}" has been updated`
-    });
-  }, [externalSetNodes, toast]);
+  // Memoize prepared nodes
+  const preparedNodes = useMemo(() => {
+    return prepareNodes(initialNodes, initialEdges);
+  }, [initialNodes, initialEdges]);
 
-  // Process edges to ensure proper typing and arrowheads
+  // Memoized function for determining edge type
+  const getEdgeType = useCallback((sourceId, targetId) => {
+    return determineEdgeType(sourceId, targetId, initialNodes);
+  }, [initialNodes]);
+
+  // Process edges to ensure proper rendering
   const processEdges = useCallback((edgesToProcess) => {
     if (!Array.isArray(edgesToProcess) || edgesToProcess.length === 0) {
       return [];
     }
-    
+
     return edgesToProcess.map(edge => {
       if (!edge.source || !edge.target) {
         console.warn('Skipping invalid edge:', edge);
         return null;
       }
+
+      // Find source and target node types
+      const sourceNode = initialNodes.find(n => n.id === edge.source);
+      const targetNode = initialNodes.find(n => n.id === edge.target);
+      const sourceType = sourceNode?.data?.nodeType || '';
+      const targetType = targetNode?.data?.nodeType || '';
       
-      // Use the determined edge type or the existing one
-      const edgeType = edge.type || getEdgeType(edge.source, edge.target);
+      // Determine edge type
+      const edgeType = getEdgeType(sourceType, targetType);
       
       return {
         ...edge,
-        type: edgeType,
-        markerEnd: 'url(#arrowhead)',
-        style: {
-          ...(edge.style || {}),
-          ...(edgeStyles[edgeType] || edgeStyles.default)
+        type: 'default', // Use our custom default edge
+        data: {
+          ...(edge.data || {}),
+          edgeType: edgeType,
+          sourceType: sourceType,
+          targetType: targetType
         }
       };
     }).filter(Boolean);
-  }, [getEdgeType]);
+  }, [initialNodes]);
 
   // Memoize processed edges
   const processedEdges = useMemo(() => {
@@ -502,7 +359,7 @@ export function useDiagramNodes(
     handleConnect,
     handleAddNode,
     handleSaveNodeEdit,
-    getEdgeType,
+    determineEdgeType, // Keep for backward compatibility
     processEdges: useCallback((edges) => {
       // If inputs match the memoized inputs, return the memoized result
       if (edges === initialEdges) {
@@ -533,7 +390,7 @@ export function useDiagramNodes(
 
 //   // Apply style defaults to all nodes and add callbacks
 //   const prepareNodes = useCallback((nodes) => {
-//     if (!nodes || !Array.isArray(nodes)) {
+//     if (!nodes || !Array.isArray(nodes) || nodes.length === 0) {
 //       console.warn("prepareNodes received invalid nodes:", nodes);
 //       return [];
 //     }

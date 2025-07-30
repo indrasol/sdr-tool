@@ -50,6 +50,10 @@ class DSLEdge(BaseModel):
 class DSLDiagram(BaseModel):
     nodes: List[DSLNode] = Field(default_factory=list)
     edges: List[DSLEdge] = Field(default_factory=list)
+    # Optional grouping metadata (layer clusters, trust zones, etc.) injected
+    # by IR → DSL adapters.  Kept flexible as ``Any`` to avoid a hard import
+    # dependency on ``IRGroup`` while still allowing full round-trip fidelity.
+    groups: List[Any] = Field(default_factory=list)
 # class DSLEdge(BaseModel):
 #     """Directed connector between two nodes."""
 

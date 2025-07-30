@@ -43,6 +43,7 @@ import { DFDData, ThreatItem } from '../../interfaces/aiassistedinterfaces';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 // Import the DFD icons from the icons directory
 import { EarthGlobeSVG, CDNIconSVG } from './icons/DFDIcons';
+import SmartIcon from './components/SmartIcon';
 
 import '@xyflow/react/dist/style.css';
 
@@ -1116,7 +1117,7 @@ const NodeDetailPanel: React.FC<{
       }`}>
         <div className="flex items-center">
           <div className={`p-1.5 rounded-full ${hasCriticalThreats ? 'bg-red-100' : 'bg-blue-100'} mr-2`}>
-            {getNodeIcon(selectedNode.type, 4)}
+            {getNodeIcon(selectedNode.type, 4, selectedNode.data?.metadata)}
           </div>
           <div>
             <div className="text-sm font-bold text-gray-800">
@@ -1194,7 +1195,7 @@ const NodeDetailPanel: React.FC<{
                 {incomingNodes.map((node, idx) => (
                   <div key={`in-${idx}`} className="flex items-center justify-between text-xs text-gray-600 bg-gray-50 px-2 py-1.5 rounded border border-gray-100">
                     <div className="flex items-center">
-                      {getNodeIcon(node.type, 3)}
+                      {getNodeIcon(node.type, 3, node.data?.metadata)}
                       <span className="ml-1">{node.data?.label}</span>
                     </div>
                     <div className={`text-[9px] px-1 py-0.5 rounded ${
@@ -1222,7 +1223,7 @@ const NodeDetailPanel: React.FC<{
                 {outgoingNodes.map((node, idx) => (
                   <div key={`out-${idx}`} className="flex items-center justify-between text-xs text-gray-600 bg-gray-50 px-2 py-1.5 rounded border border-gray-100">
                     <div className="flex items-center">
-                      {getNodeIcon(node.type, 3)}
+                      {getNodeIcon(node.type, 3, node.data?.metadata)}
                       <span className="ml-1">{node.data?.label}</span>
                     </div>
                     <div className={`text-[9px] px-1 py-0.5 rounded ${
@@ -1245,25 +1246,17 @@ const NodeDetailPanel: React.FC<{
 };
 
 // Helper function to get the appropriate icon based on node type
-function getNodeIcon(nodeType: string, size = 4) {
-  const className = `w-${size} h-${size}`;
-  
-  switch(nodeType) {
-    case 'processNode':
-      return <Server className={className} />;
-    case 'entityNode':
-      return <User className={className} />;
-    case 'dataStoreNode':
-      return <Database className={className} />;
-    case 'externalNode':
-      return <Globe className={className} />;
-    case 'cloudServiceNode':
-      return <Cloud className={className} />;
-    case 'secretNode':
-      return <Key className={className} />;
-    default:
-      return <Server className={className} />;
-  }
+function getNodeIcon(nodeType: string, size = 4, metadata?: any) {
+  // Tailwind w-4 ≈ 16px. Multiply to get pixel size.
+  const pxSize = size * 4; // 1rem increments in Tailwind (4px units)
+  return (
+    <SmartIcon
+      nodeType={nodeType}
+      size={pxSize}
+      svgUrl={metadata?.svgUrl} // Pass svgUrl if available in metadata
+      provider={metadata?.provider} // Also pass provider if available
+    />
+  );
 }
 
 // Helper function to get the zone color for a node based on boundary

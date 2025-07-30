@@ -9,13 +9,15 @@ SQLAlchemy Session is supplied by the service layer – we *do not* create
 engine/SessionLocal here to keep responsibilities clear.
 """
 
-from typing import Dict, Any, Tuple
+from typing import Dict, Any, List, Tuple, Optional
 from datetime import datetime
 
 from sqlalchemy.orm import Session
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, func
+from sqlalchemy import select, func, delete
 
+# Add import for settings
+from config.settings import IR_BUILDER_MIN_ACTIVE
 from models.db_schema_models_v2 import Diagram, DiagramVersion
 from utils.logger import log_info
 
@@ -39,7 +41,44 @@ class DSLVersioningV2:
 
         Returns `(diagram_id, version)` for downstream use.
         """
+        import os, json
+
+        from utils.logger import log_error
+
         pinned_nodes = pinned_nodes or []
+
+        # ------------------------------------------------------------------
+        #  Optional IR generation (Phase-2)
+        # ------------------------------------------------------------------
+        ir_json: dict | None = None
+        # Replace os.getenv with imported setting
+        if IR_BUILDER_MIN_ACTIVE:
+            log_info(f"IR flow enabled - starting IR generation for project {project_id}")
+            try:
+                # Lazy imports to avoid heavy dependencies unless needed
+                from core.dsl.dsl_parser_v2 import D2LangParser
+                from core.ir.ir_builder import IRBuilder
+                from core.ir.enrich import IrEnricher
+
+                # Log each major step in the process
+                log_info("IR flow: Parsing DSL with D2LangParser")
+                dsl_parser = D2LangParser()
+                dsl_diagram = dsl_parser.parse(d2_dsl)
+                
+                log_info("IR flow: Building base IR graph with IRBuilder")
+                builder = IRBuilder()
+                base_graph = builder.build(dsl_diagram, source_dsl=d2_dsl)
+                
+                log_info("IR flow: Running enrichment pipeline with IrEnricher")
+                enricher = IrEnricher()
+                ir_graph = enricher.run(base_graph)
+
+                log_info(f"IR flow: Generation complete - graph has {len(ir_graph.nodes)} nodes, {len(ir_graph.edges)} edges, {len(ir_graph.groups)} groups")
+                ir_json = ir_graph.model_dump()  # dict ready for JSONB column
+            except Exception as e:
+                log_error(f"IR generation failed – falling back to None: {e}")
+        else:
+            log_info("IR flow disabled - skipping IR generation")
 
         # Fetch or create Diagram row
         stmt = select(Diagram).where(Diagram.project_id == project_id)
@@ -51,6 +90,7 @@ class DSLVersioningV2:
                 rendered_json=rendered_json,
                 version=1,
                 pinned_nodes=pinned_nodes,
+                ir_json=ir_json,
             )
             db.add(diagram)
             # Flush immediately so that the database assigns a primary key
@@ -67,6 +107,7 @@ class DSLVersioningV2:
             version_number = diagram.version + 1
             diagram.d2_dsl = d2_dsl
             diagram.rendered_json = rendered_json
+            diagram.ir_json = ir_json
             diagram.version = version_number
             diagram.updated_at = datetime.utcnow()
             diagram.pinned_nodes = pinned_nodes
@@ -81,6 +122,7 @@ class DSLVersioningV2:
             d2_dsl=d2_dsl,
             rendered_json=rendered_json,
             pinned_nodes=pinned_nodes,
+            ir_json=ir_json,
         )
         db.add(version_row)
         db.commit()
@@ -101,7 +143,39 @@ class DSLVersioningV2:
     ) -> Tuple[str, int]:
         """Async wrapper – mirrors *save_new_version* semantics."""
 
+        import os
+        from utils.logger import log_error
+
         pinned_nodes = pinned_nodes or []
+
+        ir_json: dict | None = None
+        # Replace os.getenv with imported setting
+        if IR_BUILDER_MIN_ACTIVE:
+            log_info(f"[async] IR flow enabled - starting IR generation for project {project_id}")
+            try:
+                from core.dsl.dsl_parser_v2 import D2LangParser
+                from core.ir.ir_builder import IRBuilder
+                from core.ir.enrich import IrEnricher
+
+                # Log each major step in the process
+                log_info("[async] IR flow: Parsing DSL with D2LangParser")
+                dsl_parser = D2LangParser()
+                dsl_diagram = dsl_parser.parse(d2_dsl)
+                
+                log_info("[async] IR flow: Building base IR graph with IRBuilder")
+                builder = IRBuilder()
+                base_graph = builder.build(dsl_diagram, source_dsl=d2_dsl)
+                
+                log_info("[async] IR flow: Running enrichment pipeline with IrEnricher")
+                enricher = IrEnricher()
+                ir_graph = enricher.run(base_graph)
+
+                log_info(f"[async] IR flow: Generation complete - graph has {len(ir_graph.nodes)} nodes, {len(ir_graph.edges)} edges, {len(ir_graph.groups)} groups")
+                ir_json = ir_graph.model_dump()
+            except Exception as e:
+                log_error(f"[async] IR generation failed: {e}")
+        else:
+            log_info("[async] IR flow disabled - skipping IR generation")
 
         # Fetch diagram (async)
         stmt = select(Diagram).where(Diagram.project_id == project_id)
@@ -115,6 +189,7 @@ class DSLVersioningV2:
                 rendered_json=rendered_json,
                 version=1,
                 pinned_nodes=pinned_nodes,
+                ir_json=ir_json,
             )
             db.add(diagram)
             # Ensure the INSERT runs so ``diagram.id`` is populated before
@@ -126,6 +201,7 @@ class DSLVersioningV2:
             version_number = diagram.version + 1
             diagram.d2_dsl = d2_dsl
             diagram.rendered_json = rendered_json
+            diagram.ir_json = ir_json
             diagram.version = version_number
             diagram.updated_at = datetime.utcnow()
             diagram.pinned_nodes = pinned_nodes
@@ -138,6 +214,7 @@ class DSLVersioningV2:
             d2_dsl=d2_dsl,
             rendered_json=rendered_json,
             pinned_nodes=pinned_nodes,
+            ir_json=ir_json,
         )
         db.add(version_row)
 

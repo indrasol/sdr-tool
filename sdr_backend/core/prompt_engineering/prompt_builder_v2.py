@@ -16,18 +16,23 @@ from utils.logger import log_info
 
 # Enhanced Style Pack for consistent D2 diagram generation
 STYLE_PACK = """
-### SECURETRACK 2 · Unified Diagram Style Pack ###
+### SECURETRACK · Provider-Agnostic Diagram Style Pack ###
 
 GLOBAL
   • Preferred layout     : LEFT-TO-RIGHT architecture flow (enforced by backend D2 + ELK)
-  • Output format        : **D2 source only**. NO markdown, no prose.
-  • Direction setting    : ALWAYS include "direction: right" at the top level
-  • Node id convention   : snake_case, ASCII, ≤ 30 chars.
-  • Label length         : ≤ 60 chars, Title Case.
-  • Edge style           : plain "a -> b" unless label needed.
-  • Avoid               : explicit xy, comments (//), HTML.
+  • Output format        : **D2 source only** – NO markdown, no prose.
+  • Direction setting    : ALWAYS include "direction: right" at the very top.
+  • Node-id convention   : snake_case, ASCII only, ≤ 50 chars. Use the *token* from the service dictionary when possible.
+  • Label convention     : Use the *display_name* exactly as given in the service dictionary.
+  • Edge style           : plain "a -> b"; add edge labels only when it improves clarity.
+  • Avoid                : comments (//), HTML, explicit xy coordinates, **ANY style.* or color directives**, shape overrides.
 
-CORRECT D2 SYNTAX EXAMPLES WITH LEFT-TO-RIGHT DIRECTION:
+CRITICAL REQUIREMENTS:
+  ❌ NEVER use: node_id: type "Label"
+  ✅ ALWAYS use: node_id: "Label"
+  ✅ FIRST LINE **must** be "direction: right" for left-to-right layout.
+
+ARCHITECTURAL PATTERNS & EXAMPLES (colourless):
   direction: right
   
   web_client: "Web Client"
@@ -38,163 +43,7 @@ CORRECT D2 SYNTAX EXAMPLES WITH LEFT-TO-RIGHT DIRECTION:
   web_client -> api_gateway: "HTTPS Request"
   api_gateway -> user_database: "Query Data"
 
-STYLING (with LEFT-TO-RIGHT direction):
-  direction: right
-  
-  client_app: "Client App" {
-    shape: rectangle
-    style.fill: "#3B82F6"
-  }
-  
-  database: "Database" {
-    shape: cylinder
-    style.fill: "#F97316"
-  }
-
-CRITICAL REQUIREMENTS: 
-  ❌ NEVER use: node_id: type "Label"
-  ✅ ALWAYS use: node_id: "Label"
-  ✅ ALWAYS start D2 code with: "direction: right"
-  ✅ MANDATORY: First line must be "direction: right" for left-to-right layout
-
-CATEGORY COLORS (use in style.fill when needed):
-  client      #3B82F6   # blue-500
-  process     #8B5CF6   # violet-500  
-  database    #F97316   # orange-500
-  queue       #10B981   # emerald-500
-  security    #F43F5E   # rose-500
-  external    #64748B   # slate-500
-
-ARCHITECTURAL PATTERNS & EXAMPLES:
-
-🎮 GAME APPLICATION ARCHITECTURE:
-  game_client: "Game Client" { style.fill: "#3B82F6" }
-  game_server: "Game Server" { style.fill: "#8B5CF6" }
-  matchmaking: "Matchmaking Service" { style.fill: "#8B5CF6" }
-  realtime_engine: "Real-time Engine" { style.fill: "#8B5CF6" }
-  user_auth: "User Authentication" { style.fill: "#F43F5E" }
-  player_db: "Player Database" { style.fill: "#F97316" }
-  game_db: "Game State DB" { style.fill: "#F97316" }
-  leaderboard: "Leaderboard Service" { style.fill: "#8B5CF6" }
-  chat_service: "Chat Service" { style.fill: "#8B5CF6" }
-  payment_gateway: "Payment Gateway" { style.fill: "#F43F5E" }
-  analytics: "Analytics Service" { style.fill: "#8B5CF6" }
-  cdn: "CDN Assets" { style.fill: "#64748B" }
-  
-  game_client -> game_server: "WebSocket"
-  game_client -> user_auth: "Login"
-  game_server -> game_db: "Game State"
-  game_server -> realtime_engine: "Updates"
-  matchmaking -> player_db: "Player Data"
-  chat_service -> game_server: "Messages"
-
-🌐 WEB APPLICATION ARCHITECTURE:
-  web_client: "Web Client" { style.fill: "#3B82F6" }
-  load_balancer: "Load Balancer" { style.fill: "#64748B" }
-  web_server: "Web Server" { style.fill: "#8B5CF6" }
-  api_gateway: "API Gateway" { style.fill: "#8B5CF6" }
-  auth_service: "Auth Service" { style.fill: "#F43F5E" }
-  app_server: "Application Server" { style.fill: "#8B5CF6" }
-  database: "Database" { style.fill: "#F97316" }
-  cache: "Redis Cache" { style.fill: "#10B981" }
-  cdn: "CDN" { style.fill: "#64748B" }
-  
-  web_client -> load_balancer
-  load_balancer -> web_server
-  web_server -> api_gateway
-  api_gateway -> auth_service
-  api_gateway -> app_server
-  app_server -> database
-  app_server -> cache
-
-🛍️ E-COMMERCE ARCHITECTURE:
-  customer_app: "Customer App" { style.fill: "#3B82F6" }
-  admin_panel: "Admin Panel" { style.fill: "#3B82F6" }
-  api_gateway: "API Gateway" { style.fill: "#8B5CF6" }
-  user_service: "User Service" { style.fill: "#8B5CF6" }
-  product_service: "Product Service" { style.fill: "#8B5CF6" }
-  order_service: "Order Service" { style.fill: "#8B5CF6" }
-  payment_service: "Payment Service" { style.fill: "#F43F5E" }
-  inventory_service: "Inventory Service" { style.fill: "#8B5CF6" }
-  notification_service: "Notification Service" { style.fill: "#8B5CF6" }
-  user_db: "User Database" { style.fill: "#F97316" }
-  product_db: "Product Database" { style.fill: "#F97316" }
-  order_db: "Order Database" { style.fill: "#F97316" }
-  message_queue: "Message Queue" { style.fill: "#10B981" }
-  
-  customer_app -> api_gateway
-  admin_panel -> api_gateway
-  api_gateway -> user_service
-  api_gateway -> product_service
-  api_gateway -> order_service
-  order_service -> payment_service
-  order_service -> inventory_service
-  payment_service -> notification_service
-
-🤖 AI/ML APPLICATION ARCHITECTURE:
-  user_interface: "User Interface" { style.fill: "#3B82F6" }
-  api_gateway: "API Gateway" { style.fill: "#8B5CF6" }
-  ml_service: "ML Service" { style.fill: "#8B5CF6" }
-  data_pipeline: "Data Pipeline" { style.fill: "#8B5CF6" }
-  model_registry: "Model Registry" { style.fill: "#8B5CF6" }
-  vector_db: "Vector Database" { style.fill: "#F97316" }
-  training_data: "Training Data Store" { style.fill: "#F97316" }
-  llm_service: "LLM Service" { style.fill: "#8B5CF6" }
-  monitoring: "ML Monitoring" { style.fill: "#8B5CF6" }
-  feature_store: "Feature Store" { style.fill: "#F97316" }
-  
-  user_interface -> api_gateway
-  api_gateway -> ml_service
-  ml_service -> vector_db
-  ml_service -> llm_service
-  data_pipeline -> training_data
-  data_pipeline -> feature_store
-  model_registry -> ml_service
-
-MICROSERVICES PATTERNS:
-  • Always include: API Gateway, Service Discovery, Load Balancer
-  • Data patterns: Database per service, Event sourcing, CQRS
-  • Communication: Async messaging, Event bus, Service mesh
-  • Observability: Logging, Metrics, Tracing, Health checks
-  • Security: Auth service, API keys, Circuit breakers
-
-SECURITY PATTERNS:
-  • Authentication: OAuth, JWT, Multi-factor
-  • Authorization: RBAC, ABAC, Policy engine
-  • Network: Firewall, WAF, VPN, Zero-trust
-  • Data: Encryption at rest/transit, Secrets management
-  • Monitoring: SIEM, Anomaly detection, Audit logs
-
-COMPLEX AI PATTERNS  (use when user asks for RAG / vector search / LLM)
-  • "rag_pipeline" cluster → { ingest → vector_store → retriever → llm }
-  • vector_store: "Vector Database"
-  • llm nodes: openai_llm: "OpenAI GPT", claude_llm: "Claude AI"
-
-ARCHITECTURE PRINCIPLES:
-  • Be COMPREHENSIVE: Include all necessary components for the application type
-  • Think HOLISTICALLY: Consider data flow, security, scalability, monitoring
-  • Add DEPTH: Include supporting services like auth, logging, monitoring, caching
-  • Consider SCALE: Add load balancers, CDNs, caching layers
-  • Think SECURITY: Include firewalls, auth services, encryption points
-  • Plan DATA: Include appropriate database types, caching, message queues
-  
-  # ==== Advanced AI & Cloud Patterns ====
-  ADVANCED AI/CLOUD PATTERNS:
-  • AI Workflow: rag_ingest: "RAG Ingest" { style.fill: "#8B5CF6" } -> vector_db: "Vector DB" { shape: cylinder; style.fill: "#F97316" } -> retriever: "Retriever" -> llm_chain: "LLM Chain" { style.fill: "#8B5CF6" }
-  • AI Agents: agent_orchestrator: "Agent Orchestrator" -> tool_registry: "Tool Registry" -> memory_store: "Memory Store" { shape: cylinder }
-    agent_orchestrator -> external_api: "External Tools" { style.dashed: true }
-  • MCP (Model Context Protocol): context_manager: "Context Manager" { style.fill: "#10B981" } -> llm_endpoint: "LLM Endpoint"
-  • A2A Collaboration: agent1: "Agent 1" <-> agent2: "Agent 2": "Bidirectional Comm" { style.animated: true }
-  • Hybrid Cloud: multi_cloud_gateway: "Multi-Cloud Gateway" -> aws_cluster: "AWS Cluster" { style.fill: "#F97316" } -> gcp_cluster: "GCP Cluster" { style.fill: "#3B82F6" }
-    service_mesh: "Istio Mesh" {
-      aws_cluster
-      gcp_cluster
-    }
-  • Serverless: api_gateway -> lambda_function: "Lambda" { style.fill: "#F43F5E" } -> event_bridge: "Event Bridge" -> dynamodb: "DynamoDB"
-  • Edge AI: cdn_edge: "CDN Edge" { style.fill: "#64748B" } -> ml_inference: "ML Inference at Edge" { style.fill: "#8B5CF6" }
-
-  # Enforce consistency for advanced patterns
-  ENFORCE CONSISTENCY: Always "direction: right"; cluster related nodes (e.g., {{ security_zone: {{ firewall -> auth_service }} }}); use dashed for optional edges.
+# Colour and shape styling are handled entirely by the front-end based on node.kind/layerIndex.
 
 ### END STYLE PACK ###
 """
@@ -217,7 +66,7 @@ class PromptBuilderV2:
         if intent in (IntentV2.DSL_CREATE, IntentV2.DSL_UPDATE):
             if intent == IntentV2.DSL_CREATE:
                 return await self.build_dsl_create_prompt(query, conversation_history or [])
-            else:
+            elif intent == IntentV2.DSL_UPDATE:
                 return await self.build_dsl_update_prompt(
                     query, conversation_history or [], current_dsl or ""
                 )
@@ -249,10 +98,11 @@ CRITICAL REQUIREMENTS:
 • Include ALL necessary components for the application type
 • Follow the architectural patterns and examples in the Style Pack above
 • Include supporting services: authentication, databases, caching, monitoring
+• Use 'Microservice' suffix instead of simple 'Service' for internal business-logic components (e.g., 'Payment Microservice', 'Auth Microservice')
 • Add security components: firewalls, auth services, encryption
 • Consider scalability: load balancers, CDNs, microservices
 • Include data flow with meaningful edge labels
-• Use proper D2 syntax with colors and styling
+• Use proper D2 syntax with no style.* directives (color handled in front-end)
 • ENFORCE HORIZONTAL FLOW: Always begin with "direction: right"
 
 ARCHITECTURE MAPPING GUIDE:

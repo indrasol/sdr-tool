@@ -17,6 +17,50 @@ export interface CustomNodeData {
   hasSourceConnection?: boolean;
   hasTargetConnection?: boolean;
   pinned?: boolean; // Indicates if node position is locked
+  /**
+   * Optional raw Iconify or SVG identifier coming directly from the back-end.
+   * When present this takes precedence over client-side look-ups so we render
+   * exactly the asset the server has chosen.
+   */
+  icon?: string;
+
+  /**
+   * Optional HEX/RGB colour hint coming from the back-end. If provided the
+   * node (or its icon) should use this colour as primary accent.
+   */
+  color?: string;
+
+  /**
+   * Cloud provider hint (e.g. "aws", "azure", "gcp") passed through from the
+   * back-end so the front-end can display provider-specific icons or apply
+   * grouping.
+   */
+  provider?: string;
+
+  /**
+   * Technology hint (e.g. "postgresql", "redis") passed through from the
+   * back-end for refined icon selection.
+   */
+  technology?: string;
+
+  /**
+   * Numeric layer hint (0,1,2…) coming from the backend used by the ELK
+   * layout engine to pin the node into a swim-lane.
+   */
+  layerIndex?: number;
+
+  /**
+   * Optional shape descriptor (e.g. “cylinder”, “queue”) coming from the
+   * back-end.  At the moment it is treated as metadata only but we keep it in
+   * the type definition for future visual enhancements.
+   */
+  shape?: string;
+
+  /**
+   * Optional risk score or risk band (e.g. “low”, “medium”, “high”) attached
+   * to the node by the security analysis pipeline.
+   */
+  risk?: string | number;
   [key: string]: unknown; // Add index signature to satisfy Record<string, unknown>
 }
 

@@ -60,6 +60,8 @@ class Diagram(Base):
 
     # Rendered React-Flow JSON returned to the front-end (nodes/edges)
     rendered_json = Column(JSONB, nullable=False)
+    ir_json = Column(JSONB, nullable=True)
+    derived_meta = Column(JSONB, nullable=True)
 
     # Monotonically increasing version counter (mirrors
     # DiagramVersion.version from latest row).
@@ -100,6 +102,9 @@ class DiagramVersion(Base):
     d2_dsl = Column(Text, nullable=False)
     rendered_json = Column(JSONB, nullable=False)
     pinned_nodes = Column(ARRAY(String), default=[])
+
+    ir_json = Column(JSONB, nullable=True)
+    derived_meta = Column(JSONB, nullable=True)
 
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 

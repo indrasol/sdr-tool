@@ -1,0 +1,309 @@
+# --------------------------------------------------------------------
+# 1. EXACT  ── highest-priority one-to-one matches
+# --------------------------------------------------------------------
+exact:
+  # Databases
+  - match: "postgres db"
+    kind: "Database"
+    subkind: "postgres"
+  - match: "mysql db"
+    kind: "Database"
+    subkind: "mysql"
+  - match: "mongodb db"
+    kind: "Database"
+    subkind: "mongodb"
+  - match: "sql server"
+    kind: "Database"
+    subkind: "sqlserver"
+  - match: "oracle db"
+    kind: "Database"
+    subkind: "oracle"
+  - match: "dynamodb"
+    kind: "Database"
+    subkind: "dynamodb"
+    provider: "aws"
+  - match: "bigquery"
+    kind: "DataWarehouse"
+    subkind: "bigquery"
+    provider: "gcp"
+  - match: "snowflake"
+    kind: "DataWarehouse"
+    subkind: "snowflake"
+  - match: "redshift"
+    kind: "DataWarehouse"
+    subkind: "redshift"
+    provider: "aws"
+  - match: "clickhouse"
+    kind: "Database"
+    subkind: "clickhouse"
+  - match: "elastic search"
+    kind: "Search"
+    subkind: "elasticsearch"
+
+  # Messaging & Streaming
+  - match: "rabbitmq"
+    kind: "Queue"
+    subkind: "rabbitmq"
+  - match: "sqs queue"
+    kind: "Queue"
+    subkind: "sqs"
+    provider: "aws"
+  - match: "sns topic"
+    kind: "Topic"
+    subkind: "sns"
+    provider: "aws"
+  - match: "eventbridge bus"
+    kind: "EventBus"
+    subkind: "eventbridge"
+    provider: "aws"
+  - match: "pubsub topic"
+    kind: "Topic"
+    subkind: "pubsub"
+    provider: "gcp"
+  - match: "kafka broker"
+    kind: "Queue"
+    subkind: "kafka"
+  - match: "kafka topic"
+    kind: "Topic"
+    subkind: "kafka"
+
+  # Caching & KV
+  - match: "memcached"
+    kind: "Cache"
+    subkind: "memcached"
+  - match: "redis cache"
+    kind: "Cache"
+    subkind: "redis"
+
+  # Serverless / Compute
+  - match: "aws lambda"
+    kind: "Function"
+    subkind: "lambda"
+    provider: "aws"
+  - match: "cloud function"
+    kind: "Function"
+    subkind: "cloud_functions"
+    provider: "gcp"
+  - match: "azure function"
+    kind: "Function"
+    subkind: "azure_functions"
+    provider: "azure"
+  - match: "cloud run"
+    kind: "Service"
+    subkind: "cloud_run"
+    provider: "gcp"
+  - match: "aws fargate"
+    kind: "Service"
+    subkind: "fargate"
+    provider: "aws"
+
+  # Containers & Orchestration
+  - match: "kubernetes cluster"
+    kind: "ContainerPlatform"
+    subkind: "kubernetes"
+  - match: "eks cluster"
+    kind: "ContainerPlatform"
+    subkind: "eks"
+    provider: "aws"
+  - match: "gke cluster"
+    kind: "ContainerPlatform"
+    subkind: "gke"
+    provider: "gcp"
+  - match: "aks cluster"
+    kind: "ContainerPlatform"
+    subkind: "aks"
+    provider: "azure"
+  - match: "docker engine"
+    kind: "ContainerPlatform"
+    subkind: "docker"
+
+  # AI / ML / Vector
+  - match: "pinecone"
+    kind: "VectorStore"
+    subkind: "pinecone"
+  - match: "weaviate"
+    kind: "VectorStore"
+    subkind: "weaviate"
+  - match: "qdrant"
+    kind: "VectorStore"
+    subkind: "qdrant"
+  - match: "milvus"
+    kind: "VectorStore"
+    subkind: "milvus"
+  - match: "chroma"
+    kind: "VectorStore"
+    subkind: "chroma"
+  - match: "vertex ai"
+    kind: "MLModel"
+    subkind: "vertex_ai"
+    provider: "gcp"
+  - match: "sage maker"
+    kind: "MLModel"
+    subkind: "sagemaker"
+    provider: "aws"
+  - match: "openai gpt"
+    kind: "MLModel"
+    subkind: "openai"
+  - match: "huggingface inference"
+    kind: "MLModel"
+    subkind: "huggingface"
+
+  # Observability & Security
+  - match: "prometheus"
+    kind: "Monitoring"
+    subkind: "prometheus"
+  - match: "grafana"
+    kind: "Monitoring"
+    subkind: "grafana"
+  - match: "datadog"
+    kind: "Monitoring"
+    subkind: "datadog"
+  - match: "new relic"
+    kind: "Monitoring"
+    subkind: "newrelic"
+  - match: "jaeger"
+    kind: "Tracing"
+    subkind: "jaeger"
+  - match: "vault"
+    kind: "SecretStore"
+    subkind: "hashicorp_vault"
+  - match: "aws waf"
+    kind: "WAF"
+    subkind: "aws_waf"
+    provider: "aws"
+  - match: "cloudflare waf"
+    kind: "WAF"
+    subkind: "cloudflare"
+
+  # CDN
+  - match: "cloudfront"
+    kind: "CDN"
+    subkind: "cloudfront"
+    provider: "aws"
+  - match: "cloudflare cdn"
+    kind: "CDN"
+    subkind: "cloudflare"
+
+  # CI/CD
+  - match: "jenkins"
+    kind: "Orchestrator"
+    subkind: "jenkins"
+  - match: "github actions"
+    kind: "Orchestrator"
+    subkind: "github_actions"
+  - match: "gitlab ci"
+    kind: "Orchestrator"
+    subkind: "gitlab_ci"
+
+# --------------------------------------------------------------------
+# 2. CONTAINS  ── mid-priority substring buckets
+# --------------------------------------------------------------------    
+contains:
+  # Auth / Identity
+  - match: ["auth", "authentication", "cognito","auth0", "keycloak", "okta", "idp"]
+    kind: "Auth"
+    subkind: "generic"
+  - match: ["load balancer", "alb", "nlb"]
+    kind: "LB"
+    subkind: "generic"
+  - match: ["vector store", "pinecone", "milvus"]
+    kind: "VectorStore"
+    subkind: "pinecone"
+  # LB / Proxy / API GW
+  - match: ["nginx", "traefik", "kong", "api gateway"]
+    kind: "Gateway"
+    subkind: "generic"
+
+  # Message / Event
+  - match: ["event bus", "eventhub", "event hub"]
+    kind: "EventBus"
+    subkind: "generic"
+
+  # Cache
+  - match: ["cache", "in-memory", "memcache"]
+    kind: "Cache"
+    subkind: "generic"
+
+  # Monitoring / Logs
+  - match: ["cloudwatch", "splunk", "log", "logging", "loki"]
+    kind: "Logging"
+    subkind: "generic"
+
+  # AI / Embedding Services
+  - match: ["embedding", "vector", "rag", "llm"]
+    kind: "MLModel"
+    subkind: "generic"
+
+  # Serverless keywords
+  - match: ["function", "lambda", "cloud function", "faas"]
+    kind: "Function"
+    subkind: "generic"
+
+  # ETL / Workflow
+  - match: ["airflow", "dagster", "prefect"]
+    kind: "ETL"
+    subkind: "workflow"
+
+  # CI/CD common
+  - match: ["ci", "cd", "pipeline", "deploy"]
+    kind: "Orchestrator"
+    subkind: "generic"
+
+# --------------------------------------------------------------------
+# 3. REGEX  ── flexible catch-alls (lower priority than exact/contains)
+# --------------------------------------------------------------------
+
+regex:
+  # DB flavours
+  - match: "(?i)(mongo.*db|mongodb)"
+    kind: "Database"
+    subkind: "mongodb"
+
+  - match: "(?i)(maria.*db|mariadb)"
+    kind: "Database"
+    subkind: "mariadb"
+
+  - match: "(?i)(sql.?server|mssql)"
+    kind: "Database"
+    subkind: "sqlserver"
+
+  - match: "(?i)(cassandra|scylla)"
+    kind: "Database"
+    subkind: "cassandra"
+
+  - match: "(postgres|pg).*\\b(db|database)"
+    kind: "Database"
+    subkind: "postgres"
+  # Queues / Streams
+  - match: "(?i)(kinesis|streams)"
+    kind: "Queue"
+    subkind: "kinesis"
+
+  - match: "(?i)(pub.?sub)"
+    kind: "Topic"
+    subkind: "pubsub"
+
+  # Vector / Embedding misc
+  - match: "(?i)(vector.*(db|store))"
+    kind: "VectorStore"
+    subkind: "generic"
+
+  # Serverless generic pattern
+  - match: "(?i)(lambda|cloud.?function|azure.?function)"
+    kind: "Function"
+    subkind: "generic"
+
+  # Load balancers
+  - match: "(?i)(load.?balancer|lb|ingress)"
+    kind: "LB"
+    subkind: "generic"
+
+  # Monitoring / Tracing generic
+  - match: "(?i)(prometheus|grafana|jaeger|opentelemetry|datadog)"
+    kind: "Monitoring"
+    subkind: "generic"
+
+  # Cache
+  - match: "redis.*(cache)?"
+    kind: "Cache"
+    subkind: "redis" 

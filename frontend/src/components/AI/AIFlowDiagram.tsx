@@ -19,7 +19,7 @@ import CommentNode from './CommentNode';
 import EditNodeDialog from './EditNodeDialog';
 import { AIFlowDiagramProps } from './types/diagramTypes';
 import { useDiagramNodes } from './hooks/useDiagramNodes';
-import { edgeStyles } from './utils/edgeStyles';
+import { edgeTypes, getEdgeStyle } from './utils/edgeStyles';
 import './AIFlowDiagram.css';
 import { AlertTriangle, Loader2, EyeOff, Eye } from 'lucide-react';
 import { runThreatAnalysis } from '@/services/designService';
@@ -33,6 +33,7 @@ import MermaidCanvas, { MermaidCanvasRef } from './MermaidCanvas';
 import { fetchDataFlow, fetchFlowchart } from '@/services/dataFlowService';
 import { DataFlowRequest } from '@/types/dataFlowTypes';
 import { useTheme } from '@/contexts/ThemeContext';
+import { applyLayerLayout } from './utils/irToReactflow';
 
 // Helper function to check if two arrays of nodes or edges are deeply equal by comparing their essential properties
 const areArraysEqual = (arr1: any[], arr2: any[], isNodes = true) => {
@@ -173,23 +174,13 @@ const AIFlowDiagram = forwardRef<AIFlowDiagramHandle, AIFlowDiagramProps>(({
     layerGroup: LayerGroupNode,
   }), []);
 
-  // Default edge options with theme-aware styling
+  // Default edge options using our enhanced edge styling
   const defaultEdgeOptions = useMemo(() => ({
-    type: 'smoothstep',
-    markerEnd: {
-      type: MarkerType.ArrowClosed,
-      width: 12, 
-      height: 12,
-      color: theme === 'dark' ? '#e5e7eb' : '#333',
-    },
-    style: {
-      strokeWidth: 1.5,
-      stroke: theme === 'dark' ? '#e5e7eb' : '#333',
-    },
-    animated: false,
-    pathOptions: {
-      curvature: 0.1, // Minimal curvature
-      offset: 0
+    type: 'default', // Use our custom default edge
+    // Store theme in edge data for adaptive styling
+    data: {
+      theme: theme,
+      edgeType: 'default'
     }
   }), [theme]);
 
@@ -465,35 +456,55 @@ const AIFlowDiagram = forwardRef<AIFlowDiagramHandle, AIFlowDiagramProps>(({
         return null;
       }
 
-      // Determine edge type
-      const edgeType = edge.type || 'smoothstep';
+      // Determine the source and target node types
+      const sourceNode = nodes.find(n => n.id === edge.source);
+      const targetNode = nodes.find(n => n.id === edge.target);
+      const sourceType = sourceNode?.data?.nodeType || '';
+      const targetType = targetNode?.data?.nodeType || '';
       
-      // Get styling for this edge type
-      const typeStyle = edgeStyles[edgeType] || edgeStyles.dataFlow || {};
+             // Determine edge type - default to 'default' type
+       // We'd normally use getEdgeType here, but for simplicity, let's just use a basic type assignment
+       let edgeType = 'default';
+       
+       // Data flow edges (database-related)
+       if (sourceType.includes('database') || targetType.includes('database') ||
+           sourceType.includes('storage') || targetType.includes('storage')) {
+         edgeType = 'data';
+       } 
+       // Authentication edges
+       else if (sourceType.includes('auth') || targetType.includes('auth')) {
+         edgeType = 'authentication';
+       }
+       // Control flow edges (network/security)
+       else if (sourceType.includes('gateway') || targetType.includes('gateway') ||
+                sourceType.includes('firewall') || targetType.includes('firewall')) {
+         edgeType = 'control';
+       }
+       // System communication edges (service-to-service)
+       else if (sourceType.includes('service') && targetType.includes('service')) {
+         edgeType = 'system';
+       }
+      
+      // Create a unique edge ID if missing
+      const edgeId = edge.id || `edge-${edge.source}-${edge.target}-${Date.now()}`;
       
       return {
         ...edge,
-        id: edge.id || `edge-${edge.source}-${edge.target}-${Date.now()}`,
-        type: 'smoothstep',
-        animated: edgeType === 'dataFlow' || edgeType === 'database',
-        // Enhanced arrow marker for better visibility
-        markerEnd: {
-          type: MarkerType.ArrowClosed,
-          width: 25, // Increased from 22 to 25
-          height: 25, // Increased from 22 to 25
-          color: '#000000', // Always use black for better visibility
-          markerEndOffset: -50, // Adjusted for larger arrowhead
+        id: edgeId,
+        // Use 'default' for our custom edge component
+        type: 'default',
+        // Add edgeType to data for styling
+        data: {
+          ...(edge.data || {}),
+          edgeType: edgeType,
+          sourceType: sourceType,
+          targetType: targetType
         },
+        // No need to specify these as they're handled by our edge component
+        // which will look them up from the edgeConfig based on the edgeType
         style: {
-          strokeWidth: 2,
-          stroke: '#000000', // Use black for better visibility
           ...(edge.style || {}),
         },
-        // Add support for vertical-first routing to encourage top-to-bottom flow
-        pathOptions: {
-          offset: 10, // Reduced offset for cleaner lines
-          vertical: true, // Prefer vertical paths first
-        }
       };
     }).filter(Boolean);
   }, []);
@@ -1061,7 +1072,45 @@ const AIFlowDiagram = forwardRef<AIFlowDiagramHandle, AIFlowDiagramProps>(({
     }
   };
 
-  // Expose imperative handle
+  // Add state for layer layout functionality
+  const [layoutInProgress, setLayoutInProgress] = useState(false);
+  
+  // Apply layout using the new layer-based approach
+  const handleApplyLayerLayout = useCallback(async () => {
+    if (!nodes.length) return;
+    
+    setLayoutInProgress(true);
+    try {
+      // Check viewMode string instead of enum comparison
+      const direction = viewMode && 
+                      (typeof viewMode === 'string') && 
+                      (viewMode.includes('TB') || viewMode.includes('topdown')) 
+                      ? 'TB' : 'LR';
+      
+      const result = await applyLayerLayout(nodes, edges, direction as any);
+      
+      // Type assertions to handle the React Flow node types
+      setNodes(result.nodes as any);
+      setEdges(result.edges as any);
+      
+      // Update external state if callbacks are provided
+      if (setNodesExternal) setNodesExternal(result.nodes as any);
+      if (setEdgesExternal) setEdgesExternal(result.edges as any);
+      
+      // Fit view to show the entire diagram
+      setTimeout(() => {
+        if (reactFlowInstance.current) {
+          reactFlowInstance.current.fitView({ padding: 0.2 });
+        }
+      }, 50);
+    } catch (error) {
+      console.error("Error applying layer layout:", error);
+    } finally {
+      setLayoutInProgress(false);
+    }
+  }, [nodes, edges, viewMode, setNodes, setEdges, setNodesExternal, setEdgesExternal]);
+
+  // Expose the layer layout method in the handle
   useImperativeHandle(ref, () => ({
     toggleSequence: handleToggleSequence,
     toggleFlowchart: handleToggleFlowchart,
@@ -1070,7 +1119,9 @@ const AIFlowDiagram = forwardRef<AIFlowDiagramHandle, AIFlowDiagramProps>(({
     zoomIn: handleZoomIn,
     zoomOut: handleZoomOut,
     fitView: handleFitView,
-  }), [handleToggleSequence, handleToggleFlowchart, effectiveIsSequenceActive, effectiveIsFlowchartActive, handleZoomIn, handleZoomOut, handleFitView]);
+    applyLayerLayout: handleApplyLayerLayout,
+  }), [handleToggleSequence, handleToggleFlowchart, effectiveIsSequenceActive, effectiveIsFlowchartActive, 
+      handleZoomIn, handleZoomOut, handleFitView, handleApplyLayerLayout]);
 
   // AIFlowDiagram.tsx
   return (
@@ -1103,81 +1154,7 @@ const AIFlowDiagram = forwardRef<AIFlowDiagramHandle, AIFlowDiagramProps>(({
         </div> */}
         
         {/* Show empty canvas background without animated placeholder nodes */}
-        {showEmptyCanvas && (
-          <div className="absolute inset-0 flex items-center justify-center empty-canvas-container" style={{ zIndex: 5 }}>
-            <div className="absolute inset-0 diagram-background"></div>
-            
-            {/* Center welcome message with animation */}
-            <div className="w-full h-full flex items-center justify-center">
-              <div className="welcome-message px-10 py-8 animate-float-slow" style={{
-                background: theme === 'dark' 
-                  ? 'linear-gradient(135deg, rgba(31, 41, 55, 0.4) 0%, rgba(55, 65, 81, 0.3) 100%)'
-                  : 'linear-gradient(135deg, rgba(255, 255, 255, 0.4) 0%, rgba(230, 240, 255, 0.3) 100%)',
-                backdropFilter: 'blur(12px)',
-                border: theme === 'dark' 
-                  ? '1px solid rgba(124, 101, 246, 0.4)'
-                  : '1px solid rgba(255, 255, 255, 0.4)',
-                borderRadius: '20px',
-                boxShadow: theme === 'dark'
-                  ? '0 15px 35px rgba(124, 101, 246, 0.25), 0 5px 15px rgba(124, 101, 246, 0.15), 0 0 0 1px rgba(124, 101, 246, 0.1)'
-                  : '0 15px 35px rgba(124, 101, 246, 0.15), 0 5px 15px rgba(124, 101, 246, 0.1), 0 0 0 1px rgba(124, 101, 246, 0.05)',
-                maxWidth: '650px',
-                transform: 'translateZ(0)',
-                overflow: 'hidden',
-                position: 'relative'
-              }}>
-                {/* Decorative gradient overlay */}
-                <div style={{
-                  position: 'absolute',
-                  top: 0,
-                  left: 0,
-                  right: 0,
-                  height: '5px',
-                  background: 'linear-gradient(to right, rgba(124, 101, 246, 0.8), rgba(66, 153, 225, 0.8))',
-                  boxShadow: '0 1px 10px rgba(124, 101, 246, 0.3)'
-                }}></div>
-                
-                <div className="welcome-text" style={{
-                  color: theme === 'dark' ? '#e5e7eb' : '#2d3748',
-                  fontSize: '24px',
-                  fontWeight: '600',
-                  letterSpacing: '-0.01em',
-                  lineHeight: '1.4',
-                  fontFamily: 'Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
-                  textShadow: theme === 'dark' 
-                    ? '0 1px 1px rgba(0, 0, 0, 0.6)'
-                    : '0 1px 1px rgba(255, 255, 255, 0.6)'
-                }}>
-                  Design your secure architecture with AI assistance
-                </div>
-                <div style={{
-                  marginTop: '16px',
-                  color: theme === 'dark' ? '#9ca3af' : '#4a5568',
-                  fontSize: '16px',
-                  lineHeight: '1.5',
-                  fontFamily: 'Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
-                  opacity: 0.85
-                }}>
-                  Simply describe your requirements in natural language to generate diagrams
-                </div>
-                
-                {/* Additional subtle decorative element */}
-                <div style={{
-                  position: 'absolute',
-                  bottom: '-30px',
-                  right: '-30px',
-                  width: '100px',
-                  height: '100px',
-                  borderRadius: '50%',
-                  background: theme === 'dark'
-                    ? 'radial-gradient(circle, rgba(124, 101, 246, 0.25) 0%, rgba(124, 101, 246, 0) 70%)'
-                    : 'radial-gradient(circle, rgba(124, 101, 246, 0.15) 0%, rgba(124, 101, 246, 0) 70%)',
-                  zIndex: -1
-                }}></div>
-              </div>
-            </div>
-          </div>
-        )}
+        {/* Placeholder overlay removed - displaying only the dotted canvas when no nodes are present */}
         
         {effectiveIsSequenceActive || effectiveIsFlowchartActive ? (
           <div className="w-full h-full" style={{ position: 'relative', zIndex: 20 }}>
@@ -1200,6 +1177,7 @@ const AIFlowDiagram = forwardRef<AIFlowDiagramHandle, AIFlowDiagramProps>(({
             onEdgesChange={viewMode === 'AD' ? onEdgesChange : undefined}
             onConnect={viewMode === 'AD' ? handleConnect : undefined}
             nodeTypes={nodeTypes}
+            edgeTypes={edgeTypes}
             defaultEdgeOptions={defaultEdgeOptions}
             onInit={onInit}
             fitView={false}
@@ -1223,8 +1201,8 @@ const AIFlowDiagram = forwardRef<AIFlowDiagramHandle, AIFlowDiagramProps>(({
             defaultViewport={{ x: 0, y: 0, zoom: 0.8 }}
             minZoom={0.1}
             maxZoom={2.0}
-          >
-            {showMinimap && (
+                      >              
+              {showMinimap && (
               <MiniMap
                 nodeStrokeColor={(n) => (n.selected ? '#ff0072' : '#7C65F6')}
                 nodeColor={(n) => {

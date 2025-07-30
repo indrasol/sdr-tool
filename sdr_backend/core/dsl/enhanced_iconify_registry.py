@@ -24,7 +24,15 @@ PROVIDER_ICON_MAPPINGS = {
         "vpc": "mdi:cloud-outline",
         "cloudfront": "simple-icons:amazoncloudfront",
         "api_gateway": "logos:aws-api-gateway",
-        "load_balancer": "mdi:scale-balance"
+        "load_balancer": "mdi:scale-balance",
+
+        # Queues
+        "sqs": "logos:aws-simple-queue-service",
+        "sns": "logos:aws-simple-notification-service",
+        "event_bridge": "logos:aws-eventbridge",
+        "kinesis": "logos:aws-kinesis",
+        "step_functions": "logos:aws-step-functions",
+        "step_functions": "logos:aws-step-functions",
     },
     
     "azure": {
@@ -114,14 +122,35 @@ CATEGORY_ICON_MAPPINGS = {
     # Core categories
     "client": "mdi:monitor-shimmer",
     "process": "mdi:server",
+    "server": "mdi:server",
     "database": "mdi:database",
     "security": "mdi:shield-lock",
     "network": "mdi:router-network",
-    "application": "mdi:application",
+    "application": "mdi:application-braces",
+    "service": "mdi:cube-outline",
+    "function": "mdi:lambda",
+    "data_warehouse": "mdi:warehouse",
+    "data_lake": "mdi:database-outline",
+    "data_share": "mdi:database-outline",
+    "data_factory": "mdi:database-outline",
+    "vector": "mdi:vector-arrange-above",
+    "data_lake": "mdi:database-outline",
     "storage": "mdi:harddisk",
     "queue": "mdi:queue",
     "cache": "mdi:lightning-bolt",
     "external": "mdi:web",
+    "realtime_engine": "mdi:lightning-bolt-circle",
+    "realtime_gateway": "mdi:flash-auto",
+    "pinecone": "simple-icons:pinecone",
+    "weaviate": "simple-icons:weaviate",
+    "milvus": "simple-icons:milvus",
+    "qdrant": "simple-icons:qdrant",
+    "chroma": "simple-icons:chromadb",
+    "vespa": "simple-icons:vespaengine",
+    "snowflake": "logos:snowflake-icon",
+    "bigquery": "logos:google-bigquery",
+    "redshift": "logos:amazon-redshift",
+    "vector_store": "mdi:vector-arrange-above",
     
     # Specific application services
     "chat_service": "mdi:message-text",
@@ -245,6 +274,18 @@ def resolve_icon(node_type: str, provider: str = None, technology: str = None) -
     if any(term in node_lower for term in ['cache', 'redis', 'memcache']):
         return CATEGORY_ICON_MAPPINGS["cache"]
     
+    # Server / engine patterns (generic compute)
+    if any(term in node_lower for term in ['server', 'engine', 'broker']):
+        return CATEGORY_ICON_MAPPINGS["process"]
+
+    # Client / UI patterns
+    if any(term in node_lower for term in ['client', 'frontend', 'ui']):
+        return CATEGORY_ICON_MAPPINGS["client"]
+
+    # Generic *service* patterns
+    if node_lower.endswith('service') or node_lower.endswith('_svc') or 'service' in node_lower:
+        return CATEGORY_ICON_MAPPINGS["application"]
+
     # Monitoring patterns
     if any(term in node_lower for term in ['monitor', 'metric', 'log', 'alert']):
         return CATEGORY_ICON_MAPPINGS["monitoring"]
@@ -252,10 +293,6 @@ def resolve_icon(node_type: str, provider: str = None, technology: str = None) -
     # Queue/Message patterns
     if any(term in node_lower for term in ['queue', 'message', 'kafka', 'rabbitmq']):
         return CATEGORY_ICON_MAPPINGS["message_queue"]
-    
-    # Service patterns (catch-all for services)
-    if node_lower.endswith('_service') or node_lower.endswith('service'):
-        return CATEGORY_ICON_MAPPINGS["application"]
     
     # Ultimate fallback
     return CATEGORY_ICON_MAPPINGS["application"]

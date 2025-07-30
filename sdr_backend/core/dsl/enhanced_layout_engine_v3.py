@@ -26,6 +26,10 @@ from typing import Dict, List, Any, Optional, Tuple, NamedTuple
 from dataclasses import dataclass
 from utils.logger import log_info, log_error
 from core.dsl.dsl_types import DSLDiagram, DSLNode, DSLEdge
+from core.ir.layout.constraint_adapter import ir_to_dsl, ir_hash
+from core.ir.layout import cache as ir_cache
+from core.ir.ir_types import IRGraph
+from collections import defaultdict
 
 
 class LayoutEngine(Enum):
@@ -131,65 +135,140 @@ class EnhancedLayoutEngineV3:
             LayoutResult with positioned diagram and performance metrics
         """
         start_time = time.time()
-        
+
         if not diagram.nodes:
-            log_info("No nodes to layout")
+            log_info("No nodes to layout – nothing to do")
             return LayoutResult(
                 diagram=diagram,
-                engine_used=LayoutEngine.BASIC,
+                engine_used=LayoutEngine.ELK,
                 direction_used=direction,
                 execution_time=time.time() - start_time,
                 success=True,
-                quality_score=1.0
+                quality_score=1.0,
             )
-        
-        # Analyze diagram complexity
-        metrics = self._analyze_complexity(diagram)
-        log_info(f"Diagram complexity analysis: {metrics}")
-        
-        # Determine engine selection strategy
+
+        # ------------------------------------------------------------------
+        #  Engine order: ELK first → Dagre second.  No complexity heuristics.
+        # ------------------------------------------------------------------
         if preferred_engine == LayoutEngine.AUTO:
-            selected_engines = self._select_engines_by_complexity(metrics)
+            selected_engines = [LayoutEngine.ELK, LayoutEngine.DAGRE]
         else:
-            selected_engines = self._get_fallback_chain(preferred_engine)
-        
-        log_info(f"Engine selection chain: {[e.value for e in selected_engines]}")
+            # Always ensure dagre is the fallback if preferred fails.
+            selected_engines = [preferred_engine]
+            if preferred_engine != LayoutEngine.DAGRE:
+                selected_engines.append(LayoutEngine.DAGRE)
+
+        log_info(
+            "Layout engine attempt order (no complexity heuristics): "
+            f"{[e.value for e in selected_engines]}"
+        )
         
         # Try each engine in the fallback chain
         last_error = None
         for engine in selected_engines:
+            log_info(f"Attempting layout with {engine.value} engine")
+
+            # Run the engine inside a try/except so we can handle unexpected crashes
             try:
-                log_info(f"Attempting layout with {engine.value} engine")
-                
                 result = self._layout_with_engine(diagram, engine, direction)
-                
-                if result.success:
-                    # Validate layout quality
-                    quality_score = self._assess_layout_quality(result.diagram, metrics)
-                    result.quality_score = quality_score
-                    result.metrics = metrics
-                    result.fallback_chain = selected_engines
-                    
-                    # Record performance
-                    self._record_performance(engine, result.execution_time)
-                    self.layout_history.append(result)
-                    
-                    log_info(f"Layout successful: {result}")
-                    return result
-                    
             except Exception as e:
-                log_error(f"Engine {engine.value} failed: {e}")
+                # A low-level exception escaped _layout_with_engine; treat as failure.
+                log_error(f"Engine {engine.value} raised exception: {e}")
                 last_error = str(e)
                 continue
+
+            # Record timing even if the engine ultimately fails – helps diagnostics
+            self._record_performance(engine, result.execution_time)
+
+            if result.success:
+                # Validate layout quality (without complexity we still check basic metrics)
+                quality_score = self._assess_layout_quality(result.diagram, None)  # metrics optional
+                result.quality_score = quality_score
+                # metrics no longer used – keep None to avoid confusion
+                result.fallback_chain = selected_engines
+
+                # --- IR-aware crossing reduction (post ELK) ---
+                try:
+                    from core.ir.layout.crossing_reducer import reduce_crossings
+                    result.diagram = reduce_crossings(result.diagram)
+                except Exception as e:
+                    log_error(f"crossing reducer failed: {e}")
+
+                self.layout_history.append(result)
+
+                log_info(f"Layout successful: {result}")
+                return result
+            else:
+                # Capture the error message for later reporting and continue to next engine
+                last_error = result.error_message or "unknown error"
+                log_error(
+                    f"Engine {engine.value} reported failure. Reason: {last_error}. Trying next fallback if any."
+                )
+                continue
         
-        # All engines failed - return basic fallback
+        # All engines failed – propagate error (no Basic fallback)
         log_error(f"All layout engines failed. Last error: {last_error}")
-        basic_result = self._create_basic_layout(diagram, direction)
-        basic_result.error_message = f"All engines failed: {last_error}"
-        basic_result.fallback_chain = selected_engines
-        basic_result.metrics = metrics
+        raise RuntimeError(f"All layout engines failed: {last_error}")
+    
+    def layout_ir(
+        self,
+        ir_graph: IRGraph,
+        direction: LayoutDirection = LayoutDirection.LEFT_TO_RIGHT,
+    ) -> DSLDiagram:
+        """Position nodes based on IR layer ranks with caching.
+
+        Returns a **DSLDiagram** ready for emission/rendering. Uses direct
+        IR → ELK conversion for cleaner, more efficient layouts.
+        """
+        from core.ir.layout.ir_to_elk import IRLayoutEngine
+        from core.ir.layout.crossing_reducer import reduce_crossings
+
+        key = ir_hash(ir_graph)
+        cached = ir_cache.get(key)
+        if cached:
+            return cached  # already a positioned DSLDiagram
+
+        # Use our new direct IR to ELK approach
+        try:
+            # Convert direction enum to string
+            dir_str = "right"
+            if direction == LayoutDirection.TOP_TO_BOTTOM:
+                dir_str = "down"
+            elif direction == LayoutDirection.RIGHT_TO_LEFT:
+                dir_str = "left"
+            elif direction == LayoutDirection.BOTTOM_TO_TOP:
+                dir_str = "up"
+            
+            # Apply direct IR to ELK layout
+            ir_layout = IRLayoutEngine()
+            positioned = ir_layout.layout_ir(ir_graph, direction=dir_str)
+            
+            # Apply crossing reduction as a post-process
+            try:
+                positioned = reduce_crossings(positioned)
+            except Exception as e:
+                log_error(f"crossing reducer failed: {e}")
+            
+            # Cache the result
+            ir_cache.set(key, positioned)
+            return positioned
         
-        return basic_result
+        except Exception as e:
+            log_error(f"Direct IR layout failed: {e}")
+            
+            # Fall back to old approach as a safety measure
+            log_info("Falling back to traditional DSL conversion approach")
+            dsl_input = ir_to_dsl(ir_graph)
+
+            layout_result = self.layout(
+                dsl_input,
+                direction=direction,
+                preferred_engine=LayoutEngine.ELK,
+            )
+
+            positioned = layout_result.diagram
+            ir_cache.set(key, positioned)
+            return positioned
     
     def _analyze_complexity(self, diagram: DSLDiagram) -> ComplexityMetrics:
         """Analyze diagram complexity to determine optimal layout engine."""
@@ -264,30 +343,14 @@ class EnhancedLayoutEngineV3:
         return score
     
     def _select_engines_by_complexity(self, metrics: ComplexityMetrics) -> List[LayoutEngine]:
-        """Select optimal engine chain based on complexity metrics."""
-        score = metrics.complexity_score
-        
-        if score >= self.elk_threshold:
-            # Complex diagram - start with ELK
-            return [LayoutEngine.ELK, LayoutEngine.DAGRE, LayoutEngine.BASIC]
-        elif score >= self.dagre_threshold:
-            # Medium complexity - start with Dagre
-            return [LayoutEngine.DAGRE, LayoutEngine.ELK, LayoutEngine.BASIC]
-        else:
-            # Simple diagram - Basic layout might be sufficient
-            return [LayoutEngine.BASIC, LayoutEngine.DAGRE, LayoutEngine.ELK]
+        """Select layout engines – Basic engine disabled. Always try ELK ➜ DAGRE."""
+        # Regardless of complexity we always prefer ELK and fall back to DAGRE.
+        return [LayoutEngine.ELK, LayoutEngine.DAGRE]
     
     def _get_fallback_chain(self, preferred: LayoutEngine) -> List[LayoutEngine]:
-        """Get fallback chain starting with preferred engine."""
-        if preferred == LayoutEngine.ELK:
-            return [LayoutEngine.ELK, LayoutEngine.DAGRE, LayoutEngine.BASIC]
-        elif preferred == LayoutEngine.DAGRE:
-            return [LayoutEngine.DAGRE, LayoutEngine.ELK, LayoutEngine.BASIC]
-        elif preferred == LayoutEngine.BASIC:
-            return [LayoutEngine.BASIC]
-        else:
-            # Default fallback
-            return [LayoutEngine.ELK, LayoutEngine.DAGRE, LayoutEngine.BASIC]
+        """Return fallback chain – Basic engine removed."""
+        # Always attempt ELK first, then DAGRE. BASIC is no longer considered.
+        return [LayoutEngine.ELK, LayoutEngine.DAGRE]
     
     def _layout_with_engine(
         self,
@@ -343,40 +406,90 @@ class EnhancedLayoutEngineV3:
         self,
         diagram: DSLDiagram,
         algorithm: str,
-        direction: LayoutDirection
+        direction: LayoutDirection,
     ) -> DSLDiagram:
-        """Layout using D2 with specified algorithm."""
-        # Convert diagram to D2 format
+        """Layout using project-local *d2json* binary (always JSON)."""
+
+        d2json_bin = self._find_d2json_binary()
+
+        # Convert diagram to D2 source so d2json can lay it out.
         d2_content = self._diagram_to_d2(diagram, direction)
-        
-        # Create temporary file
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.d2', delete=False) as f:
+
+        # Write to temp file for the binary to read.
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".d2", delete=False) as f:
             f.write(d2_content)
             temp_file = f.name
-        
+
         try:
-            # Run D2 with JSON output
-            cmd = ["d2", "--layout", algorithm, "--format", "json", temp_file, "-"]
-            result = subprocess.run(
-                cmd,
-                capture_output=True,
-                text=True,
-                timeout=30,
-                check=True
-            )
-            
-            # Parse JSON output
-            layout_data = json.loads(result.stdout)
-            
-            # Convert back to DSLDiagram
+            cmd = [
+                d2json_bin,
+                "--layout",
+                algorithm,
+                temp_file,
+            ]
+
+            try:
+                result = subprocess.run(
+                    cmd,
+                    capture_output=True,
+                    text=True,
+                    timeout=30,
+                    check=True,
+                )
+            except subprocess.CalledProcessError as cpe:
+                err_msg = (
+                    f"d2json {algorithm} exited with {cpe.returncode}. "
+                    f"stderr: {cpe.stderr.strip()[:300]}"
+                )
+                raise RuntimeError(err_msg) from cpe
+
+            # Parse JSON emitted by d2json
+            try:
+                layout_data = json.loads(result.stdout)
+            except json.JSONDecodeError as jde:
+                raise RuntimeError(
+                    f"d2json {algorithm} produced invalid JSON: {jde} – first 200 chars: {result.stdout[:200]}"
+                ) from jde
+
             return self._d2_json_to_diagram(layout_data, diagram)
-            
         finally:
-            # Clean up temp file
             try:
                 os.unlink(temp_file)
             except OSError:
                 pass
+
+    # ------------------------------------------------------------------
+    #  d2json binary resolution (copied from dsl_parser_v2)
+    # ------------------------------------------------------------------
+
+    @staticmethod
+    def _find_d2json_binary() -> str:
+        """Locate the *d2json* binary used across the backend."""
+        import shutil
+        from pathlib import Path
+
+        # 1) PATH lookup
+        path = shutil.which("d2json")
+        if path:
+            return path
+
+        # 2) Common project-relative locations
+        base_dir = Path(__file__).resolve().parent.parent.parent.parent  # project root
+        candidate_paths = [
+            base_dir / "tools" / "cmd" / "d2json" / "d2json",
+            base_dir / "sdr_backend" / "tools" / "cmd" / "d2json" / "d2json",
+            Path.home() / "bin" / "d2json",
+            Path("/usr/local/bin/d2json"),
+            Path("/usr/bin/d2json"),
+        ]
+
+        for p in candidate_paths:
+            if p.is_file() and os.access(p, os.X_OK):
+                return str(p)
+
+        raise FileNotFoundError(
+            "d2json binary not found – ensure it is built and on PATH or under tools/cmd/d2json."
+        )
     
     def _layout_with_basic(self, diagram: DSLDiagram, direction: LayoutDirection) -> DSLDiagram:
         """Basic grid-based layout implementation."""
@@ -432,35 +545,141 @@ class EnhancedLayoutEngineV3:
         return positioned_diagram
     
     def _diagram_to_d2(self, diagram: DSLDiagram, direction: LayoutDirection) -> str:
-        """Convert DSLDiagram to D2 format."""
-        lines = []
-        
-        # Add direction setting
+        """Convert DSLDiagram to D2 format **with layer clusters**.
+
+        Nodes that carry ``properties['layerIndex']`` are emitted inside a
+        dedicated cluster (``layer_<idx>``).  This gives ELK concrete layer
+        constraints so the final layout preserves left-to-right swim lanes.
+        """
+        lines: List[str] = []
+
+        # Add ELK global options for better spacing and edge routing
+        lines.append("layout: elk")
+        lines.append("elk.algorithm: layered")
+        lines.append("elk.direction: right")
+        lines.append("elk.edgeRouting: ORTHOGONAL")
+
+        # --- Node placement & crossing minimisation (mirror frontend) ---
+        lines.append("elk.layered.nodePlacement.strategy: NETWORK_SIMPLEX")
+        lines.append("elk.layered.nodePlacement.bk.fixedAlignment: BALANCED")
+        lines.append("elk.layered.crossingMinimization.semiInteractive: true")
+        lines.append("elk.layered.crossingMinimization.strategy: LAYER_SWEEP")
+
+        # --- Spacing parameters ---
+        lines.append("elk.spacing.nodeNode: 100")
+        lines.append("elk.layered.spacing.nodeNodeBetweenLayers: 300")
+        lines.append("elk.spacing.edgeNode: 40")
+        lines.append("elk.spacing.edgeEdge: 25")
+
+        # --- Layering / cycle breaking ---
+        lines.append("elk.layered.layering.strategy: NETWORK_SIMPLEX")
+        lines.append("elk.layered.cycleBreaking.strategy: GREEDY")
+        lines.append("elk.layered.considerModelOrder.strategy: NODES_AND_EDGES")
+
+        # --- Port & edge aesthetics ---
+        lines.append("elk.portConstraints: FIXED_SIDE")
+        lines.append("elk.layered.unnecessaryBendpoints: true")
+        lines.append("elk.layered.edgeLabels.sideSelection: SMART_DOWN")
+
+        # --- Hierarchy & compaction ---
+        lines.append("elk.hierarchyHandling: INCLUDE_CHILDREN")
+        lines.append("elk.layered.nodePlacement.favorStraightEdges: true")
+        lines.append("elk.layered.compaction.postCompaction.strategy: LEFT")
+
+        # --- Padding & component separation ---
+        lines.append("elk.padding: [top=80,left=100,bottom=80,right=100]")
+        lines.append("elk.separateConnectedComponents: true")
+        lines.append("elk.layered.thoroughness: 50")
+        lines.append("")
+        # ------------------------------------------------------------------
+        #  1) Global direction setting
+        # ------------------------------------------------------------------
         direction_map = {
             LayoutDirection.LEFT_TO_RIGHT: "right",
-            LayoutDirection.TOP_TO_BOTTOM: "down", 
+            LayoutDirection.TOP_TO_BOTTOM: "down",
             LayoutDirection.BOTTOM_TO_TOP: "up",
-            LayoutDirection.RIGHT_TO_LEFT: "left"
+            LayoutDirection.RIGHT_TO_LEFT: "left",
         }
         lines.append(f"direction: {direction_map[direction]}")
         lines.append("")
-        
-        # Add nodes
+
+        # ------------------------------------------------------------------
+        #  2) Bucket nodes by *layerIndex* for clustered emission
+        # ------------------------------------------------------------------
+        layer_to_nodes: defaultdict[int, List[DSLNode]] = defaultdict(list)
+        ungrouped: List[DSLNode] = []
         for node in diagram.nodes:
-            label = node.label.replace('"', '\\"') if node.label else node.id
-            lines.append(f'{node.id}: "{label}"')
-        
+            layer_idx = None
+            # ``properties`` may be absent; guard defensively.
+            if hasattr(node, "properties") and isinstance(node.properties, dict):
+                layer_idx = node.properties.get("layerIndex")
+            if layer_idx is None:
+                ungrouped.append(node)
+            else:
+                try:
+                    layer_to_nodes[int(layer_idx)].append(node)
+                except (TypeError, ValueError):
+                    ungrouped.append(node)
+
+        # ------------------------------------------------------------------
+        #  3) Helper to escape labels
+        # ------------------------------------------------------------------
+        def _node_line(n: DSLNode, indent: str = "") -> str:
+            label = self._escape_d2_string(n.label if n.label else n.id)
+            layer_opt = ""
+            if hasattr(n, "properties") and isinstance(n.properties, dict):
+                li = n.properties.get("layerIndex")
+                if isinstance(li, (int, float)):
+                    layer_opt = f" {{ layerIndex: {int(li)} }}"
+            return f"{indent}{n.id}: \"{label}\"{layer_opt}"
+
+        # ------------------------------------------------------------------
+        #  4) Emit clustered nodes first (sorted by layer index)
+        # ------------------------------------------------------------------
+        for layer_idx, nodes_in_layer in sorted(layer_to_nodes.items()):
+            lines.append(f"cluster layer_{layer_idx} {{")
+            lines.append("  direction: right")  # ensure horizontal inside cluster
+            # Optional visual hint – caller CSS can style .layer
+            lines.append("  class: layer")
+            for n in nodes_in_layer:
+                lines.append(_node_line(n, indent="  "))
+            lines.append("}")
+            lines.append("")
+
+        # ------------------------------------------------------------------
+        #  5) Emit any nodes without layerIndex at root level
+        # ------------------------------------------------------------------
+        for n in ungrouped:
+            lines.append(_node_line(n))
+
         lines.append("")
-        
-        # Add edges
+
+        # ------------------------------------------------------------------
+        #  6) Emit edges
+        # ------------------------------------------------------------------
         for edge in diagram.edges:
             if edge.label:
-                label = edge.label.replace('"', '\\"')
-                lines.append(f'{edge.source} -> {edge.target}: "{label}"')
+                lbl = self._escape_d2_string(edge.label)
+                lines.append(f'{edge.source} -> {edge.target}: "{lbl}"')
             else:
-                lines.append(f'{edge.source} -> {edge.target}')
-        
+                lines.append(f"{edge.source} -> {edge.target}")
+
         return "\n".join(lines)
+
+    # ------------------------------------------------------------------
+    #  Internal helpers
+    # ------------------------------------------------------------------
+
+    @staticmethod
+    def _escape_d2_string(value: str) -> str:
+        """Escape characters that break D2 syntax (quote, backslash, newlines)."""
+        if value is None:
+            return ""
+        # Replace backslashes first to avoid double-escaping
+        s = value.replace("\\", "\\\\")
+        s = s.replace("\n", "\\n")
+        s = s.replace("\"", "\\\"")
+        return s
     
     def _d2_json_to_diagram(self, json_data: Dict, original_diagram: DSLDiagram) -> DSLDiagram:
         """Convert D2 JSON output back to DSLDiagram."""
@@ -511,7 +730,7 @@ class EnhancedLayoutEngineV3:
                 error_message=f"Basic layout failed: {e}"
             )
     
-    def _assess_layout_quality(self, diagram: DSLDiagram, metrics: ComplexityMetrics) -> float:
+    def _assess_layout_quality(self, diagram: DSLDiagram, metrics: Optional[Any]) -> float:
         """Assess the quality of a layout result."""
         if not diagram.nodes:
             return 1.0

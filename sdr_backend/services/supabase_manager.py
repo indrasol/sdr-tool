@@ -1,6 +1,6 @@
 import string
 from fastapi import HTTPException
-from typing import Dict, Any, List, Optional
+from typing import Dict, Any, List, Optional, Tuple
 from datetime import date, datetime, timezone, timedelta
 import random
 from utils.logger import log_info
@@ -10,6 +10,14 @@ from constants import ProjectPriority, ProjectStatus
 class SupabaseManager:
     def __init__(self):
         self.supabase = get_supabase_client()
+
+    # FastAPI dependency helper
+    @classmethod
+    async def get_instance(cls):
+        # simple singleton via class attribute
+        if not hasattr(cls, "_inst"):
+            cls._inst = cls()
+        return cls._inst
         
     async def get_project_data(self, user_id: int, project_code: str) -> Dict[str, Any]:
         """
@@ -41,6 +49,148 @@ class SupabaseManager:
             "conversation_history": project["conversation_history"],
             "diagram_state": project["diagram_state"]
         }
+    
+    async def fetch_latest_dsl(self, project_code: str) -> Optional[str]:
+        """
+        Fetch the latest DSL for a given project from Supabase.
+        
+        Args:
+            project_code: The unique code of the project (e.g., "P123").
+            
+        Returns:
+            The latest DSL text or None if not found.
+        """
+        def fetch_dsl():
+            return (self.supabase
+                   .from_("diagrams")
+                   .select("d2_dsl")
+                   .eq("project_id", project_code)
+                   .order("version", desc=True)
+                   .limit(1)
+                   .execute())
+                   
+        dsl_response = await safe_supabase_operation(
+            fetch_dsl,
+            f"Failed to fetch latest DSL for project {project_code}"
+        )
+        
+        if not dsl_response.data or not dsl_response.data[0]:
+            return None
+            
+        return dsl_response.data[0].get("d2_dsl")
+    
+    async def save_diagram_version(
+        self,
+        project_code: str,
+        d2_dsl: str,
+        rendered_json: Dict[str, Any],
+        pinned_nodes: Optional[List[str]] = None,
+        ir_json: Optional[Dict[str, Any]] = None,
+    ) -> Tuple[int, int]:
+        """
+        Save a new diagram version in Supabase.
+        
+        Args:
+            project_code: The unique code of the project (e.g., "P123").
+            d2_dsl: The D2 DSL source code.
+            rendered_json: The rendered diagram state.
+            pinned_nodes: Optional list of pinned node IDs.
+            ir_json: Optional IR JSON data.
+            
+        Returns:
+            Tuple of (diagram_id, version_number)
+        """
+        # First check if there's already a diagram for this project
+        def check_existing():
+            return (self.supabase
+                   .from_("diagrams")
+                   .select("id, version")
+                   .eq("project_id", project_code)
+                   .execute())
+                   
+        existing = await safe_supabase_operation(
+            check_existing,
+            f"Failed to check existing diagrams for project {project_code}"
+        )
+        
+        now = datetime.now(timezone.utc).isoformat()
+        diagram_id = None
+        version_number = 1
+        
+        # If diagram exists, update it and increment version
+        if existing.data and existing.data[0]:
+            diagram_id = existing.data[0]["id"]
+            version_number = existing.data[0]["version"] + 1
+            
+            # Update the diagram record
+            def update_diagram():
+                return (self.supabase
+                       .from_("diagrams")
+                       .update({
+                           "d2_dsl": d2_dsl,
+                           "rendered_json": rendered_json,
+                           "pinned_nodes": pinned_nodes or [],
+                           "ir_json": ir_json,
+                           "version": version_number,
+                           "updated_at": now
+                       })
+                       .eq("id", diagram_id)
+                       .execute())
+                       
+            await safe_supabase_operation(
+                update_diagram,
+                f"Failed to update diagram {diagram_id} for project {project_code}"
+            )
+            log_info(f"Updated diagram {diagram_id} to version {version_number} for project {project_code}")
+        else:
+            # Create a new diagram record
+            def create_diagram():
+                return (self.supabase
+                       .from_("diagrams")
+                       .insert({
+                           "project_id": project_code,
+                           "d2_dsl": d2_dsl,
+                           "rendered_json": rendered_json,
+                           "pinned_nodes": pinned_nodes or [],
+                           "ir_json": ir_json,
+                           "version": 1,
+                           "created_at": now,
+                           "updated_at": now
+                       })
+                       .execute())
+                       
+            diagram_response = await safe_supabase_operation(
+                create_diagram,
+                f"Failed to create diagram for project {project_code}"
+            )
+            
+            if diagram_response.data and diagram_response.data[0]:
+                diagram_id = diagram_response.data[0]["id"]
+                log_info(f"Created new diagram {diagram_id} for project {project_code}")
+        
+        # Always create a version history record
+        if diagram_id:
+            def create_version():
+                return (self.supabase
+                       .from_("diagram_versions")
+                       .insert({
+                           "diagram_id": diagram_id,
+                           "version": version_number,
+                           "d2_dsl": d2_dsl,
+                           "rendered_json": rendered_json,
+                           "pinned_nodes": pinned_nodes or [],
+                           "ir_json": ir_json,
+                           "created_at": now
+                       })
+                       .execute())
+                       
+            await safe_supabase_operation(
+                create_version,
+                f"Failed to create diagram version for diagram {diagram_id}"
+            )
+            log_info(f"Created diagram version {version_number} for diagram {diagram_id}")
+        
+        return diagram_id, version_number
     
     async def update_project_data(
         self,
@@ -95,6 +245,27 @@ class SupabaseManager:
             f"Failed to update project: {project_code}"
         )
         log_info(f"Updated project {project_code} for user {user_id}")
+
+    # ------------------------------------------------------------------
+    #  Diagrams / IR access (Phase-5)
+    # ------------------------------------------------------------------
+
+    async def get_diagram_ir(self, diagram_id: int) -> Dict[str, Any]:
+        """Return ``ir_json`` blob for a diagram; raises if not found/empty."""
+
+        def fetch_ir():
+            return self.supabase.from_("diagrams").select("ir_json").eq("id", diagram_id).single().execute()
+
+        resp = await safe_supabase_operation(fetch_ir, f"Failed fetching diagram {diagram_id}")
+
+        if not resp.data:
+            raise ValueError(f"Diagram {diagram_id} not found")
+
+        ir_json = resp.data.get("ir_json")
+        if not ir_json:
+            raise ValueError("IR JSON missing for diagram")
+
+        return ir_json
     
     async def create_project(
         self,

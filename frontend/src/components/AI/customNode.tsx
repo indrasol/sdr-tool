@@ -9,7 +9,6 @@ import { classNames } from "@/lib/utils";
 import { Icon } from '@iconify/react';
 import { NodeIcon } from './components/SmartIcon';
 import { useDiagramStyle } from './contexts/DiagramStyleContext';
-import { resolveIcon } from './utils/enhancedIconifyRegistry';
 
 const CustomNode = ({ 
   id, 
@@ -29,10 +28,20 @@ const CustomNode = ({
   const label = safeData.label || 'Node';
   const description = safeData.description || '';
   const nodeType = safeData.nodeType || 'default';
+  // Back-end authoritative identifier
   const iconifyId = (safeData as any).iconifyId as string | undefined;
+
+  // SVG URL for direct rendering - look in both locations
+  const svgUrl = (safeData as any).svgUrl as string | undefined;
   
-  // Resolve icon using enhanced registry
-  const resolvedIconId = iconifyId || resolveIcon(nodeType);
+  // Fallback cube when identifier missing (should be rare)
+  const resolvedIconId = iconifyId || 'mdi:application';
+
+  // Allow the back-end to hint a preferred colour for the icon / node accent
+  const colorOverride = (safeData as any).color as string | undefined;
+  // Extract provider / technology for provider-specific icon rendering
+  const provider = (safeData as any).provider as string | undefined;
+  const technology = (safeData as any).technology as string | undefined;
   // Access connection flags safely, defaulting to false if undefined
   const hasSourceConnection = safeData.hasSourceConnection ?? false;
   const hasTargetConnection = safeData.hasTargetConnection ?? false;
@@ -291,40 +300,17 @@ const CustomNode = ({
     iconClass: 'text-[#7C65F6] drop-shadow-lg', // Purple color for client icons with enhanced shadow
     hasBackground: false
   } : {
-    ...nodeColors,
-    hasBackground: true
+    // Fallback: render icon-only for uncategorised nodes
+    bg: 'bg-transparent',
+    border: 'border-transparent',
+    // Preserve any icon colour chosen by getNodeColor(); default to purple if absent
+    iconClass: (nodeColors && (nodeColors as any).iconClass) ? (nodeColors as any).iconClass : 'text-[#7C65F6] drop-shadow-lg',
+    hasBackground: false
   };
 
   // Calculate icon size based on node type
-  const getIconSize = () => {
-    // Client nodes get largest icons
-    if (isClient) {
-      return 70; // Extra large for client icons
-    }
-    
-    // Database nodes get larger icons since they have no background
-    if (isDatabase) {
-      return 64; // Slightly larger for better visibility without background
-    }
-    
-    // Application nodes also get larger icons
-    if (isApplication) {
-      return 60; // Larger application icons
-    }
-    
-    // Network nodes also get larger icons
-    if (isNetwork) {
-      return 58; // Large network icons
-    }
-    
-    // API Gateway and Servers get slightly larger icons for better visibility
-    if (isApiGateway() || isServerNode()) {
-      return 42;
-    }
-    
-    // Default size for other nodes
-    return 40;
-  };
+  // Use a uniform icon size across all nodes for visual consistency
+  const getIconSize = () => 56;
 
   const iconSize = getIconSize();
   // Always use white for icon color to ensure visibility against colored backgrounds
@@ -493,9 +479,10 @@ const CustomNode = ({
                   !isDatabase && !isApplication && !isNetwork && !isClient && nodeStyle.border // Only apply border if not a special node type
                 )}
                 style={{ 
-                  minWidth: isClient ? '70px' : isDatabase || isApplication || isNetwork ? '64px' : '50px', 
-                  minHeight: isClient ? '70px' : isDatabase || isApplication || isNetwork ? '64px' : '50px',
-                  backgroundColor: isClient || isDatabase || isApplication || isNetwork ? 'transparent' : (getCategoryStyle(nodeType)?.bgColor || 'transparent'),
+                  // Standardised container dimensions for all node types
+                  minWidth: '72px',
+                  minHeight: '72px',
+                  backgroundColor: nodeStyle.hasBackground ? (getCategoryStyle(nodeType)?.bgColor || 'transparent') : 'transparent',
                   position: 'relative',
                   borderRadius: styleConfig.nodeStyle.borderRadius,
                   transition: 'all 0.2s ease-in-out',
@@ -505,13 +492,17 @@ const CustomNode = ({
               >
                 {resolvedIconId && (
                   <NodeIcon
-                    nodeType={nodeType}
+                    nodeType={resolvedIconId}
+                    provider={provider}
+                    technology={technology}
+                    color={colorOverride}
                     className={nodeStyle.iconClass}
                     style={{
                       width: iconSize,
                       height: iconSize,
                       filter: diagramStyle === 'sketch' ? 'url(#rough-paper)' : styleConfig.nodeStyle.filter,
                     }}
+                    svgUrl={svgUrl}
                   />
                 )}
               </div>

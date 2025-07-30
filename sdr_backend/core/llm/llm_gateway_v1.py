@@ -643,7 +643,7 @@ class LLMService:
         prompt: str, 
         model_name: str,
         system_prompt: Optional[str] = None,
-        model_provider: str = "anthropic",
+        model_provider: str = "openai",
         temperature: Optional[float] = None,
         max_tokens: Optional[int] = None,
         stream: Optional[bool] = None,

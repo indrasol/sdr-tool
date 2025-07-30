@@ -1,0 +1,82 @@
+{
+  "Service:generic": { "icon": "mdi:application-braces", "color": "#6366f1", "shape": "rounded-rect" },
+  
+  "EventBus:generic": { "icon": "mdi:ray-start-end", "color": "#06b6d4" },
+  "Gateway:generic": { "icon": "mdi:gate", "color": "#4f46e5" },
+  "Client:generic": { "icon": "mdi:account", "color": "#0d9488" },
+  "LB:generic": { "icon": "mdi:shuffle-variant", "color": "#7c3aed" },
+  "CDN:generic": { "icon": "mdi:web", "color": "#0284c7" },
+  "WAF:generic": { "icon": "mdi:shield-alert", "color": "#dc2626" },
+  "Firewall:generic": { "icon": "mdi:firewall", "color": "#f97316" },
+  "Database:postgres": { "icon": "logos:postgresql", "color": "#0ea5e9", "shape": "cylinder" },
+  "DataWarehouse:generic": { "icon": "mdi:database-outline", "color": "#2563eb", "shape": "cylinder" },
+  "Cache:redis": { "icon": "logos:redis", "color": "#ef4444" },
+  "BlobStore:generic": { "icon": "mdi:database", "color": "#14b8a6", "shape": "cylinder" },
+  "Search:generic": { "icon": "mdi:magnify", "color": "#16a34a" },
+  "VectorStore:pinecone": { "icon": "simple-icons:pinecone", "color": "#14b8a6" },
+  "FeatureStore:generic": { "icon": "mdi:star-circle-outline", "color": "#c026d3" },
+  "Auth:generic": { "icon": "simple-icons:keycloak", "color": "#8b5cf6" },
+  "SecretStore:generic": { "icon": "mdi:key-variant", "color": "#f97316" },
+  "CertAuthority:generic": { "icon": "mdi:certificate", "color": "#facc15" },
+  "ExternalService:generic": { "icon": "mdi:api", "color": "#64748b" },
+  "Monitoring:generic": { "icon": "mdi:chart-timeline-variant", "color": "#f59e0b" },
+  "Alerting:generic": { "icon": "mdi:bell-alert", "color": "#f43f5e" },
+  "Logging:generic": { "icon": "mdi:clipboard-text", "color": "#475569" },
+  "Tracing:generic": { "icon": "mdi:vector-polyline", "color": "#0ea5e9" },
+  "Analytics:generic": { "icon": "mdi:chart-bar", "color": "#ea580c" },
+  "MLModel:embedding": { "icon": "mdi:robot-outline", "color": "#10b981" },
+  
+  "Topic:generic": { "icon": "mdi:message-broadcast", "color": "#1d4ed8" },
+  "Orchestrator:generic": { "icon": "mdi:sitemap-outline", "color": "#16a34a" },
+  "ContainerPlatform:generic": { "icon": "mdi:docker", "color": "#448aff" },
+  "default": { "icon": "mdi:cube-outline", "color": "#9ca3af" },
+
+  
+  "DataWarehouse:redshift":   { "icon": "logos:amazon-redshift",   "color": "#2563eb", "shape": "cylinder" },
+  "DataWarehouse:bigquery":   { "icon": "logos:google-bigquery",   "color": "#1d4ed8", "shape": "cylinder" },
+  "DataWarehouse:snowflake":  { "icon": "logos:snowflake-icon",    "color": "#0ea5e9", "shape": "cylinder" },
+
+  
+  "VectorStore:weaviate":     { "icon": "simple-icons:weaviate",   "color": "#14b8a6" },
+  "VectorStore:qdrant":       { "icon": "simple-icons:qdrant",     "color": "#14b8a6" },
+  "VectorStore:milvus":       { "icon": "simple-icons:milvus",     "color": "#14b8a6" },
+  "VectorStore:chroma":       { "icon": "simple-icons:chromadb",   "color": "#14b8a6" },
+  "VectorStore:redis_vector": { "icon": "logos:redis",          "color": "#ef4444" },
+  "VectorStore:pgvector":     { "icon": "logos:postgresql",      "color": "#0ea5e9" },
+  "VectorStore:generic":      { "icon": "mdi:vector-arrange-above","color": "#14b8a6" },
+
+  
+  "Queue:rabbitmq":           { "icon": "logos:rabbitmq-icon",     "color": "#f97316" },
+  "Queue:sqs":                { "icon": "logos:aws-simple-queue-service", "color": "#f97316" },
+  "EventBus:eventbridge":     { "icon": "logos:aws-eventbridge",   "color": "#06b6d4" },
+  "Queue:kinesis":            { "icon": "logos:aws-kinesis",       "color": "#9333ea" },
+
+ 
+  "Function:lambda":          { "icon": "logos:aws-lambda",        "color": "#f97316" },
+  "Function:cloud_functions": { "icon": "logos:google-cloud-functions","color": "#8b5cf6" },
+  "Function:azure_functions": { "icon": "mdi:function-variant",    "color": "#8b5cf6" },
+  "Function:generic":         { "icon": "mdi:lambda",              "color": "#8b5cf6" },
+
+ 
+  "Orchestrator:jenkins":     { "icon": "logos:jenkins",           "color": "#ea580c" },
+  "Orchestrator:github_actions": { "icon": "logos:github-actions", "color": "#6d28d9" },
+  "Orchestrator:gitlab_ci":   { "icon": "logos:gitlab",            "color": "#e11d48" },
+
+  
+  "ETL:airflow":              { "icon": "logos:airflow-icon",      "color": "#0ea5e9" },
+  "ETL:dagster":              { "icon": "simple-icons:dagster",    "color": "#0ea5e9" },
+  "ETL:prefect":              { "icon": "simple-icons:prefect",    "color": "#0ea5e9" },
+
+ 
+  "MLModel:vertex_ai":        { "icon": "logos:google-vertex-ai",  "color": "#10b981" },
+  "MLModel:sagemaker":        { "icon": "logos:amazon-sagemaker",  "color": "#10b981" },
+  "MLModel:huggingface":      { "icon": "simple-icons:huggingface","color": "#fbbf24" },
+
+  
+  "Monitoring:datadog":       { "icon": "logos:datadog",           "color": "#7e22ce" },
+  "Logging:loki":             { "icon": "simple-icons:grafanalogoloki","color": "#475569" },
+
+
+  "Database:generic":         { "icon": "mdi:database",            "color": "#475569", "shape": "cylinder" },
+  "Queue:generic":            { "icon": "mdi:queue",               "color": "#9333ea" }
+} 

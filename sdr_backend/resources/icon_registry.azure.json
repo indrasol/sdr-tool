@@ -1,0 +1,12 @@
+{
+  "BlobStore:generic": { "icon": "logos:microsoft-azure", "color": "#0089d6" },
+  "Database:generic": { "icon": "logos:azure-sql-database", "color": "#2b6cb0" },
+  "Queue:generic": { "icon": "logos:azure-service-bus", "color": "#0089d6" },
+  "Function:generic": { "icon": "logos:azure-functions", "color": "#f9c623" },
+  "Monitoring:generic": { "icon": "logos:azure-monitor", "color": "#0063b1" },
+  "Gateway:generic": { "icon": "logos:azure-api-management", "color": "#0089d6" },
+  "VectorStore:generic": { "icon": "logos:azure-ai-studio", "color": "#0063b1" },
+  "Search:generic": { "icon": "logos:azure-search", "color": "#0063b1" },
+  "SecretStore:generic": { "icon": "logos:azure-key-vault", "color": "#0063b1" },
+  "ContainerPlatform:generic": { "icon": "logos:azure-kubernetes-service", "color": "#0078d4" }
+} 
