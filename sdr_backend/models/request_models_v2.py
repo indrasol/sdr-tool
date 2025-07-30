@@ -7,7 +7,7 @@ The API surface purposefully stays minimal in Phase-0/1 – we will
 extend with pagination, pinned nodes, etc. later.
 """
 
-from typing import Optional
+from typing import Optional, List, Dict, Any
 from pydantic import BaseModel
 
 
@@ -16,3 +16,5 @@ class DesignGenerateRequestV2(BaseModel):
     query: str
     # Provide a default value so the field becomes optional in Pydantic v2
     session_id: Optional[str] = None
+    # Add conversation history field (optional with default empty list)
+    conversation_history: Optional[List[Dict[str, Any]]] = None

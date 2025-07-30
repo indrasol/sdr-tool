@@ -43,7 +43,7 @@ postgrest>=0.10.6  # Dependency for Supabase
 
 # Utils
 python-dotenv==1.0.1
-pydantic>=1.9.0
+pydantic==2.11.3
 pydantic-settings==2.1.0
 pyyaml==6.0.1
 PyJWT==2.8.0
@@ -64,3 +64,8 @@ pytest>=8.0.0
 
 # Rate limiting
 slowapi==0.1.9
+
+beautifulsoup4==4.13.4
+lxml==4.9.3
+rapidfuzz==3.13.0
+symspellpy==6.9.0

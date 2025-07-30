@@ -33,6 +33,9 @@ GROK_API_KEY = os.getenv("GROKAPIKEYST")
 
 # TESSERACT_PATH = os.getenv("TESSERACT_PATH", "C:/Program Files/Tesseract-OCR/tesseract.exe")  # Update if needed
 
+# Feature flags
+IR_BUILDER_MIN_ACTIVE = os.getenv("IR_BUILDER_MIN_ACTIVE", "true").lower() in {"1", "true", "yes"}
+
 # vector DB
 # Get the VECTOR_DB_PATH from your environment
 VECTOR_DB_PATH = os.getenv("VECTOR_DB_PATH", "knowledge_base/faiss_index/index.faiss")

@@ -37,6 +37,10 @@ import {
   Loader2,
   LayoutTemplate,
   Building,
+  Eye,
+  EyeOff,
+  Layers,
+  RefreshCcw
 } from 'lucide-react';
 import { Button } from '../ui/button';
 import { Separator } from '../ui/separator';
@@ -61,6 +65,8 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
   DropdownMenuCheckboxItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
 } from "../ui/dropdown-menu";
 import { Badge } from "../ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
@@ -73,6 +79,7 @@ import { captureDiagramImage } from '@/utils/diagramUtils';
 import StyleToggle from './components/StyleToggle';
 import { useTheme } from '@/contexts/ThemeContext';
 import { cn } from '@/lib/utils';
+import ViewSwitcher from './toolbar/ViewSwitcher';
 
 type ViewMode = 'AD' | 'DFD';
 
@@ -121,6 +128,19 @@ interface DiagramActionsProps {
   };
   // Collapse handler
   onCollapse?: () => void;
+
+  /* Lane containers */
+  onToggleLayers?: () => void;
+  showLayers?: boolean;
+  
+  /* Layer layout functionality */
+  onApplyLayerLayout?: () => void;
+  isApplyingLayerLayout?: boolean;
+
+  /* Backend view switcher */
+  availableBackendViews?: string[];
+  activeBackendView?: string;
+  onSwitchBackendView?: (view: string) => void;
 }
 
 const DiagramActions: React.FC<DiagramActionsProps> = ({
@@ -150,7 +170,15 @@ const DiagramActions: React.FC<DiagramActionsProps> = ({
   onLayout,
   isLayouting,
   lastLayoutResult,
-  onCollapse
+  onCollapse,
+  onToggleLayers,
+  showLayers = true,
+  onApplyLayerLayout,
+  isApplyingLayerLayout = false,
+
+  availableBackendViews = [],
+  activeBackendView = 'reactflow',
+  onSwitchBackendView,
 }) => {
   const { addOrgTemplate } = useOrgTemplates();
   const { user } = useAuth();
@@ -446,6 +474,12 @@ const DiagramActions: React.FC<DiagramActionsProps> = ({
     return colors[engineType as keyof typeof colors] || 'bg-gray-100 text-gray-800';
   };
 
+  const [isLayoutOptionsDialogOpen, setIsLayoutOptionsDialogOpen] = useState(false);
+
+  const openLayoutOptionsDialog = () => {
+    setIsLayoutOptionsDialogOpen(true);
+  };
+
   const handleSaveImage = async () => {
     const reactFlowWrapper = document.querySelector('.react-flow') as HTMLElement;
     const viewport = document.querySelector('.react-flow__viewport') as HTMLElement;
@@ -687,7 +721,7 @@ const SequenceFlowIcon = ({ size = 16, className = "" }) => (
       <TooltipProvider>
         <div className="flex items-center gap-1.5 w-full justify-center">
           {/* Project ID display */}
-          {projectId && projectId !== 'default-project' && (
+          {/* {projectId && projectId !== 'default-project' && (
             <Tooltip>
               <TooltipTrigger asChild>
                 <div
@@ -704,7 +738,7 @@ const SequenceFlowIcon = ({ size = 16, className = "" }) => (
               </TooltipTrigger>
               <TooltipContent side="bottom">Click to copy project ID</TooltipContent>
             </Tooltip>
-          )}
+          )} */}
           
           <div className="mx-1 h-5 w-px bg-blue-200/50"></div>
           
@@ -745,7 +779,21 @@ const SequenceFlowIcon = ({ size = 16, className = "" }) => (
           <div className="mx-1 h-5 w-px bg-blue-200/50"></div>
           
           {/* View controls */}
-          <div className="flex items-center">
+          <div className="flex items-center gap-1">
+            {/* Backend view switcher (ReactFlow / D2 / C4 / ...) */}
+            {availableBackendViews && availableBackendViews.length >= 1 && (
+              <div className="mr-1">
+                {/* DEBUG INDICATOR */}
+                <div className="absolute -top-8 right-0 bg-green-100 text-green-800 px-2 py-1 rounded text-xs">
+                  Views: {availableBackendViews.join(', ')}
+                </div>
+                <ViewSwitcher
+                  views={availableBackendViews}
+                  activeView={activeBackendView}
+                  onSwitch={(v) => onSwitchBackendView?.(v)}
+                />
+              </div>
+            )}
             {onZoomIn && (
               <Tooltip>
                 <TooltipTrigger asChild>
@@ -882,7 +930,7 @@ const SequenceFlowIcon = ({ size = 16, className = "" }) => (
                   variant="ghost"
                   size="sm"
                   className="h-7 w-7 rounded-lg bg-transparent hover:bg-blue-200/60 text-blue-700 hover:text-blue-700"
-                  onClick={handleApplyLayout}
+                  onClick={openLayoutOptionsDialog}
                   disabled={isLayouting}
                 >
                   <LayoutGrid size={16} />
@@ -952,6 +1000,55 @@ const SequenceFlowIcon = ({ size = 16, className = "" }) => (
           
           <div className="mx-1 h-5 w-px bg-blue-200/50"></div>
           
+          {/* Toggle lane containers - Enhanced with dropdown */}
+          {onToggleLayers && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-7 w-7 rounded-lg bg-transparent hover:bg-blue-200/60 text-blue-700 hover:text-blue-700"
+                >
+                  <Layers size={16} />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-48 p-2">
+                <DropdownMenuLabel>Layer Controls</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuGroup>
+                  <DropdownMenuItem onClick={onToggleLayers} className="cursor-pointer">
+                    <div className="flex items-center gap-2">
+                      {showLayers ? <EyeOff size={14} /> : <Eye size={14} />}
+                      <span>{showLayers ? "Hide Layers" : "Show Layers"}</span>
+                    </div>
+                  </DropdownMenuItem>
+                  
+                  {onApplyLayerLayout && (
+                    <DropdownMenuItem 
+                      onClick={onApplyLayerLayout}
+                      disabled={isApplyingLayerLayout || nodes.length === 0}
+                      className="cursor-pointer"
+                    >
+                      <div className="flex items-center gap-2">
+                        {isApplyingLayerLayout ? (
+                          <>
+                            <Loader2 size={14} className="animate-spin" />
+                            <span>Applying Layout...</span>
+                          </>
+                        ) : (
+                          <>
+                            <RefreshCcw size={14} />
+                            <span>Apply Layer Layout</span>
+                          </>
+                        )}
+                      </div>
+                    </DropdownMenuItem>
+                  )}
+                </DropdownMenuGroup>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
+
           {/* Collapse - X icon instead of text */}
           {onCollapse && (
             <Tooltip>
@@ -1183,6 +1280,264 @@ const SequenceFlowIcon = ({ size = 16, className = "" }) => (
             >
               <Download size={16} />
               Download Image
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Layout Options Dialog */}
+      <Dialog open={isLayoutOptionsDialogOpen} onOpenChange={setIsLayoutOptionsDialogOpen}>
+        <DialogContent className="max-w-lg bg-gradient-to-r from-white to-blue-50/30 rounded-lg border border-blue-100/50 shadow-xl">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-semibold text-gray-800 flex items-center gap-2">
+              <div className="bg-gradient-to-r from-blue-500 to-purple-600 p-1.5 rounded-md shadow-sm">
+                <LayoutGrid className="h-4 w-4 text-white" />
+              </div>
+              Layout Options
+            </DialogTitle>
+            <DialogDescription className="text-gray-600">
+              Choose the layout direction and algorithm to apply to your diagram.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="grid gap-6 py-4">
+            {/* Direction options */}
+            <div className="grid gap-2">
+              <Label className="text-gray-700 font-medium">Layout Direction</Label>
+              <div className="grid grid-cols-2 gap-3 mt-1">
+                <div 
+                  className={cn(
+                    "flex flex-col items-center gap-2 p-3 rounded-lg border-2 cursor-pointer transition-all duration-200",
+                    layoutDirection === 'LR' 
+                      ? "border-blue-500 bg-blue-50" 
+                      : "border-gray-100 bg-white hover:border-blue-200"
+                  )}
+                  onClick={() => setLayoutDirection('LR')}
+                >
+                  <div className="flex items-center gap-2">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <rect x="3" y="8" width="6" height="8" rx="1" fill={layoutDirection === 'LR' ? "#3B82F6" : "#D1D5DB"} />
+                      <rect x="15" y="8" width="6" height="8" rx="1" fill={layoutDirection === 'LR' ? "#3B82F6" : "#D1D5DB"} />
+                      <path d="M9 12H15" stroke={layoutDirection === 'LR' ? "#3B82F6" : "#D1D5DB"} strokeWidth="2" />
+                      <path d="M13 10L15 12L13 14" stroke={layoutDirection === 'LR' ? "#3B82F6" : "#D1D5DB"} strokeWidth="2" strokeLinecap="round" />
+                    </svg>
+                    <span className={cn("font-medium", layoutDirection === 'LR' ? "text-blue-700" : "text-gray-700")}>
+                      Left to Right
+                    </span>
+                  </div>
+                  <span className={cn("text-xs text-center", layoutDirection === 'LR' ? "text-blue-600" : "text-gray-500")}>
+                    Default for architecture diagrams
+                  </span>
+                </div>
+                
+                <div 
+                  className={cn(
+                    "flex flex-col items-center gap-2 p-3 rounded-lg border-2 cursor-pointer transition-all duration-200",
+                    layoutDirection === 'TB' 
+                      ? "border-blue-500 bg-blue-50" 
+                      : "border-gray-100 bg-white hover:border-blue-200"
+                  )}
+                  onClick={() => setLayoutDirection('TB')}
+                >
+                  <div className="flex items-center gap-2">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <rect x="8" y="3" width="8" height="6" rx="1" fill={layoutDirection === 'TB' ? "#3B82F6" : "#D1D5DB"} />
+                      <rect x="8" y="15" width="8" height="6" rx="1" fill={layoutDirection === 'TB' ? "#3B82F6" : "#D1D5DB"} />
+                      <path d="M12 9V15" stroke={layoutDirection === 'TB' ? "#3B82F6" : "#D1D5DB"} strokeWidth="2" />
+                      <path d="M10 13L12 15L14 13" stroke={layoutDirection === 'TB' ? "#3B82F6" : "#D1D5DB"} strokeWidth="2" strokeLinecap="round" />
+                    </svg>
+                    <span className={cn("font-medium", layoutDirection === 'TB' ? "text-blue-700" : "text-gray-700")}>
+                      Top to Bottom
+                    </span>
+                  </div>
+                  <span className={cn("text-xs text-center", layoutDirection === 'TB' ? "text-blue-600" : "text-gray-500")}>
+                    Better for flowcharts
+                  </span>
+                </div>
+                
+                <div 
+                  className={cn(
+                    "flex flex-col items-center gap-2 p-3 rounded-lg border-2 cursor-pointer transition-all duration-200",
+                    layoutDirection === 'RL' 
+                      ? "border-blue-500 bg-blue-50" 
+                      : "border-gray-100 bg-white hover:border-blue-200"
+                  )}
+                  onClick={() => setLayoutDirection('RL')}
+                >
+                  <div className="flex items-center gap-2">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <rect x="15" y="8" width="6" height="8" rx="1" fill={layoutDirection === 'RL' ? "#3B82F6" : "#D1D5DB"} />
+                      <rect x="3" y="8" width="6" height="8" rx="1" fill={layoutDirection === 'RL' ? "#3B82F6" : "#D1D5DB"} />
+                      <path d="M15 12H9" stroke={layoutDirection === 'RL' ? "#3B82F6" : "#D1D5DB"} strokeWidth="2" />
+                      <path d="M11 14L9 12L11 10" stroke={layoutDirection === 'RL' ? "#3B82F6" : "#D1D5DB"} strokeWidth="2" strokeLinecap="round" />
+                    </svg>
+                    <span className={cn("font-medium", layoutDirection === 'RL' ? "text-blue-700" : "text-gray-700")}>
+                      Right to Left
+                    </span>
+                  </div>
+                  <span className={cn("text-xs text-center", layoutDirection === 'RL' ? "text-blue-600" : "text-gray-500")}>
+                    For RTL languages
+                  </span>
+                </div>
+                
+                <div 
+                  className={cn(
+                    "flex flex-col items-center gap-2 p-3 rounded-lg border-2 cursor-pointer transition-all duration-200",
+                    layoutDirection === 'BT' 
+                      ? "border-blue-500 bg-blue-50" 
+                      : "border-gray-100 bg-white hover:border-blue-200"
+                  )}
+                  onClick={() => setLayoutDirection('BT')}
+                >
+                  <div className="flex items-center gap-2">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <rect x="8" y="15" width="8" height="6" rx="1" fill={layoutDirection === 'BT' ? "#3B82F6" : "#D1D5DB"} />
+                      <rect x="8" y="3" width="8" height="6" rx="1" fill={layoutDirection === 'BT' ? "#3B82F6" : "#D1D5DB"} />
+                      <path d="M12 15V9" stroke={layoutDirection === 'BT' ? "#3B82F6" : "#D1D5DB"} strokeWidth="2" />
+                      <path d="M14 11L12 9L10 11" stroke={layoutDirection === 'BT' ? "#3B82F6" : "#D1D5DB"} strokeWidth="2" strokeLinecap="round" />
+                    </svg>
+                    <span className={cn("font-medium", layoutDirection === 'BT' ? "text-blue-700" : "text-gray-700")}>
+                      Bottom to Top
+                    </span>
+                  </div>
+                  <span className={cn("text-xs text-center", layoutDirection === 'BT' ? "text-blue-600" : "text-gray-500")}>
+                    Alternative layout
+                  </span>
+                </div>
+              </div>
+            </div>
+            
+            {/* Layout engine options */}
+            <div className="grid gap-2">
+              <Label className="text-gray-700 font-medium">Layout Engine</Label>
+              <Select
+                value={layoutEngine}
+                onValueChange={(value) => setLayoutEngine(value as 'auto' | 'elk' | 'dagre' | 'basic')}
+              >
+                <SelectTrigger className="w-full border-blue-200 focus:border-blue-400 focus:ring-blue-300/40 bg-white/70">
+                  <SelectValue placeholder="Select layout engine" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="auto">
+                    <div className="flex items-center gap-2">
+                      <Zap size={14} className="text-blue-600" />
+                      <div>
+                        <span className="font-medium">Auto (Recommended)</span>
+                      </div>
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="elk">
+                    <div className="flex items-center gap-2">
+                      <Settings size={14} className="text-purple-600" />
+                      <div>
+                        <span className="font-medium">ELK Engine</span>
+                      </div>
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="dagre">
+                    <div className="flex items-center gap-2">
+                      <Activity size={14} className="text-green-600" />
+                      <div>
+                        <span className="font-medium">Dagre Engine</span>
+                      </div>
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="basic">
+                    <div className="flex items-center gap-2">
+                      <LayoutGrid size={14} className="text-gray-600" />
+                      <div>
+                        <span className="font-medium">Basic Engine</span>
+                      </div>
+                    </div>
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+              
+              <p className="text-xs text-gray-500 mt-1">
+                {getEngineDescription(layoutEngine)}
+              </p>
+            </div>
+
+            {/* Performance monitoring checkbox */}
+            <div className="flex items-center gap-2">
+              <Checkbox
+                id="performance-monitoring"
+                checked={enablePerformanceMonitoring}
+                onCheckedChange={(checked) => setEnablePerformanceMonitoring(!!checked)}
+              />
+              <label
+                htmlFor="performance-monitoring"
+                className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+              >
+                Enable performance monitoring
+              </label>
+            </div>
+
+            {/* Layout statistics (if available) */}
+            {lastLayoutResult && (
+              <div className="bg-blue-50/50 border border-blue-100 rounded-md p-3">
+                <h4 className="text-sm font-medium text-blue-700 mb-2 flex items-center gap-1.5">
+                  <Clock size={14} />
+                  Last Layout Statistics
+                </h4>
+                <div className="grid grid-cols-2 gap-2 text-xs">
+                  <div className="flex items-center gap-1.5">
+                    <Badge variant="outline" className={getEngineColor(lastLayoutResult.engineUsed)}>
+                      {lastLayoutResult.engineUsed}
+                    </Badge>
+                    <span className="text-gray-600">Engine</span>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <span className="font-medium text-blue-700">{lastLayoutResult.executionTime.toFixed(0)}ms</span>
+                    <span className="text-gray-600">Execution Time</span>
+                  </div>
+                  {lastLayoutResult.qualityScore && (
+                    <>
+                      <div className="flex items-center gap-1.5">
+                        <span className={`font-medium ${getQualityColor(lastLayoutResult.qualityScore)}`}>
+                          {(lastLayoutResult.qualityScore * 100).toFixed(0)}%
+                        </span>
+                        <span className="text-gray-600">Quality Score</span>
+                      </div>
+                    </>
+                  )}
+                  {lastLayoutResult.complexityMetrics && (
+                    <div className="flex items-center gap-1.5">
+                      <span className="font-medium text-gray-700">
+                        {lastLayoutResult.complexityMetrics.nodeCount}n/{lastLayoutResult.complexityMetrics.edgeCount}e
+                      </span>
+                      <span className="text-gray-600">Nodes/Edges</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+          
+          <DialogFooter className="flex items-center justify-end gap-2 pt-2">
+            <Button 
+              variant="outline" 
+              onClick={() => setIsLayoutOptionsDialogOpen(false)}
+              className="border-gray-200 text-gray-600 hover:text-gray-600"
+            >
+              Cancel
+            </Button>
+            <Button 
+              onClick={handleApplyLayout}
+              disabled={isLayouting}
+              className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-500 hover:to-purple-600 text-white hover:text-white transition-all duration-200 flex items-center gap-2"
+            >
+              {isLayouting ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Applying Layout...
+                </>
+              ) : (
+                <>
+                  <RefreshCw className="h-4 w-4" />
+                  Apply Layout
+                </>
+              )}
             </Button>
           </DialogFooter>
         </DialogContent>

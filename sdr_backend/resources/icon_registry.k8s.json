@@ -1,0 +1,8 @@
+{
+  "ContainerPlatform:generic": { "icon": "logos:kubernetes", "color": "#326ce5" },
+  "Service:generic": { "icon": "logos:kubernetes", "color": "#326ce5" },
+  "Gateway:generic": { "icon": "logos:istio", "color": "#0f5fa8" },
+  "Monitoring:generic": { "icon": "logos:prometheus", "color": "#e6522c" },
+  "Logging:generic": { "icon": "logos:fluentd", "color": "#0e83cd" },
+  "Tracing:generic": { "icon": "logos:jaeger", "color": "#e77e23" }
+} 

@@ -21,7 +21,7 @@ import { useAuth } from '@/components/Auth/AuthContext';
 import tokenService from '@/services/tokenService';
 import projectService from '@/services/projectService';
 import { validateDiagramState } from '@/utils/diagramValidation';
-import { BASE_API_URL } from '@/services/apiService';
+import { BASE_API_URL, getIconTheme } from '@/services/apiService';
 import { DiagramStyleProvider } from '@/components/AI/contexts/DiagramStyleContext';
 import SketchFilters from '@/components/AI/styles/SketchFilters';
 import { resolveIcon } from '@/components/AI/utils/enhancedIconifyRegistry';
@@ -58,6 +58,7 @@ import {
   X
 } from 'lucide-react';
 import DiagramActions from '@/components/AI/DiagramActions';
+import { useDiagramWithAI } from '@/components/AI/hooks/useDiagramWithAI';
 
 // CRITICAL FIX: Enhanced edge processing function for proper edge loading and styling
 const processEdges = (edges: Edge[] = [], nodes: Node[] = []): Edge[] => {
@@ -134,13 +135,13 @@ const processEdges = (edges: Edge[] = [], nodes: Node[] = []): Edge[] => {
   return processedEdges;
 };
 
-// CRITICAL FIX: Enhanced node preparation with FORCED left-to-right layout transformation
+// CRITICAL FIX: Enhanced node preparation with FORCED left-to-right layout
 const prepareNodesForDiagram = (inputNodes: Node[], inputEdges: Edge[] = []): Node[] => {
   if (!inputNodes || !Array.isArray(inputNodes) || inputNodes.length === 0) {
     return [];
   }
 
-  console.log('🚀 V2: Preparing nodes with FORCED left-to-right layout, input nodes:', inputNodes.length);
+  console.log('V2: Preparing nodes with FORCED left-to-right layout, input nodes:', inputNodes.length);
   
   // Step 1: Clean and enhance nodes with icons
   const enhancedNodes = inputNodes.map((node, index) => {
@@ -176,8 +177,16 @@ const prepareNodesForDiagram = (inputNodes: Node[], inputEdges: Edge[] = []): No
     const nodeType = String(node.data?.nodeType || node.type || 'default');
     const provider = node.data?.provider ? String(node.data.provider) : undefined;
     
-    // Always resolve icon using enhanced registry for consistent diverse icons
-    const resolvedIconId = resolveIcon(nodeType, provider);
+    // Preserve the icon chosen by the back-end IR pipeline when it already
+    // exists.  Only fall back to the enhancedIconifyRegistry when the
+    // back-end left the field empty so we avoid showing identical default
+    // squares for every node.
+    const resolvedIconId = (node.data?.iconifyId as string | undefined) ?? resolveIcon(nodeType, provider);
+
+    // Extract layerIndex directly from node data
+    const layerIndex = node.data?.layerIndex !== undefined ? 
+      Number(node.data.layerIndex) : 
+      ((node.data as any)?.properties?.layerIndex !== undefined ? Number((node.data as any).properties.layerIndex) : undefined);
     
     return {
       ...node,
@@ -189,17 +198,37 @@ const prepareNodesForDiagram = (inputNodes: Node[], inputEdges: Edge[] = []): No
         label: cleanLabel,
         nodeType: nodeType,
         iconifyId: resolvedIconId,
+        layerIndex: layerIndex,
         validated: true,
         source: 'v2_enhanced'
       }
     } as Node;
   }).filter((node): node is Node => node !== null);
 
-  // Step 2: Force left-to-right layout transformation
+  // Step 2: Ensure nodes are properly sorted by layerIndex before layout
+  const sortedNodes = [...enhancedNodes].sort((a, b) => {
+    const aLayerIdx = a.data?.layerIndex !== undefined ? Number(a.data.layerIndex) : 999;
+    const bLayerIdx = b.data?.layerIndex !== undefined ? Number(b.data.layerIndex) : 999;
+    return aLayerIdx - bLayerIdx;
+  });
+
+  // Step 3: Force left-to-right layout transformation
   console.log('🎯 V2: Checking if layout transformation is needed...');
-  
-  // Always apply left-to-right transformation for consistent architecture visualization
-  const { nodes: transformedNodes } = transformToLeftRightLayout(enhancedNodes, inputEdges);
+
+  // Skip client-side relayout if:
+  // a) all nodes already have non-zero coords, OR
+  // b) majority carry a numeric layerIndex, OR
+  // c) backend emitted clusterGroup container nodes.
+  const hasClusterGroup = sortedNodes.some((n) => n.type === 'clusterGroup');
+
+  const hasBackendLayout =
+    hasClusterGroup ||
+    sortedNodes.every((n) => (n.position?.x ?? 0) !== 0 || (n.position?.y ?? 0) !== 0) ||
+    sortedNodes.filter((n) => Number.isFinite((n.data as any)?.layerIndex)).length >= sortedNodes.length / 2;
+
+  const { nodes: transformedNodes } = hasBackendLayout
+    ? { nodes: sortedNodes } // trust backend layout
+    : transformToLeftRightLayout(sortedNodes, inputEdges);
   
   console.log(`✅ V2: Layout transformation complete: ${transformedNodes.length} nodes positioned in left-to-right architecture`);
   
@@ -230,6 +259,9 @@ const ModelWithAI_V2: React.FC = () => {
 
   const [sessionId, setSessionId] = useState<string | undefined>();
   const [nodes, setNodes] = useState<Node<any>[]>([]);
+  // Toggle for lane containers visibility
+  const [showLayers, setShowLayers] = useState<boolean>(true);
+  const fullNodesRef = useRef<Node<any>[]>([]);
   const [edges, setEdges] = useState<Edge[]>([]);
   const [messages, setMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -459,6 +491,43 @@ const ModelWithAI_V2: React.FC = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Initial setup - fetch project data when needed
+  useEffect(() => {
+    const fetchProjectData = async () => {
+      try {
+        if (!projectId || projectId === 'default-project') {
+          return;
+        }
+
+        setIsLoading(true); // Use isLoading for project data fetching
+        
+        // Fetch project data and update state
+        const projectData = await projectService.loadProject(projectId);
+        
+        if (projectData) {
+          setProjectName(projectData.name || 'Untitled Project');
+          
+          if (projectData.diagram_state) {
+            setDiagramState(projectData.diagram_state);
+          }
+        } else {
+          console.warn('No project data found for ID:', projectId);
+        }
+      } catch (err) {
+        console.error('Error fetching project data:', err);
+        toast({
+          title: "Error",
+          description: "Failed to load project data",
+          variant: "destructive",
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchProjectData();
+  }, [projectId, toast]);
+
   // --------------------------------
   //  SAVE HANDLER
   // --------------------------------
@@ -638,6 +707,35 @@ const ModelWithAI_V2: React.FC = () => {
 
       if (resp.response.session_id) setSessionId(resp.response.session_id);
 
+      // Propagate available views to hook (robust path-safe).  Back-end may
+      // expose the list at *either* root level (older build) or inside the
+      // payload object (current spec).
+      const avRoot = (resp as any).available_views;
+      const avPayload = (resp.response as any)?.payload?.available_views;
+      const av = avPayload ?? avRoot;
+
+      if (Array.isArray(av) && av.length > 0) {
+        console.log('Backend supports multiple views:', av);
+        updateAvailableViews(av);
+
+        // prefetch themed icon registry once for colourful icons
+        if (!(window as any).__ICON_THEME_REGISTRY__) {
+          getIconTheme()
+            .then((reg) => {
+              (window as any).__ICON_THEME_REGISTRY__ = reg;
+            })
+            .catch(() => {});
+        }
+      } else {
+        console.log('No alternative views available from backend');
+      }
+      // if (resp.available_views && resp.available_views.length > 0) {
+      //   console.log("Backend supports multiple views:", resp.available_views);
+      //   updateAvailableViews(resp.available_views);
+      // } else {
+      //   console.log("No alternative views available from backend");
+      // }
+
       const r = resp.response;
       let assistantContent = r.message || '';
 
@@ -651,8 +749,13 @@ const ModelWithAI_V2: React.FC = () => {
         case IntentV2.DSL_UPDATE: {
           const dslRes = r as DSLResponse;
 
+          // capture diagram_id for future view switching
+          if (dslRes.payload?.diagram_id) {
+            updateDiagramId(dslRes.payload.diagram_id);
+          }
+
           // Guard against backend responses that may omit the payload when an
-          // error occurs or no diagram state was produced.  This prevents
+          // error occurs or no diagram state was produced. This prevents
           // "Cannot read properties of undefined (reading 'diagram_state')"
           if (dslRes.payload && dslRes.payload.diagram_state) {
             // replace placeholder with final assistant text immediately
@@ -678,23 +781,77 @@ const ModelWithAI_V2: React.FC = () => {
                 );
               }
 
-              // CRITICAL FIX: Apply enhanced node preparation with FORCED left-to-right layout
-              const enhancedNodes = prepareNodesForDiagram(state.nodes, state.edges);
-              const processedEdges = processEdges(state.edges, enhancedNodes);
-              const nodesWithFlags = addConnectionFlags(enhancedNodes, processedEdges);
-              
-              console.log(`✅ V2: Enhanced ${enhancedNodes.length} nodes with beautiful left-to-right architecture layout`);
-              console.log(`✅ V2: Processed ${processedEdges.length} edges for clear data flow`);
+              // If the back-end already returned a fully laid-out graph with layerGroup
+              // bounding boxes we keep that exact layout to avoid double-processing.
+              const backendHasLayoutGroups = state.nodes?.some(
+                (n: any) => n.type === 'layerGroup'
+              );
 
-              // Set enhanced nodes and processed edges
-              setNodes(nodesWithFlags);
-              setEdges(processedEdges);
+              if (backendHasLayoutGroups) {
+                console.log(
+                  '✅ Back-end provided layout & layerGroup nodes – skipping client re-layout'
+                );
+                setNodes(state.nodes as any);
+                setEdges(state.edges as any);
+              } else {
+                // Apply enhanced node preparation with FORCED left-to-right layout
+                const enhancedNodes = prepareNodesForDiagram(state.nodes, state.edges);
+                const processedEdges = processEdges(state.edges, enhancedNodes);
+                const nodesWithFlags = addConnectionFlags(enhancedNodes, processedEdges);
+
+                console.log(
+                  `✅ V2: Enhanced ${enhancedNodes.length} nodes with beautiful left-to-right architecture layout`
+                );
+                console.log(
+                  `✅ V2: Processed ${processedEdges.length} edges for clear data flow`
+                );
+
+                // Set enhanced nodes and processed edges first
+                setNodes(nodesWithFlags);
+                setEdges(processedEdges);
+                
+                // AUTOMATICALLY APPLY LAYER LAYOUT for better organization
+                setTimeout(async () => {
+                  try {
+                    // Import the layer layout utility dynamically
+                    const { applyLayerLayout } = await import('@/components/AI/utils/irToReactflow');
+                    
+                    console.log('🔄 V2: Automatically applying layer layout...');
+                    // Use LR direction (left to right) for clean horizontal layout
+                    const result = await applyLayerLayout(nodesWithFlags, processedEdges, 'LR');
+                    
+                    // Save the full nodes state (including layer nodes)
+                    fullNodesRef.current = result.nodes;
+                    
+                    // Update nodes and edges with layered structure
+                    setNodes(result.nodes);
+                    setEdges(result.edges);
+                    setShowLayers(true);
+                    
+                    console.log('✅ V2: Automatic layer layout applied successfully!');
+                    
+                    // Wait a moment, then fit view
+                    setTimeout(() => {
+                      if (reactFlowInstanceRef.current) {
+                        reactFlowInstanceRef.current.fitView({ padding: 0.2, includeHiddenNodes: false });
+                      }
+                    }, 300);
+                    
+                  } catch (error) {
+                    console.error('Error applying automatic layer layout:', error);
+                    // If layer layout fails, fall back to basic layout
+                    if (reactFlowInstanceRef.current) {
+                      reactFlowInstanceRef.current.fitView({ padding: 0.2 });
+                    }
+                  }
+                }, 300);
+              }
               
               // REMOVED: Automatic fitView - left-to-right layout is already optimally positioned
-
-              // heavy work scheduled, return
-              assistantContent = undefined;
             }, 0);
+            
+            // heavy work scheduled, return
+            assistantContent = undefined;
           } else {
             // Fallback – still acknowledge the action so the user gets feedback
             console.warn('DSL response is missing payload', dslRes);
@@ -881,17 +1038,31 @@ const ModelWithAI_V2: React.FC = () => {
       }
     };
 
+    // Connect on mount
     connect();
-
+    
+    // Clean up on unmount
     return () => {
-      // Abort any outstanding fetch when component unmounts
-      requestCtrlRef.current?.abort();
-      wsRef.current?.close();
-      wsRef.current = null;
-      heartbeat && clearInterval(heartbeat);
-      retryTimeout && clearTimeout(retryTimeout);
+      // Close WebSocket if exists
+      if (wsRef.current) {
+        try {
+          wsRef.current.close();
+        } catch (e) {
+          console.error('Error closing WebSocket:', e);
+        }
+        wsRef.current = null;
+      }
+      
+      // Clear any pending heartbeats or reconnect timers
+      if (heartbeat) {
+        clearInterval(heartbeat);
+      }
+      
+      if (retryTimeout) {
+        clearTimeout(retryTimeout);
+      }
     };
-  }, [user?.id]);
+  }, [user?.id, projectId, sessionId, toast]);
 
   // Modern action handlers
   const handleZoomIn = () => {
@@ -1140,6 +1311,72 @@ const ModelWithAI_V2: React.FC = () => {
     setIsProjectNameVisible(prev => !prev);
   };
 
+  const {
+    availableViews,
+    activeView,
+    switchView,
+    updateAvailableViews,
+    updateDiagramId,
+  } = useDiagramWithAI([], [], null, null, projectId);
+
+  // ---------------- Layer functionality ----------------
+  const toggleLaneContainers = () => {
+    if (showLayers) {
+      // Hide lanes
+      setNodes(prev => prev.filter(n => n.type !== 'layerGroup'));
+      setShowLayers(false);
+    } else {
+      // Show lanes – restore from last full snapshot
+      if (fullNodesRef.current.length > 0) {
+        setNodes(fullNodesRef.current);
+      }
+      setShowLayers(true);
+    }
+  };
+  
+  // State for layer layout
+  const [isApplyingLayerLayout, setIsApplyingLayerLayout] = useState(false);
+  
+  // Apply layer layout using the applyLayerLayout function from irToReactflow.ts
+  const handleApplyLayerLayout = async () => {
+    if (!nodes.length || isApplyingLayerLayout) return;
+    
+    setIsApplyingLayerLayout(true);
+    try {
+      // Import the applyLayerLayout function
+      const { applyLayerLayout } = await import('@/components/AI/utils/irToReactflow');
+      
+      // Use LR direction (left to right) for clean horizontal layout
+      const result = await applyLayerLayout(nodes, edges, 'LR');
+      
+      // Update nodes and edges
+      const enhancedNodes = prepareNodesForDiagram(result.nodes, result.edges);
+      const processedEdges = processEdges(result.edges, enhancedNodes);
+      
+      // Save the full nodes state (including layer nodes)
+      fullNodesRef.current = enhancedNodes;
+      
+      // Update state
+      setNodes(enhancedNodes);
+      setEdges(processedEdges);
+      setShowLayers(true);
+      
+      toast({
+        title: 'Layer Layout Applied',
+        description: 'Diagram has been organized into clear layers',
+      });
+    } catch (error) {
+      console.error('Error applying layer layout:', error);
+      toast({
+        title: 'Layout Failed',
+        description: 'Could not apply layer layout',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsApplyingLayerLayout(false);
+    }
+  };
+
   return (
     <ModelWithAILayout projectId={projectId}>
       <DiagramStyleProvider>
@@ -1256,7 +1493,7 @@ const ModelWithAI_V2: React.FC = () => {
             animate={{ opacity: 1 }} 
             transition={{ duration: 0.6, ease: 'easeOut' }}
             ref={diagramRef}
-            style={{ display: "flex", minHeight: "80vh" }}
+            style={{ display: isLayouting ? 'none' : 'flex', minHeight: '80vh' }}
           >
             <AIFlowDiagram
                 ref={aiDiagramRef}
@@ -1492,18 +1729,18 @@ const ModelWithAI_V2: React.FC = () => {
                 'flex justify-center items-center rounded-2xl'
               )}
             >
-              <DiagramActions
+              <DiagramActions 
                 viewMode="AD"
                 onSwitchView={handleSwitchView}
                 onZoomIn={handleZoomIn}
                 onZoomOut={handleZoomOut}
                 onFitView={handleFitView}
-                onGenerateReport={handleGenerateReport}
+                /* basic handlers omitted for now */
                 onComment={handleComment}
                 onToggleDataFlow={handleToggleDataFlow}
                 onToggleFlowchart={handleToggleFlowchart}
                 onSave={handleSave}
-                projectId={null} // Hide project ID in action bar
+                projectId={projectId}
                 diagramRef={diagramRef}
                 nodes={nodes}
                 edges={edges}
@@ -1514,7 +1751,17 @@ const ModelWithAI_V2: React.FC = () => {
                 onLayout={handleEnhancedLayout}
                 isLayouting={isLayouting}
                 lastLayoutResult={lastLayoutResult}
-                onCollapse={() => setIsToolbarCollapsed(true)}
+                onCollapse={() => setIsToolbarCollapsed(prev => !prev)}
+
+                onToggleLayers={toggleLaneContainers}
+                showLayers={showLayers}
+                onApplyLayerLayout={handleApplyLayerLayout}
+                isApplyingLayerLayout={isApplyingLayerLayout}
+
+                /* Backend view switcher */
+                availableBackendViews={availableViews}
+                activeBackendView={activeView}
+                onSwitchBackendView={switchView}
               />
             </div>
           </motion.div>

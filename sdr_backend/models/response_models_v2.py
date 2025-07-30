@@ -29,10 +29,18 @@ class NodeData(BaseModel):
     label: Annotated[str, Field(min_length=1, max_length=80)]
     nodeType: Annotated[str, Field(min_length=1, max_length=32)]
     iconifyId: Optional[Annotated[str, Field(min_length=3, max_length=40)]]
+    svgUrl: Optional[Annotated[str, Field(min_length=3, max_length=200)]]
     description: Optional[Annotated[str, Field(max_length=500)]]
     pinned: Optional[bool] = False
     validated: bool = True
     source: Literal["backend", "frontend_cleaned", "post_render_cleaned"]
+    # Optional enrichment metadata for richer UI rendering
+    provider: Optional[Annotated[str, Field(max_length=40)]] = None
+    technology: Optional[Annotated[str, Field(max_length=40)]] = None
+    color: Optional[Annotated[str, Field(max_length=10)]] = None
+    shape: Optional[Annotated[str, Field(max_length=20)]] = None
+    icon: Optional[Annotated[str, Field(max_length=40)]] = None
+    layerIndex: Optional[int] = None
 
 class RFNode(BaseModel):
     id: Annotated[str, Field(min_length=1, max_length=64)]
@@ -72,9 +80,12 @@ class BaseResponseV2(BaseModel):
 
 # – DSL mutation –
 class DSLResponsePayload(BaseModel):
+    diagram_id: Optional[int] = None
     version_id: int = Field(..., ge=1)
     diagram_state: DiagramState
     pinned_nodes: Optional[List[str]]
+    available_views: Optional[List[str]] = None
+    provider: Optional[str] = None  # Cloud provider: 'aws', 'azure', 'gcp', 'multi', or None
 
 
 class DSLResponse(BaseResponseV2):

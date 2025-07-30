@@ -1,15 +1,17 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { Node, Edge } from '@xyflow/react';
 import { CustomNodeData } from '../types/diagramTypes';
 import { diagramNodesState, diagramEdgesState } from '../diagramState';
 import { useNavigate } from 'react-router-dom';
+import { getDiagramView, getIconTheme } from '@/services/apiService';
 
 export function useDiagramWithAI(
-  externalNodes = [], 
-  externalEdges = [], 
-  onNodesChange = null, 
-  onEdgesChange = null
+  externalNodes: any[] = [],
+  externalEdges: any[] = [],
+  onNodesChange: any = null,
+  onEdgesChange: any = null,
+  projectId?: string | number,
 ) {
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -208,6 +210,95 @@ export function useDiagramWithAI(
     return '/generate-report';
   }, [nodes, edges]);
 
+  // ---------------------------------------------------------------------------
+  //  View switching (ReactFlow / D2 / C4 …)
+  // ---------------------------------------------------------------------------
+
+  const [availableViews, setAvailableViews] = useState<string[]>(['reactflow']);
+  const [activeView, setActiveView] = useState<string>('reactflow');
+
+  // keep the numeric diagram_id returned by BE so we can request other views
+  const diagramIdRef = useRef<number | undefined>(undefined);
+
+  const updateDiagramId = useCallback((id?: number) => {
+    if (id) {
+      diagramIdRef.current = id;
+    }
+  }, []);
+
+  /**
+   * Replace current diagram nodes / edges with the payload returned by the
+   * `/v2/design/view` endpoint.
+   */
+  const switchView = useCallback(
+    async (view: string) => {
+      if (view === activeView) return;
+      if (!projectId) {
+        console.warn('[useDiagramWithAI] switchView called without projectId');
+        return;
+      }
+
+      try {
+        const id = diagramIdRef.current;
+        if (id === undefined) {
+          console.warn('[useDiagramWithAI] No diagram_id known – cannot switch view');
+          return;
+        }
+
+        const payload = await getDiagramView(id.toString(), view);
+
+        if (typeof payload === 'string') {
+          // Open the raw view in a new tab for now – avoids console warnings and
+          // gives the user immediate access to the text.
+          const blob = new Blob([payload], { type: 'text/plain' });
+          const url = URL.createObjectURL(blob);
+          window.open(url, '_blank');
+          setActiveView(view);
+          return;
+        }
+
+        // Existing object handling
+        if (Array.isArray(payload.nodes) && Array.isArray(payload.edges)) {
+          setNodes(payload.nodes as any);
+          setEdges(payload.edges as any);
+          setActiveView(view);
+        } else {
+          console.error('Invalid view payload', payload);
+        }
+
+        // Lazy-load icon theme on first non-default view (or first ever)
+        if (view !== 'reactflow' && availableViews.includes('reactflow')) {
+          try {
+            const registry = await getIconTheme();
+            (window as any).__ICON_THEME_REGISTRY__ = registry; // simple global cache
+            // TODO: feed into enhancedIconifyRegistry if required
+          } catch (e) {
+            console.warn('Failed fetching icon theme', e);
+          }
+        }
+      } catch (e) {
+        console.error('Failed to switch view', e);
+      }
+    },
+    [activeView, projectId, availableViews, setNodes, setEdges],
+  );
+
+  // Expose setter so parent can update available views after initial generate
+  const updateAvailableViews = useCallback((views: string[]) => {
+    if (Array.isArray(views) && views.length > 0) {
+      setAvailableViews(views);
+    }
+  }, []);
+
+  // Re-render once global icon registry arrives so nodes repaint with correct icons
+  useEffect(() => {
+    const reg = (window as any).__ICON_THEME_REGISTRY__;
+    if (reg) {
+      // schedule microtask to update nodes shallow copy
+      setNodes((prev) => [...prev]);
+    }
+  }, [(window as any).__ICON_THEME_REGISTRY__]);
+
   return {
     nodes,
     edges,
@@ -224,6 +315,13 @@ export function useDiagramWithAI(
     handleComment,
     handleSave,
     handleAddNode,
-    handleGenerateReport
+    handleGenerateReport,
+
+    // View switching
+    availableViews,
+    activeView,
+    switchView,
+    updateAvailableViews,
+    updateDiagramId,
   };
 }

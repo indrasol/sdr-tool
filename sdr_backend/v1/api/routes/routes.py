@@ -49,10 +49,14 @@ from v1.api.routes.notifications import router as notifications_router
 
 # Design V2
 from v1.api.routes.model_with_ai.design_v2 import router as design_v2_router
+from v1.api.routes.model_with_ai.design_views import router as design_views_router
 
 # Dashboard
 from v1.api.routes.dashboard.metrics import router as dashboard_metrics_router
 from v1.api.routes.dashboard.reports import router as dashboard_reports_router
+
+# Telemetry - New
+from v1.api.routes.model_with_ai.telemetry import router as telemetry_router
 
 
 router = APIRouter()
@@ -98,7 +102,11 @@ router.include_router(notifications_router, tags=["Notifications - notifications
 
 # Design V2
 router.include_router(design_v2_router, tags=["model_with_ai - design_v2_router"])
+router.include_router(design_views_router, tags=["model_with_ai - design_views_router"])
 
 # Dashboard
 router.include_router(dashboard_metrics_router, tags=["Dashboard - metrics"])
 router.include_router(dashboard_reports_router, tags=["Dashboard - recent reports"])
+
+# Telemetry - Add new telemetry routes
+router.include_router(telemetry_router, prefix="/telemetry", tags=["Telemetry"])

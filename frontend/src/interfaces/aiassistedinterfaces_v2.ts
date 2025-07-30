@@ -16,9 +16,12 @@ export interface BaseResponseV2 {
 }
 
 export interface DSLResponsePayload {
+  diagram_id?: number;
   version_id: number;
   diagram_state: { nodes: any[]; edges: any[] };
   pinned_nodes?: string[];
+  available_views?: string[];
+  provider?: string; // Cloud provider: 'aws', 'azure', 'gcp', 'multi', or null
 }
 
 export interface DSLResponse extends BaseResponseV2 {
@@ -51,10 +54,21 @@ export type V2Response = DSLResponse | ExpertQAResponse | ViewToggleResponse | C
 
 export interface DesignServiceResponseV2 {
   response: V2Response;
+  /**
+   * List of diagram views the back-end can render for this project (e.g.
+   * ["reactflow", "d2", "c4ctx"]). Optional because older back-ends don’t
+   * include it yet.
+   */
+  available_views?: string[];
 }
 
 export interface DesignGenerateRequestV2 {
   project_id: string;
   query: string;
   session_id?: string;
+  conversation_history?: Array<{
+    role: 'user' | 'assistant';
+    content: string;
+    timestamp?: string;
+  }>;
 } 

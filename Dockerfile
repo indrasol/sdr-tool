@@ -69,6 +69,11 @@ RUN pip install --upgrade pip \
 COPY sdr_backend/ .
 
 # ---------------------------------------------------------------------------
+# Install elkjs for ELK layout runner (Node wrapper)
+# ---------------------------------------------------------------------------
+RUN npm install --omit=dev --prefix /app/sdr_backend/core/elk elkjs@0.10.0
+
+# ---------------------------------------------------------------------------
 # Non-root user (optional but recommended)
 # ---------------------------------------------------------------------------
 RUN useradd --create-home --shell /bin/bash app && chown -R app:app /app

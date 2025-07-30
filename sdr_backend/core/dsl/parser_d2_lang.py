@@ -19,172 +19,131 @@ from __future__ import annotations
 import json
 import os
 import subprocess
+from typing import Dict, Any, List
+import tempfile
 from pathlib import Path
-from typing import List
 
-from utils.logger import log_info, log_error
-from core.dsl.dsl_types import DSLDiagram, DSLNode, DSLEdge
+# ── logger import with fallback ───────────────────────────────
+try:
+    from sdr_backend.utils.logger import log_info, log_error  # preferred absolute import
+except ModuleNotFoundError:  # when project root not on PYTHONPATH
+    try:
+        from ..utils.logger import log_info, log_error  # type: ignore
+    except Exception:  # pragma: no cover – final fallback
+        def log_info(msg: str):
+            print(msg)
+        def log_error(msg: str):
+            print(msg)
 
-# Where is the binary?
-# Use the local binary in the tools directory
-PROJECT_ROOT = Path(__file__).parent.parent.parent  # Go up to sdr_backend root
-D2JSON_LOCAL_BIN = PROJECT_ROOT / "tools" / "cmd" / "d2json" / "d2json"
+from .dsl_types import DSLDiagram, DSLNode, DSLEdge
 
-# Fallback strategy: try local binary first, then PATH
-if D2JSON_LOCAL_BIN.exists() and os.access(D2JSON_LOCAL_BIN, os.X_OK):
-    D2JSON_BIN = str(D2JSON_LOCAL_BIN)
-    log_info(f"[d2lang] Using local d2json binary: {D2JSON_BIN}")
-else:
-    D2JSON_BIN = "d2json"  # Try system PATH
-    log_info(f"[d2lang] Local binary not found, using system PATH d2json")
-
-LAYOUT_ENGINE = "elk"            # "elk" for best quality; falls back internally
+# Default timeout for d2json process in seconds
+D2JSON_TIMEOUT = 15
 
 class D2LangParser:
-    """Full-grammar D2 → DSLDiagram using the official compiler + ELK."""
-
-    def parse(self, d2_text: str) -> DSLDiagram:
-        if not d2_text.strip():
-            raise ValueError("D2 source is empty")
-
-        log_info("[d2lang] compiling with d2json …")
-        try:
-            proc = subprocess.run(
-                [D2JSON_BIN, "--layout", LAYOUT_ENGINE],
-                input=d2_text.encode(),
-                check=True,
-                capture_output=True,
-                timeout=30  # 30 second timeout
-            )
-        except FileNotFoundError:
-            log_error(f"[d2lang] d2json binary not found at: {D2JSON_BIN}")
-            raise ValueError(f"D2 compiler not found. Please ensure d2json is installed or available at: {D2JSON_BIN}")
-        except subprocess.TimeoutExpired:
-            raise ValueError("D2 compilation timeout - diagram too complex")
-        except subprocess.CalledProcessError as e:
-            stderr = e.stderr.decode() if e.stderr else "Unknown error"
-            raise ValueError(f"D2 compilation failed: {stderr}")
-
-        try:
-            data = json.loads(proc.stdout)
-        except json.JSONDecodeError as e:
-            raise ValueError(f"Invalid JSON from d2json: {e}")
-
-        return self._to_dsl_diagram(data)
-
-    # ── helpers ──────────────────────────────────────────
-    @staticmethod
-    def _to_dsl_diagram(data: dict) -> DSLDiagram:
-        nodes: List[DSLNode] = []
-        edges: List[DSLEdge] = []
-
-        for n in data.get("nodes", []):
-            try:
-                # Validate required fields
-                if "id" not in n:
-                    raise ValueError("Node missing required 'id' field")
-                if "label" not in n:
-                    raise ValueError(f"Node {n['id']} missing required 'label' field")
-                
-                # Infer node type from node ID for better icon resolution
-                node_id = str(n["id"])
-                inferred_type = D2LangParser._infer_node_type(node_id)
-                
-                nodes.append(
-                    DSLNode(
-                        id=node_id,
-                        type=inferred_type,     # Use inferred type instead of hardcoded "generic"
-                        label=str(n["label"]),
-                        x=float(n.get("x", 0)),
-                        y=float(n.get("y", 0)),
-                        width=float(n.get("width", 60)),
-                        height=float(n.get("height", 36)),
-                        properties={}  # Keep empty for additional metadata
-                    )
-                )
-            except (ValueError, TypeError) as e:
-                raise ValueError(f"Invalid node data: {e}")
-
-        # Handle edges (might be null from d2json)
-        edges_data = data.get("edges")
-        if edges_data is not None:
-            for e in edges_data:
-                try:
-                    # Validate required fields
-                    if "Source" not in e:
-                        raise ValueError("Edge missing required 'Source' field")
-                    if "Target" not in e:
-                        raise ValueError("Edge missing required 'Target' field")
-                    
-                    edges.append(
-                        DSLEdge(
-                            id=f"{e['Source']}->{e['Target']}",
-                            source=str(e["Source"]),
-                            target=str(e["Target"]),
-                            label=str(e["Label"]) if e.get("Label") else None,
-                            properties={},
-                        )
-                    )
-                except (ValueError, TypeError) as e:
-                    raise ValueError(f"Invalid edge data: {e}")
-
-        log_info(f"[d2lang] parsed {len(nodes)} nodes / {len(edges)} edges")
-        return DSLDiagram(nodes=nodes, edges=edges)
+    """Parse D2 language source into internal DSLDiagram representation."""
     
-    @staticmethod
-    def _infer_node_type(node_id: str) -> str:
-        """
-        Intelligently infer node type from node ID for better icon resolution.
-        This maps node IDs to specific types that match our enhanced iconify registry.
-        """
-        node_lower = node_id.lower()
+    def __init__(self):
+        """Initialize the parser with paths to required tools."""
+        # Find d2json binary
+        self.d2json_path = self._find_d2json_binary()
+        log_info(f"D2 Parser initialized with d2json path: {self.d2json_path}")
+
+    def _find_d2json_binary(self) -> str:
+        """Find the d2json binary, searching in multiple locations."""
+        # Check if d2json is in PATH
+        try:
+            result = subprocess.run(["which", "d2json"], capture_output=True, text=True)
+            if result.returncode == 0:
+                path = result.stdout.strip()
+                log_info(f"Found d2json in PATH: {path}")
+                return path
+        except Exception:
+            pass  # Continue to other methods
         
-        # Direct mappings for specific node types
-        specific_mappings = {
-            'chat_service': 'chat_service',
-            'leaderboard': 'leaderboard', 
-            'analytics': 'analytics',
-            'user_auth': 'user_auth',
-            'payment_gateway': 'payment_gateway',
-            'monitoring': 'monitoring',
-            'encryption_service': 'encryption_service',
-            'secrets_manager': 'secrets_manager',
-            'audit_logs': 'audit_logs',
-            'message_queue': 'message_queue',
-            'matchmaking': 'matchmaking',
-            'realtime_engine': 'realtime_engine',
-            'game_server': 'game_server',
-            'game_client': 'game_client',
-        }
+        # Check in the project directory
+        base_dir = Path(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__)))))
+        possible_paths = [
+            base_dir / "tools" / "cmd" / "d2json" / "d2json",
+            base_dir / "sdr_backend" / "tools" / "cmd" / "d2json" / "d2json",
+            Path("/usr/local/bin/d2json"),
+            Path("/usr/bin/d2json"),
+        ]
         
-        # Check for direct matches first
-        if node_lower in specific_mappings:
-            return specific_mappings[node_lower]
+        for path in possible_paths:
+            if path.exists() and os.access(path, os.X_OK):
+                log_info(f"Found d2json at: {path}")
+                return str(path)
         
-        # Pattern-based inference for common cases
-        if any(term in node_lower for term in ['_db', 'database', 'data_store']):
-            return node_id  # Keep specific DB names like player_db, game_db
+        # If not found, raise clear error
+        log_error("d2json binary not found! Please install d2json or ensure it's in the project path.")
+        raise FileNotFoundError("d2json binary not found. Required for D2 language parsing.")
         
-        if any(term in node_lower for term in ['cache', 'redis', 'memcache']):
-            return node_id  # Keep specific cache names
+    def parse(self, d2_source: str) -> DSLDiagram:
+        """Parse D2 language source into structured DSLDiagram."""
+        log_info("Parsing D2 language source into DSLDiagram")
         
-        if any(term in node_lower for term in ['gateway', 'api', 'proxy']):
-            return node_id  # Keep gateway types
+        # Create a temporary file for the D2 source
+        with tempfile.NamedTemporaryFile(mode="w+", suffix=".d2", delete=False) as temp:
+            temp.write(d2_source)
+            temp_path = temp.name
+
+        try:
+            # Run d2json on the temp file WITH TIMEOUT
+            log_info(f"Running d2json on temporary file {temp_path} with {D2JSON_TIMEOUT}s timeout")
+            
+            # Add timeout to prevent hanging
+            result = subprocess.run(
+                [self.d2json_path, "-timeout", str(D2JSON_TIMEOUT), temp_path],
+                capture_output=True,
+                text=True,
+                check=True,
+                timeout=D2JSON_TIMEOUT + 2  # Give process a little extra time beyond the binary's own timeout
+            )
+            
+            # Parse the JSON output
+            d2_json = json.loads(result.stdout)
+            log_info(f"[d2lang] parsed {len(d2_json.get('nodes', []))} nodes / {len(d2_json.get('edges', []))} edges")
+            
+            return self._convert_to_dsl_diagram(d2_json)
+        except subprocess.TimeoutExpired:
+            log_error(f"d2json process timed out after {D2JSON_TIMEOUT} seconds")
+            raise ValueError(f"D2 parsing timed out: Process took longer than {D2JSON_TIMEOUT} seconds")
+        except subprocess.CalledProcessError as e:
+            log_error(f"Error running d2json: {e.stderr}")
+            raise ValueError(f"D2 parsing failed: {e.stderr}")
+        except json.JSONDecodeError as e:
+            log_error(f"Error parsing d2json output: {e}")
+            raise ValueError(f"Invalid JSON from d2json: {e}")
+        finally:
+            # Clean up the temp file
+            os.unlink(temp_path)
+    
+    def _convert_to_dsl_diagram(self, d2_json: Dict[str, Any]) -> DSLDiagram:
+        """Convert d2json output to DSLDiagram structure."""
+        # Extract nodes
+        nodes: List[DSLNode] = []
+        for node in d2_json.get("nodes", []):
+            nodes.append(DSLNode(
+                id=node["id"],
+                type="default",
+                label=node.get("label", node["id"]),
+                x=node.get("x", 0),
+                y=node.get("y", 0),
+                width=node.get("width", 100),
+                height=node.get("height", 50),
+                properties={}
+            ))
         
-        if any(term in node_lower for term in ['firewall', 'waf', 'security']):
-            return node_id  # Keep security component names
+        # Extract edges
+        edges: List[DSLEdge] = []
+        for edge in d2_json.get("edges", []):
+            edges.append(DSLEdge(
+                id=f"{edge['Source']}->{edge['Target']}",
+                source=edge["Source"],
+                target=edge["Target"],
+                label=edge.get("Label", ""),
+                properties={}
+            ))
         
-        if any(term in node_lower for term in ['load_balancer', 'lb', 'balancer']):
-            return 'load_balancer'
-        
-        if any(term in node_lower for term in ['cdn', 'content_delivery']):
-            return 'cdn'
-        
-        if any(term in node_lower for term in ['client', 'user', 'browser', 'mobile']):
-            return 'client'
-        
-        if node_lower.endswith('_service') or node_lower.endswith('service'):
-            return node_id  # Keep specific service names
-        
-        # Default to the node_id itself for maximum specificity
-        return node_id
+        return DSLDiagram(nodes=nodes, edges=edges)

@@ -1,0 +1,12 @@
+{
+  "BlobStore:generic": { "icon": "logos:google-cloud-storage", "color": "#4285f4" },
+  "Database:generic": { "icon": "logos:google-cloud-sql", "color": "#4285f4" },
+  "Queue:generic": { "icon": "logos:pubsub", "color": "#34a853" },
+  "Function:generic": { "icon": "logos:google-cloud-functions", "color": "#4285f4" },
+  "Monitoring:generic": { "icon": "logos:google-operations", "color": "#34a853" },
+  "Gateway:generic": { "icon": "logos:google-cloud-endpoints", "color": "#ea4335" },
+  "VectorStore:generic": { "icon": "logos:google-vertex-ai", "color": "#4285f4" },
+  "Search:generic": { "icon": "logos:google-cloud-search", "color": "#4285f4" },
+  "SecretStore:generic": { "icon": "logos:google-secret-manager", "color": "#ea4335" },
+  "ContainerPlatform:generic": { "icon": "logos:google-kubernetes-engine", "color": "#4285f4" }
+} 
