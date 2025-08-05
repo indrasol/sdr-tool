@@ -90,7 +90,8 @@ const SmartIcon: React.FC<SmartIconProps> = ({
   const [iconLoadError, setIconLoadError] = React.useState(false);
 
   // Ensure the svgUrl can actually be rendered in an <img>
-  const renderableSvgUrl = React.useMemo(() => toRenderableSupabaseUrl(svgUrl), [svgUrl]);
+  // const renderableSvgUrl = React.useMemo(() => toRenderableSupabaseUrl(svgUrl), [svgUrl]);
+  const renderableSvgUrl = svgUrl;
 
   // Resolve the icon using the enhanced registry
   const resolvedIcon = React.useMemo(() => {
