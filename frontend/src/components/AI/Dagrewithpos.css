@@ -1,0 +1,13 @@
+/* Force all edge lines (smoothstep paths) to pure black */
+.react-flow .react-flow__edge-path {
+    stroke: #444 !important;
+    stroke-width: 4 !important;
+    opacity: 1 !important;
+    fill: none !important;
+  }
+ 
+  /* Force all edge arrow markers to pure black */
+  .react-flow .react-flow__edge-marker path {
+    fill: #444 !important;
+    stroke: #444 !important;
+  }
