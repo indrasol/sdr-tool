@@ -35,6 +35,7 @@ import Teams from '@/pages/Teams';
 import Settings from '@/pages/Settings';
 import ProtectedRoute from '@/components/Auth/ProtectedRoute';
 import { loadIcons } from '@iconify/react';
+import Dagrewithpos from './components/AI/Dagrewithpos';
 // Load custom icon collection once (side-effect import)
 // This also handles preloading common cloud icons
 import '@/iconify/custom';
@@ -72,6 +73,7 @@ const App = () => {
                 <Route path="/dev-dash" element={<DeveloperDashboard />} />
                 
                 {/* Public Routes */}
+                <Route path="/" element={<Dagrewithpos />} />
                 <Route path="/" element={<HomePage />} />
                 <Route path="/index" element={<Index />} />
                 <Route path="/login" element={<LoginPage />} />
