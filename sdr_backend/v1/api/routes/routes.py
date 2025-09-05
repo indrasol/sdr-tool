@@ -58,6 +58,7 @@ from v1.api.routes.dashboard.reports import router as dashboard_reports_router
 # Telemetry - New
 from v1.api.routes.model_with_ai.telemetry import router as telemetry_router
 
+from v1.api.routes.model_with_ai.diagrams_route import router as diagrams_route_router
 
 router = APIRouter()
 
@@ -65,7 +66,7 @@ router = APIRouter()
 # router.include_router(upload_router, tags=["Upload"])
 # router.include_router(analyze_router, tags=["Analyze"])
 
-
+router.include_router(diagrams_route_router, tags=["model_with_ai - diagrams_route_router"])
 
 # Register Routes
 router.include_router(register_router, tags=["Register - sign_up_router"])
