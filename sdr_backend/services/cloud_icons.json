@@ -1,0 +1,2268 @@
+{
+    "alibabacloud": {
+        "analytics": {
+            "AnalyticDb": "analytic-db",
+            "ClickHouse": "click-house",
+            "DataLakeAnalytics": "data-lake-analytics",
+            "ElaticMapReduce": "elatic-map-reduce",
+            "OpenSearch": "open-search"
+        },
+        "application": {
+            "ApiGateway": "api-gateway",
+            "BeeBot": "bee-bot",
+            "BlockchainAsAService": "blockchain-as-a-service",
+            "CloudCallCenter": "cloud-call-center",
+            "CodePipeline": "code-pipeline",
+            "DirectMail": "direct-mail",
+            "LogService": "log-service",
+            "MessageNotificationService": "message-notification-service",
+            "NodeJsPerformancePlatform": "node-js-performance-platform",
+            "OpenSearch": "open-search",
+            "PerformanceTestingService": "performance-testing-service",
+            "RdCloud": "rd-cloud",
+            "SmartConversationAnalysis": "smart-conversation-analysis",
+            "Yida": "yida"
+        },
+        "communication": {
+            "DirectMail": "direct-mail",
+            "MobilePush": "mobile-push"
+        },
+        "compute": {
+            "AutoScaling": "auto-scaling",
+            "BatchCompute": "batch-compute",
+            "ContainerRegistry": "container-registry",
+            "ContainerService": "container-service",
+            "ElasticComputeService": "elastic-compute-service",
+            "ElasticContainerInstance": "elastic-container-instance",
+            "ElasticHighPerformanceComputing": "elastic-high-performance-computing",
+            "ElasticSearch": "elastic-search",
+            "FunctionCompute": "function-compute",
+            "OperationOrchestrationService": "operation-orchestration-service",
+            "ResourceOrchestrationService": "resource-orchestration-service",
+            "ServerLoadBalancer": "server-load-balancer",
+            "ServerlessAppEngine": "serverless-app-engine",
+            "SimpleApplicationServer": "simple-application-server",
+            "WebAppService": "web-app-service"
+        },
+        "database": {
+            "ApsaradbCassandra": "apsaradb-cassandra",
+            "ApsaradbHbase": "apsaradb-hbase",
+            "ApsaradbMemcache": "apsaradb-memcache",
+            "ApsaradbMongodb": "apsaradb-mongodb",
+            "ApsaradbOceanbase": "apsaradb-oceanbase",
+            "ApsaradbPolardb": "apsaradb-polardb",
+            "ApsaradbPostgresql": "apsaradb-postgresql",
+            "ApsaradbPpas": "apsaradb-ppas",
+            "ApsaradbRedis": "apsaradb-redis",
+            "ApsaradbSqlserver": "apsaradb-sqlserver",
+            "DataManagementService": "data-management-service",
+            "DataTransmissionService": "data-transmission-service",
+            "DatabaseBackupService": "database-backup-service",
+            "DisributeRelationalDatabaseService": "disribute-relational-database-service",
+            "GraphDatabaseService": "graph-database-service",
+            "HybriddbForMysql": "hybriddb-for-mysql",
+            "RelationalDatabaseService": "relational-database-service"
+        },
+        "iot": {
+            "IotInternetDeviceId": "iot-internet-device-id",
+            "IotLinkWan": "iot-link-wan",
+            "IotMobileConnectionPackage": "iot-mobile-connection-package",
+            "IotPlatform": "iot-platform"
+        },
+        "network": {
+            "Cdn": "cdn",
+            "CloudEnterpriseNetwork": "cloud-enterprise-network",
+            "ElasticIpAddress": "elastic-ip-address",
+            "ExpressConnect": "express-connect",
+            "NatGateway": "nat-gateway",
+            "ServerLoadBalancer": "server-load-balancer",
+            "SmartAccessGateway": "smart-access-gateway",
+            "VirtualPrivateCloud": "virtual-private-cloud",
+            "VpnGateway": "vpn-gateway"
+        },
+        "security": {
+            "AntiBotService": "anti-bot-service",
+            "AntiDdosBasic": "anti-ddos-basic",
+            "AntiDdosPro": "anti-ddos-pro",
+            "AntifraudService": "antifraud-service",
+            "BastionHost": "bastion-host",
+            "CloudFirewall": "cloud-firewall",
+            "CloudSecurityScanner": "cloud-security-scanner",
+            "ContentModeration": "content-moderation",
+            "CrowdsourcedSecurityTesting": "crowdsourced-security-testing",
+            "DataEncryptionService": "data-encryption-service",
+            "DbAudit": "db-audit",
+            "GameShield": "game-shield",
+            "IdVerification": "id-verification",
+            "ManagedSecurityService": "managed-security-service",
+            "SecurityCenter": "security-center",
+            "ServerGuard": "server-guard",
+            "SslCertificates": "ssl-certificates",
+            "WebApplicationFirewall": "web-application-firewall"
+        },
+        "storage": {
+            "CloudStorageGateway": "cloud-storage-gateway",
+            "FileStorageHdfs": "file-storage-hdfs",
+            "FileStorageNas": "file-storage-nas",
+            "HybridBackupRecovery": "hybrid-backup-recovery",
+            "HybridCloudDisasterRecovery": "hybrid-cloud-disaster-recovery",
+            "Imm": "imm",
+            "ObjectStorageService": "object-storage-service",
+            "ObjectTableStore": "object-table-store"
+        },
+        "web": {
+            "Dns": "dns",
+            "Domain": "domain"
+        }
+    },
+    "aws": {
+        "analytics": {
+            "AmazonOpensearchService": "amazon-opensearch-service",
+            "Analytics": "analytics",
+            "Athena": "athena",
+            "CloudsearchSearchDocuments": "cloudsearch-search-documents",
+            "Cloudsearch": "cloudsearch",
+            "DataLakeResource": "data-lake-resource",
+            "DataPipeline": "data-pipeline",
+            "ElasticsearchService": "elasticsearch-service",
+            "EMRCluster": "emr-cluster",
+            "EMREngineMaprM3": "emr-engine-mapr-m3",
+            "EMREngineMaprM5": "emr-engine-mapr-m5",
+            "EMREngineMaprM7": "emr-engine-mapr-m7",
+            "EMREngine": "emr-engine",
+            "EMRHdfsCluster": "emr-hdfs-cluster",
+            "EMR": "emr",
+            "GlueCrawlers": "glue-crawlers",
+            "GlueDataCatalog": "glue-data-catalog",
+            "Glue": "glue",
+            "KinesisDataAnalytics": "kinesis-data-analytics",
+            "KinesisDataFirehose": "kinesis-data-firehose",
+            "KinesisDataStreams": "kinesis-data-streams",
+            "KinesisVideoStreams": "kinesis-video-streams",
+            "Kinesis": "kinesis",
+            "LakeFormation": "lake-formation",
+            "ManagedStreamingForKafka": "managed-streaming-for-kafka",
+            "Quicksight": "quicksight",
+            "RedshiftDenseComputeNode": "redshift-dense-compute-node",
+            "RedshiftDenseStorageNode": "redshift-dense-storage-node",
+            "Redshift": "redshift"
+        },
+        "ar": {
+            "ArVr": "ar-vr",
+            "Sumerian": "sumerian"
+        },
+        "blockchain": {
+            "BlockchainResource": "blockchain-resource",
+            "Blockchain": "blockchain",
+            "ManagedBlockchain": "managed-blockchain",
+            "QuantumLedgerDatabaseQldb": "quantum-ledger-database-qldb"
+        },
+        "business": {
+            "AlexaForBusiness": "alexa-for-business",
+            "BusinessApplications": "business-applications",
+            "Chime": "chime",
+            "Workmail": "workmail"
+        },
+        "compute": {
+            "AppRunner": "app-runner",
+            "ApplicationAutoScaling": "application-auto-scaling",
+            "Batch": "batch",
+            "ComputeOptimizer": "compute-optimizer",
+            "Compute": "compute",
+            "EC2Ami": "ec2-ami",
+            "EC2AutoScaling": "ec2-auto-scaling",
+            "EC2ContainerRegistryImage": "ec2-container-registry-image",
+            "EC2ContainerRegistryRegistry": "ec2-container-registry-registry",
+            "EC2ContainerRegistry": "ec2-container-registry",
+            "EC2ElasticIpAddress": "ec2-elastic-ip-address",
+            "EC2ImageBuilder": "ec2-image-builder",
+            "EC2Instance": "ec2-instance",
+            "EC2Instances": "ec2-instances",
+            "EC2Rescue": "ec2-rescue",
+            "EC2SpotInstance": "ec2-spot-instance",
+            "EC2": "ec2",
+            "ElasticBeanstalkApplication": "elastic-beanstalk-application",
+            "ElasticBeanstalkDeployment": "elastic-beanstalk-deployment",
+            "ElasticBeanstalk": "elastic-beanstalk",
+            "ElasticContainerServiceContainer": "elastic-container-service-container",
+            "ElasticContainerServiceServiceConnect": "elastic-container-service-service-connect",
+            "ElasticContainerServiceService": "elastic-container-service-service",
+            "ElasticContainerServiceTask": "elastic-container-service-task",
+            "ElasticContainerService": "elastic-container-service",
+            "ElasticKubernetesService": "elastic-kubernetes-service",
+            "Fargate": "fargate",
+            "LambdaFunction": "lambda-function",
+            "Lambda": "lambda",
+            "Lightsail": "lightsail",
+            "LocalZones": "local-zones",
+            "Outposts": "outposts",
+            "ServerlessApplicationRepository": "serverless-application-repository",
+            "ThinkboxDeadline": "thinkbox-deadline",
+            "ThinkboxDraft": "thinkbox-draft",
+            "ThinkboxFrost": "thinkbox-frost",
+            "ThinkboxKrakatoa": "thinkbox-krakatoa",
+            "ThinkboxSequoia": "thinkbox-sequoia",
+            "ThinkboxStoke": "thinkbox-stoke",
+            "ThinkboxXmesh": "thinkbox-xmesh",
+            "VmwareCloudOnAWS": "vmware-cloud-on-aws",
+            "Wavelength": "wavelength"
+        },
+        "cost": {
+            "Budgets": "budgets",
+            "CostAndUsageReport": "cost-and-usage-report",
+            "CostExplorer": "cost-explorer",
+            "CostManagement": "cost-management",
+            "ReservedInstanceReporting": "reserved-instance-reporting",
+            "SavingsPlans": "savings-plans"
+        },
+        "database": {
+            "AuroraInstance": "aurora-instance",
+            "Aurora": "aurora",
+            "DatabaseMigrationServiceDatabaseMigrationWorkflow": "database-migration-service-database-migration-workflow",
+            "DatabaseMigrationService": "database-migration-service",
+            "Database": "database",
+            "DocumentdbMongodbCompatibility": "documentdb-mongodb-compatibility",
+            "DynamodbAttribute": "dynamodb-attribute",
+            "DynamodbAttributes": "dynamodb-attributes",
+            "DynamodbDax": "dynamodb-dax",
+            "DynamodbGlobalSecondaryIndex": "dynamodb-global-secondary-index",
+            "DynamodbItem": "dynamodb-item",
+            "DynamodbItems": "dynamodb-items",
+            "DynamodbStreams": "dynamodb-streams",
+            "DynamodbTable": "dynamodb-table",
+            "Dynamodb": "dynamodb",
+            "ElasticacheCacheNode": "elasticache-cache-node",
+            "ElasticacheForMemcached": "elasticache-for-memcached",
+            "ElasticacheForRedis": "elasticache-for-redis",
+            "Elasticache": "elasticache",
+            "KeyspacesManagedApacheCassandraService": "keyspaces-managed-apache-cassandra-service",
+            "Neptune": "neptune",
+            "QuantumLedgerDatabaseQldb": "quantum-ledger-database-qldb",
+            "RDSInstance": "rds-instance",
+            "RDSMariadbInstance": "rds-mariadb-instance",
+            "RDSMysqlInstance": "rds-mysql-instance",
+            "RDSOnVmware": "rds-on-vmware",
+            "RDSOracleInstance": "rds-oracle-instance",
+            "RDSPostgresqlInstance": "rds-postgresql-instance",
+            "RDSSqlServerInstance": "rds-sql-server-instance",
+            "RDS": "rds",
+            "RedshiftDenseComputeNode": "redshift-dense-compute-node",
+            "RedshiftDenseStorageNode": "redshift-dense-storage-node",
+            "Redshift": "redshift",
+            "Timestream": "timestream"
+        },
+        "devtools": {
+            "CloudDevelopmentKit": "cloud-development-kit",
+            "Cloud9Resource": "cloud9-resource",
+            "Cloud9": "cloud9",
+            "Cloudshell": "cloudshell",
+            "Codeartifact": "codeartifact",
+            "Codebuild": "codebuild",
+            "Codecommit": "codecommit",
+            "Codedeploy": "codedeploy",
+            "Codepipeline": "codepipeline",
+            "Codestar": "codestar",
+            "CommandLineInterface": "command-line-interface",
+            "DeveloperTools": "developer-tools",
+            "ToolsAndSdks": "tools-and-sdks",
+            "XRay": "x-ray"
+        },
+        "enablement": {
+            "CustomerEnablement": "customer-enablement",
+            "Iq": "iq",
+            "ManagedServices": "managed-services",
+            "ProfessionalServices": "professional-services",
+            "Support": "support"
+        },
+        "enduser": {
+            "Appstream20": "appstream-2-0",
+            "DesktopAndAppStreaming": "desktop-and-app-streaming",
+            "Workdocs": "workdocs",
+            "Worklink": "worklink",
+            "Workspaces": "workspaces"
+        },
+        "engagement": {
+            "Connect": "connect",
+            "CustomerEngagement": "customer-engagement",
+            "Pinpoint": "pinpoint",
+            "SimpleEmailServiceSesEmail": "simple-email-service-ses-email",
+            "SimpleEmailServiceSes": "simple-email-service-ses"
+        },
+        "game": {
+            "GameTech": "game-tech",
+            "Gamelift": "gamelift"
+        },
+        "general": {
+            "Client": "client",
+            "Disk": "disk",
+            "Forums": "forums",
+            "General": "general",
+            "GenericDatabase": "generic-database",
+            "GenericFirewall": "generic-firewall",
+            "GenericOfficeBuilding": "generic-office-building",
+            "GenericSamlToken": "generic-saml-token",
+            "GenericSDK": "generic-sdk",
+            "InternetAlt1": "internet-alt1",
+            "InternetAlt2": "internet-alt2",
+            "InternetGateway": "internet-gateway",
+            "Marketplace": "marketplace",
+            "MobileClient": "mobile-client",
+            "Multimedia": "multimedia",
+            "OfficeBuilding": "office-building",
+            "SamlToken": "saml-token",
+            "SDK": "sdk",
+            "SslPadlock": "ssl-padlock",
+            "TapeStorage": "tape-storage",
+            "Toolkit": "toolkit",
+            "TraditionalServer": "traditional-server",
+            "User": "user",
+            "Users": "users"
+        },
+        "integration": {
+            "ApplicationIntegration": "application-integration",
+            "Appsync": "appsync",
+            "ConsoleMobileApplication": "console-mobile-application",
+            "EventResource": "event-resource",
+            "EventbridgeCustomEventBusResource": "eventbridge-custom-event-bus-resource",
+            "EventbridgeDefaultEventBusResource": "eventbridge-default-event-bus-resource",
+            "EventbridgeEvent": "eventbridge-event",
+            "EventbridgePipes": "eventbridge-pipes",
+            "EventbridgeRule": "eventbridge-rule",
+            "EventbridgeSaasPartnerEventBusResource": "eventbridge-saas-partner-event-bus-resource",
+            "EventbridgeScheduler": "eventbridge-scheduler",
+            "EventbridgeSchema": "eventbridge-schema",
+            "Eventbridge": "eventbridge",
+            "ExpressWorkflows": "express-workflows",
+            "MQ": "mq",
+            "SimpleNotificationServiceSnsEmailNotification": "simple-notification-service-sns-email-notification",
+            "SimpleNotificationServiceSnsHttpNotification": "simple-notification-service-sns-http-notification",
+            "SimpleNotificationServiceSnsTopic": "simple-notification-service-sns-topic",
+            "SimpleNotificationServiceSns": "simple-notification-service-sns",
+            "SimpleQueueServiceSqsMessage": "simple-queue-service-sqs-message",
+            "SimpleQueueServiceSqsQueue": "simple-queue-service-sqs-queue",
+            "SimpleQueueServiceSqs": "simple-queue-service-sqs",
+            "StepFunctions": "step-functions"
+        },
+        "iot": {
+            "Freertos": "freertos",
+            "InternetOfThings": "internet-of-things",
+            "Iot1Click": "iot-1-click",
+            "IotAction": "iot-action",
+            "IotActuator": "iot-actuator",
+            "IotAlexaEcho": "iot-alexa-echo",
+            "IotAlexaEnabledDevice": "iot-alexa-enabled-device",
+            "IotAlexaSkill": "iot-alexa-skill",
+            "IotAlexaVoiceService": "iot-alexa-voice-service",
+            "IotAnalyticsChannel": "iot-analytics-channel",
+            "IotAnalyticsDataSet": "iot-analytics-data-set",
+            "IotAnalyticsDataStore": "iot-analytics-data-store",
+            "IotAnalyticsNotebook": "iot-analytics-notebook",
+            "IotAnalyticsPipeline": "iot-analytics-pipeline",
+            "IotAnalytics": "iot-analytics",
+            "IotBank": "iot-bank",
+            "IotBicycle": "iot-bicycle",
+            "IotButton": "iot-button",
+            "IotCamera": "iot-camera",
+            "IotCar": "iot-car",
+            "IotCart": "iot-cart",
+            "IotCertificate": "iot-certificate",
+            "IotCoffeePot": "iot-coffee-pot",
+            "IotCore": "iot-core",
+            "IotDesiredState": "iot-desired-state",
+            "IotDeviceDefender": "iot-device-defender",
+            "IotDeviceGateway": "iot-device-gateway",
+            "IotDeviceManagement": "iot-device-management",
+            "IotDoorLock": "iot-door-lock",
+            "IotEvents": "iot-events",
+            "IotFactory": "iot-factory",
+            "IotFireTvStick": "iot-fire-tv-stick",
+            "IotFireTv": "iot-fire-tv",
+            "IotGeneric": "iot-generic",
+            "IotGreengrassConnector": "iot-greengrass-connector",
+            "IotGreengrass": "iot-greengrass",
+            "IotHardwareBoard": "iot-hardware-board",
+            "IotHouse": "iot-house",
+            "IotHttp": "iot-http",
+            "IotHttp2": "iot-http2",
+            "IotJobs": "iot-jobs",
+            "IotLambda": "iot-lambda",
+            "IotLightbulb": "iot-lightbulb",
+            "IotMedicalEmergency": "iot-medical-emergency",
+            "IotMqtt": "iot-mqtt",
+            "IotOverTheAirUpdate": "iot-over-the-air-update",
+            "IotPolicyEmergency": "iot-policy-emergency",
+            "IotPolicy": "iot-policy",
+            "IotReportedState": "iot-reported-state",
+            "IotRule": "iot-rule",
+            "IotSensor": "iot-sensor",
+            "IotServo": "iot-servo",
+            "IotShadow": "iot-shadow",
+            "IotSimulator": "iot-simulator",
+            "IotSitewise": "iot-sitewise",
+            "IotThermostat": "iot-thermostat",
+            "IotThingsGraph": "iot-things-graph",
+            "IotTopic": "iot-topic",
+            "IotTravel": "iot-travel",
+            "IotUtility": "iot-utility",
+            "IotWindfarm": "iot-windfarm"
+        },
+        "management": {
+            "AmazonDevopsGuru": "amazon-devops-guru",
+            "AmazonManagedGrafana": "amazon-managed-grafana",
+            "AmazonManagedPrometheus": "amazon-managed-prometheus",
+            "AmazonManagedWorkflowsApacheAirflow": "amazon-managed-workflows-apache-airflow",
+            "AutoScaling": "auto-scaling",
+            "Chatbot": "chatbot",
+            "CloudformationChangeSet": "cloudformation-change-set",
+            "CloudformationStack": "cloudformation-stack",
+            "CloudformationTemplate": "cloudformation-template",
+            "Cloudformation": "cloudformation",
+            "Cloudtrail": "cloudtrail",
+            "CloudwatchAlarm": "cloudwatch-alarm",
+            "CloudwatchEventEventBased": "cloudwatch-event-event-based",
+            "CloudwatchEventTimeBased": "cloudwatch-event-time-based",
+            "CloudwatchLogs": "cloudwatch-logs",
+            "CloudwatchRule": "cloudwatch-rule",
+            "Cloudwatch": "cloudwatch",
+            "Codeguru": "codeguru",
+            "CommandLineInterface": "command-line-interface",
+            "Config": "config",
+            "ControlTower": "control-tower",
+            "LicenseManager": "license-manager",
+            "ManagedServices": "managed-services",
+            "ManagementAndGovernance": "management-and-governance",
+            "ManagementConsole": "management-console",
+            "OpsworksApps": "opsworks-apps",
+            "OpsworksDeployments": "opsworks-deployments",
+            "OpsworksInstances": "opsworks-instances",
+            "OpsworksLayers": "opsworks-layers",
+            "OpsworksMonitoring": "opsworks-monitoring",
+            "OpsworksPermissions": "opsworks-permissions",
+            "OpsworksResources": "opsworks-resources",
+            "OpsworksStack": "opsworks-stack",
+            "Opsworks": "opsworks",
+            "OrganizationsAccount": "organizations-account",
+            "OrganizationsOrganizationalUnit": "organizations-organizational-unit",
+            "Organizations": "organizations",
+            "PersonalHealthDashboard": "personal-health-dashboard",
+            "Proton": "proton",
+            "ServiceCatalog": "service-catalog",
+            "SystemsManagerAppConfig": "systems-manager-app-config",
+            "SystemsManagerAutomation": "systems-manager-automation",
+            "SystemsManagerDocuments": "systems-manager-documents",
+            "SystemsManagerInventory": "systems-manager-inventory",
+            "SystemsManagerMaintenanceWindows": "systems-manager-maintenance-windows",
+            "SystemsManagerOpscenter": "systems-manager-opscenter",
+            "SystemsManagerParameterStore": "systems-manager-parameter-store",
+            "SystemsManagerPatchManager": "systems-manager-patch-manager",
+            "SystemsManagerRunCommand": "systems-manager-run-command",
+            "SystemsManagerStateManager": "systems-manager-state-manager",
+            "SystemsManager": "systems-manager",
+            "TrustedAdvisorChecklistCost": "trusted-advisor-checklist-cost",
+            "TrustedAdvisorChecklistFaultTolerant": "trusted-advisor-checklist-fault-tolerant",
+            "TrustedAdvisorChecklistPerformance": "trusted-advisor-checklist-performance",
+            "TrustedAdvisorChecklistSecurity": "trusted-advisor-checklist-security",
+            "TrustedAdvisorChecklist": "trusted-advisor-checklist",
+            "TrustedAdvisor": "trusted-advisor",
+            "UserNotifications": "user-notifications",
+            "WellArchitectedTool": "well-architected-tool"
+        },
+        "media": {
+            "ElasticTranscoder": "elastic-transcoder",
+            "ElementalConductor": "elemental-conductor",
+            "ElementalDelta": "elemental-delta",
+            "ElementalLive": "elemental-live",
+            "ElementalMediaconnect": "elemental-mediaconnect",
+            "ElementalMediaconvert": "elemental-mediaconvert",
+            "ElementalMedialive": "elemental-medialive",
+            "ElementalMediapackage": "elemental-mediapackage",
+            "ElementalMediastore": "elemental-mediastore",
+            "ElementalMediatailor": "elemental-mediatailor",
+            "ElementalServer": "elemental-server",
+            "KinesisVideoStreams": "kinesis-video-streams",
+            "MediaServices": "media-services"
+        },
+        "migration": {
+            "ApplicationDiscoveryService": "application-discovery-service",
+            "CloudendureMigration": "cloudendure-migration",
+            "DatabaseMigrationService": "database-migration-service",
+            "DatasyncAgent": "datasync-agent",
+            "Datasync": "datasync",
+            "MigrationAndTransfer": "migration-and-transfer",
+            "MigrationHub": "migration-hub",
+            "ServerMigrationService": "server-migration-service",
+            "SnowballEdge": "snowball-edge",
+            "Snowball": "snowball",
+            "Snowmobile": "snowmobile",
+            "TransferForSftp": "transfer-for-sftp"
+        },
+        "ml": {
+            "ApacheMxnetOnAWS": "apache-mxnet-on-aws",
+            "AugmentedAi": "augmented-ai",
+            "Bedrock": "bedrock",
+            "Comprehend": "comprehend",
+            "DeepLearningAmis": "deep-learning-amis",
+            "DeepLearningContainers": "deep-learning-containers",
+            "Deepcomposer": "deepcomposer",
+            "Deeplens": "deeplens",
+            "Deepracer": "deepracer",
+            "ElasticInference": "elastic-inference",
+            "Forecast": "forecast",
+            "FraudDetector": "fraud-detector",
+            "Kendra": "kendra",
+            "Lex": "lex",
+            "MachineLearning": "machine-learning",
+            "Personalize": "personalize",
+            "Polly": "polly",
+            "Q": "q",
+            "RekognitionImage": "rekognition-image",
+            "RekognitionVideo": "rekognition-video",
+            "Rekognition": "rekognition",
+            "SagemakerGroundTruth": "sagemaker-ground-truth",
+            "SagemakerModel": "sagemaker-model",
+            "SagemakerNotebook": "sagemaker-notebook",
+            "SagemakerTrainingJob": "sagemaker-training-job",
+            "Sagemaker": "sagemaker",
+            "TensorflowOnAWS": "tensorflow-on-aws",
+            "Textract": "textract",
+            "Transcribe": "transcribe",
+            "Transform": "transform",
+            "Translate": "translate"
+        },
+        "mobile": {
+            "Amplify": "amplify",
+            "APIGatewayEndpoint": "api-gateway-endpoint",
+            "APIGateway": "api-gateway",
+            "Appsync": "appsync",
+            "DeviceFarm": "device-farm",
+            "Mobile": "mobile",
+            "Pinpoint": "pinpoint"
+        },
+        "network": {
+            "APIGatewayEndpoint": "api-gateway-endpoint",
+            "APIGateway": "api-gateway",
+            "AppMesh": "app-mesh",
+            "ClientVpn": "client-vpn",
+            "CloudMap": "cloud-map",
+            "CloudFrontDownloadDistribution": "cloudfront-download-distribution",
+            "CloudFrontEdgeLocation": "cloudfront-edge-location",
+            "CloudFrontStreamingDistribution": "cloudfront-streaming-distribution",
+            "CloudFront": "cloudfront",
+            "DirectConnect": "direct-connect",
+            "ElasticLoadBalancing": "elastic-load-balancing",
+            "ElbApplicationLoadBalancer": "elb-application-load-balancer",
+            "ElbClassicLoadBalancer": "elb-classic-load-balancer",
+            "ElbNetworkLoadBalancer": "elb-network-load-balancer",
+            "Endpoint": "endpoint",
+            "GlobalAccelerator": "global-accelerator",
+            "InternetGateway": "internet-gateway",
+            "Nacl": "nacl",
+            "NATGateway": "nat-gateway",
+            "NetworkFirewall": "network-firewall",
+            "NetworkingAndContentDelivery": "networking-and-content-delivery",
+            "PrivateSubnet": "private-subnet",
+            "Privatelink": "privatelink",
+            "PublicSubnet": "public-subnet",
+            "Route53HostedZone": "route-53-hosted-zone",
+            "Route53": "route-53",
+            "RouteTable": "route-table",
+            "SiteToSiteVpn": "site-to-site-vpn",
+            "TransitGatewayAttachment": "transit-gateway-attachment",
+            "TransitGateway": "transit-gateway",
+            "VPCCustomerGateway": "vpc-customer-gateway",
+            "VPCElasticNetworkAdapter": "vpc-elastic-network-adapter",
+            "VPCElasticNetworkInterface": "vpc-elastic-network-interface",
+            "VPCFlowLogs": "vpc-flow-logs",
+            "VPCPeering": "vpc-peering",
+            "VPCRouter": "vpc-router",
+            "VPCTrafficMirroring": "vpc-traffic-mirroring",
+            "VPC": "vpc",
+            "VpnConnection": "vpn-connection",
+            "VpnGateway": "vpn-gateway"
+        },
+        "quantum": {
+            "Braket": "braket",
+            "QuantumTechnologies": "quantum-technologies"
+        },
+        "robotics": {
+            "RobomakerCloudExtensionRos": "robomaker-cloud-extension-ros",
+            "RobomakerDevelopmentEnvironment": "robomaker-development-environment",
+            "RobomakerFleetManagement": "robomaker-fleet-management",
+            "RobomakerSimulator": "robomaker-simulator",
+            "Robomaker": "robomaker",
+            "Robotics": "robotics"
+        },
+        "satellite": {
+            "GroundStation": "ground-station",
+            "Satellite": "satellite"
+        },
+        "security": {
+            "AdConnector": "ad-connector",
+            "Artifact": "artifact",
+            "CertificateAuthority": "certificate-authority",
+            "CertificateManager": "certificate-manager",
+            "CloudDirectory": "cloud-directory",
+            "Cloudhsm": "cloudhsm",
+            "Cognito": "cognito",
+            "Detective": "detective",
+            "DirectoryService": "directory-service",
+            "FirewallManager": "firewall-manager",
+            "Guardduty": "guardduty",
+            "IdentityAndAccessManagementIamAccessAnalyzer": "identity-and-access-management-iam-access-analyzer",
+            "IdentityAndAccessManagementIamAddOn": "identity-and-access-management-iam-add-on",
+            "IdentityAndAccessManagementIamAWSStsAlternate": "identity-and-access-management-iam-aws-sts-alternate",
+            "IdentityAndAccessManagementIamAWSSts": "identity-and-access-management-iam-aws-sts",
+            "IdentityAndAccessManagementIamDataEncryptionKey": "identity-and-access-management-iam-data-encryption-key",
+            "IdentityAndAccessManagementIamEncryptedData": "identity-and-access-management-iam-encrypted-data",
+            "IdentityAndAccessManagementIamLongTermSecurityCredential": "identity-and-access-management-iam-long-term-security-credential",
+            "IdentityAndAccessManagementIamMfaToken": "identity-and-access-management-iam-mfa-token",
+            "IdentityAndAccessManagementIamPermissions": "identity-and-access-management-iam-permissions",
+            "IdentityAndAccessManagementIamRole": "identity-and-access-management-iam-role",
+            "IdentityAndAccessManagementIamTemporarySecurityCredential": "identity-and-access-management-iam-temporary-security-credential",
+            "IdentityAndAccessManagementIam": "identity-and-access-management-iam",
+            "InspectorAgent": "inspector-agent",
+            "Inspector": "inspector",
+            "KeyManagementService": "key-management-service",
+            "Macie": "macie",
+            "ManagedMicrosoftAd": "managed-microsoft-ad",
+            "ResourceAccessManager": "resource-access-manager",
+            "SecretsManager": "secrets-manager",
+            "SecurityHubFinding": "security-hub-finding",
+            "SecurityHub": "security-hub",
+            "SecurityIdentityAndCompliance": "security-identity-and-compliance",
+            "ShieldAdvanced": "shield-advanced",
+            "Shield": "shield",
+            "SimpleAd": "simple-ad",
+            "SingleSignOn": "single-sign-on",
+            "WAFFilteringRule": "waf-filtering-rule",
+            "WAF": "waf"
+        },
+        "storage": {
+            "Backup": "backup",
+            "CloudendureDisasterRecovery": "cloudendure-disaster-recovery",
+            "EFSInfrequentaccessPrimaryBg": "efs-infrequentaccess-primary-bg",
+            "EFSStandardPrimaryBg": "efs-standard-primary-bg",
+            "ElasticBlockStoreEBSSnapshot": "elastic-block-store-ebs-snapshot",
+            "ElasticBlockStoreEBSVolume": "elastic-block-store-ebs-volume",
+            "ElasticBlockStoreEBS": "elastic-block-store-ebs",
+            "ElasticFileSystemEFSFileSystem": "elastic-file-system-efs-file-system",
+            "ElasticFileSystemEFS": "elastic-file-system-efs",
+            "FsxForLustre": "fsx-for-lustre",
+            "FsxForWindowsFileServer": "fsx-for-windows-file-server",
+            "Fsx": "fsx",
+            "MultipleVolumesResource": "multiple-volumes-resource",
+            "S3AccessPoints": "s3-access-points",
+            "S3GlacierArchive": "s3-glacier-archive",
+            "S3GlacierVault": "s3-glacier-vault",
+            "S3Glacier": "s3-glacier",
+            "S3ObjectLambdaAccessPoints": "s3-object-lambda-access-points",
+            "SimpleStorageServiceS3BucketWithObjects": "simple-storage-service-s3-bucket-with-objects",
+            "SimpleStorageServiceS3Bucket": "simple-storage-service-s3-bucket",
+            "SimpleStorageServiceS3Object": "simple-storage-service-s3-object",
+            "SimpleStorageServiceS3": "simple-storage-service-s3",
+            "SnowFamilySnowballImportExport": "snow-family-snowball-import-export",
+            "SnowballEdge": "snowball-edge",
+            "Snowball": "snowball",
+            "Snowmobile": "snowmobile",
+            "StorageGatewayCachedVolume": "storage-gateway-cached-volume",
+            "StorageGatewayNonCachedVolume": "storage-gateway-non-cached-volume",
+            "StorageGatewayVirtualTapeLibrary": "storage-gateway-virtual-tape-library",
+            "StorageGateway": "storage-gateway",
+            "Storage": "storage"
+        }
+    },
+    "azure": {
+        "analytics": {
+            "AnalysisServices": "analysis-services",
+            "DataExplorerClusters": "data-explorer-clusters",
+            "DataFactories": "data-factories",
+            "DataLakeAnalytics": "data-lake-analytics",
+            "DataLakeStoreGen1": "data-lake-store-gen1",
+            "Databricks": "databricks",
+            "EventHubClusters": "event-hub-clusters",
+            "EventHubs": "event-hubs",
+            "Hdinsightclusters": "hdinsightclusters",
+            "LogAnalyticsWorkspaces": "log-analytics-workspaces",
+            "StreamAnalyticsJobs": "stream-analytics-jobs",
+            "SynapseAnalytics": "synapse-analytics"
+        },
+        "compute": {
+            "AppServices": "app-services",
+            "AutomanagedVM": "automanaged-vm",
+            "AvailabilitySets": "availability-sets",
+            "BatchAccounts": "batch-accounts",
+            "CitrixVirtualDesktopsEssentials": "citrix-virtual-desktops-essentials",
+            "CloudServicesClassic": "cloud-services-classic",
+            "CloudServices": "cloud-services",
+            "CloudsimpleVirtualMachines": "cloudsimple-virtual-machines",
+            "ContainerApps": "container-apps",
+            "ContainerInstances": "container-instances",
+            "ContainerRegistries": "container-registries",
+            "DiskEncryptionSets": "disk-encryption-sets",
+            "DiskSnapshots": "disk-snapshots",
+            "Disks": "disks",
+            "FunctionApps": "function-apps",
+            "ImageDefinitions": "image-definitions",
+            "ImageVersions": "image-versions",
+            "KubernetesServices": "kubernetes-services",
+            "MeshApplications": "mesh-applications",
+            "OsImages": "os-images",
+            "SAPHANAOnAzure": "sap-hana-on-azure",
+            "ServiceFabricClusters": "service-fabric-clusters",
+            "SharedImageGalleries": "shared-image-galleries",
+            "SpringCloud": "spring-cloud",
+            "VMClassic": "vm-classic",
+            "VMImages": "vm-images",
+            "VMLinux": "vm-linux",
+            "VMScaleSet": "vm-scale-set",
+            "VMWindows": "vm-windows",
+            "VM": "vm",
+            "Workspaces": "workspaces"
+        },
+        "database": {
+            "BlobStorage": "blob-storage",
+            "CacheForRedis": "cache-for-redis",
+            "CosmosDb": "cosmos-db",
+            "DataExplorerClusters": "data-explorer-clusters",
+            "DataFactory": "data-factory",
+            "DataLake": "data-lake",
+            "DatabaseForMariadbServers": "database-for-mariadb-servers",
+            "DatabaseForMysqlServers": "database-for-mysql-servers",
+            "DatabaseForPostgresqlServers": "database-for-postgresql-servers",
+            "ElasticDatabasePools": "elastic-database-pools",
+            "ElasticJobAgents": "elastic-job-agents",
+            "InstancePools": "instance-pools",
+            "ManagedDatabases": "managed-databases",
+            "SQLDatabases": "sql-databases",
+            "SQLDatawarehouse": "sql-datawarehouse",
+            "SQLManagedInstances": "sql-managed-instances",
+            "SQLServerStretchDatabases": "sql-server-stretch-databases",
+            "SQLServers": "sql-servers",
+            "SQLVM": "sql-vm",
+            "SQL": "sql",
+            "SsisLiftAndShiftIr": "ssis-lift-and-shift-ir",
+            "SynapseAnalytics": "synapse-analytics",
+            "VirtualClusters": "virtual-clusters",
+            "VirtualDatacenter": "virtual-datacenter"
+        },
+        "devops": {
+            "ApplicationInsights": "application-insights",
+            "Artifacts": "artifacts",
+            "Boards": "boards",
+            "Devops": "devops",
+            "DevtestLabs": "devtest-labs",
+            "LabServices": "lab-services",
+            "Pipelines": "pipelines",
+            "Repos": "repos",
+            "TestPlans": "test-plans"
+        },
+        "general": {
+            "Allresources": "allresources",
+            "Azurehome": "azurehome",
+            "Developertools": "developertools",
+            "Helpsupport": "helpsupport",
+            "Information": "information",
+            "Managementgroups": "managementgroups",
+            "Marketplace": "marketplace",
+            "Quickstartcenter": "quickstartcenter",
+            "Recent": "recent",
+            "Reservations": "reservations",
+            "Resource": "resource",
+            "Resourcegroups": "resourcegroups",
+            "Servicehealth": "servicehealth",
+            "Shareddashboard": "shareddashboard",
+            "Subscriptions": "subscriptions",
+            "Support": "support",
+            "Supportrequests": "supportrequests",
+            "Tag": "tag",
+            "Tags": "tags",
+            "Templates": "templates",
+            "Twousericon": "twousericon",
+            "Userhealthicon": "userhealthicon",
+            "Usericon": "usericon",
+            "Userprivacy": "userprivacy",
+            "Userresource": "userresource",
+            "Whatsnew": "whatsnew"
+        },
+        "identity": {
+            "AccessReview": "access-review",
+            "ActiveDirectoryConnectHealth": "active-directory-connect-health",
+            "ActiveDirectory": "active-directory",
+            "ADB2C": "ad-b2c",
+            "ADDomainServices": "ad-domain-services",
+            "ADIdentityProtection": "ad-identity-protection",
+            "ADPrivilegedIdentityManagement": "ad-privileged-identity-management",
+            "AppRegistrations": "app-registrations",
+            "ConditionalAccess": "conditional-access",
+            "EnterpriseApplications": "enterprise-applications",
+            "Groups": "groups",
+            "IdentityGovernance": "identity-governance",
+            "InformationProtection": "information-protection",
+            "ManagedIdentities": "managed-identities",
+            "Users": "users"
+        },
+        "integration": {
+            "APIForFhir": "api-for-fhir",
+            "APIManagement": "api-management",
+            "AppConfiguration": "app-configuration",
+            "DataCatalog": "data-catalog",
+            "EventGridDomains": "event-grid-domains",
+            "EventGridSubscriptions": "event-grid-subscriptions",
+            "EventGridTopics": "event-grid-topics",
+            "IntegrationAccounts": "integration-accounts",
+            "IntegrationServiceEnvironments": "integration-service-environments",
+            "LogicAppsCustomConnector": "logic-apps-custom-connector",
+            "LogicApps": "logic-apps",
+            "PartnerTopic": "partner-topic",
+            "SendgridAccounts": "sendgrid-accounts",
+            "ServiceBusRelays": "service-bus-relays",
+            "ServiceBus": "service-bus",
+            "ServiceCatalogManagedApplicationDefinitions": "service-catalog-managed-application-definitions",
+            "SoftwareAsAService": "software-as-a-service",
+            "StorsimpleDeviceManagers": "storsimple-device-managers",
+            "SystemTopic": "system-topic"
+        },
+        "iot": {
+            "DeviceProvisioningServices": "device-provisioning-services",
+            "DigitalTwins": "digital-twins",
+            "IotCentralApplications": "iot-central-applications",
+            "IotHubSecurity": "iot-hub-security",
+            "IotHub": "iot-hub",
+            "Maps": "maps",
+            "Sphere": "sphere",
+            "TimeSeriesInsightsEnvironments": "time-series-insights-environments",
+            "TimeSeriesInsightsEventsSources": "time-series-insights-events-sources",
+            "Windows10IotCoreServices": "windows-10-iot-core-services"
+        },
+        "migration": {
+            "DataBoxEdge": "data-box-edge",
+            "DataBox": "data-box",
+            "DatabaseMigrationServices": "database-migration-services",
+            "MigrationProjects": "migration-projects",
+            "RecoveryServicesVaults": "recovery-services-vaults"
+        },
+        "ml": {
+            "AzureOpenAI": "azure-open-ai",
+            "AzureSpeechService": "azure-speech-service",
+            "BatchAI": "batch-ai",
+            "BotServices": "bot-services",
+            "CognitiveServices": "cognitive-services",
+            "GenomicsAccounts": "genomics-accounts",
+            "MachineLearningServiceWorkspaces": "machine-learning-service-workspaces",
+            "MachineLearningStudioWebServicePlans": "machine-learning-studio-web-service-plans",
+            "MachineLearningStudioWebServices": "machine-learning-studio-web-services",
+            "MachineLearningStudioWorkspaces": "machine-learning-studio-workspaces"
+        },
+        "mobile": {
+            "AppServiceMobile": "app-service-mobile",
+            "MobileEngagement": "mobile-engagement",
+            "NotificationHubs": "notification-hubs"
+        },
+        "monitor": {
+            "ChangeAnalysis": "change-analysis",
+            "Logs": "logs",
+            "Metrics": "metrics",
+            "Monitor": "monitor"
+        },
+        "network": {
+            "ApplicationGateway": "application-gateway",
+            "ApplicationSecurityGroups": "application-security-groups",
+            "CDNProfiles": "cdn-profiles",
+            "Connections": "connections",
+            "DDOSProtectionPlans": "ddos-protection-plans",
+            "DNSPrivateZones": "dns-private-zones",
+            "DNSZones": "dns-zones",
+            "ExpressrouteCircuits": "expressroute-circuits",
+            "Firewall": "firewall",
+            "FrontDoors": "front-doors",
+            "LoadBalancers": "load-balancers",
+            "LocalNetworkGateways": "local-network-gateways",
+            "NetworkInterfaces": "network-interfaces",
+            "NetworkSecurityGroupsClassic": "network-security-groups-classic",
+            "NetworkWatcher": "network-watcher",
+            "OnPremisesDataGateways": "on-premises-data-gateways",
+            "PrivateEndpoint": "private-endpoint",
+            "PublicIpAddresses": "public-ip-addresses",
+            "ReservedIpAddressesClassic": "reserved-ip-addresses-classic",
+            "RouteFilters": "route-filters",
+            "RouteTables": "route-tables",
+            "ServiceEndpointPolicies": "service-endpoint-policies",
+            "Subnets": "subnets",
+            "TrafficManagerProfiles": "traffic-manager-profiles",
+            "VirtualNetworkClassic": "virtual-network-classic",
+            "VirtualNetworkGateways": "virtual-network-gateways",
+            "VirtualNetworks": "virtual-networks",
+            "VirtualWans": "virtual-wans"
+        },
+        "security": {
+            "ApplicationSecurityGroups": "application-security-groups",
+            "ConditionalAccess": "conditional-access",
+            "Defender": "defender",
+            "ExtendedSecurityUpdates": "extended-security-updates",
+            "KeyVaults": "key-vaults",
+            "SecurityCenter": "security-center",
+            "Sentinel": "sentinel"
+        },
+        "storage": {
+            "ArchiveStorage": "archive-storage",
+            "Azurefxtedgefiler": "azurefxtedgefiler",
+            "BlobStorage": "blob-storage",
+            "DataBoxEdgeDataBoxGateway": "data-box-edge-data-box-gateway",
+            "DataBox": "data-box",
+            "DataLakeStorage": "data-lake-storage",
+            "GeneralStorage": "general-storage",
+            "NetappFiles": "netapp-files",
+            "QueuesStorage": "queues-storage",
+            "StorageAccountsClassic": "storage-accounts-classic",
+            "StorageAccounts": "storage-accounts",
+            "StorageExplorer": "storage-explorer",
+            "StorageSyncServices": "storage-sync-services",
+            "StorsimpleDataManagers": "storsimple-data-managers",
+            "StorsimpleDeviceManagers": "storsimple-device-managers",
+            "TableStorage": "table-storage"
+        },
+        "web": {
+            "APIConnections": "api-connections",
+            "AppServiceCertificates": "app-service-certificates",
+            "AppServiceDomains": "app-service-domains",
+            "AppServiceEnvironments": "app-service-environments",
+            "AppServicePlans": "app-service-plans",
+            "AppServices": "app-services",
+            "MediaServices": "media-services",
+            "NotificationHubNamespaces": "notification-hub-namespaces",
+            "Search": "search",
+            "Signalr": "signalr"
+        }
+    },
+    "digitalocean": {
+        "compute": {
+            "Containers": "containers",
+            "Docker": "docker",
+            "DropletConnect": "droplet-connect",
+            "DropletSnapshot": "droplet-snapshot",
+            "Droplet": "droplet",
+            "K8SCluster": "k8s-cluster",
+            "K8SNodePool": "k8s-node-pool",
+            "K8SNode": "k8s-node"
+        },
+        "database": {
+            "DbaasPrimaryStandbyMore": "dbaas-primary-standby-more",
+            "DbaasPrimary": "dbaas-primary",
+            "DbaasReadOnly": "dbaas-read-only",
+            "DbaasStandby": "dbaas-standby"
+        },
+        "network": {
+            "Certificate": "certificate",
+            "DomainRegistration": "domain-registration",
+            "Domain": "domain",
+            "Firewall": "firewall",
+            "FloatingIp": "floating-ip",
+            "InternetGateway": "internet-gateway",
+            "LoadBalancer": "load-balancer",
+            "ManagedVpn": "managed-vpn",
+            "Vpc": "vpc"
+        },
+        "storage": {
+            "Folder": "folder",
+            "Space": "space",
+            "VolumeSnapshot": "volume-snapshot",
+            "Volume": "volume"
+        }
+    },
+    "elastic": {
+        "agent": {
+            "Agent": "agent",
+            "Endpoint": "endpoint",
+            "Fleet": "fleet",
+            "Integrations": "integrations"
+        },
+        "beats": {
+            "APM": "apm",
+            "Auditbeat": "auditbeat",
+            "Filebeat": "filebeat",
+            "Functionbeat": "functionbeat",
+            "Heartbeat": "heartbeat",
+            "Metricbeat": "metricbeat",
+            "Packetbeat": "packetbeat",
+            "Winlogbeat": "winlogbeat"
+        },
+        "elasticsearch": {
+            "Alerting": "alerting",
+            "Beats": "beats",
+            "Elasticsearch": "elasticsearch",
+            "Kibana": "kibana",
+            "LogstashPipeline": "logstash-pipeline",
+            "Logstash": "logstash",
+            "MachineLearning": "machine-learning",
+            "MapServices": "map-services",
+            "Maps": "maps",
+            "Monitoring": "monitoring",
+            "SearchableSnapshots": "searchable-snapshots",
+            "SecuritySettings": "security-settings",
+            "SQL": "sql",
+            "Stack": "stack"
+        },
+        "enterprisesearch": {
+            "AppSearch": "app-search",
+            "Crawler": "crawler",
+            "EnterpriseSearch": "enterprise-search",
+            "SiteSearch": "site-search",
+            "WorkplaceSearch": "workplace-search"
+        },
+        "observability": {
+            "APM": "apm",
+            "Logs": "logs",
+            "Metrics": "metrics",
+            "Observability": "observability",
+            "Uptime": "uptime"
+        },
+        "orchestration": {
+            "ECE": "ece",
+            "ECK": "eck"
+        },
+        "saas": {
+            "Cloud": "cloud",
+            "Elastic": "elastic"
+        },
+        "security": {
+            "Endpoint": "endpoint",
+            "Security": "security",
+            "SIEM": "siem",
+            "Xdr": "xdr"
+        }
+    },
+    "firebase": {
+        "base": {
+            "Firebase": "firebase"
+        },
+        "develop": {
+            "Authentication": "authentication",
+            "Firestore": "firestore",
+            "Functions": "functions",
+            "Hosting": "hosting",
+            "MLKit": "ml-kit",
+            "RealtimeDatabase": "realtime-database",
+            "Storage": "storage"
+        },
+        "extentions": {
+            "Extensions": "extensions"
+        },
+        "grow": {
+            "ABTesting": "ab-testing",
+            "AppIndexing": "app-indexing",
+            "DynamicLinks": "dynamic-links",
+            "InAppMessaging": "in-app-messaging",
+            "Invites": "invites",
+            "Messaging": "messaging",
+            "Predictions": "predictions",
+            "RemoteConfig": "remote-config"
+        },
+        "quality": {
+            "AppDistribution": "app-distribution",
+            "CrashReporting": "crash-reporting",
+            "Crashlytics": "crashlytics",
+            "PerformanceMonitoring": "performance-monitoring",
+            "TestLab": "test-lab"
+        }
+    },
+    "gcp": {
+        "analytics": {
+            "Bigquery": "bigquery",
+            "Composer": "composer",
+            "DataCatalog": "data-catalog",
+            "DataFusion": "data-fusion",
+            "Dataflow": "dataflow",
+            "Datalab": "datalab",
+            "Dataprep": "dataprep",
+            "Dataproc": "dataproc",
+            "Genomics": "genomics",
+            "Pubsub": "pubsub"
+        },
+        "api": {
+            "APIGateway": "api-gateway",
+            "Apigee": "apigee",
+            "Endpoints": "endpoints"
+        },
+        "compute": {
+            "AppEngine": "app-engine",
+            "ComputeEngine": "compute-engine",
+            "ContainerOptimizedOS": "container-optimized-os",
+            "Functions": "functions",
+            "GKEOnPrem": "gke-on-prem",
+            "GPU": "gpu",
+            "KubernetesEngine": "kubernetes-engine",
+            "Run": "run"
+        },
+        "database": {
+            "Bigtable": "bigtable",
+            "Datastore": "datastore",
+            "Firestore": "firestore",
+            "Memorystore": "memorystore",
+            "Spanner": "spanner",
+            "SQL": "sql"
+        },
+        "devtools": {
+            "Build": "build",
+            "CodeForIntellij": "code-for-intellij",
+            "Code": "code",
+            "ContainerRegistry": "container-registry",
+            "GradleAppEnginePlugin": "gradle-app-engine-plugin",
+            "IdePlugins": "ide-plugins",
+            "MavenAppEnginePlugin": "maven-app-engine-plugin",
+            "Scheduler": "scheduler",
+            "SDK": "sdk",
+            "SourceRepositories": "source-repositories",
+            "Tasks": "tasks",
+            "TestLab": "test-lab",
+            "ToolsForEclipse": "tools-for-eclipse",
+            "ToolsForPowershell": "tools-for-powershell",
+            "ToolsForVisualStudio": "tools-for-visual-studio"
+        },
+        "iot": {
+            "IotCore": "iot-core"
+        },
+        "migration": {
+            "TransferAppliance": "transfer-appliance"
+        },
+        "ml": {
+            "AdvancedSolutionsLab": "advanced-solutions-lab",
+            "AIHub": "ai-hub",
+            "AIPlatformDataLabelingService": "ai-platform-data-labeling-service",
+            "AIPlatform": "ai-platform",
+            "AutomlNaturalLanguage": "automl-natural-language",
+            "AutomlTables": "automl-tables",
+            "AutomlTranslation": "automl-translation",
+            "AutomlVideoIntelligence": "automl-video-intelligence",
+            "AutomlVision": "automl-vision",
+            "Automl": "automl",
+            "DialogFlowEnterpriseEdition": "dialog-flow-enterprise-edition",
+            "InferenceAPI": "inference-api",
+            "JobsAPI": "jobs-api",
+            "NaturalLanguageAPI": "natural-language-api",
+            "RecommendationsAI": "recommendations-ai",
+            "SpeechToText": "speech-to-text",
+            "TextToSpeech": "text-to-speech",
+            "TPU": "tpu",
+            "TranslationAPI": "translation-api",
+            "VideoIntelligenceAPI": "video-intelligence-api",
+            "VisionAPI": "vision-api"
+        },
+        "network": {
+            "Armor": "armor",
+            "CDN": "cdn",
+            "DedicatedInterconnect": "dedicated-interconnect",
+            "DNS": "dns",
+            "ExternalIpAddresses": "external-ip-addresses",
+            "FirewallRules": "firewall-rules",
+            "LoadBalancing": "load-balancing",
+            "NAT": "nat",
+            "Network": "network",
+            "PartnerInterconnect": "partner-interconnect",
+            "PremiumNetworkTier": "premium-network-tier",
+            "Router": "router",
+            "Routes": "routes",
+            "StandardNetworkTier": "standard-network-tier",
+            "TrafficDirector": "traffic-director",
+            "VirtualPrivateCloud": "virtual-private-cloud",
+            "VPN": "vpn"
+        },
+        "operations": {
+            "Logging": "logging",
+            "Monitoring": "monitoring"
+        },
+        "security": {
+            "Iam": "iam",
+            "IAP": "iap",
+            "KeyManagementService": "key-management-service",
+            "ResourceManager": "resource-manager",
+            "SecurityCommandCenter": "security-command-center",
+            "SecurityScanner": "security-scanner"
+        },
+        "storage": {
+            "Filestore": "filestore",
+            "PersistentDisk": "persistent-disk",
+            "Storage": "storage"
+        }
+    },
+    "generic": {
+        "blank": {
+            "Blank": "blank"
+        },
+        "compute": {
+            "Rack": "rack"
+        },
+        "database": {
+            "SQL": "sql"
+        },
+        "device": {
+            "Mobile": "mobile",
+            "Tablet": "tablet"
+        },
+        "network": {
+            "Firewall": "firewall",
+            "Router": "router",
+            "Subnet": "subnet",
+            "Switch": "switch",
+            "VPN": "vpn"
+        },
+        "os": {
+            "Android": "android",
+            "Centos": "centos",
+            "Debian": "debian",
+            "IOS": "ios",
+            "LinuxGeneral": "linux-general",
+            "Raspbian": "raspbian",
+            "RedHat": "red-hat",
+            "Suse": "suse",
+            "Ubuntu": "ubuntu",
+            "Windows": "windows"
+        },
+        "place": {
+            "Datacenter": "datacenter"
+        },
+        "storage": {
+            "Storage": "storage"
+        },
+        "virtualization": {
+            "Qemu": "qemu",
+            "Virtualbox": "virtualbox",
+            "Vmware": "vmware",
+            "XEN": "xen"
+        }
+    },
+    "gis": {
+        "cli": {
+            "Gdal": "gdal",
+            "Imposm": "imposm",
+            "Lastools": "lastools",
+            "Mapnik": "mapnik",
+            "Mdal": "mdal",
+            "Pdal": "pdal"
+        },
+        "cplusplus": {
+            "Mapnik": "mapnik"
+        },
+        "data": {
+            "BAN": "ban",
+            "Here": "here",
+            "IGN": "ign",
+            "Openstreetmap": "openstreetmap",
+            "Overturemaps": "overturemaps"
+        },
+        "database": {
+            "Postgis": "postgis"
+        },
+        "desktop": {
+            "Maptunik": "maptunik",
+            "QGIS": "qgis"
+        },
+        "format": {
+            "Geopackage": "geopackage",
+            "Geoparquet": "geoparquet"
+        },
+        "geocoding": {
+            "Addok": "addok",
+            "Gisgraphy": "gisgraphy",
+            "Nominatim": "nominatim",
+            "Pelias": "pelias"
+        },
+        "java": {
+            "Geotools": "geotools"
+        },
+        "javascript": {
+            "Cesium": "cesium",
+            "Geostyler": "geostyler",
+            "Keplerjs": "keplerjs",
+            "Leaflet": "leaflet",
+            "Maplibre": "maplibre",
+            "OlExt": "ol-ext",
+            "Openlayers": "openlayers",
+            "Turfjs": "turfjs"
+        },
+        "mobile": {
+            "Mergin": "mergin",
+            "Qfield": "qfield",
+            "Smash": "smash"
+        },
+        "ogc": {
+            "OGC": "ogc",
+            "WFS": "wfs",
+            "WMS": "wms"
+        },
+        "organization": {
+            "Osgeo": "osgeo"
+        },
+        "python": {
+            "Geopandas": "geopandas",
+            "Pysal": "pysal"
+        },
+        "routing": {
+            "Graphhopper": "graphhopper",
+            "Osrm": "osrm",
+            "Pgrouting": "pgrouting",
+            "Valhalla": "valhalla"
+        },
+        "server": {
+            "Actinia": "actinia",
+            "Baremaps": "baremaps",
+            "Deegree": "deegree",
+            "G3WSuite": "g3w-suite",
+            "Geohealthcheck": "geohealthcheck",
+            "Geomapfish": "geomapfish",
+            "Geomesa": "geomesa",
+            "Geonetwork": "geonetwork",
+            "Geonode": "geonode",
+            "Georchestra": "georchestra",
+            "Geoserver": "geoserver",
+            "Geowebcache": "geowebcache",
+            "Kepler": "kepler",
+            "Mapproxy": "mapproxy",
+            "Mapserver": "mapserver",
+            "Mapstore": "mapstore",
+            "Mviewer": "mviewer",
+            "Pg_Tileserv": "pg_tileserv",
+            "Pycsw": "pycsw",
+            "Pygeoapi": "pygeoapi",
+            "QGISServer": "qgis-server",
+            "Zooproject": "zooproject"
+        }
+    },
+    "ibm": {
+        "analytics": {
+            "Analytics": "analytics",
+            "DataIntegration": "data-integration",
+            "DataRepositories": "data-repositories",
+            "DeviceAnalytics": "device-analytics",
+            "StreamingComputing": "streaming-computing"
+        },
+        "applications": {
+            "ActionableInsight": "actionable-insight",
+            "Annotate": "annotate",
+            "ApiDeveloperPortal": "api-developer-portal",
+            "ApiPolyglotRuntimes": "api-polyglot-runtimes",
+            "AppServer": "app-server",
+            "ApplicationLogic": "application-logic",
+            "EnterpriseApplications": "enterprise-applications",
+            "Index": "index",
+            "IotApplication": "iot-application",
+            "Microservice": "microservice",
+            "MobileApp": "mobile-app",
+            "Ontology": "ontology",
+            "OpenSourceTools": "open-source-tools",
+            "RuntimeServices": "runtime-services",
+            "SaasApplications": "saas-applications",
+            "ServiceBroker": "service-broker",
+            "SpeechToText": "speech-to-text",
+            "VisualRecognition": "visual-recognition",
+            "Visualization": "visualization"
+        },
+        "blockchain": {
+            "BlockchainDeveloper": "blockchain-developer",
+            "Blockchain": "blockchain",
+            "CertificateAuthority": "certificate-authority",
+            "ClientApplication": "client-application",
+            "Communication": "communication",
+            "Consensus": "consensus",
+            "EventListener": "event-listener",
+            "Event": "event",
+            "ExistingEnterpriseSystems": "existing-enterprise-systems",
+            "HyperledgerFabric": "hyperledger-fabric",
+            "KeyManagement": "key-management",
+            "Ledger": "ledger",
+            "MembershipServicesProviderApi": "membership-services-provider-api",
+            "Membership": "membership",
+            "MessageBus": "message-bus",
+            "Node": "node",
+            "Services": "services",
+            "SmartContract": "smart-contract",
+            "TransactionManager": "transaction-manager",
+            "Wallet": "wallet"
+        },
+        "compute": {
+            "BareMetalServer": "bare-metal-server",
+            "ImageService": "image-service",
+            "Instance": "instance",
+            "Key": "key",
+            "PowerInstance": "power-instance"
+        },
+        "data": {
+            "Caches": "caches",
+            "Cloud": "cloud",
+            "ConversationTrainedDeployed": "conversation-trained-deployed",
+            "DataServices": "data-services",
+            "DataSources": "data-sources",
+            "DeviceIdentityService": "device-identity-service",
+            "DeviceRegistry": "device-registry",
+            "EnterpriseData": "enterprise-data",
+            "EnterpriseUserDirectory": "enterprise-user-directory",
+            "FileRepository": "file-repository",
+            "GroundTruth": "ground-truth",
+            "Model": "model",
+            "TmsDataInterface": "tms-data-interface"
+        },
+        "devops": {
+            "ArtifactManagement": "artifact-management",
+            "BuildTest": "build-test",
+            "CodeEditor": "code-editor",
+            "CollaborativeDevelopment": "collaborative-development",
+            "ConfigurationManagement": "configuration-management",
+            "ContinuousDeploy": "continuous-deploy",
+            "ContinuousTesting": "continuous-testing",
+            "Devops": "devops",
+            "Provision": "provision",
+            "ReleaseManagement": "release-management"
+        },
+        "general": {
+            "CloudMessaging": "cloud-messaging",
+            "CloudServices": "cloud-services",
+            "Cloudant": "cloudant",
+            "CognitiveServices": "cognitive-services",
+            "DataSecurity": "data-security",
+            "Enterprise": "enterprise",
+            "GovernanceRiskCompliance": "governance-risk-compliance",
+            "IBMContainers": "ibm-containers",
+            "IBMPublicCloud": "ibm-public-cloud",
+            "IdentityAccessManagement": "identity-access-management",
+            "IdentityProvider": "identity-provider",
+            "InfrastructureSecurity": "infrastructure-security",
+            "Internet": "internet",
+            "IotCloud": "iot-cloud",
+            "MicroservicesApplication": "microservices-application",
+            "MicroservicesMesh": "microservices-mesh",
+            "MonitoringLogging": "monitoring-logging",
+            "Monitoring": "monitoring",
+            "ObjectStorage": "object-storage",
+            "OfflineCapabilities": "offline-capabilities",
+            "Openwhisk": "openwhisk",
+            "PeerCloud": "peer-cloud",
+            "RetrieveRank": "retrieve-rank",
+            "Scalable": "scalable",
+            "ServiceDiscoveryConfiguration": "service-discovery-configuration",
+            "TextToSpeech": "text-to-speech",
+            "TransformationConnectivity": "transformation-connectivity"
+        },
+        "infrastructure": {
+            "Channels": "channels",
+            "CloudMessaging": "cloud-messaging",
+            "Dashboard": "dashboard",
+            "Diagnostics": "diagnostics",
+            "EdgeServices": "edge-services",
+            "EnterpriseMessaging": "enterprise-messaging",
+            "EventFeed": "event-feed",
+            "InfrastructureServices": "infrastructure-services",
+            "InterserviceCommunication": "interservice-communication",
+            "LoadBalancingRouting": "load-balancing-routing",
+            "MicroservicesMesh": "microservices-mesh",
+            "MobileBackend": "mobile-backend",
+            "MobileProviderNetwork": "mobile-provider-network",
+            "MonitoringLogging": "monitoring-logging",
+            "Monitoring": "monitoring",
+            "PeerServices": "peer-services",
+            "ServiceDiscoveryConfiguration": "service-discovery-configuration",
+            "TransformationConnectivity": "transformation-connectivity"
+        },
+        "management": {
+            "AlertNotification": "alert-notification",
+            "ApiManagement": "api-management",
+            "CloudManagement": "cloud-management",
+            "ClusterManagement": "cluster-management",
+            "ContentManagement": "content-management",
+            "DataServices": "data-services",
+            "DeviceManagement": "device-management",
+            "InformationGovernance": "information-governance",
+            "ItServiceManagement": "it-service-management",
+            "Management": "management",
+            "MonitoringMetrics": "monitoring-metrics",
+            "ProcessManagement": "process-management",
+            "ProviderCloudPortalService": "provider-cloud-portal-service",
+            "PushNotifications": "push-notifications",
+            "ServiceManagementTools": "service-management-tools"
+        },
+        "network": {
+            "Bridge": "bridge",
+            "DirectLink": "direct-link",
+            "Enterprise": "enterprise",
+            "Firewall": "firewall",
+            "FloatingIp": "floating-ip",
+            "Gateway": "gateway",
+            "InternetServices": "internet-services",
+            "LoadBalancerListener": "load-balancer-listener",
+            "LoadBalancerPool": "load-balancer-pool",
+            "LoadBalancer": "load-balancer",
+            "LoadBalancingRouting": "load-balancing-routing",
+            "PublicGateway": "public-gateway",
+            "Region": "region",
+            "Router": "router",
+            "Rules": "rules",
+            "Subnet": "subnet",
+            "TransitGateway": "transit-gateway",
+            "Vpc": "vpc",
+            "VpnConnection": "vpn-connection",
+            "VpnGateway": "vpn-gateway",
+            "VpnPolicy": "vpn-policy"
+        },
+        "security": {
+            "ApiSecurity": "api-security",
+            "BlockchainSecurityService": "blockchain-security-service",
+            "DataSecurity": "data-security",
+            "Firewall": "firewall",
+            "Gateway": "gateway",
+            "GovernanceRiskCompliance": "governance-risk-compliance",
+            "IdentityAccessManagement": "identity-access-management",
+            "IdentityProvider": "identity-provider",
+            "InfrastructureSecurity": "infrastructure-security",
+            "PhysicalSecurity": "physical-security",
+            "SecurityMonitoringIntelligence": "security-monitoring-intelligence",
+            "SecurityServices": "security-services",
+            "TrustendComputing": "trustend-computing",
+            "Vpn": "vpn"
+        },
+        "social": {
+            "Communities": "communities",
+            "FileSync": "file-sync",
+            "LiveCollaboration": "live-collaboration",
+            "Messaging": "messaging",
+            "Networking": "networking"
+        },
+        "storage": {
+            "BlockStorage": "block-storage",
+            "ObjectStorage": "object-storage"
+        },
+        "user": {
+            "Browser": "browser",
+            "Device": "device",
+            "IntegratedDigitalExperiences": "integrated-digital-experiences",
+            "PhysicalEntity": "physical-entity",
+            "Sensor": "sensor",
+            "User": "user"
+        }
+    },
+    "k8s": {
+        "chaos": {
+            "ChaosMesh": "chaos-mesh",
+            "LitmusChaos": "litmus-chaos"
+        },
+        "clusterconfig": {
+            "HPA": "hpa",
+            "Limits": "limits",
+            "Quota": "quota"
+        },
+        "compute": {
+            "Cronjob": "cronjob",
+            "Deploy": "deploy",
+            "DS": "ds",
+            "Job": "job",
+            "Pod": "pod",
+            "RS": "rs",
+            "STS": "sts"
+        },
+        "controlplane": {
+            "API": "api",
+            "CCM": "c-c-m",
+            "CM": "c-m",
+            "KProxy": "k-proxy",
+            "Kubelet": "kubelet",
+            "Sched": "sched"
+        },
+        "ecosystem": {
+            "ExternalDns": "external-dns",
+            "Helm": "helm",
+            "Krew": "krew",
+            "Kustomize": "kustomize"
+        },
+        "group": {
+            "NS": "ns"
+        },
+        "infra": {
+            "ETCD": "etcd",
+            "Master": "master",
+            "Node": "node"
+        },
+        "network": {
+            "Ep": "ep",
+            "Ing": "ing",
+            "Netpol": "netpol",
+            "SVC": "svc"
+        },
+        "others": {
+            "CRD": "crd",
+            "PSP": "psp"
+        },
+        "podconfig": {
+            "CM": "cm",
+            "Secret": "secret"
+        },
+        "rbac": {
+            "CRole": "c-role",
+            "CRB": "crb",
+            "Group": "group",
+            "RB": "rb",
+            "Role": "role",
+            "SA": "sa",
+            "User": "user"
+        },
+        "storage": {
+            "PV": "pv",
+            "PVC": "pvc",
+            "SC": "sc",
+            "Vol": "vol"
+        }
+    },
+    "oci": {
+        "compute": {
+            "AutoscaleWhite": "autoscale-white",
+            "Autoscale": "autoscale",
+            "BMWhite": "bm-white",
+            "BM": "bm",
+            "ContainerWhite": "container-white",
+            "Container": "container",
+            "FunctionsWhite": "functions-white",
+            "Functions": "functions",
+            "InstancePoolsWhite": "instance-pools-white",
+            "InstancePools": "instance-pools",
+            "OCIRWhite": "ocir-white",
+            "OCIR": "ocir",
+            "OKEWhite": "oke-white",
+            "OKE": "oke",
+            "VMWhite": "vm-white",
+            "VM": "vm"
+        },
+        "connectivity": {
+            "BackboneWhite": "backbone-white",
+            "Backbone": "backbone",
+            "CDNWhite": "cdn-white",
+            "CDN": "cdn",
+            "CustomerDatacenter": "customer-datacenter",
+            "CustomerDatacntrWhite": "customer-datacntr-white",
+            "CustomerPremisesWhite": "customer-premises-white",
+            "CustomerPremises": "customer-premises",
+            "DisconnectedRegionsWhite": "disconnected-regions-white",
+            "DisconnectedRegions": "disconnected-regions",
+            "DNSWhite": "dns-white",
+            "DNS": "dns",
+            "FastConnectWhite": "fast-connect-white",
+            "FastConnect": "fast-connect",
+            "NATGatewayWhite": "nat-gateway-white",
+            "NATGateway": "nat-gateway",
+            "VPNWhite": "vpn-white",
+            "VPN": "vpn"
+        },
+        "database": {
+            "AutonomousWhite": "autonomous-white",
+            "Autonomous": "autonomous",
+            "BigdataServiceWhite": "bigdata-service-white",
+            "BigdataService": "bigdata-service",
+            "DatabaseServiceWhite": "database-service-white",
+            "DatabaseService": "database-service",
+            "DataflowApacheWhite": "dataflow-apache-white",
+            "DataflowApache": "dataflow-apache",
+            "DcatWhite": "dcat-white",
+            "Dcat": "dcat",
+            "DisWhite": "dis-white",
+            "Dis": "dis",
+            "DMSWhite": "dms-white",
+            "DMS": "dms",
+            "ScienceWhite": "science-white",
+            "Science": "science",
+            "StreamWhite": "stream-white",
+            "Stream": "stream"
+        },
+        "devops": {
+            "APIGatewayWhite": "api-gateway-white",
+            "APIGateway": "api-gateway",
+            "APIServiceWhite": "api-service-white",
+            "APIService": "api-service",
+            "ResourceMgmtWhite": "resource-mgmt-white",
+            "ResourceMgmt": "resource-mgmt"
+        },
+        "governance": {
+            "AuditWhite": "audit-white",
+            "Audit": "audit",
+            "CompartmentsWhite": "compartments-white",
+            "Compartments": "compartments",
+            "GroupsWhite": "groups-white",
+            "Groups": "groups",
+            "LoggingWhite": "logging-white",
+            "Logging": "logging",
+            "OCIDWhite": "ocid-white",
+            "OCID": "ocid",
+            "PoliciesWhite": "policies-white",
+            "Policies": "policies",
+            "TaggingWhite": "tagging-white",
+            "Tagging": "tagging"
+        },
+        "monitoring": {
+            "AlarmWhite": "alarm-white",
+            "Alarm": "alarm",
+            "EmailWhite": "email-white",
+            "Email": "email",
+            "EventsWhite": "events-white",
+            "Events": "events",
+            "HealthCheckWhite": "health-check-white",
+            "HealthCheck": "health-check",
+            "NotificationsWhite": "notifications-white",
+            "Notifications": "notifications",
+            "QueueWhite": "queue-white",
+            "Queue": "queue",
+            "SearchWhite": "search-white",
+            "Search": "search",
+            "TelemetryWhite": "telemetry-white",
+            "Telemetry": "telemetry",
+            "WorkflowWhite": "workflow-white",
+            "Workflow": "workflow"
+        },
+        "network": {
+            "DrgWhite": "drg-white",
+            "Drg": "drg",
+            "FirewallWhite": "firewall-white",
+            "Firewall": "firewall",
+            "InternetGatewayWhite": "internet-gateway-white",
+            "InternetGateway": "internet-gateway",
+            "LoadBalancerWhite": "load-balancer-white",
+            "LoadBalancer": "load-balancer",
+            "RouteTableWhite": "route-table-white",
+            "RouteTable": "route-table",
+            "SecurityListsWhite": "security-lists-white",
+            "SecurityLists": "security-lists",
+            "ServiceGatewayWhite": "service-gateway-white",
+            "ServiceGateway": "service-gateway",
+            "VcnWhite": "vcn-white",
+            "Vcn": "vcn"
+        },
+        "security": {
+            "CloudGuardWhite": "cloud-guard-white",
+            "CloudGuard": "cloud-guard",
+            "DDOSWhite": "ddos-white",
+            "DDOS": "ddos",
+            "EncryptionWhite": "encryption-white",
+            "Encryption": "encryption",
+            "IDAccessWhite": "id-access-white",
+            "IDAccess": "id-access",
+            "KeyManagementWhite": "key-management-white",
+            "KeyManagement": "key-management",
+            "MaxSecurityZoneWhite": "max-security-zone-white",
+            "MaxSecurityZone": "max-security-zone",
+            "VaultWhite": "vault-white",
+            "Vault": "vault",
+            "WAFWhite": "waf-white",
+            "WAF": "waf"
+        },
+        "storage": {
+            "BackupRestoreWhite": "backup-restore-white",
+            "BackupRestore": "backup-restore",
+            "BlockStorageCloneWhite": "block-storage-clone-white",
+            "BlockStorageClone": "block-storage-clone",
+            "BlockStorageWhite": "block-storage-white",
+            "BlockStorage": "block-storage",
+            "BucketsWhite": "buckets-white",
+            "Buckets": "buckets",
+            "DataTransferWhite": "data-transfer-white",
+            "DataTransfer": "data-transfer",
+            "ElasticPerformanceWhite": "elastic-performance-white",
+            "ElasticPerformance": "elastic-performance",
+            "FileStorageWhite": "file-storage-white",
+            "FileStorage": "file-storage",
+            "ObjectStorageWhite": "object-storage-white",
+            "ObjectStorage": "object-storage",
+            "StorageGatewayWhite": "storage-gateway-white",
+            "StorageGateway": "storage-gateway"
+        }
+    },
+    "onprem": {
+        "aggregator": {
+            "Fluentd": "fluentd",
+            "Vector": "vector"
+        },
+        "analytics": {
+            "Beam": "beam",
+            "Databricks": "databricks",
+            "Dbt": "dbt",
+            "Dremio": "dremio",
+            "Flink": "flink",
+            "Hadoop": "hadoop",
+            "Hive": "hive",
+            "Metabase": "metabase",
+            "Norikra": "norikra",
+            "Powerbi": "powerbi",
+            "Presto": "presto",
+            "Singer": "singer",
+            "Spark": "spark",
+            "Storm": "storm",
+            "Superset": "superset",
+            "Tableau": "tableau",
+            "Trino": "trino"
+        },
+        "auth": {
+            "Boundary": "boundary",
+            "BuzzfeedSso": "buzzfeed-sso",
+            "Oauth2Proxy": "oauth2-proxy"
+        },
+        "cd": {
+            "Spinnaker": "spinnaker",
+            "TektonCli": "tekton-cli",
+            "Tekton": "tekton"
+        },
+        "certificates": {
+            "CertManager": "cert-manager",
+            "LetsEncrypt": "lets-encrypt"
+        },
+        "ci": {
+            "Circleci": "circleci",
+            "Concourseci": "concourseci",
+            "Droneci": "droneci",
+            "GithubActions": "github-actions",
+            "Gitlabci": "gitlabci",
+            "Jenkins": "jenkins",
+            "Teamcity": "teamcity",
+            "Travisci": "travisci",
+            "Zuulci": "zuulci"
+        },
+        "client": {
+            "Client": "client",
+            "User": "user",
+            "Users": "users"
+        },
+        "compute": {
+            "Nomad": "nomad",
+            "Server": "server"
+        },
+        "container": {
+            "Containerd": "containerd",
+            "Crio": "crio",
+            "Docker": "docker",
+            "Firecracker": "firecracker",
+            "Gvisor": "gvisor",
+            "K3S": "k3s",
+            "Lxc": "lxc",
+            "Rkt": "rkt"
+        },
+        "database": {
+            "Cassandra": "cassandra",
+            "Clickhouse": "clickhouse",
+            "Cockroachdb": "cockroachdb",
+            "Couchbase": "couchbase",
+            "Couchdb": "couchdb",
+            "Dgraph": "dgraph",
+            "Druid": "druid",
+            "Duckdb": "duckdb",
+            "Hbase": "hbase",
+            "Influxdb": "influxdb",
+            "Janusgraph": "janusgraph",
+            "Mariadb": "mariadb",
+            "Mongodb": "mongodb",
+            "Mssql": "mssql",
+            "Mysql": "mysql",
+            "Neo4J": "neo4j",
+            "Oracle": "oracle",
+            "Postgresql": "postgresql",
+            "Qdrant": "qdrant",
+            "Scylla": "scylla"
+        },
+        "dns": {
+            "Coredns": "coredns",
+            "Powerdns": "powerdns"
+        },
+        "etl": {
+            "Embulk": "embulk"
+        },
+        "gitops": {
+            "Argocd": "argocd",
+            "Flagger": "flagger",
+            "Flux": "flux"
+        },
+        "groupware": {
+            "Nextcloud": "nextcloud"
+        },
+        "iac": {
+            "Ansible": "ansible",
+            "Atlantis": "atlantis",
+            "Awx": "awx",
+            "Pulumi": "pulumi",
+            "Puppet": "puppet",
+            "Terraform": "terraform"
+        },
+        "identity": {
+            "Dex": "dex"
+        },
+        "inmemory": {
+            "Aerospike": "aerospike",
+            "Hazelcast": "hazelcast",
+            "Memcached": "memcached",
+            "Redis": "redis"
+        },
+        "logging": {
+            "Fluentbit": "fluentbit",
+            "Graylog": "graylog",
+            "Loki": "loki",
+            "Rsyslog": "rsyslog",
+            "SyslogNg": "syslog-ng"
+        },
+        "messaging": {
+            "Centrifugo": "centrifugo"
+        },
+        "mlops": {
+            "Mlflow": "mlflow",
+            "Polyaxon": "polyaxon"
+        },
+        "monitoring": {
+            "Cortex": "cortex",
+            "Datadog": "datadog",
+            "Dynatrace": "dynatrace",
+            "Grafana": "grafana",
+            "Humio": "humio",
+            "Mimir": "mimir",
+            "Nagios": "nagios",
+            "Newrelic": "newrelic",
+            "PrometheusOperator": "prometheus-operator",
+            "Prometheus": "prometheus",
+            "Sentry": "sentry",
+            "Splunk": "splunk",
+            "Thanos": "thanos",
+            "Zabbix": "zabbix"
+        },
+        "network": {
+            "Ambassador": "ambassador",
+            "Apache": "apache",
+            "Bind9": "bind-9",
+            "Caddy": "caddy",
+            "CiscoRouter": "cisco-router",
+            "CiscoSwitchL2": "cisco-switch-l2",
+            "CiscoSwitchL3": "cisco-switch-l3",
+            "Consul": "consul",
+            "Envoy": "envoy",
+            "Etcd": "etcd",
+            "Glassfish": "glassfish",
+            "Gunicorn": "gunicorn",
+            "Haproxy": "haproxy",
+            "Internet": "internet",
+            "Istio": "istio",
+            "Jbossas": "jbossas",
+            "Jetty": "jetty",
+            "Kong": "kong",
+            "Linkerd": "linkerd",
+            "Mikrotik": "mikrotik",
+            "Nginx": "nginx",
+            "Ocelot": "ocelot",
+            "OpenServiceMesh": "open-service-mesh",
+            "Opnsense": "opnsense",
+            "Pfsense": "pfsense",
+            "Pomerium": "pomerium",
+            "Powerdns": "powerdns",
+            "Tomcat": "tomcat",
+            "Traefik": "traefik",
+            "Tyk": "tyk",
+            "Vyos": "vyos",
+            "Wildfly": "wildfly",
+            "Yarp": "yarp",
+            "Zookeeper": "zookeeper"
+        },
+        "proxmox": {
+            "Pve": "pve"
+        },
+        "queue": {
+            "Activemq": "activemq",
+            "Celery": "celery",
+            "Emqx": "emqx",
+            "Kafka": "kafka",
+            "Nats": "nats",
+            "Rabbitmq": "rabbitmq",
+            "Zeromq": "zeromq"
+        },
+        "registry": {
+            "Harbor": "harbor",
+            "Jfrog": "jfrog"
+        },
+        "search": {
+            "Solr": "solr"
+        },
+        "security": {
+            "Bitwarden": "bitwarden",
+            "Trivy": "trivy",
+            "Vault": "vault"
+        },
+        "storage": {
+            "CephOsd": "ceph-osd",
+            "Ceph": "ceph",
+            "Glusterfs": "glusterfs",
+            "Portworx": "portworx"
+        },
+        "tracing": {
+            "Jaeger": "jaeger",
+            "Tempo": "tempo"
+        },
+        "vcs": {
+            "Git": "git",
+            "Gitea": "gitea",
+            "Github": "github",
+            "Gitlab": "gitlab",
+            "Svn": "svn"
+        },
+        "workflow": {
+            "Airflow": "airflow",
+            "Digdag": "digdag",
+            "Kubeflow": "kubeflow",
+            "Nifi": "nifi"
+        }
+    },
+    "openstack": {
+        "apiproxies": {
+            "EC2API": "ec2api"
+        },
+        "applicationlifecycle": {
+            "Freezer": "freezer",
+            "Masakari": "masakari",
+            "Murano": "murano",
+            "Solum": "solum"
+        },
+        "baremetal": {
+            "Cyborg": "cyborg",
+            "Ironic": "ironic"
+        },
+        "billing": {
+            "Cloudkitty": "cloudkitty"
+        },
+        "compute": {
+            "Nova": "nova",
+            "Qinling": "qinling",
+            "Zun": "zun"
+        },
+        "containerservices": {
+            "Kuryr": "kuryr"
+        },
+        "deployment": {
+            "Ansible": "ansible",
+            "Charms": "charms",
+            "Chef": "chef",
+            "Helm": "helm",
+            "Kolla": "kolla",
+            "Tripleo": "tripleo"
+        },
+        "frontend": {
+            "Horizon": "horizon"
+        },
+        "monitoring": {
+            "Monasca": "monasca",
+            "Telemetry": "telemetry"
+        },
+        "multiregion": {
+            "Tricircle": "tricircle"
+        },
+        "networking": {
+            "Designate": "designate",
+            "Neutron": "neutron",
+            "Octavia": "octavia"
+        },
+        "nfv": {
+            "Tacker": "tacker"
+        },
+        "optimization": {
+            "Congress": "congress",
+            "Rally": "rally",
+            "Vitrage": "vitrage",
+            "Watcher": "watcher"
+        },
+        "orchestration": {
+            "Blazar": "blazar",
+            "Heat": "heat",
+            "Mistral": "mistral",
+            "Senlin": "senlin",
+            "Zaqar": "zaqar"
+        },
+        "packaging": {
+            "LOCI": "loci",
+            "Puppet": "puppet",
+            "RPM": "rpm"
+        },
+        "sharedservices": {
+            "Barbican": "barbican",
+            "Glance": "glance",
+            "Karbor": "karbor",
+            "Keystone": "keystone",
+            "Searchlight": "searchlight"
+        },
+        "storage": {
+            "Cinder": "cinder",
+            "Manila": "manila",
+            "Swift": "swift"
+        },
+        "user": {
+            "Openstackclient": "openstackclient"
+        },
+        "workloadprovisioning": {
+            "Magnum": "magnum",
+            "Sahara": "sahara",
+            "Trove": "trove"
+        }
+    },
+    "outscale": {
+        "compute": {
+            "Compute": "compute",
+            "DirectConnect": "direct-connect"
+        },
+        "network": {
+            "ClientVpn": "client-vpn",
+            "InternetService": "internet-service",
+            "LoadBalancer": "load-balancer",
+            "NatService": "nat-service",
+            "Net": "net",
+            "SiteToSiteVpng": "site-to-site-vpng"
+        },
+        "security": {
+            "Firewall": "firewall",
+            "IdentityAndAccessManagement": "identity-and-access-management"
+        },
+        "storage": {
+            "SimpleStorageService": "simple-storage-service",
+            "Storage": "storage"
+        }
+    },
+    "programming": {
+        "flowchart": {
+            "Action": "action",
+            "Collate": "collate",
+            "Database": "database",
+            "Decision": "decision",
+            "Delay": "delay",
+            "Display": "display",
+            "Document": "document",
+            "InputOutput": "input-output",
+            "Inspection": "inspection",
+            "InternalStorage": "internal-storage",
+            "LoopLimit": "loop-limit",
+            "ManualInput": "manual-input",
+            "ManualLoop": "manual-loop",
+            "Merge": "merge",
+            "MultipleDocuments": "multiple-documents",
+            "OffPageConnectorLeft": "off-page-connector-left",
+            "OffPageConnectorRight": "off-page-connector-right",
+            "Or": "or",
+            "PredefinedProcess": "predefined-process",
+            "Preparation": "preparation",
+            "Sort": "sort",
+            "StartEnd": "start-end",
+            "StoredData": "stored-data",
+            "SummingJunction": "summing-junction"
+        },
+        "framework": {
+            "Angular": "angular",
+            "Backbone": "backbone",
+            "Camel": "camel",
+            "Django": "django",
+            "Dotnet": "dotnet",
+            "Ember": "ember",
+            "Fastapi": "fastapi",
+            "Flask": "flask",
+            "Flutter": "flutter",
+            "Graphql": "graphql",
+            "Hibernate": "hibernate",
+            "Jhipster": "jhipster",
+            "Laravel": "laravel",
+            "Micronaut": "micronaut",
+            "Nextjs": "nextjs",
+            "Phoenix": "phoenix",
+            "Quarkus": "quarkus",
+            "Rails": "rails",
+            "React": "react",
+            "Spring": "spring",
+            "Sqlpage": "sqlpage",
+            "Starlette": "starlette",
+            "Svelte": "svelte",
+            "Vercel": "vercel",
+            "Vue": "vue"
+        },
+        "language": {
+            "Bash": "bash",
+            "C": "c",
+            "Cpp": "cpp",
+            "Csharp": "csharp",
+            "Dart": "dart",
+            "Elixir": "elixir",
+            "Erlang": "erlang",
+            "Go": "go",
+            "Java": "java",
+            "Javascript": "javascript",
+            "Kotlin": "kotlin",
+            "Latex": "latex",
+            "Matlab": "matlab",
+            "Nodejs": "nodejs",
+            "Php": "php",
+            "Python": "python",
+            "R": "r",
+            "Ruby": "ruby",
+            "Rust": "rust",
+            "Scala": "scala",
+            "Sql": "sql",
+            "Swift": "swift",
+            "Typescript": "typescript"
+        },
+        "runtime": {
+            "Dapr": "dapr"
+        }
+    },
+    "saas": {
+        "alerting": {
+            "Newrelic": "newrelic",
+            "Opsgenie": "opsgenie",
+            "Pagerduty": "pagerduty",
+            "Pushover": "pushover",
+            "Xmatters": "xmatters"
+        },
+        "analytics": {
+            "Dataform": "dataform",
+            "Snowflake": "snowflake",
+            "Stitch": "stitch"
+        },
+        "automation": {
+            "N8N": "n8n"
+        },
+        "cdn": {
+            "Akamai": "akamai",
+            "Cloudflare": "cloudflare",
+            "Fastly": "fastly",
+            "Imperva": "imperva"
+        },
+        "chat": {
+            "Discord": "discord",
+            "Line": "line",
+            "Mattermost": "mattermost",
+            "Messenger": "messenger",
+            "RocketChat": "rocket-chat",
+            "Slack": "slack",
+            "Teams": "teams",
+            "Telegram": "telegram"
+        },
+        "communication": {
+            "Twilio": "twilio"
+        },
+        "crm": {
+            "Intercom": "intercom",
+            "Zendesk": "zendesk"
+        },
+        "filesharing": {
+            "Nextcloud": "nextcloud"
+        },
+        "identity": {
+            "Auth0": "auth0",
+            "Okta": "okta"
+        },
+        "logging": {
+            "Datadog": "datadog",
+            "Newrelic": "newrelic",
+            "Papertrail": "papertrail"
+        },
+        "media": {
+            "Cloudinary": "cloudinary"
+        },
+        "recommendation": {
+            "Recombee": "recombee"
+        },
+        "security": {
+            "Crowdstrike": "crowdstrike",
+            "Sonarqube": "sonarqube"
+        },
+        "social": {
+            "Facebook": "facebook",
+            "Twitter": "twitter"
+        }
+    }
+}
