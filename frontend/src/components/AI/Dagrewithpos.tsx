@@ -123,7 +123,7 @@ const graphJson=
         "label": "Kinesis Data Streams",
         "iconUrl": "https://raw.githubusercontent.com/mingrammer/diagrams/master/resources/aws/analytics/kinesis.png"
       },
-     
+      
     },
     {
       "id": "queue",
@@ -164,7 +164,7 @@ const graphJson=
         "label": "DynamoDB",
         "iconUrl": "https://raw.githubusercontent.com/mingrammer/diagrams/master/resources/aws/database/dynamodb.png"
       },
-     
+      
     },
     {
       "id": "iam_role",
@@ -173,7 +173,7 @@ const graphJson=
         "label": "IAM Role",
         "iconUrl": "https://raw.githubusercontent.com/mingrammer/diagrams/master/resources/aws/security/identity-and-access-management-iam-role.png"
       },
-     
+      
     },
     {
       "id": "kms",
@@ -182,7 +182,7 @@ const graphJson=
         "label": "KMS",
         "iconUrl": "https://raw.githubusercontent.com/mingrammer/diagrams/master/resources/aws/security/key-management-service.png"
       },
-     
+      
     },
     {
       "id": "cloudwatch",
@@ -191,7 +191,7 @@ const graphJson=
         "label": "CloudWatch",
         "iconUrl": "https://raw.githubusercontent.com/mingrammer/diagrams/master/resources/aws/management/cloudwatch.png"
       },
-     
+      
     },
     {
       "id": "datadog",
@@ -348,7 +348,8 @@ const graphJson=
         "igw",
         "nat"
       ],
-      "parent": []
+      "parent": [],
+      "hasTint": false
     },
     {
       "id": "vpc",
@@ -359,7 +360,8 @@ const graphJson=
       ],
       "parent": [
         "networking"
-      ]
+      ],
+      "hasTint": false
     },
     {
       "id": "public_subnet",
@@ -526,8 +528,20 @@ function layoutWithDagreImproved(nodes, edges, direction = "LR") {
     return maxPath;
   }
   const mainPipelineIds = findLongestPathNodes(sortedNodes, edges);
+  // Dynamically measure label width for each node
+  function measureTextWidth(text, font = '800 28px Inter, Arial, sans-serif') {
+    if (typeof window !== 'undefined' && window.document) {
+      const canvas = document.createElement('canvas');
+      const context = canvas.getContext('2d');
+      context.font = font;
+      return context.measureText(text).width + 32; // add padding
+    }
+    // fallback for SSR
+    return Math.max(180, text.length * 18);
+  }
   sortedNodes.forEach((n) => {
-    const w = n.width ?? 180;
+    const labelWidth = n.data && n.data.label ? measureTextWidth(n.data.label) : 180;
+    const w = Math.max(labelWidth, 180);
     const h = n.height ?? 70;
     // Assign same rank to main pipeline nodes for lane alignment
     if (mainPipelineIds.includes(n.id)) {
@@ -535,11 +549,6 @@ function layoutWithDagreImproved(nodes, edges, direction = "LR") {
     } else {
       g.setNode(n.id, { width: w, height: h });
     }
-  });
-  sortedNodes.forEach((n) => {
-    const w = n.width ?? 180;
-    const h = n.height ?? 70;
-    g.setNode(n.id, { width: w, height: h });
   });
   edges.forEach((e) => g.setEdge(e.source, e.target));
   dagre.layout(g);
@@ -649,13 +658,21 @@ function buildClusterNodes(layoutedNodes, clusters) {
     const CLUSTER_GAP = 32;
     const minX = Math.min(...children.map((n) => n.position.x)) - CLUSTER_GAP;
     const minY = Math.min(...children.map((n) => n.position.y)) - CLUSTER_GAP;
+    // Use dynamically measured node width for cluster sizing
     const maxX = Math.max(...children.map((n) => n.position.x + (n.width ?? 180))) + CLUSTER_GAP;
     const maxY = Math.max(...children.map((n) => n.position.y + (n.height ?? 70))) + CLUSTER_GAP;
     clusterBoxes[c.id] = { minX, minY, maxX, maxY };
- 
-   
-// 🔥 Ensure top-level clusters (no parent) remain independent
-const hasParent = Array.isArray(c.parent) && c.parent.length > 0;
+
+    // 🔥 Ensure top-level clusters (no parent) remain independent
+    const hasParent = Array.isArray(c.parent) && c.parent.length > 0;
+    if (!hasParent) {
+      clusterBoxes[c.id] = {
+        minX,
+        minY,
+        maxX,
+        maxY
+      };
+    }
 if (!hasParent) {
   clusterBoxes[c.id] = {
     minX,
@@ -668,7 +685,7 @@ if (!hasParent) {
   // Second pass: expand parent clusters to include child clusters
   function expandClusterBoxToIncludeDescendants(clusterId) {
     if (!clusterBoxes[clusterId]) return;
-   
+    
     const childClusterIds = clusters
       .filter(cl => Array.isArray(cl.parent) && cl.parent.includes(clusterId))
       .map(cl => cl.id);
@@ -692,11 +709,13 @@ if (!hasParent) {
     const margin = hasParent ? baseMargin : topLevelMargin;
     const color = getClusterColor(c.id);
     const tilt = hasParent ? ((idx % 2 === 0) ? -3 : 3) : 0;
- 
+
+    // Fully dynamic: use only hasTint from cluster data
+    const hasTint = c.hasTint !== false;
     return {
       id: c.id,
       type: "cluster",
-      data: { label: c.label, hasParent, color, tilt, hasTint: c.hasTint !== false },
+      data: { label: c.label, hasParent, color, tilt, hasTint },
       position: { x: box.minX - margin, y: box.minY - margin - 18 },
       style: {
         width: box.maxX - box.minX + margin * 2,
@@ -707,7 +726,6 @@ if (!hasParent) {
     };
   }).filter(Boolean);
 }
- 
 const CustomNode = ({ data }) => {
   const direction = data?.direction || "LR";
   const targetPos = direction === "LR" ? Position.Left : Position.Top;
@@ -736,12 +754,12 @@ const CustomNode = ({ data }) => {
       {/* Label BELOW, outside the bounding box */}
       <div
         style={{
-          fontSize: 32,
+          fontSize: 28,
           fontWeight: 800,
-          marginTop: 3,
+          marginTop: 8,
           textAlign: "center",
           lineHeight: 1.2,
-          width: "100%",
+          display: 'inline-block',
           whiteSpace: "nowrap",
           overflow: "visible",
           textOverflow: "unset",
@@ -753,8 +771,6 @@ const CustomNode = ({ data }) => {
     </div>
   );
 };
- 
- 
 // ✅ Cluster Node renderer
 // Utility to convert hex to rgba with alpha
 function hexToRgba(hex: string, alpha: number) {
@@ -768,48 +784,54 @@ function hexToRgba(hex: string, alpha: number) {
   const b = num & 255;
   return `rgba(${r},${g},${b},${alpha})`;
 }
- 
-const ClusterNode = ({ data }) => (
-  <div
-    style={{
-      border: ["VPC", "Networking"].includes(data.label) ? "4px solid #bbb" : `4px solid ${data.color}`,
-      borderRadius: 24,
-      background: data.hasTint === false ? "none" : hexToRgba(data.color, 0.13),
-      minWidth: 420,
-      minHeight: 220,
-      width: "100%",
-      height: "100%",
-      padding: 28,
-      position: "relative",
-      zIndex: 0,
-      boxShadow: `0 6px 32px 0 ${data.color}22, 0 2px 12px 0 rgba(90,107,138,0.07)`,
-      pointerEvents: "none",
-      transition: "background 0.2s, transform 0.2s, box-shadow 0.2s",
-      margin: data.hasParent ? 16 : 0,
-      outline: data.hasParent ? undefined : '3px solid #fff',
-    }}
-  >
-    <div style={{
-      display: "flex",
-      alignItems: "center",
-      position: "absolute",
-      top: 18,
-      left: 28,
-      background: "#fff",
-      border: ["VPC", "Networking"].includes(data.label) ? "2px solid #bbb" : `2px solid ${data.color}`,
-      borderRadius: 16,
-      padding: "10px 36px 10px 36px",
-      fontWeight: 900,
-      fontSize: 34,
-      color: ["VPC", "Networking"].includes(data.label) ? "#444" : '#222',
-      boxShadow: ["VPC", "Networking"].includes(data.label) ? `0 1px 8px 0 #bbb22` : `0 1px 8px 0 ${data.color}22`,
-      pointerEvents: "auto",
-      minHeight: 56,
-    }}>
-      {data.label}
+
+const ClusterNode = ({ data }) => {
+  return (
+    <div
+      style={{
+        border: `4px solid ${data.color}`,
+        borderRadius: 24,
+        background: data.hasTint === false ? "#fff" : hexToRgba(data.color, 0.13),
+        minWidth: 420,
+        minHeight: 220,
+        width: "100%",
+        height: "100%",
+        padding: 28,
+        position: "relative",
+        zIndex: 0,
+        boxShadow: `0 6px 32px 0 ${data.color}22, 0 2px 12px 0 rgba(90,107,138,0.07)`,
+        pointerEvents: "none",
+        transition: "background 0.2s, transform 0.2s, box-shadow 0.2s",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        flexDirection: "column",
+      }}
+    >
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          position: "absolute",
+          top: 18,
+          left: 28,
+          background: "#fff", // White background for badge
+          border: `2px solid ${data.color}`,
+          borderRadius: 16,
+          padding: "10px 36px 10px 36px",
+          fontWeight: 900,
+          fontSize: 34,
+          color: '#222',
+          boxShadow: `0 1px 8px 0 ${data.color}22`,
+          pointerEvents: "auto",
+          minHeight: 56,
+        }}
+      >
+        {data.label}
+      </div>
     </div>
-  </div>
-);
+  );
+};
 const nodeTypes = { custom: CustomNode, cluster: ClusterNode };
 export default function DagreFlow() {
   const [direction, setDirection] = useState("TB");
@@ -833,20 +855,20 @@ export default function DagreFlow() {
       // collect all clusters that include this node
       const containingClusters = graphJson.clusters.filter(c => c.nodes.includes(nodeId));
       if (containingClusters.length === 0) return undefined;
-   
+    
       // pick the deepest cluster
       const deepestCluster = containingClusters.sort(
         (a, b) => (a.parent?.length || 0) - (b.parent?.length || 0)
       ).pop();
-   
+    
       // ❌ If cluster has no parent, treat it as top-level (don’t assign parentNode)
       if (!deepestCluster?.parent || deepestCluster.parent.length === 0) {
         return undefined;
       }
       return deepestCluster.id;
     }
-   
- 
+    
+
     const withParents = layoutedNodes.map((n) => {
       const parentId = findParentClusterId(n.id);
       if (parentId) {
@@ -855,7 +877,7 @@ export default function DagreFlow() {
         return { ...n, parentNode: undefined };   // ✅ keep top-level nodes independent
       }
     });
-   
+    
     const clusterNodes = buildClusterNodes(withParents, graphJson.clusters);
     console.log('withParents', withParents);
     console.log('clusterNodes', clusterNodes);
@@ -895,43 +917,40 @@ export default function DagreFlow() {
         zIndex: 20,
         pointerEvents: 'none',
       }}>
-       
+
       </div>
       <ReactFlow
         nodes={nodes}
         edges={edges.map(e => ({
           ...e,
-          type: "smoothstep",
-          sourceHandle: "right",
-          targetHandle: "left",
+          type: "beizer",   // ✅ smooth AWS-style edges
           style: {
-            stroke: "#000000",
-            opacity: 1,
-            fill: "none",
-            strokeWidth: 6,
-            borderRadius: 0,
-            filter: "drop-shadow(0px 0px 3px rgba(0,0,0,1))",
-          },
-          labelStyle: {
-            fontSize: 28,
-            fontWeight: 700,
-            fill: "#000",
-            dominantBaseline: "middle",
-            dy: -24,   // ⬆️ Increased offset: shift label 24px above the edge line for better clarity. Adjust as needed.
-          },
-          labelBgStyle: {
-            fill: "none",   // ✅ no background box
-            stroke: "none",
+            stroke: "#000000",    // pure black like AWS docs
+            strokeWidth: 3,       // bold line
           },
           markerEnd: {
             type: "arrowclosed",
-            color: "#000000",
-            width: 32,
-            height: 32,
+            color: "#000000",     // black arrow
+            width: 30,            // bigger head
+            height: 30,
           },
+          labelStyle: {
+            fontSize: 28,
+            fontWeight: 500,
+            fill: "#000000",
+            background: "white",
+            padding: "4px 8px",   // ✅ spacing around text
+            borderRadius: 4,
+          },
+          labelBgStyle: {
+            fill: "white",        // white background under text
+            fillOpacity: 1,
+          },
+          labelBgPadding: [8, 4], // ✅ adds gap between edge and label
+          labelBgBorderRadius: 4,
         }))}
-       
-       
+        
+
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
         nodeTypes={nodeTypes}
