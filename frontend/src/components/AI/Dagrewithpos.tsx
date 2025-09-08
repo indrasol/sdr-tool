@@ -9,99 +9,51 @@ const graphJson=
 {
   "nodes": [
     {
-      "id": "igw",
+      "id": "repo",
       "type": "custom",
       "data": {
-        "label": "Internet Gateway",
-        "iconUrl": "https://raw.githubusercontent.com/mingrammer/diagrams/master/resources/aws/network/internet-gateway.png"
+        "label": "Git Repo",
+        "iconUrl": "https://raw.githubusercontent.com/mingrammer/diagrams/master/resources/azure/devops/repos.png"
       },
       "position": {
-        "x": -0.995,
-        "y": -0.31999999999999995
+        "x": -1,
+        "y": -0.38738738738738737
       }
     },
     {
-      "id": "nat",
+      "id": "ci_cd",
       "type": "custom",
       "data": {
-        "label": "NAT Gateway",
-        "iconUrl": "https://raw.githubusercontent.com/mingrammer/diagrams/master/resources/aws/network/nat-gateway.png"
+        "label": "CI/CD Pipeline",
+        "iconUrl": "https://raw.githubusercontent.com/mingrammer/diagrams/master/resources/azure/devops/pipelines.png"
       },
       "position": {
-        "x": 1,
-        "y": -0.31999999999999995
+        "x": 0.7837837837837835,
+        "y": -0.38738738738738737
       }
     },
     {
-      "id": "lb",
+      "id": "artifacts",
       "type": "custom",
       "data": {
-        "label": "Application Load Balancer",
-        "iconUrl": "https://raw.githubusercontent.com/mingrammer/diagrams/master/resources/aws/network/elastic-load-balancing.png"
+        "label": "Container Artifacts",
+        "iconUrl": "https://raw.githubusercontent.com/mingrammer/diagrams/master/resources/azure/devops/artifacts.png"
       },
       "position": {
-        "x": 0.6325,
-        "y": -0.16249999999999998
+        "x": 0.5855855855855854,
+        "y": -0.18918918918918917
       }
     },
     {
-      "id": "waf",
+      "id": "aks",
       "type": "custom",
       "data": {
-        "label": "Web Application Firewall",
-        "iconUrl": "https://raw.githubusercontent.com/mingrammer/diagrams/master/resources/aws/security/waf.png"
+        "label": "AKS Cluster",
+        "iconUrl": "https://raw.githubusercontent.com/mingrammer/diagrams/master/resources/azure/compute/kubernetes-services.png"
       },
       "position": {
-        "x": 0.8949999999999999,
-        "y": -0.21499999999999997
-      }
-    },
-    {
-      "id": "dns",
-      "type": "custom",
-      "data": {
-        "label": "Route 53",
-        "iconUrl": "https://raw.githubusercontent.com/mingrammer/diagrams/master/resources/aws/network/route-53.png"
-      },
-      "position": {
-        "x": 0.6849999999999999,
-        "y": -0.10999999999999997
-      }
-    },
-    {
-      "id": "cdn",
-      "type": "custom",
-      "data": {
-        "label": "CloudFront",
-        "iconUrl": "https://raw.githubusercontent.com/mingrammer/diagrams/master/resources/aws/network/cloudfront.png"
-      },
-      "position": {
-        "x": 0.7374999999999999,
-        "y": -0.05749999999999998
-      }
-    },
-    {
-      "id": "web_server",
-      "type": "custom",
-      "data": {
-        "label": "Web Server",
-        "iconUrl": "https://raw.githubusercontent.com/mingrammer/diagrams/master/resources/aws/compute/ec2.png"
-      },
-      "position": {
-        "x": 0.15999999999999998,
-        "y": -0.004999999999999982
-      }
-    },
-    {
-      "id": "app_server",
-      "type": "custom",
-      "data": {
-        "label": "App Server",
-        "iconUrl": "https://raw.githubusercontent.com/mingrammer/diagrams/master/resources/aws/compute/ec2.png"
-      },
-      "position": {
-        "x": 0.37,
-        "y": 0.10000000000000002
+        "x": 0.38738738738738726,
+        "y": 0.009009009009009
       }
     },
     {
@@ -109,345 +61,242 @@ const graphJson=
       "type": "custom",
       "data": {
         "label": "API Gateway",
-        "iconUrl": "https://raw.githubusercontent.com/mingrammer/diagrams/master/resources/aws/compute/lambda.png"
+        "iconUrl": "https://raw.githubusercontent.com/mingrammer/diagrams/master/resources/azure/network/ApiManagementService.png"
       },
       "position": {
-        "x": -0.10250000000000001,
-        "y": 0.047500000000000014
+        "x": -0.9009009009009009,
+        "y": -0.2882882882882883
       }
     },
     {
-      "id": "kinesis",
+      "id": "cosmos_db",
       "type": "custom",
       "data": {
-        "label": "Kinesis Data Streams",
-        "iconUrl": "https://raw.githubusercontent.com/mingrammer/diagrams/master/resources/aws/analytics/kinesis.png"
-      },
-     
-    },
-    {
-      "id": "queue",
-      "type": "custom",
-      "data": {
-        "label": "SQS Queue",
-        "iconUrl": "https://raw.githubusercontent.com/mingrammer/diagrams/master/resources/aws/integration/simple-queue-service-sqs.png"
-      },
-    },
-    {
-      "id": "sagemaker",
-      "type": "custom",
-      "data": {
-        "label": "Sagemaker",
-        "iconUrl": "https://raw.githubusercontent.com/mingrammer/diagrams/master/resources/aws/ml/sagemaker.png"
-      },
-    },
-    {
-      "id": "redshift",
-      "type": "custom",
-      "data": {
-        "label": "Redshift",
-        "iconUrl": "https://raw.githubusercontent.com/mingrammer/diagrams/master/resources/aws/database/redshift.png"
-      },
-    },
-    {
-      "id": "data_lake",
-      "type": "custom",
-      "data": {
-        "label": "Data Lake",
-        "iconUrl": "https://raw.githubusercontent.com/mingrammer/diagrams/master/resources/aws/storage/simple-storage-service-s3.png"
-      },
-    },
-    {
-      "id": "ddb",
-      "type": "custom",
-      "data": {
-        "label": "DynamoDB",
-        "iconUrl": "https://raw.githubusercontent.com/mingrammer/diagrams/master/resources/aws/database/dynamodb.png"
-      },
-     
-    },
-    {
-      "id": "iam_role",
-      "type": "custom",
-      "data": {
-        "label": "IAM Role",
-        "iconUrl": "https://raw.githubusercontent.com/mingrammer/diagrams/master/resources/aws/security/identity-and-access-management-iam-role.png"
-      },
-     
-    },
-    {
-      "id": "kms",
-      "type": "custom",
-      "data": {
-        "label": "KMS",
-        "iconUrl": "https://raw.githubusercontent.com/mingrammer/diagrams/master/resources/aws/security/key-management-service.png"
-      },
-     
-    },
-    {
-      "id": "cloudwatch",
-      "type": "custom",
-      "data": {
-        "label": "CloudWatch",
-        "iconUrl": "https://raw.githubusercontent.com/mingrammer/diagrams/master/resources/aws/management/cloudwatch.png"
-      },
-     
-    },
-    {
-      "id": "datadog",
-      "type": "custom",
-      "data": {
-        "label": "Datadog",
-        "iconUrl": "https://raw.githubusercontent.com/mingrammer/diagrams/master/resources/saas/logging/datadog.png"
+        "label": "Cosmos DB",
+        "iconUrl": "https://raw.githubusercontent.com/mingrammer/diagrams/master/resources/azure/database/cosmos-db.png"
       },
       "position": {
-        "x": 0.3175,
-        "y": 0.15250000000000002
+        "x": -0.20720720720720726,
+        "y": 0.4054054054054053
       }
     },
     {
-      "id": "pipeline",
+      "id": "redis_cache",
       "type": "custom",
       "data": {
-        "label": "CodePipeline",
-        "iconUrl": "https://raw.githubusercontent.com/mingrammer/diagrams/master/resources/aws/devtools/codepipeline.png"
+        "label": "Redis Cache",
+        "iconUrl": "https://raw.githubusercontent.com/mingrammer/diagrams/master/resources/azure/cache/CacheForRedis.png"
       },
       "position": {
-        "x": -0.9425,
-        "y": -0.26749999999999996
+        "x": -0.20720720720720726,
+        "y": 0.30630630630630623
       }
     },
     {
-      "id": "build",
+      "id": "container_registry",
       "type": "custom",
       "data": {
-        "label": "CodeBuild",
-        "iconUrl": "https://raw.githubusercontent.com/mingrammer/diagrams/master/resources/aws/devtools/codebuild.png"
+        "label": "Azure Container Registry",
+        "iconUrl": "https://raw.githubusercontent.com/mingrammer/diagrams/master/resources/azure/storage/blob-storage.png"
       },
       "position": {
-        "x": -0.785,
-        "y": -0.10999999999999997
+        "x": 0.48648648648648635,
+        "y": -0.09009009009009009
+      }
+    },
+    {
+      "id": "event_grid",
+      "type": "custom",
+      "data": {
+        "label": "Event Grid",
+        "iconUrl": "https://raw.githubusercontent.com/mingrammer/diagrams/master/resources/azure/analytics/EventGrid.png"
+      },
+      "position": {
+        "x": 0.09009009009009,
+        "y": 0.30630630630630623
+      }
+    },
+    {
+      "id": "monitor",
+      "type": "custom",
+      "data": {
+        "label": "Azure Monitor",
+        "iconUrl": "https://raw.githubusercontent.com/mingrammer/diagrams/master/resources/azure/monitor/monitor.png"
+      },
+      "position": {
+        "x": -0.009009009009009087,
+        "y": 0.20720720720720717
+      }
+    },
+    {
+      "id": "azure_ad",
+      "type": "custom",
+      "data": {
+        "label": "Azure AD",
+        "iconUrl": "https://raw.githubusercontent.com/mingrammer/diagrams/master/resources/azure/identity/active-directory.png"
+      },
+      "position": {
+        "x": -0.009009009009009087,
+        "y": 0.10810810810810809
       }
     }
   ],
   "edges": [
     {
-      "id": "dns_cdn",
-      "source": "dns",
-      "target": "cdn",
-      "label": "DNS Resolution"
+      "id": "repo_ci_cd",
+      "source": "repo",
+      "target": "ci_cd",
+      "label": "Code Commit"
     },
     {
-      "id": "cdn_waf",
-      "source": "cdn",
-      "target": "waf",
-      "label": "HTTPS 443 / TLS1.3"
+      "id": "ci_cd_artifacts",
+      "source": "ci_cd",
+      "target": "artifacts",
+      "label": "Build and Deploy"
     },
     {
-      "id": "waf_lb",
-      "source": "waf",
-      "target": "lb",
-      "label": "HTTPS 443 / TLS1.3"
+      "id": "artifacts_container_registry",
+      "source": "artifacts",
+      "target": "container_registry",
+      "label": "Deploy Containers"
     },
     {
-      "id": "lb_web_server",
-      "source": "lb",
-      "target": "web_server",
-      "label": "HTTPS 443 / TLS1.3"
+      "id": "container_registry_aks",
+      "source": "container_registry",
+      "target": "aks",
+      "label": "Pull Images over HTTPS"
     },
     {
-      "id": "lb_app_server",
-      "source": "lb",
-      "target": "app_server",
-      "label": "HTTPS 443 / TLS1.3"
-    },
-    {
-      "id": "web_server_api_gateway",
-      "source": "web_server",
+      "id": "aks_api_gateway",
+      "source": "aks",
       "target": "api_gateway",
-      "label": "HTTPS 443 / TLS1.3"
+      "label": "HTTPS 443 / API Calls"
     },
     {
-      "id": "api_gateway_kinesis",
+      "id": "api_gateway_cosmos_db",
       "source": "api_gateway",
-      "target": "kinesis",
-      "label": "PutRecord API / TLS1.3"
+      "target": "cosmos_db",
+      "label": "HTTPS 443 / NoSQL Queries"
     },
     {
-      "id": "kinesis_queue",
-      "source": "kinesis",
-      "target": "queue",
-      "label": "Kinesis Data Firehose"
+      "id": "api_gateway_redis_cache",
+      "source": "api_gateway",
+      "target": "redis_cache",
+      "label": "TLS 6379 / Caching"
     },
     {
-      "id": "queue_sagemaker",
-      "source": "queue",
-      "target": "sagemaker",
-      "label": "SQS Polling"
+      "id": "aks_event_grid",
+      "source": "aks",
+      "target": "event_grid",
+      "label": "Event Publish"
     },
     {
-      "id": "sagemaker_redshift",
-      "source": "sagemaker",
-      "target": "redshift",
-      "label": "Batch Transform"
+      "id": "event_grid_aks",
+      "source": "event_grid",
+      "target": "aks",
+      "label": "Event Subscription"
     },
     {
-      "id": "redshift_data_lake",
-      "source": "redshift",
-      "target": "data_lake",
-      "label": "Copy Command"
+      "id": "aks_monitor",
+      "source": "aks",
+      "target": "monitor",
+      "label": "Logs and Metrics"
     },
     {
-      "id": "sagemaker_ddb",
-      "source": "sagemaker",
-      "target": "ddb",
-      "label": "PutItem"
+      "id": "api_gateway_monitor",
+      "source": "api_gateway",
+      "target": "monitor",
+      "label": "Logs and Metrics"
     },
     {
-      "id": "web_server_iam_role",
-      "source": "web_server",
-      "target": "iam_role",
-      "label": "AssumeRole"
+      "id": "cosmos_db_monitor",
+      "source": "cosmos_db",
+      "target": "monitor",
+      "label": "Logs and Metrics"
     },
     {
-      "id": "app_server_kms",
-      "source": "app_server",
-      "target": "kms",
-      "label": "Encrypt/Decrypt"
+      "id": "redis_cache_monitor",
+      "source": "redis_cache",
+      "target": "monitor",
+      "label": "Logs and Metrics"
     },
     {
-      "id": "web_server_cloudwatch",
-      "source": "web_server",
-      "target": "cloudwatch",
-      "label": "Logs"
+      "id": "aks_azure_ad",
+      "source": "aks",
+      "target": "azure_ad",
+      "label": "IAM Authentication"
     },
     {
-      "id": "app_server_datadog",
-      "source": "app_server",
-      "target": "datadog",
-      "label": "Metrics"
-    },
-    {
-      "id": "pipeline_build",
-      "source": "pipeline",
-      "target": "build",
-      "label": "Build Trigger"
-    },
-    {
-      "id": "build_lb",
-      "source": "build",
-      "target": "lb",
-      "label": "Deploy"
+      "id": "api_gateway_azure_ad",
+      "source": "api_gateway",
+      "target": "azure_ad",
+      "label": "IAM Authentication"
     }
   ],
   "clusters": [
     {
-      "id": "networking",
-      "label": "Networking",
+      "id": "azure_devops_ci/cd",
+      "label": "Azure DevOps CI/CD",
       "nodes": [
-        "igw",
-        "nat"
+        "repo",
+        "ci_cd",
+        "artifacts"
       ],
       "parent": []
     },
     {
-      "id": "vpc",
-      "label": "VPC",
+      "id": "kubernetes_cluster",
+      "label": "Kubernetes Cluster",
       "nodes": [
-        "lb",
-        "waf"
+        "aks"
       ],
-      "parent": [
-        "networking"
-      ]
+      "parent": []
     },
     {
-      "id": "public_subnet",
-      "label": "Public Subnet",
+      "id": "networking_and_api_management",
+      "label": "Networking and API Management",
       "nodes": [
-        "dns",
-        "cdn"
-      ],
-      "parent": [
-        "vpc"
-      ]
-    },
-    {
-      "id": "private_subnet",
-      "label": "Private Subnet",
-      "nodes": [
-        "web_server",
-        "app_server",
         "api_gateway"
       ],
-      "parent": [
-        "vpc"
-      ]
-    },
-    {
-      "id": "data_processing",
-      "label": "Data Processing",
-      "nodes": ["ingestion","processing_and_analysis","storage"],
       "parent": []
     },
     {
-      "id": "ingestion",
-      "label": "Ingestion",
-      "nodes": ["kinesis","queue"],
-      "parent": ["data_processing"]
-    },
-    {
-      "id": "processing_and_analysis",
-      "label": "Processing and Analysis",
-      "nodes": ["sagemaker","redshift"],
-      "parent": ["data_processing"]
-    },
-    {
-      "id": "storage",
-      "label": "Storage",
-      "nodes": ["data_lake","ddb"],
-      "parent": ["data_processing"]
-    },
-    {
-      "id": "security_&_iam",
-      "label": "Security & IAM",
+      "id": "data_storage",
+      "label": "Data Storage",
       "nodes": [
-        "iam_role",
-        "kms"
+        "cosmos_db",
+        "redis_cache",
+        "container_registry"
       ],
       "parent": []
     },
     {
-      "id": "monitoring_&_logging",
-      "label": "Monitoring & Logging",
+      "id": "event_handling",
+      "label": "Event Handling",
       "nodes": [
-        "cloudwatch",
-        "datadog"
+        "event_grid"
       ],
       "parent": []
     },
     {
-      "id": "ci/cd",
-      "label": "CI/CD",
+      "id": "monitoring_and_logging",
+      "label": "Monitoring and Logging",
       "nodes": [
-        "pipeline",
-        "build"
+        "monitor"
       ],
       "parent": []
     },
     {
-      "id": "unconnected",
-      "label": "Services",
+      "id": "identity_and_access_management",
+      "label": "Identity and Access Management",
       "nodes": [
-        "igw",
-        "nat"
+        "azure_ad"
       ],
-      "parent": [
-        "networking"
-      ]
+      "parent": []
     }
   ]
 }
+
  
 // ✅ Dagre layout
 function layoutWithDagreImproved(nodes, edges, direction = "LR") {
@@ -815,6 +664,40 @@ export default function DagreFlow() {
   const [direction, setDirection] = useState("TB");
   const [nodes, setNodes, onNodesChange] = useNodesState([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
+  const [rfInstance, setRfInstance] = useState<any>(null);
+  // Tweak these to control how large the diagram appears after fitting
+  const FIT_PADDING = 0.08;        // lower = bigger diagram
+  const SCALE_BOOST = 1.12;        // slight zoom-in after fit
+
+  // Helper: compute bounds of all rendered nodes
+  const computeNodeBounds = useCallback((list: any[]) => {
+    if (!list || list.length === 0) return null;
+    let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+    for (const n of list) {
+      const w = (n?.width ?? 180);
+      const h = (n?.height ?? 70);
+      const x1 = n?.position?.x ?? 0;
+      const y1 = n?.position?.y ?? 0;
+      const x2 = x1 + w;
+      const y2 = y1 + h;
+      if (x1 < minX) minX = x1;
+      if (y1 < minY) minY = y1;
+      if (x2 > maxX) maxX = x2;
+      if (y2 > maxY) maxY = y2;
+    }
+    return { minX, minY, maxX, maxY, cx: (minX + maxX) / 2, cy: (minY + maxY) / 2 };
+  }, []);
+
+  const centerGraph = useCallback(() => {
+    if (!rfInstance || !nodes.length) return;
+    const b = computeNodeBounds(nodes);
+    if (!b) return;
+    try {
+      const vp = rfInstance.getViewport ? rfInstance.getViewport() : { zoom: undefined };
+      const nextZoom = Math.min((vp?.zoom ?? 1) * SCALE_BOOST, 2);
+      rfInstance.setCenter(b.cx, b.cy, { zoom: nextZoom, duration: 250 });
+    } catch {}
+  }, [rfInstance, nodes, computeNodeBounds]);
   useEffect(() => {
     // Debug: Log graphJson, nodes, edges, clusters
     console.log('graphJson', graphJson);
@@ -863,6 +746,34 @@ export default function DagreFlow() {
     console.log('layoutedEdges', layoutedEdges);
     setEdges(layoutedEdges);
   }, [direction]);
+
+  // Ensure the diagram always fits the viewport after data/layout changes
+  useEffect(() => {
+    if (!nodes.length || !rfInstance) return;
+    // Wait for nodes to render and be measured before fitting
+    const r1 = requestAnimationFrame(() => {
+      try {
+        rfInstance.fitView({ padding: FIT_PADDING, duration: 250 });
+        // Center explicitly in case edges/labels skew the bounding box
+        const r2 = requestAnimationFrame(centerGraph);
+        // store nested frame id on window to cancel safely if needed
+        (window as any).__rf_r2 = r2;
+      } catch {}
+    });
+    return () => cancelAnimationFrame(r1);
+  }, [nodes.length, edges.length, direction, rfInstance, centerGraph]);
+
+  // Refit on window resize so it adapts to any screen/browser size
+  useEffect(() => {
+    const onResize = () => {
+      try {
+        rfInstance?.fitView({ padding: FIT_PADDING });
+        centerGraph();
+      } catch {}
+    };
+    window.addEventListener('resize', onResize);
+    return () => window.removeEventListener('resize', onResize);
+  }, [rfInstance, centerGraph]);
   const toggleLayout = useCallback(() => {
     setDirection((d) => (d === "TB" ? "LR" : "TB"));
   }, []);
@@ -930,12 +841,17 @@ export default function DagreFlow() {
             height: 32,
           },
         }))}
-       
-       
+        minZoom={0.05}
+        maxZoom={2}
+        fitView
+        fitViewOptions={{ padding: FIT_PADDING }}
+        onInit={(instance) => {
+          setRfInstance(instance);
+          try { instance.fitView({ padding: FIT_PADDING }); } catch {}
+        }}
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
         nodeTypes={nodeTypes}
-        fitView
       >
         <MiniMap />
         <Controls />

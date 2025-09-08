@@ -14,7 +14,6 @@ import {
   Edge,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
-import CustomNode from './customNode';
 import CommentNode from './CommentNode';
 import EditNodeDialog from './EditNodeDialog';
 import { AIFlowDiagramProps } from './types/diagramTypes';
@@ -169,7 +168,7 @@ const AIFlowDiagram = forwardRef<AIFlowDiagramHandle, AIFlowDiagramProps>(({
   
   // Register custom node types
   const nodeTypes = useMemo(() => ({
-    default: CustomNode,
+  
     comment: CommentNode,
     layerGroup: LayerGroupNode,
   }), []);
