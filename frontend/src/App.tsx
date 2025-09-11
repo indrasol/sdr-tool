@@ -73,7 +73,7 @@ const App = () => {
                 <Route path="/dev-dash" element={<DeveloperDashboard />} />
                 
                 {/* Public Routes */}
-                <Route path="/" element={<Dagrewithpos />} />
+                {/* <Route path="/" element={<Dagrewithpos />} /> */}
                 <Route path="/" element={<HomePage />} />
                 <Route path="/index" element={<Index />} />
                 <Route path="/login" element={<LoginPage />} />

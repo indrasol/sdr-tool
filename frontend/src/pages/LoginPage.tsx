@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Route, Eye, EyeOff, Mail, Lock, ArrowRight, ArrowLeft } from "lucide-react";
+import { Route, Mail, ArrowRight, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Form,
@@ -11,6 +11,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { OTPInput } from "@/components/ui/otp-input";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
@@ -18,61 +19,74 @@ import { toast } from "sonner";
 import { useAuth } from "../components/Auth/AuthContext";
 import { motion } from "framer-motion";
 
-// Login form schema validation
-const loginFormSchema = z.object({
-  identifier: z.string().min(1, "Email or Username is required"),
-  password: z.string().min(6, "Password must be at least 6 characters"),
+// Email form schema validation
+const emailFormSchema = z.object({
+  email: z.string().email("Please enter a valid email address"),
 });
 
-type LoginFormValues = z.infer<typeof loginFormSchema>;
+type EmailFormValues = z.infer<typeof emailFormSchema>;
 
 const LoginPage = () => {
-  const [showPassword, setShowPassword] = useState(false);
-  const { login, isLoading } = useAuth();
+  const [step, setStep] = useState<'email' | 'otp'>('email');
+  const [userEmail, setUserEmail] = useState('');
+  const { sendLoginOTP, loginWithOTP, isLoading } = useAuth();
   const navigate = useNavigate();
   
-  const loginForm = useForm<LoginFormValues>({
-    resolver: zodResolver(loginFormSchema),
+  const emailForm = useForm<EmailFormValues>({
+    resolver: zodResolver(emailFormSchema),
     defaultValues: {
-      identifier: "",
-      password: "",
+      email: "",
     },
   });
 
-  const onLoginSubmit = async (values: LoginFormValues) => {
+  const onEmailSubmit = async (values: EmailFormValues) => {
     if (isLoading) return;
 
     try {
-      console.log("Starting login process...");
+      console.log("Sending OTP to email...");
+      await sendLoginOTP(values.email);
+      setUserEmail(values.email);
+      setStep('otp');
+    } catch (error: any) {
+      console.error("Send OTP error:", error);
+      
+      // If user not found, suggest registration
+      if (error.message?.includes('No account found') || 
+          error.message?.includes('User not found')) {
+        emailForm.setError("email", { 
+          message: "No account found. Please register first." 
+        });
+      }
+      // Other error handling is done in the auth context
+    }
+  };
 
-      const loginPromise = login(values.identifier, values.password);
-      const timeoutPromise = new Promise((_, reject) =>
-        setTimeout(() => reject(new Error("Login request timed out. Please try again.")), 10000)
-      );
+  const onOTPComplete = async (otp: string) => {
+    if (isLoading) return;
 
-      await Promise.race([loginPromise, timeoutPromise]);
-
+    try {
+      console.log("Verifying OTP...");
+      await loginWithOTP(userEmail, otp);
       console.log("Login successful, navigating to teams page...");
-      loginForm.reset();
       navigate("/teams");
     } catch (error: any) {
-      console.error("Login error in component:", error);
-
-      if (error.message?.includes("timeout")) {
-        toast.error("Login request timed out. Please try again.");
-      } else if (error.message?.includes("NetworkError")) {
-        toast.error("Network error. Please check your connection and try again.");
-      } else if (error.message?.includes("CORS")) {
-        toast.error("Connection issue with the server. Please try again later.");
-      } else if (error.message?.includes("Invalid login credentials")) {
-        toast.error("Invalid email/username or password.");
-        loginForm.setError("password", { message: "Invalid credentials" });
-        loginForm.reset({ identifier: values.identifier, password: "" });
-        loginForm.setFocus("password");
-      } else {
-        toast.error(error.message || "Login failed");
-      }
+      console.error("OTP verification error:", error);
+      // Error handling is done in the auth context
     }
+  };
+
+  const onResendOTP = async () => {
+    try {
+      await sendLoginOTP(userEmail);
+    } catch (error: any) {
+      console.error("Resend OTP error:", error);
+    }
+  };
+
+  const goBackToEmail = () => {
+    setStep('email');
+    setUserEmail('');
+    emailForm.reset();
   };
 
   return (
@@ -106,122 +120,110 @@ const LoginPage = () => {
             >
               {/* Form Header */}
               <div className="text-center space-y-2">
-                <h2 className="text-3xl font-bold text-gray-900">Sign in</h2>
-                <p className="text-gray-600">Welcome back! Please enter your details.</p>
+                <h2 className="text-3xl font-bold text-gray-900">
+                  {step === 'email' ? 'Sign in' : 'Verify OTP'}
+                </h2>
+                <p className="text-gray-600">
+                  {step === 'email' 
+                    ? 'Welcome back! Please enter your email.' 
+                    : `Enter the 6-digit code sent to ${userEmail}`
+                  }
+                </p>
               </div>
 
-              {/* Login Form */}
-              <Form {...loginForm}>
-                <form onSubmit={loginForm.handleSubmit(onLoginSubmit)} className="space-y-6">
-                  <motion.div
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ duration: 0.5, delay: 0.2 }}
-                  >
-                    <FormField
-                      control={loginForm.control}
-                      name="identifier"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel className="text-gray-700 font-medium">Email or Username</FormLabel>
-                          <div className="relative">
-                            <Mail className="absolute left-4 top-3.5 h-5 w-5 text-gray-400" />
-                            <FormControl>
-                              <Input
-                                className="pl-12 h-12 border-2 border-gray-200 rounded-xl focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 transition-all duration-300"
-                                placeholder="Enter your email or username"
-                                {...field}
-                                autoComplete="email"
-                                disabled={isLoading}
-                              />
-                            </FormControl>
-                          </div>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </motion.div>
-
-                  <motion.div
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ duration: 0.5, delay: 0.3 }}
-                  >
-                    <FormField
-                      control={loginForm.control}
-                      name="password"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel className="text-gray-700 font-medium">Password</FormLabel>
-                          <div className="relative">
-                            <Lock className="absolute left-4 top-3.5 h-5 w-5 text-gray-400" />
-                            <FormControl>
-                              <Input
-                                className="pl-12 pr-12 h-12 border-2 border-gray-200 rounded-xl focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 transition-all duration-300"
-                                placeholder="Enter your password"
-                                type={showPassword ? "text" : "password"}
-                                {...field}
-                                autoComplete="current-password"
-                                disabled={isLoading}
-                              />
-                            </FormControl>
-                            <button
-                              type="button"
-                              className="absolute right-4 top-3.5 text-gray-400 hover:text-gray-600 transition-colors"
-                              onClick={() => setShowPassword(!showPassword)}
-                              disabled={isLoading}
-                            >
-                              {showPassword ? (
-                                <EyeOff className="h-5 w-5" />
-                              ) : (
-                                <Eye className="h-5 w-5" />
-                              )}
-                            </button>
-                          </div>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </motion.div>
-
-                  <div className="flex justify-between items-center">
-                    <label className="flex items-center space-x-2 text-sm text-gray-600">
-                      <input type="checkbox" className="rounded border-gray-300 text-purple-600 focus:ring-purple-500" />
-                      <span>Remember me</span>
-                    </label>
-                    <Link
-                      to="/forgot-password"
-                      className="text-purple-600 hover:text-purple-700 font-medium text-sm transition-colors"
+              {/* Email Step */}
+              {step === 'email' && (
+                <Form {...emailForm}>
+                  <form onSubmit={emailForm.handleSubmit(onEmailSubmit)} className="space-y-6">
+                    <motion.div
+                      initial={{ opacity: 0, x: -20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ duration: 0.5, delay: 0.2 }}
                     >
-                      Forgot password?
-                    </Link>
+                      <FormField
+                        control={emailForm.control}
+                        name="email"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className="text-gray-700 font-medium">Email</FormLabel>
+                            <div className="relative">
+                              <Mail className="absolute left-4 top-3.5 h-5 w-5 text-gray-400" />
+                              <FormControl>
+                                <Input
+                                  className="pl-12 h-12 border-2 border-gray-200 rounded-xl focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 transition-all duration-300"
+                                  placeholder="Enter your email address"
+                                  {...field}
+                                  autoComplete="email"
+                                  disabled={isLoading}
+                                />
+                              </FormControl>
+                            </div>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </motion.div>
+
+                    <motion.div
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.5, delay: 0.3 }}
+                    >
+                      <Button
+                        type="submit"
+                        className="w-full h-12 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white font-medium text-lg rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1"
+                        disabled={isLoading}
+                      >
+                        {isLoading ? (
+                          <div className="flex items-center">
+                            <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
+                            Sending OTP...
+                          </div>
+                        ) : (
+                          <div className="flex items-center">
+                            Send OTP
+                            <ArrowRight className="ml-2 w-5 h-5" />
+                          </div>
+                        )}
+                      </Button>
+                    </motion.div>
+                  </form>
+                </Form>
+              )}
+
+              {/* OTP Step */}
+              {step === 'otp' && (
+                <motion.div
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ duration: 0.5 }}
+                  className="space-y-6"
+                >
+                  {/* Back Button */}
+                  <div className="flex justify-start">
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      onClick={goBackToEmail}
+                      disabled={isLoading}
+                      className="text-gray-600 hover:text-gray-900 p-0 h-auto font-normal"
+                    >
+                      <ArrowLeft className="w-4 h-4 mr-2" />
+                      Back to email
+                    </Button>
                   </div>
 
-                  <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.5, delay: 0.4 }}
-                  >
-                    <Button
-                      type="submit"
-                      className="w-full h-12 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white font-medium text-lg rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1"
-                      disabled={isLoading}
-                    >
-                      {isLoading ? (
-                        <div className="flex items-center">
-                          <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
-                          Signing in...
-                        </div>
-                      ) : (
-                        <div className="flex items-center">
-                          Sign In
-                          <ArrowRight className="ml-2 w-5 h-5" />
-                        </div>
-                      )}
-                    </Button>
-                  </motion.div>
-                </form>
-              </Form>
+                  {/* OTP Input */}
+                  <OTPInput
+                    length={6}
+                    onComplete={onOTPComplete}
+                    onResend={onResendOTP}
+                    isLoading={isLoading}
+                    disabled={isLoading}
+                    timerDuration={300} // 5 minutes
+                  />
+                </motion.div>
+              )}
 
               {/* Sign Up Link */}
               <motion.div
