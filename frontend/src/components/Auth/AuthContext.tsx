@@ -12,8 +12,11 @@ interface RegisterData {
   organizationName: string;
   name: string;
   email: string;
-  password: string;
-  confirmPassword: string;
+}
+
+// OTP registration data interface
+interface OTPRegisterData extends RegisterData {
+  otp: string;
 }
 
 // Auth context interface
@@ -22,7 +25,11 @@ interface AuthContextType {
   isAuthenticated: boolean;
   isLoading: boolean;
   login: (identifier: string, password: string) => Promise<void>;
+  loginWithOTP: (email: string, otp: string) => Promise<void>;
+  sendLoginOTP: (email: string) => Promise<void>;
   register: (data: RegisterData) => Promise<boolean>;
+  registerWithOTP: (data: OTPRegisterData) => Promise<boolean>;
+  sendRegisterOTP: (data: RegisterData) => Promise<void>;
   logout: () => Promise<void>;
 }
 
@@ -467,6 +474,268 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   };
 
+  // Send OTP for login
+  const sendLoginOTP = async (email: string): Promise<void> => {
+    setIsLoading(true);
+    try {
+      const { error } = await supabase.auth.signInWithOtp({
+        email: email,
+        options: {
+          shouldCreateUser: false,
+          emailRedirectTo: undefined,
+        }
+      });
+      
+      if (error) {
+        // Handle specific Supabase errors for login
+        if (error.message.includes('Unable to validate email address') || 
+            error.message.includes('Invalid email')) {
+          throw new Error('Please enter a valid email address');
+        } else if (error.message.includes('Email not confirmed')) {
+          throw new Error('Please verify your email address first');
+        } else if (error.message.includes('User not found')) {
+          throw new Error('No account found with this email. Please register first.');
+        }
+        throw new Error(error.message);
+      }
+      
+      toast.success('OTP sent to your email. Please check your inbox.');
+    } catch (error: any) {
+      console.error('Send login OTP error:', error);
+      toast.error(error.message || 'Failed to send OTP');
+      throw error;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Login with OTP
+  const loginWithOTP = async (email: string, otp: string): Promise<void> => {
+    setIsLoading(true);
+    try {
+      // Step 1: Verify OTP with Supabase
+      const { data, error } = await supabase.auth.verifyOtp({
+        email: email,
+        token: otp,
+        type: 'email'
+      });
+      
+      if (error) throw new Error(error.message);
+      if (!data.session) throw new Error('No session returned from Supabase');
+
+      const token = data.session.access_token;
+
+      // Step 2: Call backend /login endpoint with retries
+      let response;
+      let loginData;
+      
+      for (let attempt = 1; attempt <= 3; attempt++) {
+        try {
+          console.log(`Backend login attempt ${attempt}/3`);
+          response = await fetch(`${BASE_API_URL}/login`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${token}`,
+            },
+            body: JSON.stringify({ "identifier": email }),
+            signal: AbortSignal.timeout(15000) // 15 second timeout
+          });
+          
+          if (response.ok) {
+            loginData = await response.json();
+            break;
+          } else if (attempt === 3) {
+            const errorData = await response.json();
+            throw new Error(errorData.detail || 'Backend login failed');
+          }
+        } catch (error) {
+          console.warn(`Backend login attempt ${attempt} failed:`, error);
+          if (attempt === 3) {
+            throw error;
+          }
+        }
+      }
+
+      const user = {
+        "username": loginData.username,
+        "email": loginData.email,
+        "id": loginData.user_id,
+        "tenantId": loginData.tenant_id,
+        "teamId": loginData.team_id
+      }
+
+      // Step 3: Save auth state
+      tokenService.setToken(token);
+      tokenService.setUser(user);
+      setUser(user);
+      setIsAuthenticated(true);
+      toast.success('Login successful!');
+
+      // Step 4: Navigate to teams page
+      setTimeout(() => navigate('/teams'), 1000);
+
+    } catch (error: any) {
+      console.error('Login with OTP error:', error);
+      toast.error(error.message || 'OTP verification failed');
+      await supabase.auth.signOut();
+      tokenService.clearAuth();
+      setUser(null);
+      setIsAuthenticated(false);
+      throw error;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Send OTP for registration
+  const sendRegisterOTP = async (data: RegisterData): Promise<void> => {
+    setIsLoading(true);
+    setRegistrationInProgress(true);
+    
+    try {
+      // First check if user already exists in our backend
+      try {
+        const checkResponse = await fetch(`${BASE_API_URL}/check-user-exists`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-API-Key': supabaseApiKey,
+          },
+          body: JSON.stringify({ email: data.email }),
+        });
+        
+        if (checkResponse.ok) {
+          const checkData = await checkResponse.json();
+          if (checkData.exists) {
+            toast.info('Account already exists. Please log in instead.');
+            setRegistrationInProgress(false);
+            setIsLoading(false);
+            throw new Error('User already exists');
+          }
+        }
+      } catch (checkError) {
+        // If check endpoint doesn't exist or fails, continue with registration
+        console.log('User existence check failed or endpoint not available, proceeding with registration');
+      }
+
+      // Send OTP for registration
+      const { error } = await supabase.auth.signInWithOtp({
+        email: data.email,
+        options: {
+          shouldCreateUser: true,
+          emailRedirectTo: undefined,
+          data: {
+            username: data.name,
+            full_name: data.name,
+            tenant_name: data.organizationName,
+          }
+        }
+      });
+      
+      if (error) {
+        // Handle specific Supabase errors
+        if (error.message.includes('User already registered')) {
+          toast.info('Account already exists. Please log in instead.');
+          throw new Error('User already exists');
+        }
+        throw new Error(error.message);
+      }
+      
+      toast.success('OTP sent to your email. Please check your inbox.');
+    } catch (error: any) {
+      console.error('Send register OTP error:', error);
+      if (!error.message.includes('User already exists')) {
+        toast.error(error.message || 'Failed to send OTP');
+      }
+      setRegistrationInProgress(false);
+      throw error;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Register with OTP
+  const registerWithOTP = async (data: OTPRegisterData): Promise<boolean> => {
+    setIsLoading(true);
+    let user_id: string | null = null;
+    
+    try {
+      // Step 1: Verify OTP with Supabase
+      const { data: authData, error: verifyError } = await supabase.auth.verifyOtp({
+        email: data.email,
+        token: data.otp,
+        type: 'email'
+      });
+      
+      if (verifyError) throw new Error(verifyError.message);
+      const supabaseUser = authData.user;
+      if (!supabaseUser) throw new Error("User registration failed");
+      user_id = supabaseUser.id;
+
+      const supabaseSession = authData.session;
+      if (!supabaseSession) throw new Error("No session returned from Supabase");
+      
+      const token = supabaseSession.access_token;
+      
+      // Step 2: Call backend /register endpoint
+      const response = await fetch(`${BASE_API_URL}/register`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          "tenant_name": data.organizationName,
+          "username": data.name,
+          "email": data.email,
+          "user_id": user_id,
+        }),
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        
+        // Handle various duplicate user error formats
+        const errorMessage = errorData.detail || errorData.message || 'Backend registration failed';
+        console.error('Backend registration error:', errorData);
+        
+        if (errorMessage.includes('User already exists') || 
+            errorMessage.includes('duplicate key value violates unique constraint') ||
+            errorMessage.includes('already exists') ||
+            errorData.code === '23505') {
+          toast.info('Account already exists. Please log in instead.');
+          await supabase.auth.signOut();
+          tokenService.clearAuth();
+          setRegistrationInProgress(false);
+          return true;
+        }
+        
+        throw new Error(errorMessage);
+      }
+      
+      // Step 3: Success
+      toast.success('Registration successful! Redirecting to login...');
+      await supabase.auth.signOut();
+      tokenService.clearAuth();
+      setUser(null);
+      setIsAuthenticated(false);
+      return true;
+    } catch (error: any) {
+      console.error('Registration with OTP error:', error);
+      toast.error(error.message || 'OTP verification failed');
+
+      await supabase.auth.signOut();
+      tokenService.clearAuth();
+      setUser(null);
+      setIsAuthenticated(false);
+      throw error;
+    } finally {
+      setIsLoading(false);
+      setRegistrationInProgress(false);
+    }
+  };
+
   // Logout function using Supabase
   const logout = async (): Promise<void> => {
     try {
@@ -488,7 +757,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     isAuthenticated,
     isLoading,
     login,
+    loginWithOTP,
+    sendLoginOTP,
     register,
+    registerWithOTP,
+    sendRegisterOTP,
     logout,
   };
 
