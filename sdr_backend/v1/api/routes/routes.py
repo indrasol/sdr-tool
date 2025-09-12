@@ -59,12 +59,14 @@ from v1.api.routes.dashboard.reports import router as dashboard_reports_router
 from v1.api.routes.model_with_ai.telemetry import router as telemetry_router
 
 from v1.api.routes.model_with_ai.diagrams_route import router as diagrams_route_router
+from v1.api.routes.user_session.session_routes import router as session_router
 
 router = APIRouter()
 
 # Legacy Routes
 # router.include_router(upload_router, tags=["Upload"])
 # router.include_router(analyze_router, tags=["Analyze"])
+router.include_router(session_router, tags=["Session - session_router"])
 
 router.include_router(diagrams_route_router, tags=["model_with_ai - diagrams_route_router"])
 

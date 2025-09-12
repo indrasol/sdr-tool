@@ -20,6 +20,7 @@ from typing import Optional
 from pydantic import BaseModel, Field, ConfigDict
 from sqlalchemy import Column, Integer, String, ForeignKey, DateTime, Text, ARRAY, JSON, Float, Date, Boolean
 from sqlalchemy import func  # Added to use SQLAlchemy SQL functions like now()
+from sqlalchemy import CheckConstraint, Computed
 
 from sqlalchemy import (
     Column,
@@ -278,6 +279,57 @@ class Sessions(BaseModel):
             }
         }
     )
+
+class UserSession(Base):
+    """Tracks authenticated user sessions (Supabase `auth.users`).
+
+    Mirrors SQL:
+      CREATE TABLE user_sessions (
+          session_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+          user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+          session_start TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+          session_end TIMESTAMPTZ,
+          duration_seconds INTEGER,
+          created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+          session_end_type TEXT CHECK (session_end_type IN ('manual', 'inactivity', 'forced', 'crash', 'timeout')),
+          extra_data JSONB
+      );
+    """
+
+    __tablename__ = "user_sessions"
+
+    # Core identifiers
+    session_id = Column(String, primary_key=True, server_default=func.gen_random_uuid())
+    user_id = Column(String, ForeignKey("auth.users.id", ondelete="CASCADE"), nullable=False, index=True)
+
+    # Temporal fields
+    session_start = Column(DateTime(timezone=True), nullable=False, server_default=func.now())
+    session_end = Column(DateTime(timezone=True), nullable=True)
+
+    # Generated duration in seconds (PostgreSQL persisted computed column)
+    duration_seconds = Column(
+        Integer
+    )
+
+    # Audit
+    created_at = Column(DateTime(timezone=True), nullable=False, server_default=func.now())
+
+    # Status / context
+    session_end_type = Column(Text, nullable=True)
+    extra_data = Column(JSONB, nullable=True)
+
+    __table_args__ = (
+        CheckConstraint(
+            "session_end_type IN ('manual', 'inactivity', 'forced', 'crash', 'timeout')",
+            name="ck_user_sessions_session_end_type",
+        ),
+    )
+
+    def __repr__(self) -> str:
+        return (
+            f"<UserSession session_id={self.session_id} user_id={self.user_id} "
+            f"start={self.session_start} end={self.session_end}>"
+        )
 
 class Template(Base):
     __tablename__ = "templates"

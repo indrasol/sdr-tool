@@ -17,6 +17,8 @@ import json
 from rapidfuzz import process, fuzz
 import os
 import networkx as nx
+import re
+from typing import List, Tuple
 
 # ---------- Core Layout Function ----------
 def compute_layout(nodes: List[Dict[str, Any]], edges: List[Dict[str, Any]]) -> Dict[str, Dict[str, float]]:
@@ -38,8 +40,8 @@ def compute_layout(nodes: List[Dict[str, Any]], edges: List[Dict[str, Any]]) -> 
     # Compute layout positions
     # 'spring_layout' tries to position nodes aesthetically like a force-directed graph
     # pos=nx.kamada_kawai_layout(G)
-    pos=nx.planar_layout(G)
-    # pos = nx.spring_layout(G, k=1.5, scale=500)
+    # pos=nx.planar_layout(G)
+    pos = nx.spring_layout(G, k=1.5, scale=500)
 
     # Convert numpy floats to standard Python floats for JSON serialization
     return {n: {"x": float(p[0]), "y": float(p[1])} for n, p in pos.items()}
@@ -48,6 +50,7 @@ def compute_layout(nodes: List[Dict[str, Any]], edges: List[Dict[str, Any]]) -> 
 # ---------------------------------------------------------------------------
 #  Public helpers
 # ---------------------------------------------------------------------------
+
 
 # Get absolute path to this file's directory
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -64,82 +67,302 @@ except (FileNotFoundError, json.JSONDecodeError):
     cloud_icons = {}
 
 
-def resolve_icon_path(path_list, icons_data, score_threshold=85):
+def normalize_class_name(cls: str) -> str:
     """
-    Given [provider, category, class], return [provider, category, icon-name].
-    Matching priority:
-      1. Direct match
-      2. Case-insensitive match
-      3. Suffix match
-      4. Fuzzy match (score >= threshold)
+    Normalize the class name for better matching:
+    - Strip whitespace
+    - Convert kebab-case or snake_case to CamelCase where possible
+    - Handle acronyms (EC2, IAM, API, DB, VPC, KMS)
     """
+    cls = cls.strip()
+    cls = re.sub(r'-([a-z])', lambda m: m.group(1).upper(), cls)
+    cls = re.sub(r'_([a-z])', lambda m: m.group(1).upper(), cls)
+
+    acronyms = {
+        'ec2': 'EC2', 'iam': 'IAM', 'api': 'API',
+        'db': 'DB', 'vpc': 'VPC', 'kms': 'KMS'
+    }
+    for lower, upper in acronyms.items():
+        cls = re.sub(rf'\b{re.escape(lower)}\b', upper, cls, flags=re.IGNORECASE)
+    return cls
+
+
+def camel_case_match(cls: str, candidates: List[str]) -> Tuple[str, int]:
+    """
+    Try to match acronyms like 'KMS' against CamelCase class names.
+    Example: 'KMS' should match 'KeyManagementServiceKMS'.
+    """
+    for candidate in candidates:
+        acronym = ''.join([w[0] for w in re.findall(r'[A-Z][a-z]*', candidate)])
+        if cls.upper() == acronym:
+            return candidate, 100
+    return "", 0
+
+
+def _alias_acronym(alias: str) -> str:
+    """Extract acronym from an alias by taking uppercase letters.
+
+    Example: 'DynamodbGSI' -> 'DGSI', 'ECR' -> 'ECR', 'DocumentDB' -> 'DDB'.
+    """
+    caps = ''.join(ch for ch in alias if ch.isupper())
+    return caps or alias.upper()
+
+
+def _candidate_acronym(name: str) -> str:
+    """Build acronym from CamelCase candidate name.
+
+    Example: 'EC2ContainerRegistry' -> 'ECR', 'DynamodbGlobalSecondaryIndex' -> 'DGSI'.
+    """
+    parts = re.findall(r'[A-Z][a-z]*\d*', name)
+    return ''.join(p[0] for p in parts)
+
+
+def resolve_icon_path(path_list: List[str], icons_data: dict, score_threshold: int = 85) -> List[str]:
     if not path_list or len(path_list) < 3:
         return path_list
-    
-    provider, category, cls = path_list
-    classes_dict = icons_data.get(provider, {}).get(category, {})
 
-    # 1. Direct match
+    provider, category, cls = path_list
+
+    # 1. Direct match using provider+category+class (strongest)
+    classes_dict = icons_data.get(provider, {}).get(category, {})
     if cls in classes_dict:
         return [provider, category, classes_dict[cls]]
 
-    # 2. Case-insensitive match
+    # 1b. Case-insensitive exact match
     for key, icon in classes_dict.items():
         if key.lower() == cls.lower():
             return [provider, category, icon]
 
-    # 3. Suffix match (e.g., IAM → IdentityAndAccessManagementIam)
+    # 1c. Suffix match (e.g., QLDB -> QuantumLedgerDatabaseQldb)
     for key, icon in classes_dict.items():
         if key.lower().endswith(cls.lower()):
             return [provider, category, icon]
 
-    # 4. Fuzzy match (best-effort)
+    # 1d. Acronym/alias match (ECR -> EC2ContainerRegistry, AKS -> KubernetesServices, DGSI -> DynamodbGlobalSecondaryIndex)
+    alias_acro = _alias_acronym(cls)
+    for key, icon in classes_dict.items():
+        if _candidate_acronym(key).upper() == alias_acro:
+            return [provider, category, icon]
+
+    # Compute normalized only if needed for lenient matching
+    normalized_cls = normalize_class_name(cls)
+    if normalized_cls in classes_dict:
+        return [provider, category, classes_dict[normalized_cls]]
+
+    # 2. If provider exists but category is wrong → search across provider categories
+    if provider in icons_data and not classes_dict:
+        best_match = None
+        best_score = 0
+        best_category = None
+        best_icon = None
+        for cat, sub_dict in icons_data[provider].items():
+            if cls in sub_dict:
+                return [provider, cat, sub_dict[cls]]
+            # Case-insensitive
+            for key, icon in sub_dict.items():
+                if key.lower() == cls.lower():
+                    return [provider, cat, icon]
+            # Suffix
+            for key, icon in sub_dict.items():
+                if key.lower().endswith(cls.lower()):
+                    return [provider, cat, icon]
+            # Acronym
+            for key, icon in sub_dict.items():
+                if _candidate_acronym(key).upper() == alias_acro:
+                    return [provider, cat, icon]
+            if normalized_cls in sub_dict:
+                return [provider, cat, sub_dict[normalized_cls]]
+            try:
+                # Looser partial ratio for long aliases (e.g., DocumentDB)
+                partial_threshold = 80 if len(cls) >= 8 else 90
+                match, score, _ = process.extractOne(
+                    normalized_cls, sub_dict.keys(), scorer=fuzz.partial_ratio
+                )
+                if score >= partial_threshold and match in sub_dict:
+                    return [provider, cat, sub_dict[match]]
+                # Fallback to WRatio
+                match, score, _ = process.extractOne(
+                    normalized_cls, sub_dict.keys(), scorer=fuzz.WRatio
+                )
+                if score > best_score:
+                    best_score = score
+                    best_match = match
+                    best_category = cat
+                    best_icon = sub_dict[match]
+            except:
+                pass
+        if best_score >= score_threshold and best_category:
+            return [provider, best_category, best_icon]
+
+    # 3. CamelCase acronym match (like KMS → KeyManagementServiceKMS)
+    candidate, score = camel_case_match(normalized_cls, list(classes_dict.keys()))
+    if score == 100:
+        return [provider, category, classes_dict[candidate]]
+
+    # 4. Fuzzy matching (partial ratio first, then WRatio)
     if classes_dict:
         try:
             best_match, score, _ = process.extractOne(
-                cls,
-                classes_dict.keys(),
-                scorer=fuzz.WRatio
+                normalized_cls, classes_dict.keys(), scorer=fuzz.partial_ratio
+            )
+            if score >= 90:
+                return [provider, category, classes_dict[best_match]]
+        except:
+            pass
+
+        try:
+            best_match, score, _ = process.extractOne(
+                normalized_cls, classes_dict.keys(), scorer=fuzz.WRatio
             )
             if score >= score_threshold:
                 return [provider, category, classes_dict[best_match]]
         except:
             pass
 
-    # Not found
     return [provider, category, cls]
 
 
+def get_default_icon_for_category(provider: str, category: str) -> Tuple[str, str]:
+    defaults = {
+        'compute': 'instance',
+        'database': 'database',
+        'network': 'internet-gateway',
+        'storage': 'storage',
+        'security': 'key-management-service',
+        'analytics': 'analytics',
+    }
+    default_icon = defaults.get(category, 'storage')
+    classes_dict = cloud_icons.get(provider, {}).get(category, {})
+    if default_icon in classes_dict:
+        return category, classes_dict[default_icon]
+    return category, default_icon
+
+
 def get_icon_url(node_type: str) -> str:
-    """Return a CDN URL pointing to the SVG/PNG for *node_type*."""
-    log_info(f"Node type: {node_type}")
-
     parts = node_type.split(".")
-    log_info(f"Parts: {parts}")
-    icon_path = resolve_icon_path(parts, cloud_icons)
-    log_info(f"Icon path: {icon_path}")
-
-    # Typical structure: provider.module.NodeClass
-    if len(parts) == 3:
-        provider, module, node_name = icon_path
+    if len(parts) < 2:
         return (
             "https://raw.githubusercontent.com/mingrammer/diagrams/master/resources/"
-            f"{provider}/{module}/{node_name}.png"
+            "onprem/network/internet.png"
         )
 
-    # Fallback for generic: e.g. "compute.Rack" (treated as generic/compute)
     if len(parts) == 2:
-        module, node_name = icon_path
+        category, cls = parts
+        provider = "generic"
+        normalized_cls = normalize_class_name(cls)
+        icon_path = resolve_icon_path([provider, category, normalized_cls], cloud_icons)
+        if icon_path[2] == normalized_cls:
+            _, default_icon = get_default_icon_for_category(provider, category)
+            icon_path[2] = default_icon
         return (
             "https://raw.githubusercontent.com/mingrammer/diagrams/master/resources/"
-            f"generic/{module}/{node_name}.png"
+            f"{provider}/{icon_path[1]}/{icon_path[2]}.png"
         )
 
-    # Absolute fallback – internet icon.
+    provider, category, cls = parts[:3]
+    normalized_cls = normalize_class_name(cls)
+    icon_path = resolve_icon_path([provider, category, normalized_cls], cloud_icons)
+    if icon_path[2] == normalized_cls:
+        _, default_icon = get_default_icon_for_category(provider, category)
+        icon_path[2] = default_icon
     return (
-        "https://raw.githubusercontent.com/mingrammer/diagrams/master/resources/onprem/"
-        "network/internet.png"
+        "https://raw.githubusercontent.com/mingrammer/diagrams/master/resources/"
+        f"{provider}/{icon_path[1]}/{icon_path[2]}.png"
     )
+
+
+# # Get absolute path to this file's directory
+# BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
+# # Build path to cloud_icons.json inside services folder
+# json_path = os.path.join(BASE_DIR, "cloud_icons.json")
+
+# # Load cloud icons with fallback
+# try:
+#     with open(json_path, "r", encoding="utf-8") as f:
+#         cloud_icons = json.load(f)
+# except (FileNotFoundError, json.JSONDecodeError):
+#     # Fallback if cloud_icons.json doesn't exist
+#     cloud_icons = {}
+
+
+# def resolve_icon_path(path_list, icons_data, score_threshold=85):
+#     """
+#     Given [provider, category, class], return [provider, category, icon-name].
+#     Matching priority:
+#       1. Direct match
+#       2. Case-insensitive match
+#       3. Suffix match
+#       4. Fuzzy match (score >= threshold)
+#     """
+#     if not path_list or len(path_list) < 3:
+#         return path_list
+    
+#     provider, category, cls = path_list
+#     classes_dict = icons_data.get(provider, {}).get(category, {})
+#     log_info(f"Classes dict: {classes_dict}")
+
+#     # 1. Direct match
+#     if cls in classes_dict:
+#         return [provider, category, classes_dict[cls]]
+
+#     # 2. Case-insensitive match
+#     for key, icon in classes_dict.items():
+#         if key.lower() == cls.lower():
+#             return [provider, category, icon]
+
+#     # 3. Suffix match (e.g., IAM → IdentityAndAccessManagementIam)
+#     for key, icon in classes_dict.items():
+#         if key.lower().endswith(cls.lower()):
+#             return [provider, category, icon]
+
+#     # 4. Fuzzy match (best-effort)
+#     if classes_dict:
+#         try:
+#             best_match, score, _ = process.extractOne(
+#                 cls,
+#                 classes_dict.keys(),
+#                 scorer=fuzz.WRatio
+#             )
+#             if score >= score_threshold:
+#                 return [provider, category, classes_dict[best_match]]
+#         except:
+#             pass
+
+#     # Not found
+#     return [provider, category, cls]
+
+
+# def get_icon_url(node_type: str) -> str:
+#     """Return a CDN URL pointing to the SVG/PNG for *node_type*."""
+#     log_info(f"Node type: {node_type}")
+
+#     parts = node_type.split(".")
+#     log_info(f"Parts: {parts}")
+#     icon_path = resolve_icon_path(parts, cloud_icons)
+#     log_info(f"Icon path: {icon_path}")
+
+#     # Typical structure: provider.module.NodeClass
+#     if len(parts) == 3:
+#         provider, module, node_name = icon_path
+#         return (
+#             "https://raw.githubusercontent.com/mingrammer/diagrams/master/resources/"
+#             f"{provider}/{module}/{node_name}.png"
+#         )
+
+#     # Fallback for generic: e.g. "compute.Rack" (treated as generic/compute)
+#     if len(parts) == 2:
+#         module, node_name = icon_path
+#         return (
+#             "https://raw.githubusercontent.com/mingrammer/diagrams/master/resources/"
+#             f"generic/{module}/{node_name}.png"
+#         )
+
+#     # Absolute fallback – internet icon.
+#     return (
+#         "https://raw.githubusercontent.com/mingrammer/diagrams/master/resources/onprem/"
+#         "network/internet.png"
+#     )
 
 
 # ---------------------------------------------------------------------------
@@ -176,42 +399,94 @@ def _extract_assignment(
     current_id: int,
     import_map: Dict[str, str],
     current_cluster: str,
-    clusters: List[Dict[str, Any]]
+    clusters: List[Dict[str, Any]],
+    list_var_map: Dict[str, List[str]]
 ) -> int:
     """Handle an ``ast.Assign`` like ``var = Provider("Label")``."""
 
+    # Helper to add a single node from a call expression
+    def _add_node_from_call(call_expr: ast.Call, var_name: str, cur_id: int) -> int:
+        func = call_expr.func
+
+        if isinstance(func, ast.Name):  # Direct class import
+            node_type = import_map.get(func.id, f"generic.compute.{func.id}")
+        elif isinstance(func, ast.Attribute):
+            if isinstance(func.value, ast.Attribute):
+                # Fully qualified: aws.compute.EC2
+                provider = getattr(func.value.value, 'id', 'unknown')
+                module = func.value.attr
+                node_cls = func.attr
+                node_type = f"{provider}.{module}.{node_cls}"
+            else:
+                # Single level: module.Class
+                provider_module = getattr(func.value, "id", None)
+                if provider_module:
+                    node_type = f"{provider_module}.{func.attr}"
+                else:
+                    return cur_id
+        else:
+            return cur_id
+
+        # Extract label from function call
+        label = "Unnamed"
+        if call_expr.args:
+            arg0 = call_expr.args[0]
+            if isinstance(arg0, ast.Constant):
+                label = str(arg0.value)
+            elif hasattr(arg0, 's'):  # ast.Str for older Python versions
+                label = arg0.s
+
+        # Register id mapping
+        node_id_map[var_name] = var_name
+
+        nodes.append(
+            {
+                "id": var_name,
+                "type": "custom",
+                "data": {"label": label, "iconUrl": get_icon_url(node_type)},
+                "position": {"x": 0, "y": 0},
+            }
+        )
+
+        # If inside a cluster, record membership
+        if current_cluster:
+            for cl in clusters:
+                if cl["cluster_id"] == current_cluster:
+                    cl["cluster_nodes"].append(var_name)
+                    break
+
+        return cur_id + 1
+
+    # Support list or tuple of node constructor calls, e.g. lambdas = [Lambda("A"), Lambda("B")]
+    if isinstance(node.value, (ast.List, ast.Tuple)):
+        # Use variable name as base id prefix
+        if isinstance(node.targets[0], ast.Name):
+            base_name = node.targets[0].id
+        else:
+            base_name = f"tmp_list_{current_id}"
+
+        element_ids: List[str] = []
+        idx = 0
+        for elt in getattr(node.value, 'elts', []):
+            if isinstance(elt, ast.Call):
+                element_var = f"{base_name}_{idx}"
+                current_id = _add_node_from_call(elt, element_var, current_id)
+                element_ids.append(element_var)
+                idx += 1
+            elif isinstance(elt, ast.Name):
+                # Reference to an already defined node variable
+                ref_id = node_id_map.get(elt.id)
+                if ref_id:
+                    element_ids.append(ref_id)
+                    idx += 1
+            # Ignore other element types silently
+
+        # Map the list variable to its element node ids
+        list_var_map[base_name] = element_ids
+        return current_id
+
     if not isinstance(node.value, ast.Call):
         return current_id
-
-    func = node.value.func
-
-    if isinstance(func, ast.Name):  # Direct class import
-        node_type = import_map.get(func.id, f"generic.compute.{func.id}")
-    elif isinstance(func, ast.Attribute):
-        if isinstance(func.value, ast.Attribute):
-            # Fully qualified: aws.compute.EC2
-            provider = getattr(func.value.value, 'id', 'unknown')
-            module = func.value.attr
-            node_cls = func.attr
-            node_type = f"{provider}.{module}.{node_cls}"
-        else:
-            # Single level: module.Class
-            provider_module = getattr(func.value, "id", None)
-            if provider_module:
-                node_type = f"{provider_module}.{func.attr}"
-            else:
-                return current_id
-    else:
-        return current_id
-
-    # Extract label from function call
-    label = "Unnamed"
-    if node.value.args:
-        arg0 = node.value.args[0]
-        if isinstance(arg0, ast.Constant):
-            label = str(arg0.value)
-        elif hasattr(arg0, 's'):  # ast.Str for older Python versions
-            label = arg0.s
 
     # Use variable name as node ID
     if isinstance(node.targets[0], ast.Name):
@@ -219,25 +494,7 @@ def _extract_assignment(
     else:
         var_name = f"tmp_{current_id}"
     
-    node_id_map[var_name] = var_name
-
-    nodes.append(
-        {
-            "id": var_name,
-            "type": "custom",
-            "data": {"label": label, "iconUrl": get_icon_url(node_type)},
-            "position": {"x": 0, "y": 0},
-        }
-    )
-
-    # If inside a cluster, record membership
-    if current_cluster:
-        for cl in clusters:
-            if cl["cluster_id"] == current_cluster:
-                cl["cluster_nodes"].append(var_name)
-                break
-
-    return current_id + 1
+    return _add_node_from_call(node.value, var_name, current_id)
 
 
 # ---------------------------------------------------------------------------
@@ -424,10 +681,13 @@ def _extract_from_body(
     import_map,
     cluster_stack=None,
     current_cluster=None,
+    list_var_map: Dict[str, List[str]] | None = None,
 ):
     """Walk statements, handling clusters, assignments, and edges."""
     if cluster_stack is None:
         cluster_stack = []
+    if list_var_map is None:
+        list_var_map = {}
 
     for stmt in body:
         if isinstance(stmt, ast.With):
@@ -459,7 +719,7 @@ def _extract_from_body(
 
                     current_id = _extract_from_body(
                         stmt.body, nodes, edges, clusters, node_id_map,
-                        current_id, import_map, cluster_stack, current_cluster
+                        current_id, import_map, cluster_stack, current_cluster, list_var_map
                     )
 
                     # Pop back to previous cluster
@@ -469,14 +729,66 @@ def _extract_from_body(
                     # Non-cluster with-block (like Diagram)
                     current_id = _extract_from_body(
                         stmt.body, nodes, edges, clusters, node_id_map,
-                        current_id, import_map, cluster_stack, current_cluster
+                        current_id, import_map, cluster_stack, current_cluster, list_var_map
                     )
 
         elif isinstance(stmt, ast.Assign):
             current_id = _extract_assignment(
                 stmt, nodes, node_id_map, current_id, import_map,
-                current_cluster, clusters
+                current_cluster, clusters, list_var_map
             )
+
+        elif isinstance(stmt, ast.For):
+            # Handle simple for-loops: for <name> in <iterable>:
+            loop_var_name = None
+            if isinstance(stmt.target, ast.Name):
+                loop_var_name = stmt.target.id
+
+            element_ids: List[str] = []
+
+            # Materialize iterable elements into node ids
+            if isinstance(stmt.iter, ast.Name):
+                element_ids = list_var_map.get(stmt.iter.id, [])
+            elif isinstance(stmt.iter, (ast.List, ast.Tuple)):
+                # Inline literal iterable in the for-loop
+                idx = 0
+                for elt in getattr(stmt.iter, 'elts', []):
+                    if isinstance(elt, ast.Call) and loop_var_name:
+                        temp_name = f"{loop_var_name}_{idx}"
+                        # Reuse assignment helper to add nodes
+                        fake_assign = ast.Assign(targets=[ast.Name(id=temp_name)], value=elt)
+                        current_id = _extract_assignment(
+                            fake_assign, nodes, node_id_map, current_id, import_map,
+                            current_cluster, clusters, list_var_map
+                        )
+                        element_ids.append(temp_name)
+                        idx += 1
+                    elif isinstance(elt, ast.Name):
+                        ref_id = node_id_map.get(elt.id)
+                        if ref_id:
+                            element_ids.append(ref_id)
+
+            # Iterate body once for each element, binding loop var to that element id
+            if loop_var_name and element_ids:
+                prior_binding = node_id_map.get(loop_var_name)
+                try:
+                    for elem_id in element_ids:
+                        node_id_map[loop_var_name] = elem_id
+                        current_id = _extract_from_body(
+                            stmt.body, nodes, edges, clusters, node_id_map,
+                            current_id, import_map, cluster_stack, current_cluster, list_var_map
+                        )
+                finally:
+                    # Restore previous binding if it existed; otherwise keep last binding
+                    if prior_binding is not None:
+                        node_id_map[loop_var_name] = prior_binding
+
+            # Optionally handle for-else (no special binding)
+            if stmt.orelse:
+                current_id = _extract_from_body(
+                    stmt.orelse, nodes, edges, clusters, node_id_map,
+                    current_id, import_map, cluster_stack, current_cluster, list_var_map
+                )
 
         elif isinstance(stmt, ast.Expr):
             _extract_edge_expression(stmt, edges, node_id_map)
@@ -484,7 +796,7 @@ def _extract_from_body(
         elif hasattr(stmt, 'body'):
             current_id = _extract_from_body(
                 stmt.body, nodes, edges, clusters, node_id_map,
-                current_id, import_map, cluster_stack, current_cluster
+                current_id, import_map, cluster_stack, current_cluster, list_var_map
             )
 
     return current_id
@@ -511,35 +823,14 @@ def parse_diagrams_code(code_str: str) -> Dict[str, Any]:
     node_id_map: Dict[str, str] = {}
     current_id = 1
     import_map = _build_import_map(tree)
+    list_var_map: Dict[str, List[str]] = {}
 
     # Start parsing from module body
-    _extract_from_body(tree.body, nodes, edges, clusters, node_id_map, current_id, import_map)
+    _extract_from_body(
+        tree.body, nodes, edges, clusters, node_id_map, current_id, import_map,
+        cluster_stack=None, current_cluster=None, list_var_map=list_var_map
+    )
 
-    # ------------------------------------------------------------------
-    #  Post-processing: add "unconnected" cluster for nodes with no edges
-    # ------------------------------------------------------------------
-
-    # Build a set of node IDs that appear in any edge
-    connected_ids = {e["source"] for e in edges}.union({e["target"] for e in edges})
-
-    unconnected_nodes = [n["id"] for n in nodes if n["id"] not in connected_ids]
-
-    if unconnected_nodes:
-        # Determine common parent clusters (intersection)
-        parent_sets = []
-        for node_id in unconnected_nodes:
-            parents = [cl["cluster_id"] for cl in clusters if node_id in cl["cluster_nodes"]]
-            parent_sets.append(set(parents))
-
-        common_parents = list(set.intersection(*parent_sets)) if parent_sets else []
-
-        clusters.append({
-            "cluster_id": "unconnected",
-            "cluster_label": "services",
-            "cluster_nodes": unconnected_nodes,
-            "cluster_parent": common_parents,
-        })
- 
     return {"nodes": nodes, "edges": edges, "clusters": clusters}
 
 
