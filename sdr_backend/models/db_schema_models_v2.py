@@ -30,6 +30,7 @@ from sqlalchemy import (
     DateTime,
     ForeignKey,
     ARRAY,
+    Index,
 )
 from sqlalchemy import JSON as _GENERIC_JSON
 from sqlalchemy.orm import relationship
@@ -316,7 +317,12 @@ class UserSession(Base):
 
     # Status / context
     session_end_type = Column(Text, nullable=True)
+
     extra_data = Column(JSONB, nullable=True)
+    last_seen = Column(DateTime(timezone=True), nullable=True)
+    user_agent = Column(String, nullable=True)
+    device_info = Column(JSONB, nullable=True)
+    geo_location = Column(JSONB, nullable=True)
 
     __table_args__ = (
         CheckConstraint(
@@ -511,4 +517,65 @@ class TeamMember(Base):
     __table_args__ = (
         # Ensure user can only have one membership per team
         {"sqlite_autoincrement": True},
-    ) 
+    )
+
+
+class EventSession(Base):
+    """Tracks user events and interactions for analytics and session management.
+    
+    Maps to the event_session table in the database. This table stores
+    granular event data for user interactions, analytics, and session tracking.
+    
+    SQL Schema:
+    CREATE TABLE event_session (
+        event_id     UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        user_id      UUID NOT NULL,                       -- reference to auth.users(id)
+        event_name   TEXT NOT NULL,                       -- e.g. 'search_bar', 'create project'
+        event_type   TEXT NOT NULL,                       -- e.g. 'view', 'btn_click', 'auth'
+        session_id   UUID NULL,                           -- optional link to user_session(session_id)
+        created_at   TIMESTAMPTZ NOT NULL DEFAULT now(),  -- server timestamp
+        extra_data   JSONB                                -- flexible metadata {geolocation, device, etc.}
+    );
+    """
+    
+    __tablename__ = "user_events"
+    
+    # Primary key with UUID default
+    event_id = Column(String, primary_key=True, server_default=func.gen_random_uuid())
+    
+    # User reference (Supabase auth.users)
+    user_id = Column(String, ForeignKey("auth.users.id", ondelete="CASCADE"), nullable=False, index=True)
+    
+    # Event details
+    event_name = Column(Text, nullable=False, index=True)  # e.g. 'search_bar', 'create project'
+    event_type = Column(Text, nullable=False, index=True)  # e.g. 'view', 'btn_click', 'auth'
+    
+    # Optional session link
+    session_id = Column(String, ForeignKey("user_sessions.session_id", ondelete="SET NULL"), nullable=True, index=True)
+    
+    # Timestamp
+    created_at = Column(DateTime(timezone=True), nullable=False, server_default=func.now(), index=True)
+    
+    # Flexible metadata storage
+    extra_data = Column(JSONB, nullable=True)
+    
+    # Relationships
+    user = relationship("User", foreign_keys=[user_id])
+    user_session = relationship("UserSession", foreign_keys=[session_id])
+    
+    # Indexes for performance (matching the SQL schema)
+    __table_args__ = (
+        Index('idx_event_user_id', 'user_id'),
+        Index('idx_event_name', 'event_name'),
+        Index('idx_event_type', 'event_type'),
+        Index('idx_event_created_at', 'created_at'),
+        Index('idx_event_session_id', 'session_id'),
+        # GIN index for JSONB extra_data (PostgreSQL specific)
+        Index('idx_event_extra_data', 'extra_data', postgresql_using='gin'),
+    )
+    
+    def __repr__(self) -> str:
+        return (
+            f"<EventSession event_id={self.event_id} user_id={self.user_id} "
+            f"event_name={self.event_name} event_type={self.event_type}>"
+        ) 

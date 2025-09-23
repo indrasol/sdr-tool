@@ -84,76 +84,76 @@ async def generate_diagram(
     """
     try:
         # Call LLM to generate diagrams code
-        # diagrams_code = await call_llm(request.query)
-        #log_info(f"Diagrams code: {diagrams_code}")
-        diagrams_code = """
-```python
+        diagrams_code = await call_llm(request.query)
+        log_info(f"Diagrams code: {diagrams_code}")
+#         diagrams_code = """
+# ```python
 
-from diagrams import Diagram, Cluster
-from diagrams.aws.compute import EC2AutoScaling
-from diagrams.aws.network import ELB, Route53, VPC, PrivateSubnet, PublicSubnet
-from diagrams.aws.database import RDS, Dynamodb
-from diagrams.aws.analytics import KinesisDataStreams, Glue, EMR
-from diagrams.aws.ml import Sagemaker
-from diagrams.aws.integration import SQS
-from diagrams.aws.storage import S3
-from diagrams.aws.security import WAF, IAM, KMS
-from diagrams.aws.management import Cloudwatch
-from diagrams.aws.devtools import Codepipeline, Codebuild
-from diagrams.aws.general import InternetGateway
-from diagrams.onprem.client import Users
+# from diagrams import Diagram, Cluster
+# from diagrams.aws.compute import EC2AutoScaling
+# from diagrams.aws.network import ELB, Route53, VPC, PrivateSubnet, PublicSubnet
+# from diagrams.aws.database import RDS, Dynamodb
+# from diagrams.aws.analytics import KinesisDataStreams, Glue, EMR
+# from diagrams.aws.ml import Sagemaker
+# from diagrams.aws.integration import SQS
+# from diagrams.aws.storage import S3
+# from diagrams.aws.security import WAF, IAM, KMS
+# from diagrams.aws.management import Cloudwatch
+# from diagrams.aws.devtools import Codepipeline, Codebuild
+# from diagrams.aws.general import InternetGateway
+# from diagrams.onprem.client import Users
 
-with Diagram("AWS Data Processing Pipeline", show=False, direction="LR"):
-    dns = Route53("DNS")
-    waf = WAF("Web Application Firewall")
+# with Diagram("AWS Data Processing Pipeline", show=False, direction="LR"):
+#     dns = Route53("DNS")
+#     waf = WAF("Web Application Firewall")
 
-    with Cluster("VPC"):
-        internet_gateway = InternetGateway("Internet Gateway")
+#     with Cluster("VPC"):
+#         internet_gateway = InternetGateway("Internet Gateway")
 
-        with Cluster("Public Subnet"):
-            lb = ELB("Load Balancer")
-            lb - internet_gateway
+#         with Cluster("Public Subnet"):
+#             lb = ELB("Load Balancer")
+#             lb - internet_gateway
 
-        with Cluster("Private Subnet"):
-            with Cluster("Auto Scaling Group"):
-                workers = EC2AutoScaling("EC2 Instances")
+#         with Cluster("Private Subnet"):
+#             with Cluster("Auto Scaling Group"):
+#                 workers = EC2AutoScaling("EC2 Instances")
 
-            s3_data_lake = S3("Data Lake")
-            kinesis = KinesisDataStreams("Data Stream")
-            glue = Glue("Data Catalog & ETL")
-            emr = EMR("Data Processing")
-            sagemaker = Sagemaker("Machine Learning")
-            dynamodb = Dynamodb("NoSQL Database")
+#             s3_data_lake = S3("Data Lake")
+#             kinesis = KinesisDataStreams("Data Stream")
+#             glue = Glue("Data Catalog & ETL")
+#             emr = EMR("Data Processing")
+#             sagemaker = Sagemaker("Machine Learning")
+#             dynamodb = Dynamodb("NoSQL Database")
 
-            workers >> s3_data_lake
-            workers >> kinesis
-            kinesis >> glue >> emr
-            emr >> s3_data_lake
-            emr >> dynamodb
-            s3_data_lake >> sagemaker
+#             workers >> s3_data_lake
+#             workers >> kinesis
+#             kinesis >> glue >> emr
+#             emr >> s3_data_lake
+#             emr >> dynamodb
+#             s3_data_lake >> sagemaker
 
-        sqs_queue = SQS("Message Queue")
-        kms = KMS("Key Management Service")
-        iam = IAM("Identity & Access Management")
+#         sqs_queue = SQS("Message Queue")
+#         kms = KMS("Key Management Service")
+#         iam = IAM("Identity & Access Management")
 
-        workers >> sqs_queue
-        sqs_queue >> workers
+#         workers >> sqs_queue
+#         sqs_queue >> workers
 
-    with Cluster("CI/CD Pipeline"):
-        code_pipeline = Codepipeline("CodePipeline")
-        code_build = Codebuild("CodeBuild")
+#     with Cluster("CI/CD Pipeline"):
+#         code_pipeline = Codepipeline("CodePipeline")
+#         code_build = Codebuild("CodeBuild")
 
-        code_pipeline >> code_build >> workers
+#         code_pipeline >> code_build >> workers
 
-    cloudwatch = Cloudwatch("Monitoring & Logging")
+#     cloudwatch = Cloudwatch("Monitoring & Logging")
 
-    dns >> waf >> lb >> workers
-    cloudwatch >> workers
-    cloudwatch >> emr
-    cloudwatch >> sagemaker
-    cloudwatch >> code_pipeline
-    cloudwatch >> code_build
-"""
+#     dns >> waf >> lb >> workers
+#     cloudwatch >> workers
+#     cloudwatch >> emr
+#     cloudwatch >> sagemaker
+#     cloudwatch >> code_pipeline
+#     cloudwatch >> code_build
+# """
         
         # Parse the generated code to extract nodes and edges
         graph = parse_diagrams_code(diagrams_code)

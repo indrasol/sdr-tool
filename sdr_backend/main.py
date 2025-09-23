@@ -30,7 +30,6 @@ from config.settings import SUPABASE_URL
 from alembic import command
 import anthropic
 import httpx
-from services.inactive_session_checker import InactiveSessionChecker
 from alembic.config import Config
 from v1.api.health.health_monitor import health_monitor
 from v1.api.routes.health import setup_health_monitoring
@@ -47,7 +46,6 @@ from v2.api.routes.model_with_ai.svg_export import router as svg_export_router
 from core.dsl.env_check import ensure_d2_present
 
 session_manager = SessionManager()
-inactive_session_checker = InactiveSessionChecker(check_interval_minutes=5, inactive_threshold_minutes=30)
 # logger = setup_logging()
 
 # Models to download with fallbacks
@@ -87,16 +85,11 @@ async def lifespan(app: FastAPI):
         # Initialize active sessions gauge
         APP_ACTIVE_SESSIONS.set(0)
         
-        # Start the inactive session checker
-        log_info("Starting inactive session checker...")
-        asyncio.create_task(inactive_session_checker.start())
-        log_info("Inactive session checker started.")
+    
         
         yield
     finally:
         # Cleanup resources in finally block to ensure they run even on errors
-        inactive_session_checker.stop()  # Stop the inactive session checker
-        log_info("Inactive session checker stopped.")
         
         await session_manager.disconnect()  # Disconnect from Redis
         log_info("disconnected redis session manager...")
@@ -173,15 +166,12 @@ async def generic_exception_handler(request: Request, exc: Exception):
         content={"detail": "Internal server error. Please try again later."},
     )
 
-# ----- Register routers -----
-# # Import session routes
-# from api.routes.session_routes import router as session_router
+
 
 # v1 grouped under /v1/routes
 app.include_router(api_router, prefix="/v1/routes")
 
-# Register session routes
-# app.include_router(session_router)
+
 
 # Mount v1 router
 # from v1.api.routes.routes import router as v1_router
