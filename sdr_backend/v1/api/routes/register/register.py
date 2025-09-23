@@ -2,6 +2,7 @@
 from fastapi import APIRouter, Depends, HTTPException, Body, BackgroundTasks
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
+import supabase
 from models.db_schema_models import User, Tenant, UserTenantAssociation
 from core.db.supabase_db import get_supabase_client, safe_supabase_operation
 from sqlalchemy import insert
@@ -151,7 +152,6 @@ async def register(
                     raise HTTPException(status_code=400, detail="Email already registered! Register with a different email")
         
         # Check or create tenant (using organization_name)
-       # Check if tenant exists or create a new one
         tenant_id = await get_or_create_tenant(request_data.tenant_name)
         log_info(f"Using tenant with ID: {tenant_id}")
 
@@ -234,7 +234,7 @@ async def register(
 async def cleanup_auth_user(request_data: dict, api_key: str = Depends(verify_api_key)):
     user_id = request_data.get("user_id")
     try:
-        supabase.auth.admin.delete_user(user_id)
+        supabase.auth.admin.delete_user(user_id)  # pyright: ignore[reportUndefinedVariable]
         return {"message": "Auth user deleted successfully"}
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to delete auth user: {str(e)}")
@@ -323,7 +323,7 @@ async def register_pending(
         # 3) Upsert association row
         def upsert_assoc():
             return (
-                supabase.from_("user_tenant_association")
+                supabase.from_("user_tenant_association")  # pyright: ignore[reportUndefinedVariable]
                 .upsert({"user_id": request_data.user_id, "tenant_id": tenant_id})
                 .execute()
             )

@@ -9,8 +9,8 @@ export const getAuthHeaders = () => {
     };
   };
 
-export const BASE_API_URL = import.meta.env.VITE_BASE_API_URL
-// export const BASE_API_URL = import.meta.env.VITE_DEV_BASE_API_URL
+//export const BASE_API_URL = import.meta.env.VITE_BASE_API_URL
+ export const BASE_API_URL = import.meta.env.VITE_DEV_BASE_API_URL
 
 // Default timeout for requests. 150 000 ms (150 s) keeps the client connection
 // open slightly longer than the LLM back-end timeout (120 s) so that legitimate

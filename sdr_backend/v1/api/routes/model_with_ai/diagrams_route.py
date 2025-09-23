@@ -85,95 +85,74 @@ async def generate_diagram(
     try:
         # Call LLM to generate diagrams code
         diagrams_code = await call_llm(request.query)
-        #log_info(f"Diagrams code: {diagrams_code}")
+        log_info(f"Diagrams code: {diagrams_code}")
 #         diagrams_code = """
 # ```python
-# from diagrams import Diagram, Cluster, Edge
-# from diagrams.aws.compute import EC2, Lambda
-# from diagrams.aws.database import RDS, Dynamodb, Redshift
-# from diagrams.aws.integration import SQS
-# from diagrams.aws.network import ELB, Route53, VPC, CloudFront, NATGateway, InternetGateway
-# from diagrams.aws.security import WAF, IAMRole, Cognito, KMS
-# from diagrams.aws.storage import S3
-# from diagrams.aws.management import Cloudwatch
-# from diagrams.aws.analytics import Kinesis
+
+# from diagrams import Diagram, Cluster
+# from diagrams.aws.compute import EC2AutoScaling
+# from diagrams.aws.network import ELB, Route53, VPC, PrivateSubnet, PublicSubnet
+# from diagrams.aws.database import RDS, Dynamodb
+# from diagrams.aws.analytics import KinesisDataStreams, Glue, EMR
 # from diagrams.aws.ml import Sagemaker
-# from diagrams.saas.logging import Datadog
+# from diagrams.aws.integration import SQS
+# from diagrams.aws.storage import S3
+# from diagrams.aws.security import WAF, IAM, KMS
+# from diagrams.aws.management import Cloudwatch
 # from diagrams.aws.devtools import Codepipeline, Codebuild
+# from diagrams.aws.general import InternetGateway
+# from diagrams.onprem.client import Users
 
-# with Diagram("AWS Data Processing Pipeline", show=False, direction="TB"):
-#     with Cluster("Networking"):
-#         igw = InternetGateway("Internet Gateway")
-#         nat = NATGateway("NAT Gateway")
-#         with Cluster("VPC"):
-#             lb = ELB("Application Load Balancer")
-#             waf = WAF("Web Application Firewall")
+# with Diagram("AWS Data Processing Pipeline", show=False, direction="LR"):
+#     dns = Route53("DNS")
+#     waf = WAF("Web Application Firewall")
 
-#             with Cluster("Public Subnet"):
-#                 dns = Route53("Route 53")
-#                 cdn = CloudFront("CloudFront")
+#     with Cluster("VPC"):
+#         internet_gateway = InternetGateway("Internet Gateway")
 
-#             with Cluster("Private Subnet"):
-#                 web_server = EC2("Web Server")
-#                 app_server = EC2("App Server")
-#                 api_gateway = Lambda("API Gateway")
+#         with Cluster("Public Subnet"):
+#             lb = ELB("Load Balancer")
+#             lb - internet_gateway
 
-#     with Cluster("Data Processing"):
-#         with Cluster("Ingestion"):
-#             kinesis = Kinesis("Kinesis Data Streams")
-#             queue = SQS("SQS Queue")
+#         with Cluster("Private Subnet"):
+#             with Cluster("Auto Scaling Group"):
+#                 workers = EC2AutoScaling("EC2 Instances")
 
-#         with Cluster("Processing and Analysis"):
-#             sagemaker = Sagemaker("Sagemaker")
-#             redshift = Redshift("Redshift")
+#             s3_data_lake = S3("Data Lake")
+#             kinesis = KinesisDataStreams("Data Stream")
+#             glue = Glue("Data Catalog & ETL")
+#             emr = EMR("Data Processing")
+#             sagemaker = Sagemaker("Machine Learning")
+#             dynamodb = Dynamodb("NoSQL Database")
 
-#         with Cluster("Storage"):
-#             data_lake = S3("Data Lake")
-#             ddb = Dynamodb("DynamoDB")
+#             workers >> s3_data_lake
+#             workers >> kinesis
+#             kinesis >> glue >> emr
+#             emr >> s3_data_lake
+#             emr >> dynamodb
+#             s3_data_lake >> sagemaker
 
-#     with Cluster("Security & IAM"):
-#         iam_role = IAMRole("IAM Role")
-#         kms = KMS("KMS")
+#         sqs_queue = SQS("Message Queue")
+#         kms = KMS("Key Management Service")
+#         iam = IAM("Identity & Access Management")
 
-#     with Cluster("Monitoring & Logging"):
-#         cloudwatch = Cloudwatch("CloudWatch")
-#         datadog = Datadog("Datadog")
+#         workers >> sqs_queue
+#         sqs_queue >> workers
 
-#     with Cluster("CI/CD"):
-#         pipeline = Codepipeline("CodePipeline")
-#         build = Codebuild("CodeBuild")
+#     with Cluster("CI/CD Pipeline"):
+#         code_pipeline = Codepipeline("CodePipeline")
+#         code_build = Codebuild("CodeBuild")
 
-#     # Network and Access
-#     dns >> Edge(label="DNS Resolution") >> cdn
-#     cdn >> Edge(label="HTTPS 443 / TLS1.3") >> waf
-#     waf >> Edge(label="HTTPS 443 / TLS1.3") >> lb
-#     lb >> Edge(label="HTTPS 443 / TLS1.3") >> web_server
-#     lb >> Edge(label="HTTPS 443 / TLS1.3") >> app_server
-#     web_server >> Edge(label="HTTPS 443 / TLS1.3") >> api_gateway
+#         code_pipeline >> code_build >> workers
 
-#     # Data Ingestion
-#     api_gateway >> Edge(label="PutRecord API / TLS1.3") >> kinesis
-#     kinesis >> Edge(label="Kinesis Data Firehose") >> queue
+#     cloudwatch = Cloudwatch("Monitoring & Logging")
 
-#     # Processing and Analysis
-#     queue >> Edge(label="SQS Polling") >> sagemaker
-#     sagemaker >> Edge(label="Batch Transform") >> redshift
-
-#     # Storage
-#     redshift >> Edge(label="Copy Command") >> data_lake
-#     sagemaker >> Edge(label="PutItem") >> ddb
-
-#     # Security & IAM
-#     web_server >> Edge(label="AssumeRole") >> iam_role
-#     app_server >> Edge(label="Encrypt/Decrypt") >> kms
-
-#     # Monitoring & Logging
-#     web_server >> Edge(label="Logs") >> cloudwatch
-#     app_server >> Edge(label="Metrics") >> datadog
-
-#     # CI/CD
-#     pipeline >> Edge(label="Build Trigger") >> build
-#     build >> Edge(label="Deploy") >> lb
+#     dns >> waf >> lb >> workers
+#     cloudwatch >> workers
+#     cloudwatch >> emr
+#     cloudwatch >> sagemaker
+#     cloudwatch >> code_pipeline
+#     cloudwatch >> code_build
 # """
         
         # Parse the generated code to extract nodes and edges

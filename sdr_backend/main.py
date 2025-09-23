@@ -85,9 +85,12 @@ async def lifespan(app: FastAPI):
         # Initialize active sessions gauge
         APP_ACTIVE_SESSIONS.set(0)
         
+    
+        
         yield
     finally:
         # Cleanup resources in finally block to ensure they run even on errors
+        
         await session_manager.disconnect()  # Disconnect from Redis
         log_info("disconnected redis session manager...")
         log_info("Shutting down")
@@ -163,9 +166,12 @@ async def generic_exception_handler(request: Request, exc: Exception):
         content={"detail": "Internal server error. Please try again later."},
     )
 
-# ----- Register routers -----
+
+
 # v1 grouped under /v1/routes
 app.include_router(api_router, prefix="/v1/routes")
+
+
 
 # Mount v1 router
 # from v1.api.routes.routes import router as v1_router
