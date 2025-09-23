@@ -59,6 +59,8 @@ import { cn } from '@/lib/utils';
 import { Team, CreateTeamPayload } from '@/interfaces/teamInterfaces';
 import teamService from '@/services/teamService';
 import tokenService from '@/services/tokenService';
+import { syncUserWithBackend } from '@/services/authService';
+import { User } from '@/interfaces/userInterface';
 
 const createTeamSchema = z.object({
   name: z.string().min(1, 'Team name is required'),
@@ -99,7 +101,7 @@ const Teams = () => {
   const [teamToDelete, setTeamToDelete] = useState<Team | null>(null);
   const [isDeletingTeam, setIsDeletingTeam] = useState(false);
   const navigate = useNavigate();
-  const { logout, user } = useAuth();
+  const { logout, user, session } = useAuth();
 
   // Handle sort field change
   const handleSortFieldChange = (field: string) => {
@@ -170,13 +172,10 @@ const Teams = () => {
           }
         }
         
-        // If we still don't have a valid tenant ID, use a default value or show an error
+        // If no tenant ID found, show specific error
         if (!tenantId) {
-          // Use a default tenant ID (only if your system has a concept of a default tenant)
-          // Or show an error if tenant ID is absolutely required
-          console.warn("No tenant ID found, trying to use default tenant");
-          // Try to continue with refresh flow - at worst it will return an empty array
-          tenantId = 1; // Default tenant ID if applicable
+          setError('No tenant found for your account. Please contact support or try refreshing your user data.');
+          return;
         }
 
         const teamsData = await teamService.getTeams({
@@ -286,6 +285,37 @@ const Teams = () => {
     });
   };
 
+  // Function to refresh user data from backend
+  const refreshUserData = async () => {
+    if (!user || !session) {
+      toast.error('No active session found. Please log in again.');
+      return;
+    }
+    
+    setIsLoadingTeams(true);
+    try {
+      const completeUserData = await syncUserWithBackend(
+        user.email, 
+        session.access_token
+      );
+      
+      setUser(completeUserData);
+      tokenService.setUser(completeUserData);
+      toast.success('User data refreshed successfully');
+      
+      // Retry fetching teams with new data
+      setTimeout(() => {
+        window.location.reload();
+      }, 500);
+      
+    } catch (error) {
+      console.error('Failed to refresh user data:', error);
+      toast.error('Failed to refresh user data. Please try logging out and back in.');
+    } finally {
+      setIsLoadingTeams(false);
+    }
+  };
+
   // Function to retry fetching teams
   const retryFetchTeams = () => {
     setIsLoadingTeams(true);
@@ -316,7 +346,7 @@ const Teams = () => {
         }
         
         if (!tenantId) {
-          setError("No tenant ID found. Please log in again.");
+          setError("No tenant found for your account. Please contact support or try refreshing your user data.");
           return;
         }
 
@@ -530,9 +560,28 @@ const Teams = () => {
             <h3 className="text-xl font-semibold text-gray-900 mb-2">
               {error}
             </h3>
-            <Button onClick={retryFetchTeams}>
-              Try Again
-            </Button>
+            <div className="flex gap-2 justify-center">
+              <Button onClick={retryFetchTeams} disabled={isLoadingTeams}>
+                {isLoadingTeams ? (
+                  <div className="flex items-center">
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Loading...
+                  </div>
+                ) : (
+                  'Try Again'
+                )}
+              </Button>
+              <Button onClick={refreshUserData} variant="outline" disabled={isLoadingTeams}>
+                {isLoadingTeams ? (
+                  <div className="flex items-center">
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Refreshing...
+                  </div>
+                ) : (
+                  'Refresh User Data'
+                )}
+              </Button>
+            </div>
           </motion.div>
         ) : filteredTeams.length === 0 ? (
           <motion.div
@@ -787,3 +836,7 @@ const Teams = () => {
 };
 
 export default Teams; 
+
+function setUser(completeUserData: User) {
+  throw new Error('Function not implemented.');
+}

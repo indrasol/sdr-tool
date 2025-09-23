@@ -110,8 +110,41 @@ async def verify_token(authorization: str = Header(None), is_registration: bool 
             return {"id": user_id}
 
         if not user_response.data:
-            log_info(f"User not found in database for Supabase ID: {user_id}")
-            raise HTTPException(status_code=404, detail="User not found in database")
+            # Try to auto-create user from Supabase Auth metadata if not registration endpoint
+            if not is_registration:
+                try:
+                    log_info(f"User not found in database, attempting auto-creation for Supabase ID: {user_id}")
+                    
+                    # Get user metadata from Supabase Auth
+                    auth_user_response = supabase.auth.admin.get_user_by_id(user_id)
+                    auth_user = auth_user_response.user
+                    
+                    if auth_user and auth_user.email:
+                        # Create user record
+                        new_user_data = {
+                            "id": user_id,
+                            "username": auth_user.user_metadata.get('username') or auth_user.user_metadata.get('full_name') or auth_user.email.split('@')[0],
+                            "email": auth_user.email
+                        }
+                        
+                        def create_user():
+                            return supabase.from_("users").insert(new_user_data).execute()
+                        
+                        await safe_supabase_operation(create_user, "Failed to auto-create user")
+                        log_info(f"Auto-created user: {user_id}")
+                        
+                        # Set user_response for further processing
+                        user_response = {"data": [new_user_data]}
+                    else:
+                        raise Exception("Could not fetch user from Supabase Auth")
+                        
+                except Exception as auto_create_error:
+                    log_info(f"Auto-creation failed for user {user_id}: {str(auto_create_error)}")
+                    log_info(f"User not found in database for Supabase ID: {user_id}")
+                    raise HTTPException(status_code=404, detail="User not found in database")
+            else:
+                log_info(f"User not found in database for Supabase ID: {user_id}")
+                raise HTTPException(status_code=404, detail="User not found in database")
 
         # Get user data
         user_data = user_response.data[0]

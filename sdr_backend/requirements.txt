@@ -69,3 +69,8 @@ beautifulsoup4==4.13.4
 lxml==4.9.3
 rapidfuzz==3.13.0
 symspellpy==6.9.0
+
+# Geolocation
+geopy==2.3.0
+user_agents==2.2.0
+geopy==2.4.1

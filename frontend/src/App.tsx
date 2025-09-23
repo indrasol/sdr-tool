@@ -36,6 +36,8 @@ import Settings from '@/pages/Settings';
 import ProtectedRoute from '@/components/Auth/ProtectedRoute';
 import { loadIcons } from '@iconify/react';
 import DagreReactFlow from './components/AI/DagreReactFlow';
+import Dagrewithpos from '@/components/AI/Dagrewithpos';
+import SampleDiagram from './components/AI/SampleDiagram';
 // Load custom icon collection once (side-effect import)
 // This also handles preloading common cloud icons
 import '@/iconify/custom';
@@ -73,6 +75,8 @@ const App = () => {
                 <Route path="/dev-dash" element={<DeveloperDashboard />} />
                 
                 {/* Public Routes */}
+                <Route path="/sample-diagram" element={<SampleDiagram />} />
+                {/* <Route path="/" element={<Dagrewithpos />} /> */}
                 <Route path="/" element={<HomePage />} />
                 <Route path="/" element={<DagreReactFlow />} />
                 <Route path="/index" element={<Index />} />
